@@ -4,42 +4,34 @@ export interface User {
   role: string;
 }
 
-export interface Subscription {
-  id?: string;
-  userId?: string;
-  planId?: string;
-  status?: string;
-  startDate?: string;
-  endDate?: string;
+export interface StartSignupRequest {
+  fullName: string;
+  email: string;
 }
 
-export interface Plan {
-  id?: string;
-  name?: string;
-  price?: number;
-  features?: string[];
+export interface StartSignupResponse {
+  success: boolean;
+  message: string;
 }
 
-export interface RegisterRequest {
+export interface VerifyEmailResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface SetPasswordRequest {
   email: string;
   password: string;
-  planId: string;
+}
+
+export interface SetPasswordResponse {
+  success: boolean;
+  message: string;
 }
 
 export interface LoginRequest {
   email: string;
   password: string;
-}
-
-export interface RegisterResponse {
-  success: boolean;
-  message: string;
-  data: {
-    user: User;
-    subscription: Subscription;
-    plan: Plan;
-    token: string;
-  };
 }
 
 export interface LoginResponse {
@@ -56,4 +48,5 @@ export interface AuthState {
   token: string | null;
   isLoading: boolean;
   error: string | null;
+  signupEmail: string | null;
 }
