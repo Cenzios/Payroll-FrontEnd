@@ -82,13 +82,17 @@ const Signup = () => {
         {/* <div className="absolute top-0 right-0 w-96 h-96 border-[12px] border-white/10 rounded-full translate-x-40 -translate-y-40"></div> */}
 
         <div className="absolute top-55 -left-20 w-64 h-64 border-[30px] border-white/15 rounded-full"></div>
-        <div className="absolute top-1/2 -left-28 w-80 h-80 border-[30px] border-white/10 rounded-full"></div>
+        <div className="absolute top-1/2 -left-28 w-80 h-80 border-[20px] border-white/10 rounded-full"></div>
 
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] border-[3px] border-white/15 rounded-full -translate-x-64 translate-y-64"></div>
+        <div className="absolute bottom-[-20px] -left-28 w-40 h-40 bg-white/15 rounded-full translate-x-80 transition-all duration-300 ease-in-out"></div>
+
+
+
+        {/* <div className="absolute bottom-0 left-0 w-[500px] h-[500px] border-[3px] border-white/15 rounded-full translate-x-80 transition-all duration-300 ease-in-out"></div> */}
 
         {/* Dot grid pattern */}
-        <div className="absolute bottom-20 right-16 grid grid-cols-6 gap-3 opacity-20">
-          {[...Array(48)].map((_, i) => (
+        <div className="absolute bottom-10 right-16 grid grid-cols-10 gap-3 opacity-20">
+          {[...Array(100)].map((_, i) => (
             <div key={i} className="w-1.5 h-1.5 bg-white rounded-full"></div>
           ))}
         </div>
