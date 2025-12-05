@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { startSignup, clearError } from '../store/slices/authSlice';
 import { Loader2 } from 'lucide-react';
+import passwordImg from '../assets/images/password-illustration.png';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -75,25 +76,37 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-blue-400 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-400 rounded-full translate-x-1/2 translate-y-1/2"></div>
-          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-blue-300 rounded-full"></div>
+      <div className="hidden lg:flex lg:w-1/2 bg-[#5B8EF5] relative overflow-hidden">
+        {/* Circular ring decorations */}
+        <div className="absolute top-0 right-0 w-80 h-80 border-[3px] border-white/15 rounded-full translate-x-32 -translate-y-32"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 border-[3px] border-white/10 rounded-full translate-x-40 -translate-y-40"></div>
+
+        <div className="absolute top-1/2 -left-20 w-64 h-64 border-[3px] border-white/15 rounded-full"></div>
+        <div className="absolute top-1/2 -left-28 w-80 h-80 border-[3px] border-white/10 rounded-full"></div>
+
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] border-[3px] border-white/15 rounded-full -translate-x-64 translate-y-64"></div>
+
+        {/* Dot grid pattern */}
+        <div className="absolute bottom-20 right-16 grid grid-cols-6 gap-3 opacity-20">
+          {[...Array(24)].map((_, i) => (
+            <div key={i} className="w-1.5 h-1.5 bg-white rounded-full"></div>
+          ))}
         </div>
 
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-md"></div>
+          <div className="flex items-center gap-3 mb-16">
+            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="8" fill="#5B8EF5" />
+              </svg>
             </div>
-            <h1 className="text-4xl font-bold">Payrole</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">Payrole</h1>
           </div>
 
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 className="text-4xl font-semibold mb-4 leading-tight">
             Automated. Accurate. On Time.
           </h2>
-          <p className="text-xl text-blue-100">
+          <p className="text-lg text-white/100 font-light">
             Welcome to Payrole.
           </p>
         </div>
@@ -104,16 +117,11 @@ const Signup = () => {
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="mb-8 text-center">
               <div className="mb-4">
-                <svg className="w-24 h-24 mx-auto" viewBox="0 0 200 200" fill="none">
-                  <circle cx="100" cy="60" r="30" fill="#3B82F6" opacity="0.1"/>
-                  <circle cx="100" cy="60" r="20" fill="#3B82F6"/>
-                  <path d="M70 110 Q70 85 100 85 Q130 85 130 110 L130 140 Q130 145 125 145 L75 145 Q70 145 70 140 Z" fill="#3B82F6" opacity="0.1"/>
-                  <path d="M75 115 Q75 95 100 95 Q125 95 125 115 L125 135 Q125 138 122 138 L78 138 Q75 138 75 135 Z" fill="#3B82F6"/>
-                  <rect x="85" y="125" width="8" height="8" rx="1" fill="white"/>
-                  <rect x="107" y="125" width="8" height="8" rx="1" fill="white"/>
-                  <line x1="145" y1="100" x2="175" y2="100" stroke="#3B82F6" strokeWidth="4" strokeLinecap="round"/>
-                  <line x1="145" y1="115" x2="165" y2="115" stroke="#3B82F6" strokeWidth="4" strokeLinecap="round"/>
-                </svg>
+                <img
+                  src="/images/password-illustration.png"
+                  alt="Password setup"
+                  className="w-24 h-24 mx-auto object-contain"
+                />
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
                 Let's setup your account
@@ -140,11 +148,10 @@ const Signup = () => {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleChange}
-                  className={`block w-full px-4 py-3 border ${
-                    validationErrors.fullName
-                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                  } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                  className={`block w-full px-4 py-3 border ${validationErrors.fullName
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                    } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                   placeholder="Nimal Kumara"
                 />
                 {validationErrors.fullName && (
@@ -167,11 +174,10 @@ const Signup = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`block w-full px-4 py-3 border ${
-                    validationErrors.email
-                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                  } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                  className={`block w-full px-4 py-3 border ${validationErrors.email
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                    } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                   placeholder="nimalkumara@mail.com"
                 />
                 {validationErrors.email && (
