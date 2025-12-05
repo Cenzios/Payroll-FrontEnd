@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAppDispatch } from '../store/hooks';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { verifyEmail } from '../store/slices/authSlice';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 
@@ -8,11 +8,23 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
+  const { signupEmail } = useAppSelector((state) => state.auth);
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
 
+  const hasVerified = useRef(false);
+
   useEffect(() => {
+    if (hasVerified.current) return;
+
     const token = searchParams.get('token');
+
+    // ✅ Check if email exists - if not, redirect to signup
+    if (!signupEmail && !token) {
+      console.log('No email found, redirecting to signup');
+      navigate('/signup');
+      return;
+    }
 
     if (!token) {
       setStatus('error');
@@ -21,27 +33,42 @@ const VerifyEmail = () => {
     }
 
     const verify = async () => {
+      hasVerified.current = true;
+
       try {
         const result = await dispatch(verifyEmail(token));
 
         if (verifyEmail.fulfilled.match(result)) {
           setStatus('success');
           setMessage(result.payload.message || 'Email verified successfully!');
+
+          // ✅ Redirect after 1.5 seconds
           setTimeout(() => {
+            console.log('Redirecting to set-password with email:', signupEmail);
             navigate('/set-password');
-          }, 2000);
+          }, 1500);
         } else {
           setStatus('error');
           setMessage(result.payload as string || 'Email verification failed.');
+
+          // ✅ If verification fails, redirect to signup after 3 seconds
+          setTimeout(() => {
+            console.log('Verification failed, redirecting to signup');
+            navigate('/signup');
+          }, 3000);
         }
       } catch (error) {
         setStatus('error');
         setMessage('An unexpected error occurred.');
+
+        setTimeout(() => {
+          navigate('/signup');
+        }, 3000);
       }
     };
 
     verify();
-  }, [dispatch, searchParams, navigate]);
+  }, [dispatch, searchParams, navigate, signupEmail]);
 
   return (
     <div className="min-h-screen flex">
@@ -115,6 +142,9 @@ const VerifyEmail = () => {
                   <p className="text-gray-600 mb-6">
                     {message}
                   </p>
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                    Redirecting to signup page...
+                  </div>
                   <div className="space-y-3">
                     <button
                       onClick={() => navigate('/signup')}

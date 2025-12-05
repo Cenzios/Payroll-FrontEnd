@@ -16,7 +16,7 @@ const initialState: AuthState = {
     ? JSON.parse(localStorage.getItem('user')!)
     : null,
   token: localStorage.getItem('token') || null,
-  signupEmail: null,
+  signupEmail: localStorage.getItem('signupEmail') || null, // ✅ Persist email
   isLoading: false,
   error: null,
 };
@@ -29,6 +29,8 @@ export const startSignup = createAsyncThunk(
         '/auth/start-signup',
         userData
       );
+      // ✅ Store email in localStorage
+      localStorage.setItem('signupEmail', userData.email);
       return { email: userData.email, message: response.data.message };
     } catch (error: any) {
       const message =
@@ -66,6 +68,8 @@ export const setPassword = createAsyncThunk(
         '/auth/set-password',
         data
       );
+      // ✅ Clear signupEmail after password is set
+      localStorage.removeItem('signupEmail');
       return response.data;
     } catch (error: any) {
       const message =
@@ -108,12 +112,18 @@ const authSlice = createSlice({
       state.signupEmail = null;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('signupEmail');
     },
     clearError: (state) => {
       state.error = null;
     },
     setSignupEmail: (state, action) => {
       state.signupEmail = action.payload;
+      localStorage.setItem('signupEmail', action.payload);
+    },
+    clearSignupEmail: (state) => {
+      state.signupEmail = null;
+      localStorage.removeItem('signupEmail');
     },
   },
   extraReducers: (builder) => {
@@ -138,6 +148,7 @@ const authSlice = createSlice({
       .addCase(verifyEmail.fulfilled, (state) => {
         state.isLoading = false;
         state.error = null;
+        // ✅ Keep signupEmail - don't clear it yet
       })
       .addCase(verifyEmail.rejected, (state, action) => {
         state.isLoading = false;
@@ -150,6 +161,7 @@ const authSlice = createSlice({
       .addCase(setPassword.fulfilled, (state) => {
         state.isLoading = false;
         state.error = null;
+        state.signupEmail = null; // ✅ Clear after password set
       })
       .addCase(setPassword.rejected, (state, action) => {
         state.isLoading = false;
@@ -173,5 +185,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, setSignupEmail } = authSlice.actions;
+export const { logout, clearError, setSignupEmail, clearSignupEmail } = authSlice.actions;
 export default authSlice.reducer;

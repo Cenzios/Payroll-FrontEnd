@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { startSignup } from '../store/slices/authSlice';
 import { Mail, Loader2 } from 'lucide-react';
+import verifyImg from '../assets/images/verify-illustration.png';
 
 const VerifyInfo = () => {
   const navigate = useNavigate();
@@ -65,13 +66,11 @@ const VerifyInfo = () => {
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="mb-8 text-center">
               <div className="mb-4">
-                <svg className="w-24 h-24 mx-auto" viewBox="0 0 200 200" fill="none">
-                  <rect x="50" y="60" width="100" height="80" rx="8" fill="#3B82F6" opacity="0.1"/>
-                  <rect x="60" y="70" width="80" height="60" rx="4" fill="white" stroke="#3B82F6" strokeWidth="3"/>
-                  <path d="M60 75 L100 105 L140 75" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                  <circle cx="145" cy="95" r="15" fill="#22C55E"/>
-                  <path d="M138 95 L143 100 L152 88" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                </svg>
+                <img
+                  src={verifyImg}
+                  alt="Setup account"
+                  className="w-28 h-28 mx-auto object-contain"
+                />
               </div>
               <h2 className="text-3xl font-bold text-gray-900 mb-3">
                 Verify Your Email

@@ -23,7 +23,11 @@ const SetPassword = () => {
   });
 
   useEffect(() => {
+    // ✅ Check if signupEmail exists
+    console.log('SetPassword - signupEmail:', signupEmail);
+
     if (!signupEmail) {
+      console.log('No signupEmail found, redirecting to signup');
       navigate('/signup');
     }
   }, [signupEmail, navigate]);
@@ -70,7 +74,15 @@ const SetPassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm() && signupEmail) {
+
+    if (!signupEmail) {
+      console.error('No email available for password setup');
+      navigate('/signup');
+      return;
+    }
+
+    if (validateForm()) {
+      console.log('Setting password for:', signupEmail);
       const result = await dispatch(
         setPassword({
           email: signupEmail,
@@ -79,11 +91,13 @@ const SetPassword = () => {
       );
 
       if (setPassword.fulfilled.match(result)) {
+        console.log('Password set successfully, redirecting to login');
         navigate('/login');
       }
     }
   };
 
+  // ✅ Show loading while checking email
   if (!signupEmail) {
     return null;
   }
@@ -120,19 +134,22 @@ const SetPassword = () => {
             <div className="mb-8 text-center">
               <div className="mb-4">
                 <svg className="w-24 h-24 mx-auto" viewBox="0 0 200 200" fill="none">
-                  <rect x="50" y="70" width="100" height="70" rx="8" fill="#3B82F6" opacity="0.1"/>
-                  <rect x="60" y="80" width="80" height="50" rx="6" fill="white" stroke="#3B82F6" strokeWidth="3"/>
-                  <circle cx="100" cy="105" r="12" fill="#3B82F6"/>
-                  <rect x="96" y="105" width="8" height="15" fill="#3B82F6"/>
-                  <circle cx="70" cy="65" r="8" fill="#3B82F6"/>
-                  <line x1="70" y1="58" x2="70" y2="50" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round"/>
-                  <circle cx="130" cy="65" r="8" fill="#3B82F6"/>
-                  <line x1="130" y1="58" x2="130" y2="50" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round"/>
+                  <rect x="50" y="70" width="100" height="70" rx="8" fill="#3B82F6" opacity="0.1" />
+                  <rect x="60" y="80" width="80" height="50" rx="6" fill="white" stroke="#3B82F6" strokeWidth="3" />
+                  <circle cx="100" cy="105" r="12" fill="#3B82F6" />
+                  <rect x="96" y="105" width="8" height="15" fill="#3B82F6" />
+                  <circle cx="70" cy="65" r="8" fill="#3B82F6" />
+                  <line x1="70" y1="58" x2="70" y2="50" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" />
+                  <circle cx="130" cy="65" r="8" fill="#3B82F6" />
+                  <line x1="130" y1="58" x2="130" y2="50" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" />
                 </svg>
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
                 Create Your Password
               </h2>
+              <p className="text-gray-600 mt-2">
+                Setting password for: <span className="font-medium text-blue-600">{signupEmail}</span>
+              </p>
             </div>
 
             {error && (
@@ -147,7 +164,7 @@ const SetPassword = () => {
                   htmlFor="password"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Password
+                  Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -159,11 +176,10 @@ const SetPassword = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className={`block w-full pl-10 pr-12 py-3 border ${
-                      validationErrors.password
+                    className={`block w-full pl-10 pr-12 py-3 border ${validationErrors.password
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                         : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                    } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                      } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                     placeholder="••••••••"
                   />
                   <button
@@ -202,11 +218,10 @@ const SetPassword = () => {
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className={`block w-full pl-10 pr-12 py-3 border ${
-                      validationErrors.confirmPassword
+                    className={`block w-full pl-10 pr-12 py-3 border ${validationErrors.confirmPassword
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                         : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                    } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                      } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                     placeholder="••••••••"
                   />
                   <button
@@ -239,7 +254,7 @@ const SetPassword = () => {
                     Setting Password...
                   </>
                 ) : (
-                  'Next'
+                  'Set Password & Continue'
                 )}
               </button>
             </form>
