@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { startSignup, clearError } from '../store/slices/authSlice';
 import { Loader2 } from 'lucide-react';
-import passwordImg from '../assets/images/password-illustration.png';
+import passwordImg from '../assets/images/signup-illustration.png';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -78,20 +78,21 @@ const Signup = () => {
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 bg-[#5B8EF5] relative overflow-hidden">
         {/* Circular ring decorations */}
-        <div className="absolute top-0 right-0 w-80 h-80 border-[3px] border-white/15 rounded-full translate-x-32 -translate-y-32"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 border-[3px] border-white/10 rounded-full translate-x-40 -translate-y-40"></div>
+        <div className="absolute top-20 right-20 w-60 h-60 border-[30px] border-white/15 rounded-full translate-x-32 -translate-y-32"></div>
+        {/* <div className="absolute top-0 right-0 w-96 h-96 border-[12px] border-white/10 rounded-full translate-x-40 -translate-y-40"></div> */}
 
-        <div className="absolute top-1/2 -left-20 w-64 h-64 border-[3px] border-white/15 rounded-full"></div>
-        <div className="absolute top-1/2 -left-28 w-80 h-80 border-[3px] border-white/10 rounded-full"></div>
+        <div className="absolute top-55 -left-20 w-64 h-64 border-[30px] border-white/15 rounded-full"></div>
+        <div className="absolute top-1/2 -left-28 w-80 h-80 border-[30px] border-white/10 rounded-full"></div>
 
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] border-[3px] border-white/15 rounded-full -translate-x-64 translate-y-64"></div>
 
         {/* Dot grid pattern */}
         <div className="absolute bottom-20 right-16 grid grid-cols-6 gap-3 opacity-20">
-          {[...Array(24)].map((_, i) => (
+          {[...Array(48)].map((_, i) => (
             <div key={i} className="w-1.5 h-1.5 bg-white rounded-full"></div>
           ))}
         </div>
+
 
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="flex items-center gap-3 mb-16">
@@ -106,7 +107,7 @@ const Signup = () => {
           <h2 className="text-4xl font-semibold mb-4 leading-tight">
             Automated. Accurate. On Time.
           </h2>
-          <p className="text-lg text-white/100 font-light">
+          <p className="text-2xl text-white/100 font-light">
             Welcome to Payrole.
           </p>
         </div>
@@ -118,9 +119,9 @@ const Signup = () => {
             <div className="mb-8 text-center">
               <div className="mb-4">
                 <img
-                  src="/images/password-illustration.png"
-                  alt="Password setup"
-                  className="w-24 h-24 mx-auto object-contain"
+                  src={passwordImg}
+                  alt="Setup account"
+                  className="w-48 h-48 mx-auto object-contain"
                 />
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
