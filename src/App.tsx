@@ -3,6 +3,7 @@ import Signup from './pages/Signup';
 import VerifyInfo from './pages/VerifyInfo';
 import VerifyEmail from './pages/VerifyEmail';
 import SetPassword from './pages/SetPassword';
+import SetCompany from './pages/SetCompany';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -16,6 +17,7 @@ function App() {
         <Route path="/verify-info" element={<VerifyInfo />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/set-password" element={<SetPassword />} />
+        <Route path="/set-company" element={<SetCompany />} />
         <Route path="/login" element={<Login />} />
         <Route
           path="/dashboard"

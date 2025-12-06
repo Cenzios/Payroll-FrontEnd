@@ -12,13 +12,13 @@ const AuthLayout = ({ children, title, subtitle, illustration }: AuthLayoutProps
   return (
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-800 relative overflow-hidden">
-        <div className="absolute top-20 right-20 w-60 h-60 border-[30px] border-white/15 rounded-full translate-x-32 -translate-y-32"></div>
+        <div className="absolute top-20 right-20 w-60 h-60 border-[30px] border-white/15 rounded-full translate-x-32 -translate-y-32 animate-[float_6s_ease-in-out_infinite]"></div>
 
-        <div className="absolute top-55 -left-20 w-64 h-64 border-[30px] border-white/15 rounded-full"></div>
-        <div className="absolute bottom-[-60px] -left-10 w-80 h-80 border-[30px] border-white/10 rounded-full"></div>
+        <div className="absolute top-55 -left-20 w-64 h-64 border-[30px] border-white/15 rounded-full animate-[float_8s_ease-in-out_infinite_1s]"></div>
+        <div className="absolute bottom-[-60px] -left-10 w-80 h-80 border-[30px] border-white/10 rounded-full animate-[float_10s_ease-in-out_infinite_2s]"></div>
 
-        <div className="absolute bottom-[-20px] -left-28 w-40 h-40 bg-white/15 rounded-full translate-x-80 transition-all duration-300 ease-in-out"></div>
-        <div className="absolute bottom-[60px] -left-60 w-28 h-28 rounded-full translate-x-80 transition-all duration-300 ease-in-out bg-gradient-to-br from-white/50 via-white/20 to-transparent blur-[0.5px]"></div>
+        <div className="absolute bottom-[-20px] -left-28 w-40 h-40 bg-white/15 rounded-full translate-x-80 transition-all duration-300 ease-in-out animate-[pulse_4s_ease-in-out_infinite]"></div>
+        <div className="absolute bottom-[60px] -left-60 w-28 h-28 rounded-full translate-x-80 transition-all duration-300 ease-in-out bg-gradient-to-br from-white/50 via-white/20 to-transparent blur-[0.5px] animate-[pulse_3s_ease-in-out_infinite_1s]"></div>
 
         <div className="absolute bottom-10 right-16 grid grid-cols-10 gap-3 opacity-20">
           {[...Array(100)].map((_, i) => (
@@ -26,7 +26,7 @@ const AuthLayout = ({ children, title, subtitle, illustration }: AuthLayoutProps
           ))}
         </div>
 
-        <div className="relative z-10 flex flex-col justify-center px-16 text-white">
+        <div className="relative z-10 flex flex-col justify-center px-16 text-white animate-[fadeInLeft_0.8s_ease-out]">
           <div className="flex items-center gap-3 mb-16">
             <img
               src={logo}
@@ -46,12 +46,12 @@ const AuthLayout = ({ children, title, subtitle, illustration }: AuthLayoutProps
       </div>
 
       <div className="flex-1 flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md animate-[fadeInUp_0.6s_ease-out]">
           <div className="bg-white rounded-2xl shadow-xl p-8">
             {(illustration || title || subtitle) && (
               <div className="mb-8 text-center">
                 {illustration && (
-                  <div className="mb-4">
+                  <div className="mb-4 animate-[scaleIn_0.5s_ease-out]">
                     <img
                       src={illustration}
                       alt="Illustration"
@@ -60,18 +60,20 @@ const AuthLayout = ({ children, title, subtitle, illustration }: AuthLayoutProps
                   </div>
                 )}
                 {title && (
-                  <h2 className="text-3xl font-bold text-gray-900">
+                  <h2 className="text-3xl font-bold text-gray-900 animate-[fadeIn_0.6s_ease-out_0.2s_both]">
                     {title}
                   </h2>
                 )}
                 {subtitle && (
-                  <p className="text-gray-600 mt-2">
+                  <p className="text-gray-600 mt-2 animate-[fadeIn_0.6s_ease-out_0.3s_both]">
                     {subtitle}
                   </p>
                 )}
               </div>
             )}
-            {children}
+            <div className="animate-[fadeIn_0.6s_ease-out_0.4s_both]">
+              {children}
+            </div>
           </div>
         </div>
       </div>

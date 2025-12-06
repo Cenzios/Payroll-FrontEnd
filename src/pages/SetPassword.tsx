@@ -93,8 +93,8 @@ const SetPassword = () => {
       );
 
       if (setPassword.fulfilled.match(result)) {
-        console.log('Password set successfully, redirecting to login');
-        navigate('/login');
+        console.log('Password set successfully, redirecting to set-company');
+        navigate('/set-company');
       }
     }
   };
