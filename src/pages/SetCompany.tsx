@@ -80,7 +80,7 @@ const SetCompany = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      navigate('/login');
+      navigate('/get-plan');
     }
   };
 
