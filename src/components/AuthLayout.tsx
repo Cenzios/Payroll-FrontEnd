@@ -33,14 +33,14 @@ const AuthLayout = ({ children, title, subtitle, illustration }: AuthLayoutProps
               alt="Cenzios Logo"
               className="w-10 h-10 object-contain"
             />
-            <h1 className="text-4xl font-semibold tracking-tight">Cenzios</h1>
+            <h1 className="text-4xl font-semibold tracking-tight">Payroll</h1>
           </div>
 
           <h2 className="text-4xl font-semibold mb-4 leading-tight">
             Automated. Accurate. On Time.
           </h2>
           <p className="text-2xl text-white/100 font-light">
-            Welcome to Cenzios Payroll.
+            Welcome to Payroll.
           </p>
         </div>
       </div>
