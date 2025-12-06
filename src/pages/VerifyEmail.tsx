@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { verifyEmail } from '../store/slices/authSlice';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
-import AuthSidePanel from '../components/AuthSidePanel';
+import AuthLayout from '../components/AuthLayout';
 
 const VerifyEmail = () => {
   const navigate = useNavigate();
@@ -72,79 +72,71 @@ const VerifyEmail = () => {
   }, [dispatch, searchParams, navigate, signupEmail]);
 
   return (
-    <div className="min-h-screen flex">
-      <AuthSidePanel />
-
-      <div className="flex-1 flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <div className="text-center">
-              {status === 'loading' && (
-                <>
-                  <div className="mb-6">
-                    <Loader2 className="w-20 h-20 mx-auto text-blue-600 animate-spin" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                    Verifying Your Email
-                  </h2>
-                  <p className="text-gray-600">
-                    Please wait while we verify your email address...
-                  </p>
-                </>
-              )}
-
-              {status === 'success' && (
-                <>
-                  <div className="mb-6">
-                    <CheckCircle className="w-20 h-20 mx-auto text-green-600" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                    Email Verified!
-                  </h2>
-                  <p className="text-gray-600 mb-4">
-                    {message}
-                  </p>
-                  <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-                    Redirecting to password setup...
-                  </div>
-                </>
-              )}
-
-              {status === 'error' && (
-                <>
-                  <div className="mb-6">
-                    <XCircle className="w-20 h-20 mx-auto text-red-600" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                    Verification Failed
-                  </h2>
-                  <p className="text-gray-600 mb-6">
-                    {message}
-                  </p>
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
-                    Redirecting to signup page...
-                  </div>
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => navigate('/signup')}
-                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
-                    >
-                      Start Over
-                    </button>
-                    <button
-                      onClick={() => navigate('/verify-info')}
-                      className="w-full bg-white text-blue-600 border-2 border-blue-600 font-semibold py-3 px-4 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
-                    >
-                      Resend Verification
-                    </button>
-                  </div>
-                </>
-              )}
+    <AuthLayout>
+      <div className="text-center">
+        {status === 'loading' && (
+          <>
+            <div className="mb-6">
+              <Loader2 className="w-20 h-20 mx-auto text-blue-600 animate-spin" />
             </div>
-          </div>
-        </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              Verifying Your Email
+            </h2>
+            <p className="text-gray-600">
+              Please wait while we verify your email address...
+            </p>
+          </>
+        )}
+
+        {status === 'success' && (
+          <>
+            <div className="mb-6">
+              <CheckCircle className="w-20 h-20 mx-auto text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              Email Verified!
+            </h2>
+            <p className="text-gray-600 mb-4">
+              {message}
+            </p>
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+              Redirecting to password setup...
+            </div>
+          </>
+        )}
+
+        {status === 'error' && (
+          <>
+            <div className="mb-6">
+              <XCircle className="w-20 h-20 mx-auto text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              Verification Failed
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {message}
+            </p>
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+              Redirecting to signup page...
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate('/signup')}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+              >
+                Start Over
+              </button>
+              <button
+                onClick={() => navigate('/verify-info')}
+                className="w-full bg-white text-blue-600 border-2 border-blue-600 font-semibold py-3 px-4 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+              >
+                Resend Verification
+              </button>
+            </div>
+          </>
+        )}
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 
