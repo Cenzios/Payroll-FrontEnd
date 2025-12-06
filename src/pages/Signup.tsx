@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { startSignup, clearError } from '../store/slices/authSlice';
 import { Loader2 } from 'lucide-react';
-import passwordImg from '../assets/images/signup-illustration.png';
+import passwordImg from '../assets/images/signup-illustration.svg';
 import AuthSidePanel from '../components/AuthSidePanel';
 
 const Signup = () => {

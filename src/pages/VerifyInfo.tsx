@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { startSignup } from '../store/slices/authSlice';
 import { Mail, Loader2 } from 'lucide-react';
-import verifyImg from '../assets/images/verify-illustration.png';
+import verifyImg from '../assets/images/verify-illustration.svg';
 import AuthSidePanel from '../components/AuthSidePanel';
 
 const VerifyInfo = () => {

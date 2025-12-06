@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPassword, clearError } from '../store/slices/authSlice';
 import { Lock, Loader2, Eye, EyeOff } from 'lucide-react';
-import password from '../assets/images/password-illustration.png';
+import password from '../assets/images/password-illustration.svg';
 import AuthSidePanel from '../components/AuthSidePanel';
 
 const SetPassword = () => {
