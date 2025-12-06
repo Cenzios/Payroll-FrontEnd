@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { startSignup, clearError } from '../store/slices/authSlice';
 import { Loader2 } from 'lucide-react';
-import passwordImg from '../assets/images/signup-illustration.svg';
-import AuthSidePanel from '../components/AuthSidePanel';
+import signupIllustration from '../assets/images/signup-illustration.svg';
+import AuthLayout from '../components/AuthLayout';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -76,103 +76,87 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      <AuthSidePanel />
-
-      <div className="flex-1 flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <div className="mb-8 text-center">
-              <div className="mb-4">
-                <img
-                  src={passwordImg}
-                  alt="Setup account"
-                  className="w-48 h-48 mx-auto object-contain"
-                />
-              </div>
-              <h2 className="text-3xl font-bold text-gray-900">
-                Let's setup your account
-              </h2>
-            </div>
-
-            {error && (
-              <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label
-                  htmlFor="fullName"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="fullName"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  className={`block w-full px-4 py-3 border ${validationErrors.fullName
-                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                    } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-                  placeholder="Nimal Kumara"
-                />
-                {validationErrors.fullName && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {validationErrors.fullName}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`block w-full px-4 py-3 border ${validationErrors.email
-                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                    } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-                  placeholder="nimalkumara@mail.com"
-                />
-                {validationErrors.email && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {validationErrors.email}
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                    Processing...
-                  </>
-                ) : (
-                  'Next'
-                )}
-              </button>
-            </form>
-          </div>
+    <AuthLayout
+      illustration={signupIllustration}
+      title="Let's setup your account"
+    >
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          {error}
         </div>
-      </div>
-    </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label
+            htmlFor="fullName"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Full Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="fullName"
+            name="fullName"
+            value={formData.fullName}
+            onChange={handleChange}
+            className={`block w-full px-4 py-3 border ${
+              validationErrors.fullName
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+            } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+            placeholder="Nimal Kumara"
+          />
+          {validationErrors.fullName && (
+            <p className="mt-1 text-sm text-red-600">
+              {validationErrors.fullName}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className={`block w-full px-4 py-3 border ${
+              validationErrors.email
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+            } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+            placeholder="nimalkumara@mail.com"
+          />
+          {validationErrors.email && (
+            <p className="mt-1 text-sm text-red-600">
+              {validationErrors.email}
+            </p>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
+              Processing...
+            </>
+          ) : (
+            'Next'
+          )}
+        </button>
+      </form>
+    </AuthLayout>
   );
 };
 
