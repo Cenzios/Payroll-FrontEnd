@@ -1,16 +1,26 @@
-server {
-    listen 5090;
-    server_name _;
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-    root /usr/share/nginx/html;
-    index index.html;
+export default defineConfig({
+  plugins: [react()],
 
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
+  server: {
+    port: 5090,
+    proxy: {
+      '/api': {
+        target: 'https://payroll.dev.server.cenzios.com',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 
-    error_page 500 502 503 504 /50x.html;
-    location = /50x.html {
-        root /usr/share/nginx/html;
-    }
-}
+  optimizeDeps: {
+    exclude: ['lucide-react'],
+  },
+
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+  },
+});
