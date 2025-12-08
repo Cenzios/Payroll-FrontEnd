@@ -43,10 +43,27 @@ export interface LoginResponse {
   };
 }
 
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  planId: string;
+}
+
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: User;
+    token: string;
+  };
+}
+
 export interface AuthState {
   user: User | null;
   token: string | null;
   isLoading: boolean;
   error: string | null;
   signupEmail: string | null;
+  tempPassword?: string | null;
+  tempPlanId?: string | null;
 }

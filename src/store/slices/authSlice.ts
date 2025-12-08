@@ -9,6 +9,8 @@ import {
   SetPasswordResponse,
   LoginRequest,
   LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
 } from '../../types/auth.types';
 
 const initialState: AuthState = {
@@ -19,6 +21,8 @@ const initialState: AuthState = {
   signupEmail: localStorage.getItem('signupEmail') || null, // ✅ Persist email
   isLoading: false,
   error: null,
+  tempPassword: null,
+  tempPlanId: null,
 };
 
 export const startSignup = createAsyncThunk(
@@ -101,6 +105,27 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+export const registerUser = createAsyncThunk(
+  'auth/register',
+  async (data: RegisterRequest, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post<RegisterResponse>(
+        '/auth/register',
+        data
+      );
+      const { user, token } = response.data.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.removeItem('signupEmail');
+      return { user, token };
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || error.message || 'Registration failed';
+      return rejectWithValue(message);
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -124,6 +149,12 @@ const authSlice = createSlice({
     clearSignupEmail: (state) => {
       state.signupEmail = null;
       localStorage.removeItem('signupEmail');
+    },
+    setTempPassword: (state, action) => {
+      state.tempPassword = action.payload;
+    },
+    setTempPlanId: (state, action) => {
+      state.tempPlanId = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -181,9 +212,26 @@ const authSlice = createSlice({
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+      .addCase(registerUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.signupEmail = null;
+        state.tempPassword = null;
+        state.tempPlanId = null;
+        state.error = null;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       });
   },
 });
 
-export const { logout, clearError, setSignupEmail, clearSignupEmail } = authSlice.actions;
+export const { logout, clearError, setSignupEmail, clearSignupEmail, setTempPassword, setTempPlanId } = authSlice.actions;
 export default authSlice.reducer;
