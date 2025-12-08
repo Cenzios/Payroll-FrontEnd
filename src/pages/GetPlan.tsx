@@ -3,6 +3,7 @@ import { Check } from 'lucide-react';
 
 const GetPlan = () => {
   const navigate = useNavigate();
+  const BASIC_PLAN_ID = '0f022c11-2a3c-49f5-9d11-30082882a8e9';
 
   const features = [
     'Payroll processing for up to 10 employees',
@@ -15,6 +16,8 @@ const GetPlan = () => {
   ];
 
   const handleGetPlan = () => {
+    // ✅ Save planId to localStorage
+    localStorage.setItem('reg_planId', BASIC_PLAN_ID);
     navigate('/buy-plan');
   };
 

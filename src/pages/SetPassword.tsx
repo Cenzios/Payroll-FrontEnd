@@ -85,6 +85,11 @@ const SetPassword = () => {
 
     if (validateForm()) {
       console.log('Setting password for:', signupEmail);
+
+      // ✅ Save to localStorage as requested
+      localStorage.setItem('reg_password', formData.password);
+
+      // ✅ Call API to save password
       const result = await dispatch(
         setPassword({
           email: signupEmail,
@@ -93,8 +98,8 @@ const SetPassword = () => {
       );
 
       if (setPassword.fulfilled.match(result)) {
-        console.log('Password set successfully, redirecting to set-company');
-        navigate('/set-company');
+        console.log('Password set successfully, redirecting to get-plan');
+        navigate('/get-plan');
       }
     }
   };
@@ -133,11 +138,10 @@ const SetPassword = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className={`block w-full pl-10 pr-12 py-3 border ${
-                validationErrors.password
+              className={`block w-full pl-10 pr-12 py-3 border ${validationErrors.password
                   ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                   : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-              } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
               placeholder="••••••••"
             />
             <button
@@ -176,11 +180,10 @@ const SetPassword = () => {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className={`block w-full pl-10 pr-12 py-3 border ${
-                validationErrors.confirmPassword
+              className={`block w-full pl-10 pr-12 py-3 border ${validationErrors.confirmPassword
                   ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                   : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-              } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
               placeholder="••••••••"
             />
             <button

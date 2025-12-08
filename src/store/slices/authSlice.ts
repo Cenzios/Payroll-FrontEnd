@@ -9,6 +9,8 @@ import {
   SetPasswordResponse,
   LoginRequest,
   LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
 } from '../../types/auth.types';
 
 const initialState: AuthState = {
@@ -16,9 +18,11 @@ const initialState: AuthState = {
     ? JSON.parse(localStorage.getItem('user')!)
     : null,
   token: localStorage.getItem('token') || null,
-  signupEmail: localStorage.getItem('signupEmail') || null, // ✅ Persist email
+  signupEmail: localStorage.getItem('reg_email') || null, // ✅ Persist email
   isLoading: false,
   error: null,
+  tempPassword: null,
+  tempPlanId: null,
 };
 
 export const startSignup = createAsyncThunk(
@@ -30,7 +34,7 @@ export const startSignup = createAsyncThunk(
         userData
       );
       // ✅ Store email in localStorage
-      localStorage.setItem('signupEmail', userData.email);
+      localStorage.setItem('reg_email', userData.email);
       return { email: userData.email, message: response.data.message };
     } catch (error: any) {
       const message =
@@ -65,11 +69,11 @@ export const setPassword = createAsyncThunk(
   async (data: SetPasswordRequest, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post<SetPasswordResponse>(
-        '/auth/set-password',
+        '/auth/save-password',
         data
       );
-      // ✅ Clear signupEmail after password is set
-      localStorage.removeItem('signupEmail');
+      // ✅ Don't clear email yet, needed for final registration
+      // localStorage.removeItem('reg_email');
       return response.data;
     } catch (error: any) {
       const message =
@@ -101,6 +105,29 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+export const registerUser = createAsyncThunk(
+  'auth/register',
+  async (data: RegisterRequest, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post<RegisterResponse>(
+        '/auth/register',
+        data
+      );
+      const { user, token } = response.data.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.removeItem('reg_email');
+      localStorage.removeItem('reg_password');
+      localStorage.removeItem('reg_planId');
+      return { user, token };
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || error.message || 'Registration failed';
+      return rejectWithValue(message);
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -112,18 +139,26 @@ const authSlice = createSlice({
       state.signupEmail = null;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      localStorage.removeItem('signupEmail');
+      localStorage.removeItem('reg_email');
+      localStorage.removeItem('reg_password');
+      localStorage.removeItem('reg_planId');
     },
     clearError: (state) => {
       state.error = null;
     },
     setSignupEmail: (state, action) => {
       state.signupEmail = action.payload;
-      localStorage.setItem('signupEmail', action.payload);
+      localStorage.setItem('reg_email', action.payload);
     },
     clearSignupEmail: (state) => {
       state.signupEmail = null;
-      localStorage.removeItem('signupEmail');
+      localStorage.removeItem('reg_email');
+    },
+    setTempPassword: (state, action) => {
+      state.tempPassword = action.payload;
+    },
+    setTempPlanId: (state, action) => {
+      state.tempPlanId = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -161,7 +196,7 @@ const authSlice = createSlice({
       .addCase(setPassword.fulfilled, (state) => {
         state.isLoading = false;
         state.error = null;
-        state.signupEmail = null; // ✅ Clear after password set
+        // state.signupEmail = null; // ✅ Keep email for final registration
       })
       .addCase(setPassword.rejected, (state, action) => {
         state.isLoading = false;
@@ -181,9 +216,26 @@ const authSlice = createSlice({
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+      .addCase(registerUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.signupEmail = null;
+        state.tempPassword = null;
+        state.tempPlanId = null;
+        state.error = null;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       });
   },
 });
 
-export const { logout, clearError, setSignupEmail, clearSignupEmail } = authSlice.actions;
+export const { logout, clearError, setSignupEmail, clearSignupEmail, setTempPassword, setTempPlanId } = authSlice.actions;
 export default authSlice.reducer;

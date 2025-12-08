@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { registerUser, clearError } from '../store/slices/authSlice';
 import { Check, Loader2 } from 'lucide-react';
 
 const BuyPlan = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useAppDispatch();
+  const { isLoading, error } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     paymentMethod: 'visa',
@@ -75,11 +78,26 @@ const BuyPlan = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
+      // ✅ Retrieve registration data from localStorage
+      const email = localStorage.getItem('reg_email');
+      const password = localStorage.getItem('reg_password');
+      const planId = localStorage.getItem('reg_planId');
+
+      if (!email || !password || !planId) {
+        console.error('Missing registration data:', { email, password, planId });
+        // Handle error appropriately, maybe redirect to start
+        return;
+      }
+
+      const result = await dispatch(registerUser({
+        email,
+        password,
+        planId
+      }));
+
+      if (registerUser.fulfilled.match(result)) {
         navigate('/confirmation');
-      }, 1500);
+      }
     }
   };
 
@@ -89,6 +107,12 @@ const BuyPlan = () => {
         <h1 className="text-4xl font-bold text-center text-gray-900 mb-10">
           Complete Registration Payment
         </h1>
+
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center">
+            {error}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-xl p-8 text-white">
@@ -138,11 +162,10 @@ const BuyPlan = () => {
                       key={method}
                       type="button"
                       onClick={() => setFormData((prev) => ({ ...prev, paymentMethod: method }))}
-                      className={`flex-1 border-2 rounded-lg px-4 py-3 transition-all ${
-                        formData.paymentMethod === method
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      className={`flex-1 border-2 rounded-lg px-4 py-3 transition-all ${formData.paymentMethod === method
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                        }`}
                     >
                       <span className="text-xs font-semibold text-gray-700 uppercase">
                         {method === 'visa' && 'VISA'}
@@ -165,11 +188,10 @@ const BuyPlan = () => {
                   name="cardholderName"
                   value={formData.cardholderName}
                   onChange={handleChange}
-                  className={`block w-full px-4 py-3 border ${
-                    validationErrors.cardholderName
-                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                  } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                  className={`block w-full px-4 py-3 border ${validationErrors.cardholderName
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                    } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                   placeholder="Nimal Kumara"
                 />
                 {validationErrors.cardholderName && (
@@ -187,11 +209,10 @@ const BuyPlan = () => {
                   name="cardNumber"
                   value={formData.cardNumber}
                   onChange={handleChange}
-                  className={`block w-full px-4 py-3 border ${
-                    validationErrors.cardNumber
-                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                  } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                  className={`block w-full px-4 py-3 border ${validationErrors.cardNumber
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                    } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                   placeholder="0000 0000 00"
                 />
                 {validationErrors.cardNumber && (
@@ -210,11 +231,10 @@ const BuyPlan = () => {
                     name="expiryDate"
                     value={formData.expiryDate}
                     onChange={handleChange}
-                    className={`block w-full px-4 py-3 border ${
-                      validationErrors.expiryDate
-                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                    } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                    className={`block w-full px-4 py-3 border ${validationErrors.expiryDate
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                      } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                     placeholder="04/2027"
                   />
                   {validationErrors.expiryDate && (
@@ -232,11 +252,10 @@ const BuyPlan = () => {
                     name="cvc"
                     value={formData.cvc}
                     onChange={handleChange}
-                    className={`block w-full px-4 py-3 border ${
-                      validationErrors.cvc
-                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                    } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                    className={`block w-full px-4 py-3 border ${validationErrors.cvc
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                      } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                     placeholder="123"
                   />
                   {validationErrors.cvc && (
