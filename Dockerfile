@@ -20,16 +20,19 @@ RUN npm run build
 # -----------------------
 FROM nginx:stable-alpine
 
-# Remove default nginx website
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Remove default site files
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy build output from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy custom Nginx config if needed
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 5090 (frontend)
+# Expose correct port
 EXPOSE 5090
 
 # Start nginx
