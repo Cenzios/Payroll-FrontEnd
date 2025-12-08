@@ -30,7 +30,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 5090 (frontend)
-EXPOSE 80
+EXPOSE 5090
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
