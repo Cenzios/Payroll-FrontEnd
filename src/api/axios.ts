@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// Use environment variable from Vite
+const API_BASE_URL = "https://payroll.dev.server.cenzios.com/api/v1";
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
