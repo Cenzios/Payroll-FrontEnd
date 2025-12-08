@@ -18,7 +18,7 @@ const initialState: AuthState = {
     ? JSON.parse(localStorage.getItem('user')!)
     : null,
   token: localStorage.getItem('token') || null,
-  signupEmail: localStorage.getItem('signupEmail') || null, // ✅ Persist email
+  signupEmail: localStorage.getItem('reg_email') || null, // ✅ Persist email
   isLoading: false,
   error: null,
   tempPassword: null,
@@ -34,7 +34,7 @@ export const startSignup = createAsyncThunk(
         userData
       );
       // ✅ Store email in localStorage
-      localStorage.setItem('signupEmail', userData.email);
+      localStorage.setItem('reg_email', userData.email);
       return { email: userData.email, message: response.data.message };
     } catch (error: any) {
       const message =
@@ -69,11 +69,11 @@ export const setPassword = createAsyncThunk(
   async (data: SetPasswordRequest, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post<SetPasswordResponse>(
-        '/auth/set-password',
+        '/auth/save-password',
         data
       );
-      // ✅ Clear signupEmail after password is set
-      localStorage.removeItem('signupEmail');
+      // ✅ Don't clear email yet, needed for final registration
+      // localStorage.removeItem('reg_email');
       return response.data;
     } catch (error: any) {
       const message =
@@ -116,7 +116,9 @@ export const registerUser = createAsyncThunk(
       const { user, token } = response.data.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      localStorage.removeItem('signupEmail');
+      localStorage.removeItem('reg_email');
+      localStorage.removeItem('reg_password');
+      localStorage.removeItem('reg_planId');
       return { user, token };
     } catch (error: any) {
       const message =
@@ -137,18 +139,20 @@ const authSlice = createSlice({
       state.signupEmail = null;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      localStorage.removeItem('signupEmail');
+      localStorage.removeItem('reg_email');
+      localStorage.removeItem('reg_password');
+      localStorage.removeItem('reg_planId');
     },
     clearError: (state) => {
       state.error = null;
     },
     setSignupEmail: (state, action) => {
       state.signupEmail = action.payload;
-      localStorage.setItem('signupEmail', action.payload);
+      localStorage.setItem('reg_email', action.payload);
     },
     clearSignupEmail: (state) => {
       state.signupEmail = null;
-      localStorage.removeItem('signupEmail');
+      localStorage.removeItem('reg_email');
     },
     setTempPassword: (state, action) => {
       state.tempPassword = action.payload;
@@ -192,7 +196,7 @@ const authSlice = createSlice({
       .addCase(setPassword.fulfilled, (state) => {
         state.isLoading = false;
         state.error = null;
-        state.signupEmail = null; // ✅ Clear after password set
+        // state.signupEmail = null; // ✅ Keep email for final registration
       })
       .addCase(setPassword.rejected, (state, action) => {
         state.isLoading = false;

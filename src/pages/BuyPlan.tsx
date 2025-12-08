@@ -7,7 +7,7 @@ import { Check, Loader2 } from 'lucide-react';
 const BuyPlan = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isLoading, error, signupEmail, tempPassword, tempPlanId } = useAppSelector((state) => state.auth);
+  const { isLoading, error } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     paymentMethod: 'visa',
@@ -78,19 +78,22 @@ const BuyPlan = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      if (!signupEmail || !tempPassword || !tempPlanId) {
-        console.error('Missing registration data', { signupEmail, tempPassword, tempPlanId });
-        // Handle missing data error - maybe redirect to start?
+      // ✅ Retrieve registration data from localStorage
+      const email = localStorage.getItem('reg_email');
+      const password = localStorage.getItem('reg_password');
+      const planId = localStorage.getItem('reg_planId');
+
+      if (!email || !password || !planId) {
+        console.error('Missing registration data:', { email, password, planId });
+        // Handle error appropriately, maybe redirect to start
         return;
       }
 
-      const result = await dispatch(
-        registerUser({
-          email: signupEmail,
-          password: tempPassword,
-          planId: tempPlanId,
-        })
-      );
+      const result = await dispatch(registerUser({
+        email,
+        password,
+        planId
+      }));
 
       if (registerUser.fulfilled.match(result)) {
         navigate('/confirmation');
@@ -160,8 +163,8 @@ const BuyPlan = () => {
                       type="button"
                       onClick={() => setFormData((prev) => ({ ...prev, paymentMethod: method }))}
                       className={`flex-1 border-2 rounded-lg px-4 py-3 transition-all ${formData.paymentMethod === method
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
                         }`}
                     >
                       <span className="text-xs font-semibold text-gray-700 uppercase">
@@ -186,8 +189,8 @@ const BuyPlan = () => {
                   value={formData.cardholderName}
                   onChange={handleChange}
                   className={`block w-full px-4 py-3 border ${validationErrors.cardholderName
-                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                     } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                   placeholder="Nimal Kumara"
                 />
@@ -207,8 +210,8 @@ const BuyPlan = () => {
                   value={formData.cardNumber}
                   onChange={handleChange}
                   className={`block w-full px-4 py-3 border ${validationErrors.cardNumber
-                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                     } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                   placeholder="0000 0000 00"
                 />
@@ -229,8 +232,8 @@ const BuyPlan = () => {
                     value={formData.expiryDate}
                     onChange={handleChange}
                     className={`block w-full px-4 py-3 border ${validationErrors.expiryDate
-                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                       } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                     placeholder="04/2027"
                   />
@@ -250,8 +253,8 @@ const BuyPlan = () => {
                     value={formData.cvc}
                     onChange={handleChange}
                     className={`block w-full px-4 py-3 border ${validationErrors.cvc
-                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                       } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                     placeholder="123"
                   />

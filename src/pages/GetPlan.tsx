@@ -1,11 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch } from '../store/hooks';
-import { setTempPlanId } from '../store/slices/authSlice';
 import { Check } from 'lucide-react';
 
 const GetPlan = () => {
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const BASIC_PLAN_ID = '0f022c11-2a3c-49f5-9d11-30082882a8e9';
 
   const features = [
@@ -19,7 +16,8 @@ const GetPlan = () => {
   ];
 
   const handleGetPlan = () => {
-    dispatch(setTempPlanId(BASIC_PLAN_ID));
+    // ✅ Save planId to localStorage
+    localStorage.setItem('reg_planId', BASIC_PLAN_ID);
     navigate('/buy-plan');
   };
 

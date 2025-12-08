@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setTempPassword, clearError } from '../store/slices/authSlice';
+import { setPassword, clearError } from '../store/slices/authSlice';
 import { Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import passwordIllustration from '../assets/images/password-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
@@ -84,10 +84,23 @@ const SetPassword = () => {
     }
 
     if (validateForm()) {
-      console.log('Setting temporary password for:', signupEmail);
-      dispatch(setTempPassword(formData.password));
-      console.log('Password stored, redirecting to get-plan');
-      navigate('/get-plan');
+      console.log('Setting password for:', signupEmail);
+
+      // ✅ Save to localStorage as requested
+      localStorage.setItem('reg_password', formData.password);
+
+      // ✅ Call API to save password
+      const result = await dispatch(
+        setPassword({
+          email: signupEmail,
+          password: formData.password,
+        })
+      );
+
+      if (setPassword.fulfilled.match(result)) {
+        console.log('Password set successfully, redirecting to get-plan');
+        navigate('/get-plan');
+      }
     }
   };
 
