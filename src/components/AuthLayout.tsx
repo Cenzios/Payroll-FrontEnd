@@ -11,7 +11,7 @@ interface AuthLayoutProps {
 const AuthLayout = ({ children, title, subtitle, illustration }: AuthLayoutProps) => {
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-800 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-b from-[#3A8BFF] to-[#1E6EF7] relative overflow-hidden">
         <div className="absolute top-20 right-20 w-60 h-60 border-[30px] border-white/15 rounded-full translate-x-32 -translate-y-32 animate-[float_6s_ease-in-out_infinite]"></div>
 
         <div className="absolute top-55 -left-20 w-64 h-64 border-[30px] border-white/15 rounded-full animate-[float_8s_ease-in-out_infinite_1s]"></div>

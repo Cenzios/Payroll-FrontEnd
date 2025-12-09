@@ -3,11 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { registerUser, clearError } from '../store/slices/authSlice';
 import { Check, Loader2 } from 'lucide-react';
+import visaIcon from '../assets/images/visa.svg';
+import paypalIcon from '../assets/images/paypal.svg';
+import mastercardIcon from '../assets/images/mastercard.svg';
+import gpayIcon from '../assets/images/gpay.svg';
 
 const BuyPlan = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
+  const { isLoading, error, signupEmail, tempPassword, tempPlanId } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     paymentMethod: 'visa',
@@ -78,22 +82,19 @@ const BuyPlan = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // ✅ Retrieve registration data from localStorage
-      const email = localStorage.getItem('reg_email');
-      const password = localStorage.getItem('reg_password');
-      const planId = localStorage.getItem('reg_planId');
-
-      if (!email || !password || !planId) {
-        console.error('Missing registration data:', { email, password, planId });
-        // Handle error appropriately, maybe redirect to start
+      if (!signupEmail || !tempPassword || !tempPlanId) {
+        console.error('Missing registration data', { signupEmail, tempPassword, tempPlanId });
+        // Handle missing data error - maybe redirect to start?
         return;
       }
 
-      const result = await dispatch(registerUser({
-        email,
-        password,
-        planId
-      }));
+      const result = await dispatch(
+        registerUser({
+          email: signupEmail,
+          password: tempPassword,
+          planId: tempPlanId,
+        })
+      );
 
       if (registerUser.fulfilled.match(result)) {
         navigate('/confirmation');
@@ -102,8 +103,9 @@ const BuyPlan = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-5xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center px-4 py-12 relative">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
+      <div className="w-full max-w-5xl relative z-10">
         <h1 className="text-4xl font-bold text-center text-gray-900 mb-10">
           Complete Registration Payment
         </h1>
@@ -115,7 +117,7 @@ const BuyPlan = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-xl p-8 text-white">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-xl p-8 text-white">
             <div className="mb-6">
               <p className="text-sm font-semibold uppercase tracking-wide mb-3 text-blue-100">
                 BASIC PLAN
@@ -135,8 +137,8 @@ const BuyPlan = () => {
               {features.map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <div className="mt-0.5">
-                    <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                    <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                      <Check className="w-3 h-3 text-blue-600" strokeWidth={3} />
                     </div>
                   </div>
                   <span className="text-white/90 text-sm">{feature}</span>
@@ -144,9 +146,10 @@ const BuyPlan = () => {
               ))}
             </div>
 
-            <div className="bg-white rounded-xl px-6 py-4 text-center">
-              <p className="text-gray-600 text-sm font-medium">First Month Fee Rs.</p>
-              <p className="text-3xl font-bold text-gray-900">2,500</p>
+            <div className="bg-white rounded-xl px-4 py-2 text-center">
+              <p className="text-gray-700 text-sm font-semibold">
+                First Month Fee Rs. <span className="text-xl font-bold">2,500</span>
+              </p>
             </div>
           </div>
 
@@ -162,17 +165,23 @@ const BuyPlan = () => {
                       key={method}
                       type="button"
                       onClick={() => setFormData((prev) => ({ ...prev, paymentMethod: method }))}
-                      className={`flex-1 border-2 rounded-lg px-4 py-3 transition-all ${formData.paymentMethod === method
-                        ? 'border-blue-600 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                      className={`flex-1 border-2 rounded-xl px-4 py-4 bg-white flex items-center justify-center 
+        transition-all shadow-sm
+        ${formData.paymentMethod === method
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
                         }`}
                     >
-                      <span className="text-xs font-semibold text-gray-700 uppercase">
-                        {method === 'visa' && 'VISA'}
-                        {method === 'paypal' && 'P'}
-                        {method === 'mastercard' && 'MC'}
-                        {method === 'gpay' && 'G Pay'}
-                      </span>
+                      <img
+                        src={
+                          method === 'visa' ? visaIcon :
+                            method === 'paypal' ? paypalIcon :
+                              method === 'mastercard' ? mastercardIcon :
+                                gpayIcon
+                        }
+                        alt={method}
+                        className="h-8 w-auto object-contain"
+                      />
                     </button>
                   ))}
                 </div>
