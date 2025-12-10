@@ -10,12 +10,13 @@ import Confirmation from './pages/Confirmation';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import ConfirmationFail from './pages/ConfirmationFail';
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/signup" replace />} />
+        <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/verify-info" element={<VerifyInfo />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
@@ -24,6 +25,7 @@ function App() {
         <Route path="/get-plan" element={<GetPlan />} />
         <Route path="/buy-plan" element={<BuyPlan />} />
         <Route path="/confirmation" element={<Confirmation />} />
+        <Route path="/confirmation-fail" element={<ConfirmationFail />} />
         <Route path="/login" element={<Login />} />
         <Route
           path="/dashboard"

@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import celebrationImg from '../assets/images/celebration-illustration.svg';
+
 
 const Confirmation = () => {
   const navigate = useNavigate();
@@ -53,25 +55,9 @@ const Confirmation = () => {
             <div className="mb-8 relative">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full blur-3xl opacity-50"></div>
               <img
-                src="https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=400"
+                src={celebrationImg}
                 alt="Celebration"
-                className="w-64 h-64 mx-auto object-cover rounded-full relative z-10"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent) {
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'w-64 h-64 mx-auto bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 rounded-full flex items-center justify-center relative z-10';
-                    placeholder.innerHTML = `
-                      <div class="text-center">
-                        <div class="text-6xl mb-4">🎉</div>
-                        <div class="text-white font-bold text-2xl">Success!</div>
-                      </div>
-                    `;
-                    parent.appendChild(placeholder);
-                  }
-                }}
+                className="w-64 h-64 mx-auto object-contain relative z-10"
               />
             </div>
 
