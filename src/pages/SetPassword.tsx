@@ -5,6 +5,7 @@ import { setTempPassword, clearError, setSignupEmail } from '../store/slices/aut
 import { Lock, Loader2, Eye, EyeOff, Mail, ArrowRight } from 'lucide-react';
 import passwordIllustration from '../assets/images/password-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
+import axiosInstance from '../api/axios';
 
 const SetPassword = () => {
   const navigate = useNavigate();
@@ -89,15 +90,35 @@ const SetPassword = () => {
     e.preventDefault();
 
     if (!signupEmail) {
-      // Should not happen if UI is correct, but safety check
+      alert('Email missing. Please restart signup.');
       return;
     }
 
-    if (validatePasswordForm()) {
-      console.log('Setting temporary password for:', signupEmail);
+    if (!validatePasswordForm()) return;
+
+    try {
+      console.log('Saving password to backend for:', signupEmail);
+
+      const res = await axiosInstance.post('/auth/set-password', {
+        email: signupEmail,              // ✅ REQUIRED
+        password: formData.password,     // ✅ REQUIRED
+      });
+
+      console.log('Password saved successfully:', res.data);
+
+      // ✅ Optional: save to redux if needed for next step
       dispatch(setTempPassword(formData.password));
-      console.log('Password stored, redirecting to set-company');
+
+      // ✅ Move to company setup
       navigate('/set-company');
+
+    } catch (error: any) {
+      console.error('Password save failed:', error);
+
+      alert(
+        error?.response?.data?.message ||
+        'Failed to set password. Please try again.'
+      );
     }
   };
 
