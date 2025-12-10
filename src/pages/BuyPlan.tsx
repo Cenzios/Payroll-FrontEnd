@@ -204,7 +204,21 @@ const BuyPlan = () => {
                   id="cardholderName"
                   name="cardholderName"
                   value={formData.cardholderName}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    let value = e.target.value;
+
+                    // ✅ Allow only letters and spaces
+                    value = value.replace(/[^a-zA-Z\s]/g, '');
+
+                    // ✅ Auto-capitalize each word (optional pro UX)
+                    value = value.replace(/\b\w/g, (char) => char.toUpperCase());
+
+                    // ✅ Max length 30 characters
+                    value = value.slice(0, 30);
+
+                    setFormData((prev) => ({ ...prev, cardholderName: value }));
+                    setValidationErrors((prev) => ({ ...prev, cardholderName: '' }));
+                  }}
                   className={`block w-full px-4 py-3 border ${validationErrors.cardholderName
                     ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                     : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
@@ -225,12 +239,40 @@ const BuyPlan = () => {
                   id="cardNumber"
                   name="cardNumber"
                   value={formData.cardNumber}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    let value = e.target.value.replace(/\D/g, ''); // ✅ Only digits
+                    value = value.slice(0, 16); // ✅ Max 16 digits
+
+                    // ✅ Auto add space every 4 digits
+                    const formatted = value.replace(/(.{4})/g, '$1 ').trim();
+
+                    // ✅ AUTO-DETECT CARD TYPE
+                    let detectedType = formData.paymentMethod;
+
+                    if (value.startsWith('4')) {
+                      detectedType = 'visa';
+                    }
+                    else if (
+                      /^(5[1-5])/.test(value) || // 51–55
+                      /^(222[1-9]|22[3-9]\d|2[3-6]\d\d|27[01]\d|2720)/.test(value) // 2221–2720
+                    ) {
+                      detectedType = 'mastercard';
+                    }
+
+                    setFormData((prev) => ({
+                      ...prev,
+                      cardNumber: formatted,
+                      paymentMethod: detectedType, // ✅ Auto switch icon
+                    }));
+
+                    setValidationErrors((prev) => ({ ...prev, cardNumber: '' }));
+                  }}
                   className={`block w-full px-4 py-3 border ${validationErrors.cardNumber
                     ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                     : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                     } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-                  placeholder="0000 0000 00"
+                  placeholder="5647 8795 2134 6548"
+                  maxLength={19}
                 />
                 {validationErrors.cardNumber && (
                   <p className="mt-1 text-sm text-red-600">{validationErrors.cardNumber}</p>
@@ -240,19 +282,62 @@ const BuyPlan = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-2">
-                    Card number <span className="text-red-500">*</span>
+                    Expiry Date <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     id="expiryDate"
                     name="expiryDate"
                     value={formData.expiryDate}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      let value = e.target.value.replace(/\D/g, ''); // ✅ Only digits
+                      value = value.slice(0, 6); // ✅ Max 6 digits (MMYYYY)
+
+                      // ✅ Auto insert slash
+                      if (value.length >= 3) {
+                        value = value.slice(0, 2) + '/' + value.slice(2);
+                      }
+
+                      let error = '';
+
+                      // ✅ MONTH VALIDATION (01–12)
+                      if (value.length >= 2) {
+                        const month = Number(value.slice(0, 2));
+                        if (month < 1 || month > 12) {
+                          error = 'Invalid month';
+                        }
+                      }
+
+                      // ✅ YEAR REALISTIC LIMIT (CURRENT → +20 YEARS)
+                      if (value.length === 7) {
+                        const [monthStr, yearStr] = value.split('/');
+                        const month = Number(monthStr);
+                        const year = Number(yearStr);
+
+                        const now = new Date();
+                        const currentMonth = now.getMonth() + 1;
+                        const currentYear = now.getFullYear();
+                        const maxYear = currentYear + 20; // ✅ YOU CAN CHANGE 20 IF YOU WANT
+
+                        if (year < currentYear || (year === currentYear && month < currentMonth)) {
+                          error = 'Card is expired';
+                        } else if (year > maxYear) {
+                          error = `Year cannot be after ${maxYear}`;
+                        }
+                      }
+
+                      setFormData((prev) => ({ ...prev, expiryDate: value }));
+                      setValidationErrors((prev) => ({
+                        ...prev,
+                        expiryDate: error,
+                      }));
+                    }}
                     className={`block w-full px-4 py-3 border ${validationErrors.expiryDate
                       ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                       : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                       } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-                    placeholder="04/2027"
+                    placeholder="MM/YYYY"
+                    maxLength={7}
                   />
                   {validationErrors.expiryDate && (
                     <p className="mt-1 text-sm text-red-600">{validationErrors.expiryDate}</p>
@@ -268,7 +353,11 @@ const BuyPlan = () => {
                     id="cvc"
                     name="cvc"
                     value={formData.cvc}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 3);
+                      setFormData(prev => ({ ...prev, cvc: value }));
+                      setValidationErrors(prev => ({ ...prev, cvc: '' }));
+                    }}
                     className={`block w-full px-4 py-3 border ${validationErrors.cvc
                       ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                       : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
