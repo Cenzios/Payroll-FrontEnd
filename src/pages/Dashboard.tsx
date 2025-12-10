@@ -55,10 +55,12 @@ const Dashboard = () => {
                   <User className="w-6 h-6 text-blue-600" />
                 </div>
                 <span className="text-sm font-medium text-gray-500">
-                  User ID
+                  Name
                 </span>
               </div>
-              <p className="text-sm text-gray-600 break-all">{user?.id}</p>
+              <p className="text-sm text-gray-900 font-medium break-all">
+                {user?.fullName}
+              </p>
             </div>
           </div>
 
