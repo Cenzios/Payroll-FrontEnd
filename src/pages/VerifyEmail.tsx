@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { verifyEmail } from '../store/slices/authSlice';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 
 const VerifyEmail = () => {
@@ -20,16 +20,18 @@ const VerifyEmail = () => {
 
     const token = searchParams.get('token');
 
-    // ✅ Check if email exists - if not, redirect to signup
-    if (!signupEmail && !token) {
-      console.log('No email found, redirecting to signup');
-      navigate('/signup');
-      return;
-    }
-
+    // If no token, check if we just need to show the "please check email" state
+    // But this component seems to handle the actual verification FROM the email link
     if (!token) {
+      if (!signupEmail) {
+        // If no token AND no email in state, this is an invalid access
+        navigate('/signup');
+        return;
+      }
+      // If we have an email but no token, users might land here manually? 
+      // Usually they shouldn't. Let's assume invalid link if no token.
       setStatus('error');
-      setMessage('Invalid verification link. Please try again.');
+      setMessage('Invalid verification link. Please checks your email for the correct link.');
       return;
     }
 
@@ -43,28 +45,17 @@ const VerifyEmail = () => {
           setStatus('success');
           setMessage(result.payload.message || 'Email verified successfully!');
 
-          // ✅ Redirect after 1.5 seconds
+          // Redirect after 2 seconds
           setTimeout(() => {
-            console.log('Redirecting to set-password with email:', signupEmail);
-            navigate('/set-password');
-          }, 1500);
+            navigate('/set-password', { replace: true });
+          }, 1200);
         } else {
           setStatus('error');
-          setMessage(result.payload as string || 'Email verification failed.');
-
-          // ✅ If verification fails, redirect to signup after 3 seconds
-          setTimeout(() => {
-            console.log('Verification failed, redirecting to signup');
-            navigate('/signup');
-          }, 3000);
+          setMessage(result.payload as string || 'Email verification failed or link expired.');
         }
       } catch (error) {
         setStatus('error');
-        setMessage('An unexpected error occurred.');
-
-        setTimeout(() => {
-          navigate('/signup');
-        }, 3000);
+        setMessage('An unexpected error occurred during verification.');
       }
     };
 
@@ -96,12 +87,13 @@ const VerifyEmail = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-3">
               Email Verified!
             </h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 mb-6">
               {message}
             </p>
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm mb-6">
               Redirecting to password setup...
             </div>
+
           </>
         )}
 
@@ -116,21 +108,19 @@ const VerifyEmail = () => {
             <p className="text-gray-600 mb-6">
               {message}
             </p>
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
-              Redirecting to signup page...
-            </div>
+
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/signup')}
                 className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
               >
-                Start Over
+                Back to Signup
               </button>
               <button
-                onClick={() => navigate('/verify-info')}
+                onClick={() => navigate('/login')}
                 className="w-full bg-white text-blue-600 border-2 border-blue-600 font-semibold py-3 px-4 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
               >
-                Resend Verification
+                Go to Login
               </button>
             </div>
           </>

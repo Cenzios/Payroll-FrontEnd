@@ -45,36 +45,39 @@ const AuthLayout = ({ children, title, subtitle, illustration }: AuthLayoutProps
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="flex-1 flex items-center justify-center px-4 py-12 bg-white">
         <div className="w-full max-w-md animate-[fadeInUp_0.6s_ease-out]">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            {(illustration || title || subtitle) && (
-              <div className="mb-8 text-center">
-                {illustration && (
-                  <div className="mb-4 animate-[scaleIn_0.5s_ease-out]">
-                    <img
-                      src={illustration}
-                      alt="Illustration"
-                      className="w-32 h-32 mx-auto object-contain"
-                    />
-                  </div>
-                )}
-                {title && (
-                  <h2 className="text-3xl font-bold text-gray-900 animate-[fadeIn_0.6s_ease-out_0.2s_both]">
-                    {title}
-                  </h2>
-                )}
-                {subtitle && (
-                  <p className="text-gray-600 mt-2 animate-[fadeIn_0.6s_ease-out_0.3s_both]">
-                    {subtitle}
-                  </p>
-                )}
-              </div>
-            )}
-            <div className="animate-[fadeIn_0.6s_ease-out_0.4s_both]">
-              {children}
+
+          {(illustration || title || subtitle) && (
+            <div className="mb-10 text-center">
+              {illustration && (
+                <div className="mb-6 animate-[scaleIn_0.5s_ease-out]">
+                  <img
+                    src={illustration}
+                    alt="Illustration"
+                    className="w-40 h-40 mx-auto object-contain"
+                  />
+                </div>
+              )}
+
+              {title && (
+                <h2 className="text-3xl font-bold text-gray-900">
+                  {title}
+                </h2>
+              )}
+
+              {subtitle && (
+                <p className="text-gray-600 mt-2">
+                  {subtitle}
+                </p>
+              )}
             </div>
+          )}
+
+          <div className="animate-[fadeIn_0.6s_ease-out_0.4s_both]">
+            {children}
           </div>
+
         </div>
       </div>
     </div>

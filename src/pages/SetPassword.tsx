@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setTempPassword, clearError } from '../store/slices/authSlice';
-import { Lock, Loader2, Eye, EyeOff } from 'lucide-react';
+import { setTempPassword, clearError, setSignupEmail } from '../store/slices/authSlice';
+import { Lock, Loader2, Eye, EyeOff, Mail, ArrowRight } from 'lucide-react';
 import passwordIllustration from '../assets/images/password-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
 
@@ -11,6 +11,8 @@ const SetPassword = () => {
   const dispatch = useAppDispatch();
   const { signupEmail, isLoading, error } = useAppSelector((state) => state.auth);
 
+  // Form handling
+  const [emailInput, setEmailInput] = useState('');
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: '',
@@ -20,19 +22,10 @@ const SetPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [validationErrors, setValidationErrors] = useState({
+    email: '',
     password: '',
     confirmPassword: '',
   });
-
-  useEffect(() => {
-    // ✅ Check if signupEmail exists
-    console.log('SetPassword - signupEmail:', signupEmail);
-
-    if (!signupEmail) {
-      console.log('No signupEmail found, redirecting to signup');
-      navigate('/signup');
-    }
-  }, [signupEmail, navigate]);
 
   useEffect(() => {
     return () => {
@@ -40,8 +33,26 @@ const SetPassword = () => {
     };
   }, [dispatch]);
 
-  const validateForm = () => {
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const handleEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailInput) {
+      setValidationErrors(prev => ({ ...prev, email: 'Email is required' }));
+      return;
+    }
+    if (!validateEmail(emailInput)) {
+      setValidationErrors(prev => ({ ...prev, email: 'Please enter a valid email' }));
+      return;
+    }
+    dispatch(setSignupEmail(emailInput));
+  };
+
+  const validatePasswordForm = () => {
     const errors = {
+      email: '',
       password: '',
       confirmPassword: '',
     };
@@ -78,12 +89,11 @@ const SetPassword = () => {
     e.preventDefault();
 
     if (!signupEmail) {
-      console.error('No email available for password setup');
-      navigate('/signup');
+      // Should not happen if UI is correct, but safety check
       return;
     }
 
-    if (validateForm()) {
+    if (validatePasswordForm()) {
       console.log('Setting temporary password for:', signupEmail);
       dispatch(setTempPassword(formData.password));
       console.log('Password stored, redirecting to set-company');
@@ -91,16 +101,91 @@ const SetPassword = () => {
     }
   };
 
-  // ✅ Show loading while checking email
+  // 1. If no email, show email input form
   if (!signupEmail) {
-    return null;
+    return (
+      <AuthLayout
+        illustration={passwordIllustration}
+        title="Confirm Your Email"
+      >
+        <p className="text-gray-600 mb-6">
+          To secure your account, please confirm the email address you used to sign up.
+        </p>
+
+        <form onSubmit={handleEmailSubmit} className="space-y-5">
+          <div>
+            <label
+              htmlFor="emailInput"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Email Address <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Mail className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="email"
+                id="emailInput"
+                value={emailInput}
+                onChange={(e) => {
+                  setEmailInput(e.target.value);
+                  setValidationErrors(prev => ({ ...prev, email: '' }));
+                }}
+                className={`block w-full pl-10 pr-12 py-3 border ${validationErrors.email
+                  ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                  : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                  } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                placeholder="you@company.com"
+                autoFocus
+              />
+            </div>
+            {validationErrors.email && (
+              <p className="mt-1 text-sm text-red-600">
+                {validationErrors.email}
+              </p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center"
+          >
+            Continue <ArrowRight className="ml-2 h-5 w-5" />
+          </button>
+
+          <div className="text-center mt-4">
+            <button
+              type="button"
+              onClick={() => navigate('/signup')}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Start over with a new account
+            </button>
+          </div>
+        </form>
+      </AuthLayout>
+    );
   }
 
+  // 2. If email exists, show password form
   return (
     <AuthLayout
       illustration={passwordIllustration}
       title="Create Your Password"
     >
+      {/* <div className="mb-6 flex items-center justify-between bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
+        <span className="text-sm text-blue-800">
+          Setting password for: <strong>{signupEmail}</strong>
+        </span>
+        <button
+          onClick={() => dispatch(setSignupEmail(null))}
+          className="text-xs text-blue-600 hover:text-blue-800 underline"
+        >
+          Change
+        </button>
+      </div> */}
+
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
           {error}
@@ -195,7 +280,12 @@ const SetPassword = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          className="w-full bg-[#3A8BFF] text-white font-semibold py-3 px-4 rounded-lg 
+             hover:bg-[#337AEB] focus:outline-none 
+             focus:ring-2 focus:ring-[#3A8BFF] focus:ring-offset-2 
+             transition-all duration-200 
+             disabled:opacity-50 disabled:cursor-not-allowed 
+             flex items-center justify-center"
         >
           {isLoading ? (
             <>
