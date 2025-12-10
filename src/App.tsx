@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
+import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/confirmation-fail" element={<ConfirmationFail />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
         <Route
           path="/dashboard"
           element={

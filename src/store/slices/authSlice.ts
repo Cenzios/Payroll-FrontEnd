@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axios';
+import { jwtDecode } from 'jwt-decode';
+
 import {
   AuthState,
   StartSignupRequest,
@@ -24,6 +26,13 @@ const initialState: AuthState = {
   tempPassword: null,
   tempPlanId: null,
 };
+
+interface DecodedToken {
+  userId: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
 
 export const startSignup = createAsyncThunk(
   'auth/startSignup',
@@ -132,6 +141,18 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+
+    setAuthFromToken: (state, action) => {
+      const decodedToken = jwtDecode<DecodedToken>(action.payload);
+      state.user = {
+        id: decodedToken.userId,
+        fullName: (decodedToken as any).fullName || (decodedToken as any).name || '',
+        email: (decodedToken as any).email || '',
+        role: decodedToken.role,
+      };
+      state.token = action.payload;
+    },
+
     logout: (state) => {
       state.user = null;
       state.token = null;
@@ -237,5 +258,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, setSignupEmail, clearSignupEmail, setTempPassword, setTempPlanId } = authSlice.actions;
+export const { logout, clearError, setSignupEmail, clearSignupEmail, setTempPassword, setTempPlanId, setAuthFromToken } = authSlice.actions;
 export default authSlice.reducer;
