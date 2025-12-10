@@ -10,6 +10,7 @@ import Confirmation from './pages/Confirmation';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import ConfirmationFail from './pages/ConfirmationFail';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/get-plan" element={<GetPlan />} />
         <Route path="/buy-plan" element={<BuyPlan />} />
         <Route path="/confirmation" element={<Confirmation />} />
+        <Route path="/confirmation-fail" element={<ConfirmationFail />} />
         <Route path="/login" element={<Login />} />
         <Route
           path="/dashboard"

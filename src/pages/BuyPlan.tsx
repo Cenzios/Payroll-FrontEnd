@@ -10,6 +10,9 @@ import gpayIcon from '../assets/images/gpay.svg';
 import axiosInstance from '../api/axios';
 
 const BuyPlan = () => {
+
+
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error, signupEmail, tempPassword, tempPlanId } = useAppSelector((state) => state.auth);
@@ -85,26 +88,25 @@ const BuyPlan = () => {
 
     if (!validateForm()) return;
 
-    if (!signupEmail || !tempPlanId) {
-      console.error('Missing subscription data', { signupEmail, tempPlanId });
+    if (!signupEmail) {
+      console.error('Missing subscription email', { signupEmail });
       return;
     }
 
     try {
-      // ✅ ✅ ✅ THIS IS THE EXACT LINE YOU ASKED ABOUT
+      // Use the actual plan UUID from your database
+      const BASIC_PLAN_ID = '0f022c11-2a3c-49f5-9d11-30082882a8e9';
+
       await axiosInstance.post('/subscription/subscribe', {
         email: signupEmail,
-        planId: tempPlanId,
+        planId: BASIC_PLAN_ID,
       });
 
-      // ✅ Go to confirmation after successful subscription
       navigate('/confirmation');
     } catch (error: any) {
       console.error('Subscription failed:', error);
-      alert(
-        error?.response?.data?.message ||
-        'Plan subscription failed'
-      );
+
+      navigate('/confirmation-fail'); // ✅ THIS IS WHERE IT GOES
     }
   };
 
