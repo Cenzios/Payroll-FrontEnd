@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { registerUser, clearError } from '../store/slices/authSlice';
+import { clearError } from '../store/slices/authSlice';
 import { Check, Loader2 } from 'lucide-react';
 import visaIcon from '../assets/images/visa.svg';
 import paypalIcon from '../assets/images/paypal.svg';
 import mastercardIcon from '../assets/images/mastercard.svg';
 import gpayIcon from '../assets/images/gpay.svg';
+import axiosInstance from '../api/axios';
 
 const BuyPlan = () => {
   const navigate = useNavigate();
@@ -81,24 +82,29 @@ const BuyPlan = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      if (!signupEmail || !tempPassword || !tempPlanId) {
-        console.error('Missing registration data', { signupEmail, tempPassword, tempPlanId });
-        // Handle missing data error - maybe redirect to start?
-        return;
-      }
 
-      const result = await dispatch(
-        registerUser({
-          email: signupEmail,
-          password: tempPassword,
-          planId: tempPlanId,
-        })
+    if (!validateForm()) return;
+
+    if (!signupEmail || !tempPlanId) {
+      console.error('Missing subscription data', { signupEmail, tempPlanId });
+      return;
+    }
+
+    try {
+      // ✅ ✅ ✅ THIS IS THE EXACT LINE YOU ASKED ABOUT
+      await axiosInstance.post('/subscription/subscribe', {
+        email: signupEmail,
+        planId: tempPlanId,
+      });
+
+      // ✅ Go to confirmation after successful subscription
+      navigate('/confirmation');
+    } catch (error: any) {
+      console.error('Subscription failed:', error);
+      alert(
+        error?.response?.data?.message ||
+        'Plan subscription failed'
       );
-
-      if (registerUser.fulfilled.match(result)) {
-        navigate('/confirmation');
-      }
     }
   };
 
