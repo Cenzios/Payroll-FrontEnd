@@ -1,9 +1,50 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Check } from 'lucide-react';
+import { useAppDispatch } from '../store/hooks';
+import { setAuthFromToken, setSignupEmail } from '../store/slices/authSlice';
+import { jwtDecode } from 'jwt-decode';
+
+interface DecodedToken {
+  userId: string;
+  role: string;
+  email: string;
+  fullName: string;
+  iat: number;
+  exp: number;
+}
 
 const GetPlan = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
 
+  // Handle Google OAuth callback
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const isNewUser = searchParams.get('new');
+
+    if (token) {
+      try {
+        // Decode token to get user email
+        const decoded = jwtDecode<DecodedToken>(token);
+
+        // Set auth data in Redux
+        dispatch(setAuthFromToken(token));
+
+        // Set email for subscription flow
+        if (decoded.email) {
+          dispatch(setSignupEmail(decoded.email));
+          console.log('✅ Google user email set:', decoded.email);
+        }
+
+        // Clean up URL
+        window.history.replaceState({}, '', '/get-plan');
+      } catch (error) {
+        console.error('❌ Error processing OAuth token:', error);
+      }
+    }
+  }, [searchParams, dispatch]);
 
   const features = [
     'Payroll processing for up to 10 employees',
@@ -24,21 +65,21 @@ const GetPlan = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col items-center justify-center px-4 py-16">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
 
-      
+
       <h1 className="text-4xl font-bold text-center text-gray-900 mb-12 whitespace-nowrap sm:whitespace-normal">
         Choose The Plan That's Right For You
       </h1>
 
-     
+
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden">
 
-       
+
         <div className="relative bg-gradient-to-b from-[#4683fc] to-[#327be2] px-6 py-6 text-center text-white overflow-hidden">
 
-          
+
           <div className="absolute inset-0 bg-blue-400/30 blur-2xl opacity-60"></div>
 
-          
+
           <div className="relative z-10">
             <p className="text-sm font-medium mb-1">One-time Registration Fee</p>
             <p className="text-3xl font-bold">RS. 2,500</p>
@@ -48,7 +89,7 @@ const GetPlan = () => {
           </div>
         </div>
 
-       
+
         <div className="px-6 py-8">
           <div className="mb-5">
             <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
@@ -67,7 +108,7 @@ const GetPlan = () => {
             is based on the number of employees—simple, flexible, and affordable.
           </p>
 
-            
+
           <div className="space-y-3 mb-7">
             {features.map((feature, index) => (
               <div key={index} className="flex items-start gap-3">

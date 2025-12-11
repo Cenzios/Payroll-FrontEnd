@@ -15,6 +15,7 @@ function GoogleAuthSuccess() {
         const token = searchParams.get('token');
         const isNewUserParam = searchParams.get('new'); // 'true' or null
 
+
         if (!token) {
             console.error('No token found in Google OAuth redirect');
             navigate('/login', { replace: true });

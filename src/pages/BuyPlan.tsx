@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { clearError } from '../store/slices/authSlice';
+import { useAppSelector } from '../store/hooks';
 import { Check, Loader2 } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode';
 import visaIcon from '../assets/images/visa.svg';
 import paypalIcon from '../assets/images/paypal.svg';
 import mastercardIcon from '../assets/images/mastercard.svg';
@@ -14,8 +14,7 @@ const BuyPlan = () => {
 
 
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const { isLoading, error, signupEmail, tempPassword, tempPlanId } = useAppSelector((state) => state.auth);
+  const { isLoading, error, signupEmail, user, token } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     paymentMethod: 'visa',
@@ -88,8 +87,29 @@ const BuyPlan = () => {
 
     if (!validateForm()) return;
 
-    if (!signupEmail) {
-      console.error('Missing subscription email', { signupEmail });
+    // ✅ Try multiple sources for email (supports both normal and Google OAuth users)
+    let userEmail = signupEmail;
+
+    if (!userEmail && user?.email) {
+      // Fallback 1: Get from user object (Google OAuth users)
+      userEmail = user.email;
+      console.log('📧 Using email from user object:', userEmail);
+    }
+
+    if (!userEmail && token) {
+      // Fallback 2: Decode token to get email
+      try {
+        const decoded: any = jwtDecode(token);
+        userEmail = decoded.email;
+        console.log('📧 Using email from token:', userEmail);
+      } catch (error) {
+        console.error('❌ Error decoding token:', error);
+      }
+    }
+
+    if (!userEmail) {
+      console.error('❌ Missing subscription email', { signupEmail, user, token });
+      alert('Unable to determine user email. Please try logging in again.');
       return;
     }
 
@@ -97,16 +117,16 @@ const BuyPlan = () => {
       // Use the actual plan UUID from your database
       const BASIC_PLAN_ID = '0f022c11-2a3c-49f5-9d11-30082882a8e9';
 
+      console.log('📤 Creating subscription for:', userEmail);
       await axiosInstance.post('/subscription/subscribe', {
-        email: signupEmail,
+        email: userEmail,
         planId: BASIC_PLAN_ID,
       });
 
       navigate('/confirmation');
     } catch (error: any) {
-      console.error('Subscription failed:', error);
-
-      navigate('/confirmation-fail'); // ✅ THIS IS WHERE IT GOES
+      console.error('❌ Subscription failed:', error);
+      navigate('/confirmation-fail');
     }
   };
 
