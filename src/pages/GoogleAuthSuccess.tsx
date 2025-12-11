@@ -12,7 +12,10 @@ const GoogleAuthSuccess = () => {
         const token = searchParams.get('token');
         const isNewUser = searchParams.get('isNewUser');
 
+        console.log('📥 Received from backend:', { token: !!token, isNewUser });
+
         if (!token) {
+            console.error('❌ No token found, redirecting to login');
             navigate('/login');
             return;
         }
@@ -44,22 +47,26 @@ const GoogleAuthSuccess = () => {
             // Update Redux store
             dispatch(setAuthFromToken(token));
 
-            // ✅ CHECK IF NEW USER (NO SUBSCRIPTION)
+            console.log('👤 User data:', user);
+
+            // ✅ CHECK IF NEW USER OR NO SUBSCRIPTION
             if (isNewUser === 'true') {
-                // Store email for registration flow
+                console.log('🆕 New user OR no subscription → Redirecting to /get-plan');
+
+                // Store email for registration/plan selection flow
                 localStorage.setItem('reg_email', user.email);
                 dispatch(setSignupEmail(user.email));
 
-                console.log('New Google user - redirecting to GetPlan');
                 navigate('/get-plan');
                 return;
             }
 
-            // ✅ EXISTING USER WITH SUBSCRIPTION
-            console.log('Existing Google user - redirecting to Dashboard');
+            // ✅ EXISTING USER WITH ACTIVE SUBSCRIPTION
+            console.log('✅ Existing user with subscription → Redirecting to /dashboard');
             navigate('/dashboard');
+
         } catch (error) {
-            console.error('Error processing Google auth token:', error);
+            console.error('❌ Error processing Google auth token:', error);
             navigate('/login');
         }
     }, [searchParams, navigate, dispatch]);
