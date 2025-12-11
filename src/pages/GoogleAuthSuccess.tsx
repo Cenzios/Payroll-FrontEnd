@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch } from '../store/hooks';
-import { setAuthFromToken } from '../store/slices/authSlice';
+import { setAuthFromToken, setSignupEmail } from '../store/slices/authSlice';
 
 const GoogleAuthSuccess = () => {
     const [searchParams] = useSearchParams();
@@ -10,6 +10,7 @@ const GoogleAuthSuccess = () => {
 
     useEffect(() => {
         const token = searchParams.get('token');
+        const isNewUser = searchParams.get('isNewUser');
 
         if (!token) {
             navigate('/login');
@@ -21,10 +22,6 @@ const GoogleAuthSuccess = () => {
             localStorage.setItem('token', token);
 
             // Decode token and extract user data
-            dispatch(setAuthFromToken(token));
-
-            // Also store user data separately in localStorage for persistence
-            // The setAuthFromToken action already decodes the token and sets user in Redux
             const base64Url = token.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             const jsonPayload = decodeURIComponent(
@@ -38,13 +35,28 @@ const GoogleAuthSuccess = () => {
             // Store user object in localStorage
             const user = {
                 id: decoded.userId,
-                fullName: decoded.fullName || decoded.name || '',
+                fullName: decoded.fullName || '',
                 email: decoded.email || '',
                 role: decoded.role,
             };
             localStorage.setItem('user', JSON.stringify(user));
 
-            // Navigate to dashboard
+            // Update Redux store
+            dispatch(setAuthFromToken(token));
+
+            // ✅ CHECK IF NEW USER (NO SUBSCRIPTION)
+            if (isNewUser === 'true') {
+                // Store email for registration flow
+                localStorage.setItem('reg_email', user.email);
+                dispatch(setSignupEmail(user.email));
+
+                console.log('New Google user - redirecting to GetPlan');
+                navigate('/get-plan');
+                return;
+            }
+
+            // ✅ EXISTING USER WITH SUBSCRIPTION
+            console.log('Existing Google user - redirecting to Dashboard');
             navigate('/dashboard');
         } catch (error) {
             console.error('Error processing Google auth token:', error);

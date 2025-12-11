@@ -143,14 +143,30 @@ const authSlice = createSlice({
   reducers: {
 
     setAuthFromToken: (state, action) => {
-      const decodedToken = jwtDecode<DecodedToken>(action.payload);
-      state.user = {
-        id: decodedToken.userId,
-        fullName: (decodedToken as any).fullName || (decodedToken as any).name || '',
-        email: (decodedToken as any).email || '',
-        role: decodedToken.role,
-      };
-      state.token = action.payload;
+      try {
+        const decodedToken = jwtDecode<DecodedToken>(action.payload);
+
+        // ✅ Create user object from token
+        const user = {
+          id: decodedToken.userId,
+          fullName: (decodedToken as any).fullName || '',
+          email: (decodedToken as any).email || '',
+          role: decodedToken.role,
+        };
+
+        // ✅ Update Redux state
+        state.user = user;
+        state.token = action.payload;
+
+        // ✅ Ensure localStorage is synced
+        localStorage.setItem('token', action.payload);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        console.log('✅ User data set in Redux:', user);
+      } catch (error) {
+        console.error('❌ Error decoding token:', error);
+        state.error = 'Failed to decode authentication token';
+      }
     },
 
     logout: (state) => {
