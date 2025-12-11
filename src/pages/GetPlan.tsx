@@ -24,21 +24,21 @@ const GetPlan = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col items-center justify-center px-4 py-16">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
 
-      {/* ✅ TITLE — ON BACKGROUND, PERFECTLY CENTERED */}
+      
       <h1 className="text-4xl font-bold text-center text-gray-900 mb-12 whitespace-nowrap sm:whitespace-normal">
         Choose The Plan That's Right For You
       </h1>
 
-      {/* ✅ CARD — SMALLER WIDTH LIKE YOUR IMAGE */}
+     
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden">
 
-        {/* ✅ TOP BLUE PRICE BAR WITH GLOW */}
+       
         <div className="relative bg-gradient-to-b from-[#4683fc] to-[#327be2] px-6 py-6 text-center text-white overflow-hidden">
 
-          {/* ✅ GLOW LAYER */}
+          
           <div className="absolute inset-0 bg-blue-400/30 blur-2xl opacity-60"></div>
 
-          {/* ✅ TEXT ABOVE GLOW */}
+          
           <div className="relative z-10">
             <p className="text-sm font-medium mb-1">One-time Registration Fee</p>
             <p className="text-3xl font-bold">RS. 2,500</p>
@@ -48,7 +48,7 @@ const GetPlan = () => {
           </div>
         </div>
 
-        {/* ✅ CARD BODY */}
+       
         <div className="px-6 py-8">
           <div className="mb-5">
             <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">
@@ -67,7 +67,7 @@ const GetPlan = () => {
             is based on the number of employees—simple, flexible, and affordable.
           </p>
 
-          {/* ✅ FEATURES */}
+            
           <div className="space-y-3 mb-7">
             {features.map((feature, index) => (
               <div key={index} className="flex items-start gap-3">
