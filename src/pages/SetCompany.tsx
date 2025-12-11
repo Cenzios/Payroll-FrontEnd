@@ -1,14 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { clearError } from '../store/slices/authSlice';
+import { clearError, setAuthFromToken, setSignupEmail } from '../store/slices/authSlice';
 import { Building2, Loader2 } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode';
 import companyIllustration from '../assets/images/company-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
+
+interface DecodedToken {
+  userId: string;
+  role: string;
+  email: string;
+  fullName: string;
+  iat: number;
+  exp: number;
+}
 
 const SetCompany = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
   const { isLoading, error, signupEmail } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
@@ -23,11 +34,47 @@ const SetCompany = () => {
     numberOfPeople: '',
   });
 
+  // Handle Google OAuth callback
   useEffect(() => {
+    const token = searchParams.get('token');
+    const isNewUser = searchParams.get('new');
+
+    if (token) {
+      try {
+        // Decode token to get user email
+        const decoded = jwtDecode<DecodedToken>(token);
+
+        // Set auth data in Redux
+        dispatch(setAuthFromToken(token));
+
+        // Set email for subscription flow
+        if (decoded.email) {
+          dispatch(setSignupEmail(decoded.email));
+          console.log('✅ Google user email set in SetCompany:', decoded.email);
+        }
+
+        // Clean up URL
+        window.history.replaceState({}, '', '/set-company');
+      } catch (error) {
+        console.error('❌ Error processing OAuth token:', error);
+      }
+    }
+  }, [searchParams, dispatch]);
+
+  // Only redirect to signup if there's no email AND no token in URL
+  useEffect(() => {
+    const urlToken = searchParams.get('token');
+
+    // If there's a token in URL, wait for it to be processed
+    if (urlToken) {
+      return;
+    }
+
+    // Only redirect if no email and no token
     if (!signupEmail) {
       navigate('/signup');
     }
-  }, [signupEmail, navigate]);
+  }, [signupEmail, navigate, searchParams]);
 
   useEffect(() => {
     return () => {
