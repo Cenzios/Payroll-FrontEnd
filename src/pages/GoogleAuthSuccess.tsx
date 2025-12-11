@@ -1,84 +1,57 @@
+// src/pages/GoogleAuthSuccess.tsx
+
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch } from '../store/hooks';
-import { setAuthFromToken, setSignupEmail } from '../store/slices/authSlice';
+import { setAuthFromToken } from '../store/slices/authSlice';
+import { Loader2 } from 'lucide-react';
 
-const GoogleAuthSuccess = () => {
+function GoogleAuthSuccess() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
 
     useEffect(() => {
         const token = searchParams.get('token');
-        const isNewUser = searchParams.get('isNewUser');
-
-        console.log('📥 Received from backend:', { token: !!token, isNewUser });
+        const isNewUserParam = searchParams.get('new'); // 'true' or null
 
         if (!token) {
-            console.error('❌ No token found, redirecting to login');
-            navigate('/login');
+            console.error('No token found in Google OAuth redirect');
+            navigate('/login', { replace: true });
             return;
         }
 
-        try {
-            // Save token in localStorage
-            localStorage.setItem('token', token);
+        // Store token
+        localStorage.setItem('token', token);
 
-            // Decode token and extract user data
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(
-                atob(base64)
-                    .split('')
-                    .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                    .join('')
-            );
-            const decoded = JSON.parse(jsonPayload);
+        // Update Redux store with user data from token
+        dispatch(setAuthFromToken(token));
 
-            // Store user object in localStorage
-            const user = {
-                id: decoded.userId,
-                fullName: decoded.fullName || '',
-                email: decoded.email || '',
-                role: decoded.role,
-            };
-            localStorage.setItem('user', JSON.stringify(user));
+        // Determine redirect based on whether user is new or lacks subscription
+        const shouldRedirectToGetPlan = isNewUserParam === 'true';
 
-            // Update Redux store
-            dispatch(setAuthFromToken(token));
-
-            console.log('👤 User data:', user);
-
-            // ✅ CHECK IF NEW USER OR NO SUBSCRIPTION
-            if (isNewUser === 'true') {
-                console.log('🆕 New user OR no subscription → Redirecting to /get-plan');
-
-                // Store email for registration/plan selection flow
-                localStorage.setItem('reg_email', user.email);
-                dispatch(setSignupEmail(user.email));
-
-                navigate('/get-plan');
-                return;
-            }
-
-            // ✅ EXISTING USER WITH ACTIVE SUBSCRIPTION
-            console.log('✅ Existing user with subscription → Redirecting to /dashboard');
-            navigate('/dashboard');
-
-        } catch (error) {
-            console.error('❌ Error processing Google auth token:', error);
-            navigate('/login');
+        if (shouldRedirectToGetPlan) {
+            console.log('Google user is new or has no active subscription → Redirecting to /get-plan');
+            navigate('/get-plan', { replace: true });
+        } else {
+            console.log('Google user has active subscription → Redirecting to /dashboard');
+            navigate('/dashboard', { replace: true });
         }
     }, [searchParams, navigate, dispatch]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-            <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                <p className="text-gray-700 text-lg font-medium">Signing you in with Google...</p>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+            <div className="bg-white p-10 rounded-2xl shadow-lg text-center">
+                <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-6" />
+                <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+                    Completing Sign In...
+                </h2>
+                <p className="text-gray-600">
+                    Please wait while we securely log you in with Google.
+                </p>
             </div>
         </div>
     );
-};
+}
 
 export default GoogleAuthSuccess;

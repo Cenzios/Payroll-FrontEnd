@@ -34,6 +34,7 @@ interface DecodedToken {
   exp: number;
 }
 
+
 export const startSignup = createAsyncThunk(
   'auth/startSignup',
   async (userData: StartSignupRequest, { rejectWithValue }) => {
