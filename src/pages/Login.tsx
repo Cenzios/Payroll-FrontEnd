@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { loginUser, clearError } from '../store/slices/authSlice';
+import { loginUser, clearError, logout } from '../store/slices/authSlice';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 
@@ -18,7 +18,7 @@ const GoogleIcon = () => (
 const Login = () => {
 
   const handleGoogleLogin = () => {
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ;
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
     window.location.href = `${apiBaseUrl}/auth/google`;
   };
   const navigate = useNavigate();
@@ -35,11 +35,12 @@ const Login = () => {
     password: '',
   });
 
+  // Clear any existing session when user visits login page
   useEffect(() => {
     if (token) {
-      navigate('/dashboard');
+      dispatch(logout());
     }
-  }, [token, navigate]);
+  }, []); // Only run once on mount
 
   useEffect(() => {
     return () => {
@@ -82,7 +83,26 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      await dispatch(loginUser(formData));
+      const result = await dispatch(loginUser(formData));
+
+      // Check if login was successful
+      if (loginUser.fulfilled.match(result)) {
+        const { hasActivePlan } = result.payload;
+
+        console.log('🔍 Login result:', {
+          hasActivePlan,
+          payload: result.payload
+        });
+
+        // Route based on subscription status
+        if (hasActivePlan) {
+          console.log('✅ Has subscription → Redirecting to Dashboard');
+          navigate('/dashboard');
+        } else {
+          console.log('❌ No subscription → Redirecting to SetCompany');
+          navigate('/set-company');
+        }
+      }
     }
   };
 

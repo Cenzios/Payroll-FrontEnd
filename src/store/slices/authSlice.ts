@@ -103,10 +103,10 @@ export const loginUser = createAsyncThunk(
         '/auth/login',
         credentials
       );
-      const { user, token } = response.data.data;
+      const { user, token, hasActivePlan } = response.data.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      return { user, token };
+      return { user, token, hasActivePlan };
     } catch (error: any) {
       const message =
         error.response?.data?.message || error.message || 'Login failed';
