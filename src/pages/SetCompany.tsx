@@ -20,7 +20,7 @@ const SetCompany = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
-  const { isLoading, error, signupEmail } = useAppSelector((state) => state.auth);
+  const { isLoading, error, signupEmail, token } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -70,11 +70,16 @@ const SetCompany = () => {
       return;
     }
 
-    // Only redirect if no email and no token
+    // If user is authenticated (has token), allow access even without signupEmail
+    if (token) {
+      return;
+    }
+
+    // Only redirect if no email, no token, and not authenticated
     if (!signupEmail) {
       navigate('/signup');
     }
-  }, [signupEmail, navigate, searchParams]);
+  }, [signupEmail, navigate, searchParams, token]);
 
   useEffect(() => {
     return () => {
@@ -131,7 +136,7 @@ const SetCompany = () => {
     }
   };
 
-  if (!signupEmail) {
+  if (!signupEmail && !token) {
     return null;
   }
 
