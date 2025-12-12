@@ -1,15 +1,26 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { clearError } from '../store/slices/authSlice';
+import { clearError, setAuthFromToken, setSignupEmail } from '../store/slices/authSlice';
 import { Building2, Loader2 } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode';
 import companyIllustration from '../assets/images/company-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
+
+interface DecodedToken {
+  userId: string;
+  role: string;
+  email: string;
+  fullName: string;
+  iat: number;
+  exp: number;
+}
 
 const SetCompany = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isLoading, error, signupEmail } = useAppSelector((state) => state.auth);
+  const [searchParams] = useSearchParams();
+  const { isLoading, error, signupEmail, token } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -23,11 +34,52 @@ const SetCompany = () => {
     numberOfPeople: '',
   });
 
+  // Handle Google OAuth callback
   useEffect(() => {
+    const token = searchParams.get('token');
+    const isNewUser = searchParams.get('new');
+
+    if (token) {
+      try {
+        // Decode token to get user email
+        const decoded = jwtDecode<DecodedToken>(token);
+
+        // Set auth data in Redux
+        dispatch(setAuthFromToken(token));
+
+        // Set email for subscription flow
+        if (decoded.email) {
+          dispatch(setSignupEmail(decoded.email));
+          console.log('✅ Google user email set in SetCompany:', decoded.email);
+        }
+
+        // Clean up URL
+        window.history.replaceState({}, '', '/set-company');
+      } catch (error) {
+        console.error('❌ Error processing OAuth token:', error);
+      }
+    }
+  }, [searchParams, dispatch]);
+
+  // Only redirect to signup if there's no email AND no token in URL
+  useEffect(() => {
+    const urlToken = searchParams.get('token');
+
+    // If there's a token in URL, wait for it to be processed
+    if (urlToken) {
+      return;
+    }
+
+    // If user is authenticated (has token), allow access even without signupEmail
+    if (token) {
+      return;
+    }
+
+    // Only redirect if no email, no token, and not authenticated
     if (!signupEmail) {
       navigate('/signup');
     }
-  }, [signupEmail, navigate]);
+  }, [signupEmail, navigate, searchParams, token]);
 
   useEffect(() => {
     return () => {
@@ -84,7 +136,7 @@ const SetCompany = () => {
     }
   };
 
-  if (!signupEmail) {
+  if (!signupEmail && !token) {
     return null;
   }
 
@@ -114,11 +166,10 @@ const SetCompany = () => {
               name="companyName"
               value={formData.companyName}
               onChange={handleChange}
-              className={`block w-full px-4 py-3 border ${
-                validationErrors.companyName
-                  ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                  : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-              } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 transition-colors`}
+              className={`block w-full px-4 py-3 border ${validationErrors.companyName
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 transition-colors`}
               placeholder="Cenzios (Pvt) Ltd"
             />
           </div>
@@ -144,11 +195,10 @@ const SetCompany = () => {
               value={formData.companyCount}
               onChange={handleChange}
               min="1"
-              className={`block w-full px-4 py-3 border ${
-                validationErrors.companyCount
-                  ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                  : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-              } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 transition-colors`}
+              className={`block w-full px-4 py-3 border ${validationErrors.companyCount
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 transition-colors`}
               placeholder="3"
             />
             <div className="absolute inset-y-0 right-0 flex flex-col border-l border-gray-300">
@@ -190,11 +240,10 @@ const SetCompany = () => {
               value={formData.numberOfPeople}
               onChange={handleChange}
               min="1"
-              className={`block w-full px-4 py-3 border ${
-                validationErrors.numberOfPeople
-                  ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                  : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-              } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 transition-colors`}
+              className={`block w-full px-4 py-3 border ${validationErrors.numberOfPeople
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 transition-colors`}
               placeholder="36"
             />
             <div className="absolute inset-y-0 right-0 flex flex-col border-l border-gray-300">
@@ -224,7 +273,12 @@ const SetCompany = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          className="w-full bg-[#3A8BFF] text-white font-semibold py-3 px-4 rounded-lg 
+             hover:bg-[#337AEB] focus:outline-none 
+             focus:ring-2 focus:ring-[#3A8BFF] focus:ring-offset-2 
+             transition-all duration-200 
+             disabled:opacity-50 disabled:cursor-not-allowed 
+             flex items-center justify-center"
         >
           {isLoading ? (
             <>

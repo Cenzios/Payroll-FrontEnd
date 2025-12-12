@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { registerUser, clearError } from '../store/slices/authSlice';
+import { useAppSelector } from '../store/hooks';
 import { Check, Loader2 } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode';
+import visaIcon from '../assets/images/visa.svg';
+import paypalIcon from '../assets/images/paypal.svg';
+import mastercardIcon from '../assets/images/mastercard.svg';
+import gpayIcon from '../assets/images/gpay.svg';
+import axiosInstance from '../api/axios';
 
 const BuyPlan = () => {
+
+
+
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
+  const { isLoading, error, signupEmail, user, token } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     paymentMethod: 'visa',
@@ -77,33 +84,56 @@ const BuyPlan = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      // ✅ Retrieve registration data from localStorage
-      const email = localStorage.getItem('reg_email');
-      const password = localStorage.getItem('reg_password');
-      const planId = localStorage.getItem('reg_planId');
 
-      if (!email || !password || !planId) {
-        console.error('Missing registration data:', { email, password, planId });
-        // Handle error appropriately, maybe redirect to start
-        return;
+    if (!validateForm()) return;
+
+    // ✅ Try multiple sources for email (supports both normal and Google OAuth users)
+    let userEmail = signupEmail;
+
+    if (!userEmail && user?.email) {
+      // Fallback 1: Get from user object (Google OAuth users)
+      userEmail = user.email;
+      console.log('📧 Using email from user object:', userEmail);
+    }
+
+    if (!userEmail && token) {
+      // Fallback 2: Decode token to get email
+      try {
+        const decoded: any = jwtDecode(token);
+        userEmail = decoded.email;
+        console.log('📧 Using email from token:', userEmail);
+      } catch (error) {
+        console.error('❌ Error decoding token:', error);
       }
+    }
 
-      const result = await dispatch(registerUser({
-        email,
-        password,
-        planId
-      }));
+    if (!userEmail) {
+      console.error('❌ Missing subscription email', { signupEmail, user, token });
+      alert('Unable to determine user email. Please try logging in again.');
+      return;
+    }
 
-      if (registerUser.fulfilled.match(result)) {
-        navigate('/confirmation');
-      }
+    try {
+      // Use the actual plan UUID from your database
+      const BASIC_PLAN_ID = '0f022c11-2a3c-49f5-9d11-30082882a8e9';
+
+      console.log('📤 Creating subscription for:', userEmail);
+      await axiosInstance.post('/subscription/subscribe', {
+        email: userEmail,
+        planId: BASIC_PLAN_ID,
+      });
+
+      navigate('/confirmation');
+    } catch (error: any) {
+      console.error('❌ Subscription failed:', error);
+      navigate('/confirmation-fail');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-5xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center px-4 py-12 relative">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
+      <div className="w-full max-w-5xl relative z-10">
         <h1 className="text-4xl font-bold text-center text-gray-900 mb-10">
           Complete Registration Payment
         </h1>
@@ -115,7 +145,7 @@ const BuyPlan = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-xl p-8 text-white">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-xl p-8 text-white">
             <div className="mb-6">
               <p className="text-sm font-semibold uppercase tracking-wide mb-3 text-blue-100">
                 BASIC PLAN
@@ -135,8 +165,8 @@ const BuyPlan = () => {
               {features.map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <div className="mt-0.5">
-                    <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                    <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                      <Check className="w-3 h-3 text-blue-600" strokeWidth={3} />
                     </div>
                   </div>
                   <span className="text-white/90 text-sm">{feature}</span>
@@ -144,9 +174,10 @@ const BuyPlan = () => {
               ))}
             </div>
 
-            <div className="bg-white rounded-xl px-6 py-4 text-center">
-              <p className="text-gray-600 text-sm font-medium">First Month Fee Rs.</p>
-              <p className="text-3xl font-bold text-gray-900">2,500</p>
+            <div className="bg-white rounded-xl px-4 py-2 text-center">
+              <p className="text-gray-700 text-sm font-semibold">
+                First Month Fee Rs. <span className="text-xl font-bold">2,500</span>
+              </p>
             </div>
           </div>
 
@@ -162,17 +193,23 @@ const BuyPlan = () => {
                       key={method}
                       type="button"
                       onClick={() => setFormData((prev) => ({ ...prev, paymentMethod: method }))}
-                      className={`flex-1 border-2 rounded-lg px-4 py-3 transition-all ${formData.paymentMethod === method
-                        ? 'border-blue-600 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                      className={`flex-1 border-2 rounded-xl px-4 py-4 bg-white flex items-center justify-center 
+        transition-all shadow-sm
+        ${formData.paymentMethod === method
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
                         }`}
                     >
-                      <span className="text-xs font-semibold text-gray-700 uppercase">
-                        {method === 'visa' && 'VISA'}
-                        {method === 'paypal' && 'P'}
-                        {method === 'mastercard' && 'MC'}
-                        {method === 'gpay' && 'G Pay'}
-                      </span>
+                      <img
+                        src={
+                          method === 'visa' ? visaIcon :
+                            method === 'paypal' ? paypalIcon :
+                              method === 'mastercard' ? mastercardIcon :
+                                gpayIcon
+                        }
+                        alt={method}
+                        className="h-8 w-auto object-contain"
+                      />
                     </button>
                   ))}
                 </div>
@@ -187,7 +224,21 @@ const BuyPlan = () => {
                   id="cardholderName"
                   name="cardholderName"
                   value={formData.cardholderName}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    let value = e.target.value;
+
+                    // ✅ Allow only letters and spaces
+                    value = value.replace(/[^a-zA-Z\s]/g, '');
+
+                    // ✅ Auto-capitalize each word (optional pro UX)
+                    value = value.replace(/\b\w/g, (char) => char.toUpperCase());
+
+                    // ✅ Max length 30 characters
+                    value = value.slice(0, 30);
+
+                    setFormData((prev) => ({ ...prev, cardholderName: value }));
+                    setValidationErrors((prev) => ({ ...prev, cardholderName: '' }));
+                  }}
                   className={`block w-full px-4 py-3 border ${validationErrors.cardholderName
                     ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                     : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
@@ -208,12 +259,40 @@ const BuyPlan = () => {
                   id="cardNumber"
                   name="cardNumber"
                   value={formData.cardNumber}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    let value = e.target.value.replace(/\D/g, ''); // ✅ Only digits
+                    value = value.slice(0, 16); // ✅ Max 16 digits
+
+                    // ✅ Auto add space every 4 digits
+                    const formatted = value.replace(/(.{4})/g, '$1 ').trim();
+
+                    // ✅ AUTO-DETECT CARD TYPE
+                    let detectedType = formData.paymentMethod;
+
+                    if (value.startsWith('4')) {
+                      detectedType = 'visa';
+                    }
+                    else if (
+                      /^(5[1-5])/.test(value) || // 51–55
+                      /^(222[1-9]|22[3-9]\d|2[3-6]\d\d|27[01]\d|2720)/.test(value) // 2221–2720
+                    ) {
+                      detectedType = 'mastercard';
+                    }
+
+                    setFormData((prev) => ({
+                      ...prev,
+                      cardNumber: formatted,
+                      paymentMethod: detectedType, // ✅ Auto switch icon
+                    }));
+
+                    setValidationErrors((prev) => ({ ...prev, cardNumber: '' }));
+                  }}
                   className={`block w-full px-4 py-3 border ${validationErrors.cardNumber
                     ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                     : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                     } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-                  placeholder="0000 0000 00"
+                  placeholder="5647 8795 2134 6548"
+                  maxLength={19}
                 />
                 {validationErrors.cardNumber && (
                   <p className="mt-1 text-sm text-red-600">{validationErrors.cardNumber}</p>
@@ -223,19 +302,62 @@ const BuyPlan = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-2">
-                    Card number <span className="text-red-500">*</span>
+                    Expiry Date <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     id="expiryDate"
                     name="expiryDate"
                     value={formData.expiryDate}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      let value = e.target.value.replace(/\D/g, ''); // ✅ Only digits
+                      value = value.slice(0, 6); // ✅ Max 6 digits (MMYYYY)
+
+                      // ✅ Auto insert slash
+                      if (value.length >= 3) {
+                        value = value.slice(0, 2) + '/' + value.slice(2);
+                      }
+
+                      let error = '';
+
+                      // ✅ MONTH VALIDATION (01–12)
+                      if (value.length >= 2) {
+                        const month = Number(value.slice(0, 2));
+                        if (month < 1 || month > 12) {
+                          error = 'Invalid month';
+                        }
+                      }
+
+                      // ✅ YEAR REALISTIC LIMIT (CURRENT → +20 YEARS)
+                      if (value.length === 7) {
+                        const [monthStr, yearStr] = value.split('/');
+                        const month = Number(monthStr);
+                        const year = Number(yearStr);
+
+                        const now = new Date();
+                        const currentMonth = now.getMonth() + 1;
+                        const currentYear = now.getFullYear();
+                        const maxYear = currentYear + 20; // ✅ YOU CAN CHANGE 20 IF YOU WANT
+
+                        if (year < currentYear || (year === currentYear && month < currentMonth)) {
+                          error = 'Card is expired';
+                        } else if (year > maxYear) {
+                          error = `Year cannot be after ${maxYear}`;
+                        }
+                      }
+
+                      setFormData((prev) => ({ ...prev, expiryDate: value }));
+                      setValidationErrors((prev) => ({
+                        ...prev,
+                        expiryDate: error,
+                      }));
+                    }}
                     className={`block w-full px-4 py-3 border ${validationErrors.expiryDate
                       ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                       : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                       } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-                    placeholder="04/2027"
+                    placeholder="MM/YYYY"
+                    maxLength={7}
                   />
                   {validationErrors.expiryDate && (
                     <p className="mt-1 text-sm text-red-600">{validationErrors.expiryDate}</p>
@@ -251,7 +373,11 @@ const BuyPlan = () => {
                     id="cvc"
                     name="cvc"
                     value={formData.cvc}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 3);
+                      setFormData(prev => ({ ...prev, cvc: value }));
+                      setValidationErrors(prev => ({ ...prev, cvc: '' }));
+                    }}
                     className={`block w-full px-4 py-3 border ${validationErrors.cvc
                       ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                       : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'

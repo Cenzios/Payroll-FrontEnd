@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axios';
+import { jwtDecode } from 'jwt-decode';
+
 import {
   AuthState,
   StartSignupRequest,
@@ -24,6 +26,14 @@ const initialState: AuthState = {
   tempPassword: null,
   tempPlanId: null,
 };
+
+interface DecodedToken {
+  userId: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
+
 
 export const startSignup = createAsyncThunk(
   'auth/startSignup',
@@ -93,10 +103,10 @@ export const loginUser = createAsyncThunk(
         '/auth/login',
         credentials
       );
-      const { user, token } = response.data.data;
+      const { user, token, hasActivePlan } = response.data.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      return { user, token };
+      return { user, token, hasActivePlan };
     } catch (error: any) {
       const message =
         error.response?.data?.message || error.message || 'Login failed';
@@ -132,6 +142,34 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+
+    setAuthFromToken: (state, action) => {
+      try {
+        const decodedToken = jwtDecode<DecodedToken>(action.payload);
+
+        // ✅ Create user object from token
+        const user = {
+          id: decodedToken.userId,
+          fullName: (decodedToken as any).fullName || '',
+          email: (decodedToken as any).email || '',
+          role: decodedToken.role,
+        };
+
+        // ✅ Update Redux state
+        state.user = user;
+        state.token = action.payload;
+
+        // ✅ Ensure localStorage is synced
+        localStorage.setItem('token', action.payload);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        console.log('✅ User data set in Redux:', user);
+      } catch (error) {
+        console.error('❌ Error decoding token:', error);
+        state.error = 'Failed to decode authentication token';
+      }
+    },
+
     logout: (state) => {
       state.user = null;
       state.token = null;
@@ -237,5 +275,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, setSignupEmail, clearSignupEmail, setTempPassword, setTempPlanId } = authSlice.actions;
+export const { logout, clearError, setSignupEmail, clearSignupEmail, setTempPassword, setTempPlanId, setAuthFromToken } = authSlice.actions;
 export default authSlice.reducer;
