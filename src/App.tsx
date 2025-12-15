@@ -9,6 +9,7 @@ import BuyPlan from './pages/BuyPlan';
 import Confirmation from './pages/Confirmation';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Companies from './pages/Companies';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
@@ -34,6 +35,54 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/companies"
+          element={
+            <ProtectedRoute>
+              <Companies />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/staff"
+          element={
+            <ProtectedRoute>
+              <div className="flex items-center justify-center h-screen">
+                <h1 className="text-2xl font-bold text-gray-900">Staff Page - Coming Soon</h1>
+              </div>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/salary"
+          element={
+            <ProtectedRoute>
+              <div className="flex items-center justify-center h-screen">
+                <h1 className="text-2xl font-bold text-gray-900">Salary Page - Coming Soon</h1>
+              </div>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <div className="flex items-center justify-center h-screen">
+                <h1 className="text-2xl font-bold text-gray-900">Reports Page - Coming Soon</h1>
+              </div>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <div className="flex items-center justify-center h-screen">
+                <h1 className="text-2xl font-bold text-gray-900">Settings Page - Coming Soon</h1>
+              </div>
             </ProtectedRoute>
           }
         />
