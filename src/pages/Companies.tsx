@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Building2, Loader2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import CompanyCard from '../components/CompanyCard';
-import AddCompanyDrawer from '../components/AddCompanyDrawer';
+import UniversalDrawer from '../components/UniversalDrawer';
 import Toast from '../components/Toast';
 import { companyApi } from '../api/companyApi';
 import { Company, CreateCompanyRequest } from '../types/company.types';
@@ -119,10 +119,11 @@ const Companies = () => {
             </div>
 
             {/* Add Company Drawer */}
-            <AddCompanyDrawer
+            <UniversalDrawer
                 isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
                 onSubmit={handleAddCompany}
+                mode="company"
             />
 
             {/* Toast Notification */}
