@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { logout, setAuthFromToken } from '../store/slices/authSlice';
+import { logout, setAuthFromToken, setSelectedCompanyId } from '../store/slices/authSlice';
 import {
   LogOut,
   Users,
@@ -30,7 +30,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, selectedCompanyId } = useAppSelector((state) => state.auth);
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -38,7 +38,9 @@ const Dashboard = () => {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  // Derived state
+  const selectedCompany = companies.find(c => c.id === selectedCompanyId) || null;
+
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
 
   const [dashboardData, setDashboardData] = useState<any>({
@@ -67,8 +69,11 @@ const Dashboard = () => {
     try {
       const data = await companyApi.getCompanies();
       setCompanies(data);
-      if (data.length > 0 && !selectedCompany) {
-        setSelectedCompany(data[0]);
+      if (data.length > 0 && !selectedCompanyId) {
+        dispatch(setSelectedCompanyId(data[0].id));
+      } else if (data.length > 0 && selectedCompanyId && !data.find(c => c.id === selectedCompanyId)) {
+        // If selected ID exists but provided company is not in the list (e.g. deleted/unauthorized), fallback to first
+        dispatch(setSelectedCompanyId(data[0].id));
       }
     } catch (error) {
       console.error("Failed to load companies");
@@ -176,7 +181,7 @@ const Dashboard = () => {
                       <button
                         key={company.id}
                         onClick={() => {
-                          setSelectedCompany(company);
+                          dispatch(setSelectedCompanyId(company.id));
                           setIsCompanyDropdownOpen(false);
                         }}
                         className="w-full text-left px-4 py-2 hover:bg-blue-50 text-gray-700 text-sm flex items-center gap-2"

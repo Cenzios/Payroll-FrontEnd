@@ -2,7 +2,6 @@ import { NavLink } from 'react-router-dom';
 import {
     LayoutDashboard,
     Users,
-    Building2,
     Wallet,
     FileText,
     Settings
@@ -11,8 +10,7 @@ import {
 const Sidebar = () => {
     const navItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-        { name: 'Staff', path: '/staff', icon: Users },
-        { name: 'Employers', path: '/companies', icon: Building2 },
+        { name: 'Employers', path: '/employees', icon: Users },
         { name: 'Salary', path: '/salary', icon: Wallet },
         { name: 'Report', path: '/reports', icon: FileText },
     ];
