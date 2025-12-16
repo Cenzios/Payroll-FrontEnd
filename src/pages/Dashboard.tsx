@@ -19,6 +19,8 @@ import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import QuickAction from '../components/QuickAction';
 import UniversalDrawer from '../components/UniversalDrawer';
+import ConfirmationModal from '../components/ConfirmationModal';
+import AddonModal from '../components/AddonModal';
 import Toast from '../components/Toast';
 import { companyApi } from '../api/companyApi';
 import { employeeApi } from '../api/employeeApi';
@@ -36,6 +38,7 @@ const Dashboard = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<'company' | 'employee'>('company');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
 
   const [companies, setCompanies] = useState<Company[]>([]);
   // Derived state
@@ -107,6 +110,40 @@ const Dashboard = () => {
     navigate('/login');
   };
 
+  const [confirmation, setConfirmation] = useState<{
+    isOpen: boolean;
+    type: 'danger' | 'warning' | 'info';
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    type: 'warning',
+    title: '',
+    message: '',
+    onConfirm: () => { },
+  });
+
+  const openLimitModal = (type: 'company' | 'employee', limit: number, current: number) => {
+    setConfirmation({
+      isOpen: true,
+      type: 'warning',
+      title: `${type === 'company' ? 'Companies' : 'Employees'} Limit Reached`,
+      message: `You’ve reached the maximum number of ${type === 'company' ? 'Companies' : 'Employees'} allowed on your current plan. To add more ${type === 'company' ? 'Companies' : 'Employees'}, please ${type === 'company' ? 'upgrade your plan' : 'purchase more slots'}.`,
+      confirmText: 'Update Plan', // Kept generic "Update Plan"
+      onConfirm: () => {
+        // For companies, go to settings. For employees, open AddonModal as it's about slots.
+        if (type === 'company') {
+          navigate('/settings?tab=subscription');
+        } else {
+          setIsAddonModalOpen(true);
+        }
+        setConfirmation(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
   const handleDrawerSubmit = async (data: any) => {
     try {
       if (drawerMode === 'company') {
@@ -120,7 +157,13 @@ const Dashboard = () => {
       }
       setIsDrawerOpen(false);
     } catch (error: any) {
-      setToast({ message: error.message || 'Operation failed', type: 'error' });
+      if (error.message && error.message.includes('limit reached')) {
+        // Parse limit if needed or just show generic message based on error
+        // The error message from backend: "Company limit reached (2). Plan allows 2..."
+        openLimitModal(drawerMode, 0, 0);
+      } else {
+        setToast({ message: error.message || 'Operation failed', type: 'error' });
+      }
     }
   };
 
@@ -298,12 +341,14 @@ const Dashboard = () => {
                 description="Access detailed analytics"
                 bgColor="bg-gradient-to-br from-purple-500 to-purple-600"
               />
-              <QuickAction
-                icon={CreditCard}
-                title="Change Plan"
-                description="Change subscription plan"
-                bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
-              />
+              <div onClick={() => setIsAddonModalOpen(true)} className="cursor-pointer">
+                <QuickAction
+                  icon={CreditCard}
+                  title="Change Plan"
+                  description="Change subscription plan"
+                  bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
+                />
+              </div>
             </div>
           </div>
 
@@ -355,7 +400,10 @@ const Dashboard = () => {
                   <p className="text-sm text-gray-600 mb-6">
                     You can add {dashboardData.remainingSlots || 0} more employees to your current plan
                   </p>
-                  <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                  <button
+                    onClick={() => setIsAddonModalOpen(true)}
+                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  >
                     Get More Slots
                   </button>
                 </div>
@@ -382,6 +430,30 @@ const Dashboard = () => {
           onClose={() => setToast(null)}
         />
       )}
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmation.isOpen}
+        onClose={() => setConfirmation(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmation.onConfirm}
+        title={confirmation.title}
+        message={confirmation.message}
+        type={confirmation.type}
+        confirmText={confirmation.confirmText}
+      />
+
+      {/* Addon Modal */}
+      <AddonModal
+        isOpen={isAddonModalOpen}
+        onClose={() => setIsAddonModalOpen(false)}
+        onSuccess={() => {
+          setToast({ message: 'Slots purchased successfully!', type: 'success' });
+          fetchSummary();
+        }}
+        onUpgradePlan={() => {
+          setIsAddonModalOpen(false);
+          navigate('/settings?tab=subscription');
+        }}
+      />
     </div>
   );
 };

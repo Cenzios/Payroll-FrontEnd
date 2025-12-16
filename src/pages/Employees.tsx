@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Plus, Search, MoreVertical, Phone, Mail, MapPin, Calendar, DollarSign, User, Briefcase, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Search, MoreVertical, Phone, Mail, MapPin, Calendar, DollarSign, User, Briefcase, Loader2, Edit, Trash2, Ban } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import UniversalDrawer from '../components/UniversalDrawer';
 import SuccessModal from '../components/SuccessModal';
+import ConfirmationModal from '../components/ConfirmationModal'; // Import ConfirmationModal
+import AddonModal from '../components/AddonModal'; // Import AddonModal
 import { useAppSelector } from '../store/hooks';
 import { employeeApi } from '../api/employeeApi';
 import { Employee } from '../types/employee.types';
@@ -15,22 +17,48 @@ const Employees = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [search, setSearch] = useState('');
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
+
+    // Kebab Menu State
+    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    // Confirmation Modal State
+    const [confirmation, setConfirmation] = useState<{
+        isOpen: boolean;
+        type: 'danger' | 'warning' | 'info';
+        title: string;
+        message: string;
+        confirmText?: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        type: 'danger',
+        title: '',
+        message: '',
+        onConfirm: () => { },
+    });
+
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    // Edit State
+    const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
     // Fetch Employees
     const fetchEmployees = async () => {
         if (!selectedCompanyId) return;
         try {
             setIsLoading(true);
-            const data = await employeeApi.getEmployees(selectedCompanyId, 1, 100, search); // Fetch all for now or pagination later
+            const data = await employeeApi.getEmployees(selectedCompanyId, 1, 100, search);
             setEmployees(data.employees);
 
-            // Should we auto-select the first one?
-            // if (data.employees.length > 0 && !selectedEmployee) {
-            //     setSelectedEmployee(data.employees[0]);
-            // }
+            // Refresh selected employee if it was updated
+            if (selectedEmployee) {
+                const updated = data.employees.find(e => e.id === selectedEmployee.id);
+                if (updated) setSelectedEmployee(updated);
+            }
         } catch (error: any) {
             setToast({ message: error.message, type: 'error' });
         } finally {
@@ -42,21 +70,112 @@ const Employees = () => {
         fetchEmployees();
     }, [selectedCompanyId, search]);
 
-    const handleAddEmployee = async (data: any) => {
+    // Close menu on outside click
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setActiveMenuId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleOpenLimitModal = () => {
+        setConfirmation({
+            isOpen: true,
+            type: 'warning',
+            title: 'Employee Limit Reached',
+            message: 'You’ve reached the maximum number of Employees allowed on your current plan. To add more Employees, please upgrade your plan.',
+            confirmText: 'Update Plan', // Reverted to Update Plan as per user request to not change UI
+            onConfirm: () => {
+                setIsAddonModalOpen(true);
+                setConfirmation(prev => ({ ...prev, isOpen: false }));
+            }
+        });
+    };
+
+    const handleDrawerSubmit = async (data: any) => {
         try {
-            await employeeApi.createEmployee(data);
+            if (editingEmployee) {
+                if (!selectedCompanyId) throw new Error("No company selected");
+                await employeeApi.updateEmployee(selectedCompanyId, editingEmployee.id, data);
+            } else {
+                await employeeApi.createEmployee(data);
+            }
             setIsDrawerOpen(false);
-            setModalMessage('The employee has been successfully saved.');
+            setEditingEmployee(null); // Reset edit state
+            setModalMessage(editingEmployee ? 'The employee has been successfully updated.' : 'The employee has been successfully saved.');
             setShowSuccessModal(true);
             fetchEmployees();
         } catch (error: any) {
-            setToast({ message: error.message || 'Failed to add employee', type: 'error' });
-            throw error; // Re-throw to keep drawer open or handle error in drawer? Drawer catches it.
+            if (error.message && error.message.includes('limit reached')) {
+                handleOpenLimitModal();
+            } else {
+                setToast({ message: error.message || 'Operation failed', type: 'error' });
+            }
+            throw error;
         }
     };
 
-    // Derived state for filtered list if client-side search preferred, but we use backend search
-    // const filteredEmployees = employees; 
+    const handleEdit = (employee: Employee) => {
+        setEditingEmployee(employee);
+        setIsDrawerOpen(true);
+        setActiveMenuId(null);
+    };
+
+    const handleDeactivate = (employee: Employee) => {
+        setActiveMenuId(null);
+        setConfirmation({
+            isOpen: true,
+            type: 'warning',
+            title: 'Deactivate Employee?',
+            message: `Are you sure you want to deactivate ${employee.fullName}? They will not be able to log in.`,
+            onConfirm: async () => {
+                try {
+                    if (!selectedCompanyId) return;
+                    // Assuming updateEmployee handles partial updates including status
+                    await employeeApi.updateEmployee(selectedCompanyId, employee.id, { status: 'INACTIVE' } as any);
+                    setToast({ message: 'Employee deactivated successfully', type: 'success' });
+                    fetchEmployees();
+                } catch (error: any) {
+                    setToast({ message: error.message || 'Failed to deactivate', type: 'error' });
+                } finally {
+                    setConfirmation(prev => ({ ...prev, isOpen: false }));
+                }
+            }
+        });
+    };
+
+    const handleRemove = (employee: Employee) => {
+        setActiveMenuId(null);
+        setConfirmation({
+            isOpen: true,
+            type: 'danger',
+            title: 'Remove Employee?',
+            message: `Are you sure you want to permanently remove ${employee.fullName}? This action cannot be undone.`,
+            onConfirm: async () => {
+                try {
+                    if (!selectedCompanyId) return;
+                    await employeeApi.deleteEmployee(selectedCompanyId, employee.id);
+                    setToast({ message: 'Employee removed successfully', type: 'success' });
+                    // Provide feedback - maybe navigate away if selected?
+                    if (selectedEmployee?.id === employee.id) setSelectedEmployee(null);
+                    fetchEmployees();
+                } catch (error: any) {
+                    setToast({ message: error.message || 'Failed to remove', type: 'error' });
+                } finally {
+                    setConfirmation(prev => ({ ...prev, isOpen: false }));
+                }
+            }
+        });
+    };
+
+    // Helper for adding new
+    const openAddDrawer = () => {
+        setEditingEmployee(null);
+        setIsDrawerOpen(true);
+    };
 
     return (
         <div className="flex min-h-screen bg-gray-50">
@@ -76,18 +195,17 @@ const Employees = () => {
                                     setToast({ message: 'Please select a company from the Dashboard first.', type: 'error' });
                                     return;
                                 }
-                                setIsDrawerOpen(true);
+                                openAddDrawer();
                             }}
                             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                         >
                             <span className="hidden sm:inline">Add Employee</span>
                             <Plus className="w-5 h-5" />
                         </button>
-                        {/* Notification and Profile icons can go here matching dashboard */}
                     </div>
                 </header>
 
-                {/* Main Content - Two Column Layout */}
+                {/* Main Content */}
                 {!selectedCompanyId ? (
                     <div className="flex-1 flex items-center justify-center">
                         <div className="text-center">
@@ -125,12 +243,12 @@ const Employees = () => {
                                         No employees found.
                                     </div>
                                 ) : (
-                                    <div className="divide-y divide-gray-50">
+                                    <div className="divide-y divide-gray-50 pb-20"> {/* pb-20 for menu space */}
                                         {employees.map((emp) => (
                                             <div
                                                 key={emp.id}
                                                 onClick={() => setSelectedEmployee(emp)}
-                                                className={`p-4 flex items-center justify-between cursor-pointer transition-colors hover:bg-gray-50 ${selectedEmployee?.id === emp.id ? 'bg-blue-50/60' : ''
+                                                className={`p-4 flex items-center justify-between cursor-pointer transition-colors hover:bg-gray-50 group ${selectedEmployee?.id === emp.id ? 'bg-blue-50/60' : ''
                                                     }`}
                                             >
                                                 <div className="flex items-center gap-3 overflow-hidden">
@@ -141,18 +259,61 @@ const Employees = () => {
                                                         </span>
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <h4 className="text-sm font-medium text-gray-900 truncate">{emp.fullName}</h4>
+                                                        <div className="flex items-center gap-2">
+                                                            <h4 className="text-sm font-medium text-gray-900 truncate">{emp.fullName}</h4>
+                                                            {emp.status === 'INACTIVE' && (
+                                                                <span className="px-1.5 py-0.5 bg-red-100 text-red-600 text-[10px] rounded font-medium">Inactive</span>
+                                                            )}
+                                                        </div>
                                                         <p className="text-xs text-gray-500 truncate">{emp.email || 'No email'}</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-4 shrink-0">
+
+                                                <div className="flex items-center gap-2 shrink-0 relative"> {/* Relative for menu */}
                                                     <div className="text-xs text-gray-400 flex items-center gap-1">
                                                         <Phone className="w-3 h-3" />
                                                         <span className="hidden sm:inline">{emp.contactNumber}</span>
                                                     </div>
-                                                    <button className="text-gray-400 hover:text-gray-600">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setActiveMenuId(activeMenuId === emp.id ? null : emp.id);
+                                                        }}
+                                                        className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+                                                    >
                                                         <MoreVertical className="w-4 h-4" />
                                                     </button>
+
+                                                    {/* Kebab Menu */}
+                                                    {activeMenuId === emp.id && (
+                                                        <div
+                                                            ref={menuRef}
+                                                            className="absolute right-0 top-8 w-40 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-1"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            <button
+                                                                onClick={() => handleEdit(emp)}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeactivate(emp)}
+                                                                className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
+                                                            >
+                                                                <Ban className="w-4 h-4" />
+                                                                Deactivate
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleRemove(emp)}
+                                                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                                Remove
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
@@ -177,8 +338,8 @@ const Employees = () => {
                                                 <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
                                                     {selectedEmployee.designation}
                                                 </span>
-                                                <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">
-                                                    Active
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${selectedEmployee.status === 'INACTIVE' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                                                    {selectedEmployee.status || 'Active'}
                                                 </span>
                                             </div>
                                         </div>
@@ -196,6 +357,7 @@ const Employees = () => {
                                             </div>
                                         </div>
 
+                                        {/* ... (Other details same as before) */}
                                         <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50/50">
                                             <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400">
                                                 <Mail className="w-5 h-5" />
@@ -251,6 +413,7 @@ const Employees = () => {
                                                 </div>
                                             </div>
                                         </div>
+
                                     </div>
                                 </div>
                             ) : (
@@ -266,21 +429,53 @@ const Employees = () => {
                 )}
             </div>
 
-            {/* Add Employee Drawer */}
+            {/* Universal Drawer (Add/Edit) */}
             <UniversalDrawer
                 isOpen={isDrawerOpen}
-                onClose={() => setIsDrawerOpen(false)}
-                onSubmit={handleAddEmployee}
+                onClose={() => {
+                    setIsDrawerOpen(false);
+                    setEditingEmployee(null);
+                }}
+                onSubmit={handleDrawerSubmit}
                 mode="employee"
                 companyId={selectedCompanyId || undefined}
+                initialData={editingEmployee || undefined}
             />
 
             {/* Success Modal */}
             <SuccessModal
                 isOpen={showSuccessModal}
                 onClose={() => setShowSuccessModal(false)}
-                title="Employee Added"
+                title={editingEmployee ? "Employee Updated" : "Employee Added"}
                 message={modalMessage}
+            />
+
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={confirmation.isOpen}
+                onClose={() => setConfirmation(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmation.onConfirm}
+                title={confirmation.title}
+                message={confirmation.message}
+                type={confirmation.type}
+                confirmText={confirmation.confirmText}
+            />
+
+            {/* Addon Modal */}
+            <AddonModal
+                isOpen={isAddonModalOpen}
+                onClose={() => setIsAddonModalOpen(false)}
+                onSuccess={() => {
+                    setToast({ message: 'Slots purchased successfully!', type: 'success' });
+                    // Optionally refresh data - employees not affected directly unless we show limits here? 
+                    // But we can re-fetch just in case.
+                    fetchEmployees();
+                }}
+                onUpgradePlan={() => {
+                    setIsAddonModalOpen(false);
+                    // Navigate to subscription
+                    window.location.href = '/settings?tab=subscription';
+                }}
             />
 
             {/* Toast */}

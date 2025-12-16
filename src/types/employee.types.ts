@@ -11,6 +11,7 @@ export interface Employee {
     email?: string;
     dailyRate: number;
     epfEnabled: boolean;
+    status: 'ACTIVE' | 'INACTIVE';
     companyId: string;
     createdAt?: string;
     updatedAt?: string;

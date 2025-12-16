@@ -8,10 +8,11 @@ interface UniversalDrawerProps {
     onClose: () => void;
     onSubmit: (data: any) => Promise<void>;
     mode: 'company' | 'employee';
-    companyId?: string; // Required for employee mode
+    companyId?: string;
+    initialData?: any; // For edit mode
 }
 
-const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId }: UniversalDrawerProps) => {
+const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialData }: UniversalDrawerProps) => {
     // Company Form State
     const [companyData, setCompanyData] = useState<CreateCompanyRequest>({
         name: '',
@@ -38,12 +39,50 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId }: Univers
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Reset forms when drawer opens/closes or mode changes
+    // Reset forms when drawer opens/closes or mode changes or initialData changes
     useEffect(() => {
-        if (!isOpen) {
-            // Logic when closed can go here
+        if (isOpen) {
+            if (mode === 'company') {
+                // If editing company in future
+                if (initialData) {
+                    setCompanyData(initialData);
+                } else {
+                    setCompanyData({
+                        name: '',
+                        email: '',
+                        address: '',
+                        contactNumber: '',
+                        departments: [],
+                    });
+                }
+            } else {
+                if (initialData) {
+                    // Pre-fill employee data
+                    setEmployeeData({
+                        ...initialData,
+                        // Ensure optional fields are handled or API response mapped correctly
+                        // Note: API response might have different field names if not careful, but checked types match mostly.
+                        // joinedDate from API is ISO string, input type=date needs YYYY-MM-DD
+                        joinedDate: initialData.joinedDate ? new Date(initialData.joinedDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                    });
+                } else {
+                    // Reset for new employee
+                    setEmployeeData({
+                        fullName: '',
+                        address: '',
+                        nic: 'PENDING',
+                        employeeId: '',
+                        contactNumber: '',
+                        joinedDate: new Date().toISOString().split('T')[0],
+                        designation: '',
+                        department: 'General',
+                        email: '',
+                        dailyRate: 0,
+                    });
+                }
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, mode, initialData]);
 
     const handleCompanyChange = (field: keyof CreateCompanyRequest, value: string) => {
         setCompanyData((prev) => ({ ...prev, [field]: value }));
@@ -70,46 +109,65 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId }: Univers
         }));
     };
 
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const validate = () => {
+        const newErrors: Record<string, string> = {};
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        // Phone must start with +94 and followed by digits (e.g. +94 771234567)
+        // User example: +94 711186028. Allowing optional space.
+        const phoneRegex = /^\+94\s?\d{9}$/;
+
+        if (mode === 'company') {
+            if (companyData.email && !emailRegex.test(companyData.email)) {
+                newErrors.email = "Invalid email format";
+            }
+            if (companyData.contactNumber && !phoneRegex.test(companyData.contactNumber)) {
+                newErrors.contactNumber = "Phone must match format: +94 7xxxxxxx";
+            }
+        } else {
+            if (employeeData.email && !emailRegex.test(employeeData.email)) {
+                newErrors.email = "Invalid email format";
+            }
+            if (employeeData.contactNumber && !phoneRegex.test(employeeData.contactNumber)) {
+                newErrors.contactNumber = "Phone must match format: +94 7xxxxxxx";
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
+
+        if (!validate()) return;
+
         setIsSubmitting(true);
         try {
             if (mode === 'company') {
                 await onSubmit(companyData);
-                setCompanyData({
-                    name: '',
-                    address: '',
-                    email: '',
-                    contactNumber: '',
-                    departments: [],
-                });
+                // Don't reset if editing? For now assume close on submit
             } else {
-                if (!companyId) throw new Error("Company ID is missing");
+                if (!companyId && !initialData) { // If editing, maybe we don't need companyId passed if it's in data? But safe to require.
+                    // Actually for update, companyId is required by API
+                    if (!companyId && !employeeData.companyId) throw new Error("Company ID is missing");
+                }
 
                 const finalEmployeeData = {
                     ...employeeData,
-                    companyId,
+                    companyId: companyId || employeeData.companyId,
                     // Ensure defaults if empty
                     department: employeeData.department || 'General',
                     nic: employeeData.nic || 'PENDING',
                 } as CreateEmployeeRequest;
 
                 await onSubmit(finalEmployeeData);
-                setEmployeeData({
-                    fullName: '',
-                    address: '',
-                    nic: 'PENDING',
-                    employeeId: '',
-                    contactNumber: '',
-                    joinedDate: new Date().toISOString().split('T')[0],
-                    designation: '',
-                    department: 'General',
-                    email: '',
-                    dailyRate: 0,
-                });
             }
         } catch (error) {
             console.error(error);
+            // Parent handles toast? Yes.
+            throw error; // Rethrow so parent catches it for limit modal
         } finally {
             setIsSubmitting(false);
         }
@@ -124,7 +182,10 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId }: Univers
     if (!isOpen) return null;
 
     const isCompany = mode === 'company';
-    const title = isCompany ? 'Add new Company' : 'Add new Employee';
+    const isEdit = !!initialData;
+    const title = isCompany
+        ? (isEdit ? 'Edit Company' : 'Add New Company')
+        : (isEdit ? 'Edit Employee' : 'Add New Employee');
     const Icon = isCompany ? Building2 : UserPlus;
 
     return (
@@ -206,8 +267,9 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId }: Univers
                                                         value={companyData.email}
                                                         onChange={(e) => handleCompanyChange('email', e.target.value)}
                                                         placeholder="company@example.com"
-                                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                     />
+                                                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                                                 </div>
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
@@ -216,9 +278,10 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId }: Univers
                                                         required
                                                         value={companyData.contactNumber}
                                                         onChange={(e) => handleCompanyChange('contactNumber', e.target.value)}
-                                                        placeholder="+1 555 0000"
-                                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                        placeholder="+94 77 123 0000"
+                                                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${errors.contactNumber ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                     />
+                                                    {errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
                                                 </div>
                                             </div>
                                         </div>
@@ -271,8 +334,25 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId }: Univers
                                                     value={employeeData.email}
                                                     onChange={(e) => handleEmployeeChange('email', e.target.value)}
                                                     placeholder="employee@example.com"
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                 />
+                                                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                                            </div>
+
+                                            {/* ... */}
+
+                                            {/* Contact Number */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
+                                                <input
+                                                    type="tel"
+                                                    required
+                                                    value={employeeData.contactNumber}
+                                                    onChange={(e) => handleEmployeeChange('contactNumber', e.target.value)}
+                                                    placeholder="+94 77 123 4567"
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${errors.contactNumber ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                />
+                                                {errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
                                             </div>
                                             {/* Designation */}
                                             <div>
@@ -293,10 +373,10 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId }: Univers
                                                     type="number"
                                                     required
                                                     min="0"
-                                                    value={employeeData.dailyRate}
+                                                    value={employeeData.dailyRate || ''}
                                                     onChange={(e) => handleEmployeeChange('dailyRate', parseFloat(e.target.value) || 0)}
                                                     placeholder="0.00"
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                 />
                                             </div>
                                             {/* Address */}
@@ -311,18 +391,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId }: Univers
                                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                                                 />
                                             </div>
-                                            {/* Contact Number */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
-                                                <input
-                                                    type="tel"
-                                                    required
-                                                    value={employeeData.contactNumber}
-                                                    onChange={(e) => handleEmployeeChange('contactNumber', e.target.value)}
-                                                    placeholder="+94 77 123 4567"
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                                                />
-                                            </div>
+                                        
                                             {/* Joined Date */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Joined Date</label>
@@ -353,7 +422,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId }: Univers
                             className={`w-full text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isCompany ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
                                 }`}
                         >
-                            {isSubmitting ? 'Creating...' : 'Finish'}
+                            {isSubmitting ? 'Saving...' : (isEdit ? 'Update' : 'Finish')}
                         </button>
                     </div>
                 </div >
