@@ -33,10 +33,7 @@ export const employeeApi = {
     deleteEmployee: async (companyId: string, employeeId: string): Promise<void> => {
         try {
             await axiosInstance.delete(`/employee/${employeeId}`, {
-                data: { companyId } // Pass companyId in body if required by backend check, or query? 
-                // Backend deleteEmployee checks: const company = await prisma.company.findFirst({ where: { id: companyId, ownerId: userId } });
-                // But usually DELETE requests don't have body in some clients/servers? 
-                // Actually my backend controller: const { companyId } = req.body; check employee.controller.ts
+                params: { companyId }
             });
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Failed to delete employee');

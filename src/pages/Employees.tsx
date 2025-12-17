@@ -156,7 +156,11 @@ const Employees = () => {
             message: `Are you sure you want to permanently remove ${employee.fullName}? This action cannot be undone.`,
             onConfirm: async () => {
                 try {
-                    if (!selectedCompanyId) return;
+                    if (!selectedCompanyId) {
+                        setToast({ message: "Company ID is missing", type: "error" });
+                        return;
+                    }
+                    // Pass companyId in data object for DELETE request
                     await employeeApi.deleteEmployee(selectedCompanyId, employee.id);
                     setToast({ message: 'Employee removed successfully', type: 'success' });
                     // Provide feedback - maybe navigate away if selected?
@@ -164,6 +168,28 @@ const Employees = () => {
                     fetchEmployees();
                 } catch (error: any) {
                     setToast({ message: error.message || 'Failed to remove', type: 'error' });
+                } finally {
+                    setConfirmation(prev => ({ ...prev, isOpen: false }));
+                }
+            }
+        });
+    };
+
+    const handleActivate = (employee: Employee) => {
+        setActiveMenuId(null);
+        setConfirmation({
+            isOpen: true,
+            type: 'info',
+            title: 'Activate Employee?',
+            message: `Are you sure you want to activate ${employee.fullName}? They will be able to log in.`,
+            onConfirm: async () => {
+                try {
+                    if (!selectedCompanyId) return;
+                    await employeeApi.updateEmployee(selectedCompanyId, employee.id, { status: 'ACTIVE' } as any);
+                    setToast({ message: 'Employee activated successfully', type: 'success' });
+                    fetchEmployees();
+                } catch (error: any) {
+                    setToast({ message: error.message || 'Failed to activate', type: 'error' });
                 } finally {
                     setConfirmation(prev => ({ ...prev, isOpen: false }));
                 }
@@ -298,13 +324,23 @@ const Employees = () => {
                                                                 <Edit className="w-4 h-4" />
                                                                 Edit
                                                             </button>
-                                                            <button
-                                                                onClick={() => handleDeactivate(emp)}
-                                                                className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
-                                                            >
-                                                                <Ban className="w-4 h-4" />
-                                                                Deactivate
-                                                            </button>
+                                                            {emp.status === 'INACTIVE' ? (
+                                                                <button
+                                                                    onClick={() => handleActivate(emp)}
+                                                                    className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+                                                                >
+                                                                    <User className="w-4 h-4" />
+                                                                    Activate
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => handleDeactivate(emp)}
+                                                                    className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
+                                                                >
+                                                                    <Ban className="w-4 h-4" />
+                                                                    Deactivate
+                                                                </button>
+                                                            )}
                                                             <button
                                                                 onClick={() => handleRemove(emp)}
                                                                 className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
