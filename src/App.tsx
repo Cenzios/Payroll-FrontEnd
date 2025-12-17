@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Companies from './pages/Companies';
 import Employees from './pages/Employees';
+import Salary from './pages/Salary'; // Import Salary
 import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
@@ -69,9 +70,7 @@ function App() {
           path="/salary"
           element={
             <ProtectedRoute>
-              <div className="flex items-center justify-center h-screen">
-                <h1 className="text-2xl font-bold text-gray-900">Salary Page - Coming Soon</h1>
-              </div>
+              <Salary />
             </ProtectedRoute>
           }
         />
