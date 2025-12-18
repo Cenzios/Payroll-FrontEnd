@@ -207,7 +207,7 @@ const Employees = () => {
         <div className="flex min-h-screen bg-gray-50">
             <Sidebar />
 
-            <div className="flex-1 ml-64 p-8 h-screen overflow-hidden flex flex-col">
+            <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
                 {/* Header */}
                 <header className="flex items-center justify-between mb-8 shrink-0">
                     <div>
@@ -241,7 +241,7 @@ const Employees = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex gap-6 flex-1 overflow-hidden">
+                    <div className="flex gap-6">
                         {/* Left Column - Employee List */}
                         <div className="w-1/3 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
                             {/* Search */}
@@ -259,7 +259,7 @@ const Employees = () => {
                             </div>
 
                             {/* List */}
-                            <div className="flex-1 overflow-y-auto">
+                            <div className="max-h-[calc(100vh-220px)] overflow-y-auto">
                                 {isLoading ? (
                                     <div className="flex justify-center p-8">
                                         <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
@@ -359,7 +359,7 @@ const Employees = () => {
                         </div>
 
                         {/* Right Column - Employee Details */}
-                        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-y-auto">
+                        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100">
                             {selectedEmployee ? (
                                 <div className="p-8">
                                     {/* Profile Header */}

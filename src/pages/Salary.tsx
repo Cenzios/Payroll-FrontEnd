@@ -13,7 +13,9 @@ import {
     setCompanyWorkingDays,
     setEmployeeWorkedDays,
     toggleEpfEtf,
-    setPreviewPayslip
+    setPreviewPayslip,
+    setMonth,
+    setYear
 } from '../store/slices/salarySlice';
 
 const Salary = () => {
@@ -76,8 +78,7 @@ const Salary = () => {
     };
 
     // Handle Generate Pay Slip
-    const handleGeneratePayslip = async (emp: Employee) => { // Accepted emp as arg
-        // Set selected immediately for UI feedback if needed, although user said "One active at a time"
+    const handleGeneratePayslip = async (emp: Employee) => {
         setSelectedEmployee(emp);
 
         const { workedDays, isEpfEnabled } = getEmployeeValues(emp.id);
@@ -119,7 +120,7 @@ const Salary = () => {
         try {
             await salaryApi.saveSalary({
                 companyId: selectedCompanyId,
-                employeeId: emp.id, // Use UUID for backend lookup
+                employeeId: emp.id,
                 month: selectedMonth + 1,
                 year: selectedYear,
                 workingDays: workedDays,
@@ -139,7 +140,6 @@ const Salary = () => {
 
     const handleSelectEmployee = (emp: Employee) => {
         setSelectedEmployee(emp);
-        // Note: Inputs are now controlled by Redux, so no need to reset local state.
     };
 
     // Export Functions
@@ -152,7 +152,7 @@ const Salary = () => {
         doc.setFontSize(18);
         doc.text('COMPANY NAME (PVT) LTD', 105, 20, { align: 'center' });
         doc.setFontSize(12);
-        doc.text(`PAY SLIP - ${new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}`, 105, 30, { align: 'center' });
+        doc.text(`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`, 105, 30, { align: 'center' });
 
         doc.line(14, 35, 196, 35);
 
@@ -164,7 +164,6 @@ const Salary = () => {
 
         // Earnings
         doc.setFontSize(11);
-        doc.font = "bold";
         doc.text('EARNINGS', 14, 70);
 
         autoTable(doc, {
@@ -208,7 +207,7 @@ const Salary = () => {
         doc.text('NET SALARY', 14, currentY + 8);
         doc.text(`Net Salary Payable (Rs.) : ${previewPayslip.netSalary.toLocaleString()}`, 196, currentY + 8, { align: 'right' });
         doc.line(14, currentY + 12, 196, currentY + 12);
-        doc.line(14, currentY + 14, 196, currentY + 14); // Double line
+        doc.line(14, currentY + 14, 196, currentY + 14);
 
         currentY += 25;
 
@@ -236,7 +235,7 @@ const Salary = () => {
 
         doc.text('Employee Sign : ___________________', 14, currentY + 30);
 
-        doc.save(`Payslip_${selectedEmployee.employeeId}_${new Date().getMonth() + 1}_${new Date().getFullYear()}.pdf`);
+        doc.save(`Payslip_${selectedEmployee.employeeId}_${selectedMonth + 1}_${selectedYear}.pdf`);
     };
 
     const exportExcel = () => {
@@ -244,7 +243,7 @@ const Salary = () => {
 
         const wsData = [
             ['COMPANY NAME (PVT) LTD'],
-            [`PAY SLIP - ${new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}`],
+            [`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
             [],
             ['Employee Name', selectedEmployee.fullName],
             ['Employee No', selectedEmployee.employeeId],
@@ -278,7 +277,7 @@ const Salary = () => {
 
         const wsData = [
             ['COMPANY NAME (PVT) LTD'],
-            [`PAY SLIP - ${new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}`],
+            [`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
             [],
             ['Employee Name', selectedEmployee.fullName],
             ['Employee No', selectedEmployee.employeeId],
@@ -339,11 +338,29 @@ const Salary = () => {
                             className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                         />
                     </div>
-                    {/* Month Picker Placeholder */}
+                    {/* Month & Year Pickers */}
                     <div className="flex items-center gap-4">
-                        <div className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium">
-                            {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
-                        </div>
+                        <select
+                            value={selectedMonth}
+                            onChange={(e) => dispatch(setMonth(parseInt(e.target.value)))}
+                            className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
+                        >
+                            {Array.from({ length: 12 }, (_, i) => (
+                                <option key={i} value={i}>
+                                    {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                                </option>
+                            ))}
+                        </select>
+                        <select
+                            value={selectedYear}
+                            onChange={(e) => dispatch(setYear(parseInt(e.target.value)))}
+                            className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
+                        >
+                            {Array.from({ length: 6 }, (_, i) => {
+                                const year = new Date().getFullYear() - 5 + i;
+                                return <option key={year} value={year}>{year}</option>;
+                            })}
+                        </select>
                         {/* Working Days Editable Input within same style container */}
                         <div className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium flex items-center gap-2">
                             <span>Working Days:</span>
@@ -481,7 +498,7 @@ const Salary = () => {
                                                 {/* Header */}
                                                 <div className="text-center mb-6 border-b-2 border-gray-800 pb-4">
                                                     <h2 className="text-lg font-bold uppercase tracking-wider">Company Name (Pvt) Ltd</h2>
-                                                    <p className="text-xs font-semibold mt-1">Pay Slip - {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+                                                    <p className="text-xs font-semibold mt-1">Pay Slip - {new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
                                                 </div>
 
                                                 {/* Emp Details */}
@@ -557,7 +574,7 @@ const Salary = () => {
                                             </div>
                                         </div>
 
-                                        {/* Action Buttons - Now inside scrollable area */}
+                                        {/* Action Buttons */}
                                         <div className="p-4 border-t border-gray-200 bg-gray-50 space-y-3 mx-4 mb-4 rounded-lg">
                                             <button
                                                 onClick={exportPDF}
