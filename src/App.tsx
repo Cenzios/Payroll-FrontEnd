@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Companies from './pages/Companies';
 import Employees from './pages/Employees';
 import Salary from './pages/Salary'; // Import Salary
+import Reports from './pages/Reports';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
@@ -78,9 +79,7 @@ function App() {
           path="/reports"
           element={
             <ProtectedRoute>
-              <div className="flex items-center justify-center h-screen">
-                <h1 className="text-2xl font-bold text-gray-900">Reports Page - Coming Soon</h1>
-              </div>
+              <Reports />
             </ProtectedRoute>
           }
         />
