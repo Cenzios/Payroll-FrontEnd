@@ -5,6 +5,7 @@ import { useAppSelector } from '../store/hooks';
 import { salaryApi } from '../api/salaryApi';
 import Toast from '../components/Toast';
 import EmployeePayrollModal from '../components/EmployeePayrollModal';
+import AllEmployeesSummaryModal from '../components/AllEmployeesSummaryModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -32,7 +33,9 @@ const Reports = () => {
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAllEmployeesModalOpen, setIsAllEmployeesModalOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; companyId: string } | null>(null);
+    const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
 
     const checkAndUpdateData = async () => {
         if (!selectedCompanyId) return;
@@ -185,6 +188,22 @@ const Reports = () => {
         document.body.removeChild(link);
     };
 
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedEmployeeIds(filtereddata.map(emp => emp.employeeId));
+        } else {
+            setSelectedEmployeeIds([]);
+        }
+    };
+
+    const handleSelectEmployee = (employeeId: string) => {
+        setSelectedEmployeeIds(prev =>
+            prev.includes(employeeId)
+                ? prev.filter(id => id !== employeeId)
+                : [...prev, employeeId]
+        );
+    };
+
 
     return (
         <div className="flex min-h-screen bg-gray-50">
@@ -270,6 +289,13 @@ const Reports = () => {
                             <button onClick={exportCSV} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded hover:bg-blue-100 border border-blue-100 transition-colors">
                                 <Download className="w-3.5 h-3.5" /> Export CSV
                             </button>
+                            <button
+                                onClick={() => setIsAllEmployeesModalOpen(true)}
+                                disabled={selectedEmployeeIds.length === 0}
+                                className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded hover:bg-indigo-100 border border-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <FileText className="w-3.5 h-3.5" /> View Employee
+                            </button>
                         </div>
                     </div>
 
@@ -288,6 +314,14 @@ const Reports = () => {
                         <table className="w-full text-left text-sm">
                             <thead className="bg-gray-50 text-gray-600 font-semibold sticky top-0 z-10">
                                 <tr>
+                                    <th className="px-4 py-3 border-b border-gray-200">
+                                        <input
+                                            type="checkbox"
+                                            onChange={handleSelectAll}
+                                            checked={filtereddata.length > 0 && selectedEmployeeIds.length === filtereddata.length}
+                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                        />
+                                    </th>
                                     <th className="px-6 py-3 border-b border-gray-200">Employee ID</th>
                                     <th className="px-6 py-3 border-b border-gray-200">Employee Name</th>
                                     <th className="px-6 py-3 border-b border-gray-200">Working Days</th>
@@ -300,17 +334,25 @@ const Reports = () => {
                             <tbody className="divide-y divide-gray-100">
                                 {isLoading ? (
                                     <tr>
-                                        <td colSpan={7} className="px-6 py-12 text-center">
+                                        <td colSpan={8} className="px-6 py-12 text-center">
                                             <div className="flex justify-center"><Loader2 className="w-6 h-6 text-blue-600 animate-spin" /></div>
                                         </td>
                                     </tr>
                                 ) : filtereddata.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="px-6 py-12 text-center text-gray-500">No records found.</td>
+                                        <td colSpan={8} className="px-6 py-12 text-center text-gray-500">No records found.</td>
                                     </tr>
                                 ) : (
                                     filtereddata.map((record, index) => (
                                         <tr key={index} className="hover:bg-gray-50 transition-colors group">
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedEmployeeIds.includes(record.employeeId)}
+                                                    onChange={() => handleSelectEmployee(record.employeeId)}
+                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                                />
+                                            </td>
                                             <td className="px-6 py-3 font-semibold text-gray-900">{record.employeeCode || '-'}</td>
                                             <td className="px-6 py-3 text-gray-700">{record.employeeName || '-'}</td>
                                             <td className="px-6 py-3 text-gray-600">{record.workingDays}</td>
@@ -378,6 +420,18 @@ const Reports = () => {
                     }}
                     employeeId={selectedEmployee.id}
                     companyId={selectedEmployee.companyId}
+                />
+            )}
+
+            {/* All Employees Summary Modal */}
+            {isAllEmployeesModalOpen && (
+                <AllEmployeesSummaryModal
+                    isOpen={isAllEmployeesModalOpen}
+                    onClose={() => setIsAllEmployeesModalOpen(false)}
+                    selectedEmployeeIds={selectedEmployeeIds}
+                    companyId={selectedCompanyId || ''}
+                    month={month + 1}
+                    year={year}
                 />
             )}
         </div>

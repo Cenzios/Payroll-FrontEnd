@@ -22,5 +22,29 @@ export const reportApi = {
             headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;
+    },
+
+    /**
+     * Get selected employees payroll summary
+     * @param companyId - UUID of the company
+     * @param employeeIds - Array of employee UUIDs
+     * @param month - Month number (1-12)
+     * @param year - Year
+     * @returns Combined payroll summary for selected employees
+     */
+    getSelectedEmployeesSummary: async (
+        companyId: string,
+        employeeIds: string[],
+        month: number,
+        year: number
+    ) => {
+        const token = localStorage.getItem('token');
+
+        const response = await axios.post(
+            `${API_URL}/reports/selected-employees-summary`,
+            { companyId, employeeIds, month, year },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        return response.data;
     }
 };
