@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Signup from './pages/Signup';
+import Settings from './pages/Settings';
 import VerifyInfo from './pages/VerifyInfo';
 import VerifyEmail from './pages/VerifyEmail';
 import SetPassword from './pages/SetPassword';
@@ -57,16 +58,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/staff"
-          element={
-            <ProtectedRoute>
-              <div className="flex items-center justify-center h-screen">
-                <h1 className="text-2xl font-bold text-gray-900">Staff Page - Coming Soon</h1>
-              </div>
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/salary"
           element={
@@ -87,9 +79,7 @@ function App() {
           path="/settings"
           element={
             <ProtectedRoute>
-              <div className="flex items-center justify-center h-screen">
-                <h1 className="text-2xl font-bold text-gray-900">Settings Page - Coming Soon</h1>
-              </div>
+              <Settings />
             </ProtectedRoute>
           }
         />

@@ -84,57 +84,122 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
         }
     }, [isOpen, mode, initialData]);
 
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\+94\s?\d{9}$/;
+
+    const validateField = (field: string, value: any, formMode: 'company' | 'employee') => {
+        let error = '';
+        if (formMode === 'company') {
+            switch (field) {
+                case 'name':
+                    if (!value || value.trim().length < 2) error = 'Name must be at least 2 characters';
+                    break;
+                case 'email':
+                    if (!value) error = 'Email is required';
+                    else if (!emailRegex.test(value)) error = 'Invalid email format';
+                    break;
+                case 'contactNumber':
+                    if (!value) error = 'Contact number is required';
+                    else if (!phoneRegex.test(value)) error = 'Must be +94 followed by 9 digits';
+                    break;
+                case 'address':
+                    if (!value || !value.trim()) error = 'Address is required';
+                    break;
+            }
+        } else {
+            switch (field) {
+                case 'fullName':
+                    if (!value || value.trim().length < 2) error = 'Full name must be at least 2 characters';
+                    break;
+                case 'employeeId':
+                    if (!value || !value.trim()) error = 'Employee ID is required';
+                    break;
+                case 'email':
+                    if (value && value.trim() && !emailRegex.test(value.trim())) error = 'Invalid email format';
+                    break;
+                case 'contactNumber':
+                    if (!value) error = 'Contact number is required';
+                    else if (!phoneRegex.test(value)) error = 'Must be +94 followed by 9 digits';
+                    break;
+                case 'designation':
+                    if (!value || !value.trim()) error = 'Designation is required';
+                    break;
+                case 'dailyRate':
+                    if (value === undefined || value === null || value === '' || isNaN(Number(value))) error = 'Daily rate is required';
+                    else if (Number(value) <= 0) error = 'Daily rate must be a positive number';
+                    break;
+                case 'joinedDate':
+                    if (!value) error = 'Joined date is required';
+                    else if (new Date(value) > new Date()) error = 'Joined date cannot be in the future';
+                    break;
+                case 'address':
+                    if (!value || !value.trim()) error = 'Address is required';
+                    break;
+            }
+        }
+        return error;
+    };
+
+    const handleBlur = (field: string) => {
+        setTouched(prev => ({ ...prev, [field]: true }));
+        const value = mode === 'company' ? (companyData as any)[field] : (employeeData as any)[field];
+        const error = validateField(field, value, mode);
+        setErrors(prev => ({ ...prev, [field]: error }));
+    };
+
     const handleCompanyChange = (field: keyof CreateCompanyRequest, value: string) => {
         setCompanyData((prev) => ({ ...prev, [field]: value }));
+        const error = validateField(field, value, 'company');
+        setErrors(prev => ({ ...prev, [field]: error }));
     };
 
     const handleEmployeeChange = (field: keyof CreateEmployeeRequest, value: any) => {
         setEmployeeData((prev) => ({ ...prev, [field]: value }));
+        const error = validateField(field, value, 'employee');
+        setErrors(prev => ({ ...prev, [field]: error }));
     };
 
-    const handleAddDepartment = () => {
-        if (departmentInput.trim() && !companyData.departments.includes(departmentInput.trim())) {
-            setCompanyData((prev) => ({
-                ...prev,
-                departments: [...prev.departments, departmentInput.trim()],
-            }));
-            setDepartmentInput('');
+    const isFormValid = () => {
+        if (mode === 'company') {
+            const requiredFields: (keyof CreateCompanyRequest)[] = ['name', 'email', 'address', 'contactNumber'];
+            return requiredFields.every(field => !validateField(field, companyData[field], 'company'));
+        } else {
+            const requiredFields: (keyof CreateEmployeeRequest)[] = ['fullName', 'employeeId', 'contactNumber', 'designation', 'dailyRate', 'joinedDate', 'address'];
+            return requiredFields.every(field => !validateField(field, (employeeData as any)[field], 'employee')) &&
+                (!employeeData.email || !validateField('email', employeeData.email, 'employee'));
         }
     };
-
-    const handleRemoveDepartment = (dept: string) => {
-        setCompanyData((prev) => ({
-            ...prev,
-            departments: prev.departments.filter((d) => d !== dept),
-        }));
-    };
-
-    const [errors, setErrors] = useState<Record<string, string>>({});
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        // Phone must start with +94 and followed by digits (e.g. +94 771234567)
-        // User example: +94 711186028. Allowing optional space.
-        const phoneRegex = /^\+94\s?\d{9}$/;
-
         if (mode === 'company') {
-            if (companyData.email && !emailRegex.test(companyData.email)) {
-                newErrors.email = "Invalid email format";
-            }
-            if (companyData.contactNumber && !phoneRegex.test(companyData.contactNumber)) {
-                newErrors.contactNumber = "Phone must match format: +94 7xxxxxxx";
-            }
+            const fields: (keyof CreateCompanyRequest)[] = ['name', 'email', 'contactNumber', 'address'];
+            fields.forEach(f => {
+                const err = validateField(f, companyData[f], 'company');
+                if (err) newErrors[f] = err;
+            });
         } else {
-            if (employeeData.email && !emailRegex.test(employeeData.email)) {
-                newErrors.email = "Invalid email format";
-            }
-            if (employeeData.contactNumber && !phoneRegex.test(employeeData.contactNumber)) {
-                newErrors.contactNumber = "Phone must match format: +94 7xxxxxxx";
-            }
+            const fields: (keyof CreateEmployeeRequest)[] = ['fullName', 'employeeId', 'contactNumber', 'designation', 'dailyRate', 'joinedDate', 'address', 'email'];
+            fields.forEach(f => {
+                const err = validateField(f, (employeeData as any)[f], 'employee');
+                if (err) newErrors[f] = err;
+            });
         }
 
         setErrors(newErrors);
+        // Mark all as touched on submit attempt
+        const allTouched: Record<string, boolean> = {};
+        Object.keys(newErrors).forEach(k => allTouched[k] = true);
+        if (mode === 'company') {
+            ['name', 'email', 'contactNumber', 'address'].forEach(f => allTouched[f] = true);
+        } else {
+            ['fullName', 'employeeId', 'contactNumber', 'designation', 'dailyRate', 'joinedDate', 'address', 'email'].forEach(f => allTouched[f] = true);
+        }
+        setTouched(allTouched);
+
         return Object.keys(newErrors).length === 0;
     };
 
@@ -238,24 +303,26 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
                                                 <input
                                                     type="text"
-                                                    required
                                                     value={companyData.name}
                                                     onChange={(e) => handleCompanyChange('name', e.target.value)}
+                                                    onBlur={() => handleBlur('name')}
                                                     placeholder="Enter company name"
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.name && errors.name ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                 />
+                                                {touched.name && errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                                             </div>
                                             {/* Address */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
                                                 <input
                                                     type="text"
-                                                    required
                                                     value={companyData.address}
                                                     onChange={(e) => handleCompanyChange('address', e.target.value)}
+                                                    onBlur={() => handleBlur('address')}
                                                     placeholder="Enter company address"
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                 />
+                                                {touched.address && errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
                                             </div>
                                             {/* Email and Phone */}
                                             <div className="grid grid-cols-2 gap-4">
@@ -263,25 +330,25 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                                                     <input
                                                         type="email"
-                                                        required
                                                         value={companyData.email}
                                                         onChange={(e) => handleCompanyChange('email', e.target.value)}
+                                                        onBlur={() => handleBlur('email')}
                                                         placeholder="company@example.com"
-                                                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                     />
-                                                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                                                    {touched.email && errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                                                 </div>
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
                                                     <input
                                                         type="tel"
-                                                        required
                                                         value={companyData.contactNumber}
                                                         onChange={(e) => handleCompanyChange('contactNumber', e.target.value)}
+                                                        onBlur={() => handleBlur('contactNumber')}
                                                         placeholder="+94 77 123 0000"
-                                                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${errors.contactNumber ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                     />
-                                                    {errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
+                                                    {touched.contactNumber && errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
                                                 </div>
                                             </div>
                                         </div>
@@ -307,101 +374,106 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                                                 <input
                                                     type="text"
-                                                    required
                                                     value={employeeData.fullName}
                                                     onChange={(e) => handleEmployeeChange('fullName', e.target.value)}
+                                                    onBlur={() => handleBlur('fullName')}
                                                     placeholder="John Doe"
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.fullName && errors.fullName ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                 />
+                                                {touched.fullName && errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
                                             </div>
                                             {/* Employee ID (Manual Input) */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
                                                 <input
                                                     type="text"
-                                                    required
                                                     value={employeeData.employeeId}
                                                     onChange={(e) => handleEmployeeChange('employeeId', e.target.value)}
+                                                    onBlur={() => handleBlur('employeeId')}
                                                     placeholder="EMP001"
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeId && errors.employeeId ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                 />
+                                                {touched.employeeId && errors.employeeId && <p className="text-red-500 text-xs mt-1">{errors.employeeId}</p>}
                                             </div>
                                             {/* Email (New) */}
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Email (Optional)</label>
                                                 <input
                                                     type="email"
                                                     value={employeeData.email}
                                                     onChange={(e) => handleEmployeeChange('email', e.target.value)}
+                                                    onBlur={() => handleBlur('email')}
                                                     placeholder="employee@example.com"
-                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                 />
-                                                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                                                {touched.email && errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                                             </div>
-
-                                            {/* ... */}
 
                                             {/* Contact Number */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
                                                 <input
                                                     type="tel"
-                                                    required
                                                     value={employeeData.contactNumber}
                                                     onChange={(e) => handleEmployeeChange('contactNumber', e.target.value)}
+                                                    onBlur={() => handleBlur('contactNumber')}
                                                     placeholder="+94 77 123 4567"
-                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${errors.contactNumber ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                 />
-                                                {errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
+                                                {touched.contactNumber && errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
                                             </div>
                                             {/* Designation */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
                                                 <input
                                                     type="text"
-                                                    required
                                                     value={employeeData.designation}
                                                     onChange={(e) => handleEmployeeChange('designation', e.target.value)}
+                                                    onBlur={() => handleBlur('designation')}
                                                     placeholder="Software Engineer"
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.designation && errors.designation ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                 />
+                                                {touched.designation && errors.designation && <p className="text-red-500 text-xs mt-1">{errors.designation}</p>}
                                             </div>
                                             {/* Daily Rate */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Daily Rate (Rs)</label>
                                                 <input
                                                     type="number"
-                                                    required
                                                     min="0"
                                                     value={employeeData.dailyRate || ''}
                                                     onChange={(e) => handleEmployeeChange('dailyRate', parseFloat(e.target.value) || 0)}
+                                                    onBlur={() => handleBlur('dailyRate')}
                                                     placeholder="0.00"
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.dailyRate && errors.dailyRate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                 />
+                                                {touched.dailyRate && errors.dailyRate && <p className="text-red-500 text-xs mt-1">{errors.dailyRate}</p>}
                                             </div>
                                             {/* Address */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
                                                 <input
                                                     type="text"
-                                                    required
                                                     value={employeeData.address}
                                                     onChange={(e) => handleEmployeeChange('address', e.target.value)}
+                                                    onBlur={() => handleBlur('address')}
                                                     placeholder="123 Street, City"
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                 />
+                                                {touched.address && errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
                                             </div>
-                                        
+
                                             {/* Joined Date */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Joined Date</label>
                                                 <input
                                                     type="date"
-                                                    required
                                                     value={employeeData.joinedDate}
                                                     onChange={(e) => handleEmployeeChange('joinedDate', e.target.value)}
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                    onBlur={() => handleBlur('joinedDate')}
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.joinedDate && errors.joinedDate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                 />
+                                                {touched.joinedDate && errors.joinedDate && <p className="text-red-500 text-xs mt-1">{errors.joinedDate}</p>}
                                             </div>
                                             {/* Hidden Fields */}
                                             <input type="hidden" value={employeeData.department} />
@@ -418,7 +490,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                         <button
                             type="submit"
                             onClick={handleSubmit}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || !isFormValid()}
                             className={`w-full text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isCompany ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
                                 }`}
                         >
