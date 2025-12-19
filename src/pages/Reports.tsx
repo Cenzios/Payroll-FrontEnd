@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar';
 import { useAppSelector } from '../store/hooks';
 import { salaryApi } from '../api/salaryApi';
 import Toast from '../components/Toast';
+import EmployeePayrollModal from '../components/EmployeePayrollModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -28,6 +29,10 @@ const Reports = () => {
     });
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; companyId: string } | null>(null);
 
     const checkAndUpdateData = async () => {
         if (!selectedCompanyId) return;
@@ -313,7 +318,16 @@ const Reports = () => {
                                             <td className="px-6 py-3 text-gray-600">Rs: {Number(record.employeeEPF).toLocaleString()}</td>
                                             <td className="px-6 py-3 text-gray-600">Rs: {Number(record.companyEPFETF || (Number(record.employerEPF || 0) + Number(record.etfAmount || 0))).toLocaleString()}</td>
                                             <td className="px-6 py-3 text-right">
-                                                <button className="px-3 py-1 border border-blue-200 text-blue-600 rounded hover:bg-blue-50 text-xs transition-colors">
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedEmployee({
+                                                            id: record.employeeId,
+                                                            companyId: selectedCompanyId || ''
+                                                        });
+                                                        setIsModalOpen(true);
+                                                    }}
+                                                    className="px-3 py-1 border border-blue-200 text-blue-600 rounded hover:bg-blue-50 text-xs transition-colors"
+                                                >
                                                     View
                                                 </button>
                                             </td>
@@ -353,6 +367,19 @@ const Reports = () => {
 
                 {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             </div>
+
+            {/* Employee Payroll Modal */}
+            {isModalOpen && selectedEmployee && (
+                <EmployeePayrollModal
+                    isOpen={isModalOpen}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setSelectedEmployee(null);
+                    }}
+                    employeeId={selectedEmployee.id}
+                    companyId={selectedEmployee.companyId}
+                />
+            )}
         </div>
     );
 };
