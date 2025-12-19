@@ -17,8 +17,7 @@ const Sidebar = () => {
 
     const navItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-        { name: 'Staff', path: '/staff', icon: Users }, // Renamed Employers to Staff based on previous route file
-        { name: 'Employers', path: '/employees', icon: Users }, // Oh wait, existing code had Employers->/employees.
+        { name: 'Employers', path: '/employees', icon: Users },
         { name: 'Salary', path: '/salary', icon: Wallet },
     ];
 
@@ -61,8 +60,8 @@ const Sidebar = () => {
                     <button
                         onClick={toggleReports}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${location.pathname.startsWith('/reports')
-                                ? 'bg-blue-50 text-blue-600 font-medium'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-blue-50 text-blue-600 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                     >
                         <div className="flex items-center gap-3">

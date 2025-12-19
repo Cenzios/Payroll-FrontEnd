@@ -26,6 +26,16 @@ export const companyApi = {
             throw new Error(error.response?.data?.message || 'Failed to create company');
         }
     },
+
+    // Update company profile
+    updateCompanyProfile: async (id: string, data: Partial<CreateCompanyRequest>): Promise<Company> => {
+        try {
+            const response = await axiosInstance.put<{ data: Company }>(`/company/${id}`, data);
+            return response.data.data;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Failed to update company profile');
+        }
+    },
 };
 
 export default companyApi;
