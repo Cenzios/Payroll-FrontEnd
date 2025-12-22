@@ -141,7 +141,7 @@ const BuyPlan = () => {
             name: tempCompanyName,
             email: userEmail || 'active@user.com',
             address: 'Not Provided',
-            contactNumber: '0000000000',
+            contactNumber: '',
             departments: []
           });
 
