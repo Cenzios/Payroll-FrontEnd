@@ -132,6 +132,8 @@ const SetCompany = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
+      // ✅ Save company name temporarily for creation after payment
+      localStorage.setItem('temp_companyName', formData.companyName);
       navigate('/get-plan');
     }
   };
