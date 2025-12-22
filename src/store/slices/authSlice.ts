@@ -203,6 +203,12 @@ const authSlice = createSlice({
       state.selectedCompanyId = action.payload;
       localStorage.setItem('selectedCompanyId', action.payload);
     },
+    updateUser: (state, action) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+        localStorage.setItem('user', JSON.stringify(state.user));
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -280,5 +286,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, setSignupEmail, clearSignupEmail, setTempPassword, setTempPlanId, setAuthFromToken, setSelectedCompanyId } = authSlice.actions;
+export const { logout, clearError, setSignupEmail, clearSignupEmail, setTempPassword, setTempPlanId, setAuthFromToken, setSelectedCompanyId, updateUser } = authSlice.actions;
 export default authSlice.reducer;

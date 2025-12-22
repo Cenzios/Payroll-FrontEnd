@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useAppSelector } from '../../store/hooks';
+import { useAppSelector, useAppDispatch } from '../../store/hooks';
+import { updateUser } from '../../store/slices/authSlice';
 import { updateProfile, changePassword } from '../../api/authApi';
 import { companyApi } from '../../api/companyApi';
 import { User, Shield, Building2, Save, Edit2, Loader2, Mail, Phone, MapPin, Lock, Eye, EyeOff } from 'lucide-react';
 
 const AccountTab = () => {
+    const dispatch = useAppDispatch();
     const { user, selectedCompanyId } = useAppSelector((state) => state.auth);
     const [companies, setCompanies] = useState<any[]>([]);
 
@@ -103,7 +105,12 @@ const AccountTab = () => {
         }
         setIsSavingPersonal(true);
         try {
-            await updateProfile({ fullName: personalData.fullName });
+            const response = await updateProfile({ fullName: personalData.fullName });
+            // response.data should contain the updated user since sendResponse(res, 200, true, '...', result)
+            // result is the updated user object
+            if (response.data) {
+                dispatch(updateUser(response.data));
+            }
             setIsEditingPersonal(false);
         } catch (err: any) {
             setPersonalErrors({ fullName: err.message || 'Failed to update' });
