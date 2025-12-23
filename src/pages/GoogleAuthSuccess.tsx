@@ -24,6 +24,7 @@ function GoogleAuthSuccess() {
 
         // Store token
         localStorage.setItem('token', token);
+        localStorage.setItem('signup_method', 'google'); // ✅ Flag as google signup
 
         // Update Redux store with user data from token
         dispatch(setAuthFromToken(token));

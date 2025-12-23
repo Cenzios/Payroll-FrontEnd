@@ -264,12 +264,7 @@ const Reports = () => {
                             >
                                 Apply
                             </button>
-                            <button
-                                onClick={handleReset}
-                                className="px-6 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
-                            >
-                                Rest
-                            </button>
+
                         </div>
                     </div>
                 </div>
