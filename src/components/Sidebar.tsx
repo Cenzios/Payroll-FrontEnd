@@ -17,7 +17,7 @@ const Sidebar = () => {
 
     const navItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-        { name: 'Employers', path: '/employees', icon: Users },
+        { name: 'Employees', path: '/employees', icon: Users },
         { name: 'Salary', path: '/salary', icon: Wallet },
     ];
 
