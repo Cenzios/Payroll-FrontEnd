@@ -13,14 +13,15 @@ export const employeeApi = {
     },
 
     // Get employees with pagination and search
-    getEmployees: async (companyId: string, page = 1, limit = 10, search = ''): Promise<{ employees: Employee[], total: number, totalPages: number }> => {
+    getEmployees: async (companyId: string, page = 1, limit = 10, search = '', status?: string): Promise<{ employees: Employee[], total: number, totalPages: number }> => {
         try {
             const response = await axiosInstance.get(`/employee`, {
                 params: {
                     companyId,
                     page,
                     limit,
-                    search
+                    search,
+                    status // ✅ Pass status filter
                 }
             });
             return response.data.data;

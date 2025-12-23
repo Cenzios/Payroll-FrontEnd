@@ -46,7 +46,8 @@ const Salary = () => {
             if (!selectedCompanyId) return;
             try {
                 setIsLoading(true);
-                const data = await employeeApi.getEmployees(selectedCompanyId, 1, 100, search);
+                // ✅ Fetch ONLY ACTIVE employees for Salary generation
+                const data = await employeeApi.getEmployees(selectedCompanyId, 1, 100, search, 'ACTIVE');
                 setEmployees(data.employees);
             } catch (error: any) {
                 setToast({ message: error.message || 'Failed to fetch employees', type: 'error' });

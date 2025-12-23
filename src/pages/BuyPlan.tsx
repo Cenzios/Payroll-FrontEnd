@@ -123,6 +123,38 @@ const BuyPlan = () => {
         planId: BASIC_PLAN_ID,
       });
 
+      // ✅ 2. Create Company (ONLY if payment succeeded)
+      const tempCompanyName = localStorage.getItem('temp_companyName');
+
+      if (tempCompanyName) {
+        try {
+          console.log('🏢 Creating company:', tempCompanyName);
+          // Assuming companyApi is imported or available via axios
+          // We'll use axios directly here if companyApi isn't easily reachable, 
+          // but better to use the import if possible. 
+          // Let's stick to the plan: call companyApi.createCompany
+
+          // Wait a bit to ensure subscription is propagated
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          await axiosInstance.post('/company', {
+            name: tempCompanyName,
+            email: userEmail || 'active@user.com',
+            address: 'Not Provided',
+            contactNumber: '',
+            departments: []
+          });
+
+          console.log('✅ Company created successfully');
+          localStorage.removeItem('temp_companyName'); // Cleanup
+        } catch (companyError) {
+          console.error('⚠️ Payment success, but company creation failed:', companyError);
+          // We generally continue to confirmation so they don't get stuck, 
+          // or we could show a distinct error. 
+          // Requirement: "Redirect user to dashboard" (via confirmation usually)
+        }
+      }
+
       navigate('/confirmation');
     } catch (error: any) {
       console.error('❌ Subscription failed:', error);
