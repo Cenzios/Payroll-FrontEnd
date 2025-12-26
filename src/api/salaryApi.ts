@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL ;
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const salaryApi = {
     saveSalary: async (data: any) => {
@@ -11,10 +11,10 @@ export const salaryApi = {
         return response.data;
     },
 
-    getSalaryReport: async (companyId: string, month: number, year: number) => {
+    getSalaryReport: async (companyId: string, startMonth: number, startYear: number, endMonth: number, endYear: number) => {
         const token = localStorage.getItem('token');
         const response = await axios.get(`${API_URL}/reports/company-payroll-summary`, {
-            params: { companyId, month, year },
+            params: { companyId, startMonth, startYear, endMonth, endYear },
             headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;

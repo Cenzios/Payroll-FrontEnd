@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Search, Loader2, FileText, FileSpreadsheet, Download } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import MonthRangePicker from '../components/MonthRangePicker';
+import MonthSection from '../components/MonthSection';
 import { useAppSelector } from '../store/hooks';
 import { salaryApi } from '../api/salaryApi';
 import Toast from '../components/Toast';
@@ -14,19 +16,25 @@ const Reports = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Filters
+    // Date range filters
+    const currentDate = new Date();
+    const [startMonth, setStartMonth] = useState(currentDate.getMonth());
+    const [startYear, setStartYear] = useState(currentDate.getFullYear());
+    const [endMonth, setEndMonth] = useState(currentDate.getMonth());
+    const [endYear, setEndYear] = useState(currentDate.getFullYear());
+
+    // Search
     const [search, setSearch] = useState('');
-    const [month, setMonth] = useState(new Date().getMonth());
-    const [year, setYear] = useState(new Date().getFullYear());
 
     // Data
-    const [salaryData, setSalaryData] = useState<any[]>([]);
-    const [summary, setSummary] = useState({
+    const [monthlyData, setMonthlyData] = useState<any[]>([]);
+    const [overallTotals, setOverallTotals] = useState({
+        totalMonths: 0,
         totalEmployees: 0,
-        totalGross: 0,
-        totalNet: 0,
-        totalEmployeeEpf: 0,
-        totalCompanyContrib: 0
+        totalGrossPay: 0,
+        totalNetPay: 0,
+        totalEmployeeEPF: 0,
+        totalCompanyEPFETF: 0
     });
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -37,50 +45,44 @@ const Reports = () => {
     const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; companyId: string } | null>(null);
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
 
+    // Expand/collapse state for months
+    const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+
     const checkAndUpdateData = async () => {
         if (!selectedCompanyId) return;
         setIsLoading(true);
         try {
-            // API expects month 1-12
-            const response = await salaryApi.getSalaryReport(selectedCompanyId, month + 1, year);
-            const reportData = response.data; // Access the 'data' property of the response object
+            // API expects month 1-12, but our state is 0-11
+            const response = await salaryApi.getSalaryReport(
+                selectedCompanyId,
+                startMonth + 1,
+                startYear,
+                endMonth + 1,
+                endYear
+            );
+            const reportData = response.data;
 
-            setSalaryData(reportData.employees || []);
-
-            // Use Backend Totals if available, or calculate (Backend likely provides totals)
-            // report.service.ts usually returns { employees: [], totals: { totalEmployees, ... } }
-            if (reportData.totals) {
-                setSummary({
-                    totalEmployees: reportData.totals.totalEmployees || 0,
-                    totalGross: reportData.totals.totalGrossPay || 0,
-                    totalNet: reportData.totals.totalNetPay || 0,
-                    totalEmployeeEpf: reportData.totals.totalEmployeeEPF || 0,
-                    totalCompanyContrib: reportData.totals.totalCompanyEPFETF || 0
-                });
-            } else {
-                // Fallback calculation if backend doesn't return totals
-                const records: any[] = reportData.employees || [];
-                const newSummary = records.reduce((acc, curr) => ({
-                    totalEmployees: acc.totalEmployees + 1,
-                    totalGross: acc.totalGross + (Number(curr.basicPay) || 0),
-                    totalNet: acc.totalNet + (Number(curr.netSalary) || 0),
-                    totalEmployeeEpf: acc.totalEmployeeEpf + (Number(curr.employeeEPF) || 0),
-                    totalCompanyContrib: acc.totalCompanyContrib + (Number(curr.employerEPF || 0) + Number(curr.etfAmount || 0))
-                }), {
-                    totalEmployees: 0,
-                    totalGross: 0,
-                    totalNet: 0,
-                    totalEmployeeEpf: 0,
-                    totalCompanyContrib: 0
-                });
-                setSummary(newSummary);
-            }
+            setMonthlyData(reportData.monthlyData || []);
+            setOverallTotals(reportData.overallTotals || {
+                totalMonths: 0,
+                totalEmployees: 0,
+                totalGrossPay: 0,
+                totalNetPay: 0,
+                totalEmployeeEPF: 0,
+                totalCompanyEPFETF: 0
+            });
 
         } catch (error: any) {
-            // If 404 means no records, handle gracefully
             if (error.response?.status === 404) {
-                setSalaryData([]);
-                setSummary({ totalEmployees: 0, totalGross: 0, totalNet: 0, totalEmployeeEpf: 0, totalCompanyContrib: 0 });
+                setMonthlyData([]);
+                setOverallTotals({
+                    totalMonths: 0,
+                    totalEmployees: 0,
+                    totalGrossPay: 0,
+                    totalNetPay: 0,
+                    totalEmployeeEPF: 0,
+                    totalCompanyEPFETF: 0
+                });
             } else {
                 setToast({ message: error.message || 'Failed to fetch report', type: 'error' });
             }
@@ -89,111 +91,43 @@ const Reports = () => {
         }
     };
 
-    // Initial Load & Apply
+    // Initial Load
     useEffect(() => {
         checkAndUpdateData();
-    }, [selectedCompanyId]); // Only reload if company changes initially. Manually trigger for filters? 
-    // Requirement "Apply button". So remove auto-fetch on state change, only on Apply.
-    // However, good UX is auto-fetch or initial fetch. I'll do initial fetch, then Apply button triggers re-fetch.
+    }, [selectedCompanyId]);
 
     const handleApply = () => {
+        // Validate date range
+        const startDate = new Date(startYear, startMonth);
+        const endDate = new Date(endYear, endMonth);
+
+        if (startDate > endDate) {
+            setToast({ message: 'Start date must be before or equal to end date', type: 'error' });
+            return;
+        }
+
         checkAndUpdateData();
     };
 
     const handleReset = () => {
-        setMonth(new Date().getMonth());
-        setYear(new Date().getFullYear());
+        const currentDate = new Date();
+        setStartMonth(currentDate.getMonth());
+        setStartYear(currentDate.getFullYear());
+        setEndMonth(currentDate.getMonth());
+        setEndYear(currentDate.getFullYear());
         setSearch('');
-        // checkAndUpdateData(); // Optional: Auto fetch on reset?
     };
 
-    // Filter LogicFrontend-side search? Or API search?
-    // Requirement: "Search Employee (by name / employee ID)" in Top Filters.
-    // If API supports search, pass it. API def: GET /api/v1/reports/company?companyId=&month=&year=
-    // Doesn't explicitly say "search" param. So I will filter client-side.
-    const filtereddata = salaryData.filter(record => {
-        const query = search.toLowerCase();
-        // Backend returns employeeCode and employeeName directly
-        const name = record.employeeName?.toLowerCase() || '';
-        const id = record.employeeCode?.toLowerCase() || '';
-        return name.includes(query) || id.includes(query);
-    });
-
-    const exportPDF = () => {
-        const doc = new jsPDF();
-        doc.text(`Payroll Summary Report - ${new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' })}`, 14, 20);
-
-        const tableBody = filtereddata.map(row => [
-            row.employeeCode || '-',
-            row.employeeName || '-',
-            row.workingDays,
-            parseFloat(row.netPay || row.netSalary).toLocaleString() || '0',
-            parseFloat(row.employeeEPF).toLocaleString() || '0',
-            parseFloat(row.companyEPFETF || (row.employerEPF + row.etfAmount)).toLocaleString() || '0'
-        ]);
-
-        autoTable(doc, {
-            startY: 30,
-            head: [['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF']],
-            body: tableBody,
+    const toggleMonth = (monthKey: string) => {
+        setExpandedMonths(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(monthKey)) {
+                newSet.delete(monthKey);
+            } else {
+                newSet.add(monthKey);
+            }
+            return newSet;
         });
-
-        doc.save('Salary_Report.pdf');
-    };
-
-    const exportExcel = () => {
-        const wsData = [
-            ['Payroll Summary Report', `${new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
-            [],
-            ['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF'],
-            ...filtereddata.map(row => [
-                row.employeeCode || '-',
-                row.employeeName || '-',
-                row.workingDays,
-                row.netPay || row.netSalary,
-                row.employeeEPF,
-                row.companyEPFETF || (parseFloat(row.employerEPF || 0) + parseFloat(row.etfAmount || 0))
-            ])
-        ];
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Report");
-        XLSX.writeFile(wb, "Salary_Report.xlsx");
-    };
-
-    const exportCSV = () => {
-        const wsData = [
-            ['Payroll Summary Report', `${new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
-            [],
-            ['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF'],
-            ...filtereddata.map(row => [
-                row.employeeCode || '-',
-                row.employeeName || '-',
-                row.workingDays,
-                row.netPay || row.netSalary,
-                row.employeeEPF,
-                row.companyEPFETF || (parseFloat(row.employerEPF || 0) + parseFloat(row.etfAmount || 0))
-            ])
-        ];
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const csv = XLSX.utils.sheet_to_csv(ws);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", "Salary_Report.csv");
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.checked) {
-            setSelectedEmployeeIds(filtereddata.map(emp => emp.employeeId));
-        } else {
-            setSelectedEmployeeIds([]);
-        }
     };
 
     const handleSelectEmployee = (employeeId: string) => {
@@ -204,6 +138,106 @@ const Reports = () => {
         );
     };
 
+    const exportPDF = () => {
+        const doc = new jsPDF();
+        const dateRangeText = `${new Date(startYear, startMonth).toLocaleString('default', { month: 'long', year: 'numeric' })} - ${new Date(endYear, endMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`;
+        doc.text(`Payroll Summary Report`, 14, 15);
+        doc.setFontSize(10);
+        doc.text(dateRangeText, 14, 22);
+
+        let startY = 30;
+        monthlyData.forEach((monthData) => {
+            doc.setFontSize(12);
+            doc.text(`${monthData.month} ${monthData.year}`, 14, startY);
+            startY += 5;
+
+            const tableBody = monthData.employees.map((emp: any) => [
+                emp.employeeCode || '-',
+                emp.employeeName || '-',
+                emp.workingDays,
+                emp.netPay.toLocaleString(),
+                emp.employeeEPF.toLocaleString(),
+                emp.companyEPFETF.toLocaleString()
+            ]);
+
+            autoTable(doc, {
+                startY,
+                head: [['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF']],
+                body: tableBody,
+            });
+
+            startY = (doc as any).lastAutoTable.finalY + 10;
+        });
+
+        doc.save('Payroll_Summary_Report.pdf');
+    };
+
+    const exportExcel = () => {
+        const wsData: any[] = [
+            ['Payroll Summary Report'],
+            [`${new Date(startYear, startMonth).toLocaleString('default', { month: 'long', year: 'numeric' })} - ${new Date(endYear, endMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
+            []
+        ];
+
+        monthlyData.forEach((monthData) => {
+            wsData.push([`${monthData.month} ${monthData.year}`]);
+            wsData.push(['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF']);
+
+            monthData.employees.forEach((emp: any) => {
+                wsData.push([
+                    emp.employeeCode || '-',
+                    emp.employeeName || '-',
+                    emp.workingDays,
+                    emp.netPay,
+                    emp.employeeEPF,
+                    emp.companyEPFETF
+                ]);
+            });
+            wsData.push([]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Report");
+        XLSX.writeFile(wb, "Payroll_Summary_Report.xlsx");
+    };
+
+    const exportCSV = () => {
+        const wsData: any[] = [
+            ['Payroll Summary Report'],
+            [`${new Date(startYear, startMonth).toLocaleString('default', { month: 'long', year: 'numeric' })} - ${new Date(endYear, endMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
+            []
+        ];
+
+        monthlyData.forEach((monthData) => {
+            wsData.push([`${monthData.month} ${monthData.year}`]);
+            wsData.push(['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF']);
+
+            monthData.employees.forEach((emp: any) => {
+                wsData.push([
+                    emp.employeeCode || '-',
+                    emp.employeeName || '-',
+                    emp.workingDays,
+                    emp.netPay,
+                    emp.employeeEPF,
+                    emp.companyEPFETF
+                ]);
+            });
+            wsData.push([]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const csv = XLSX.utils.sheet_to_csv(ws);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "Payroll_Summary_Report.csv");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
         <div className="flex min-h-screen bg-gray-50">
@@ -235,26 +269,20 @@ const Reports = () => {
 
                         <div className="md:col-span-2">
                             <label className="text-sm font-semibold text-gray-600 block mb-2">Time Period</label>
-                            <div className="flex gap-4">
-                                <select
-                                    value={month}
-                                    onChange={(e) => setMonth(parseInt(e.target.value))}
-                                    className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none cursor-pointer"
-                                >
-                                    {Array.from({ length: 12 }, (_, i) => (
-                                        <option key={i} value={i}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    value={year}
-                                    onChange={(e) => setYear(parseInt(e.target.value))}
-                                    className="w-32 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none cursor-pointer"
-                                >
-                                    <option value={2024}>2024</option>
-                                    <option value={2025}>2025</option>
-                                    <option value={2026}>2026</option>
-                                </select>
-                            </div>
+                            <MonthRangePicker
+                                startMonth={startMonth}
+                                startYear={startYear}
+                                endMonth={endMonth}
+                                endYear={endYear}
+                                onStartChange={(month, year) => {
+                                    setStartMonth(month);
+                                    setStartYear(year);
+                                }}
+                                onEndChange={(month, year) => {
+                                    setEndMonth(month);
+                                    setEndYear(year);
+                                }}
+                            />
                         </div>
 
                         <div className="md:col-span-1 flex gap-3">
@@ -264,143 +292,107 @@ const Reports = () => {
                             >
                                 Apply
                             </button>
-
+                            <button
+                                onClick={handleReset}
+                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
+                            >
+                                Reset
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Table Section */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
-                    {/* Toolbar */}
-                    <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
-                        <h2 className="font-bold text-gray-800">Payroll Summary</h2>
-                        <div className="flex gap-2">
-                            <button onClick={exportPDF} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded hover:bg-red-100 border border-red-100 transition-colors">
-                                <FileText className="w-3.5 h-3.5" /> Export PDF
-                            </button>
-                            <button onClick={exportExcel} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50 rounded hover:bg-green-100 border border-green-100 transition-colors">
-                                <FileSpreadsheet className="w-3.5 h-3.5" /> Export Excel
-                            </button>
-                            <button onClick={exportCSV} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded hover:bg-blue-100 border border-blue-100 transition-colors">
-                                <Download className="w-3.5 h-3.5" /> Export CSV
-                            </button>
-                            <button
-                                onClick={() => setIsAllEmployeesModalOpen(true)}
-                                disabled={selectedEmployeeIds.length === 0}
-                                className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded hover:bg-indigo-100 border border-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <FileText className="w-3.5 h-3.5" /> View Employee
-                            </button>
+                {/* Toolbar */}
+                <div className="bg-white rounded-t-xl shadow-sm border border-gray-200 border-b-0 p-4 flex justify-between items-center">
+                    <h2 className="font-bold text-gray-800">Payroll Summary</h2>
+                    <div className="flex gap-2">
+                        <button onClick={exportPDF} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded hover:bg-red-100 border border-red-100 transition-colors">
+                            <FileText className="w-3.5 h-3.5" /> Export PDF
+                        </button>
+                        <button onClick={exportExcel} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50 rounded hover:bg-green-100 border border-green-100 transition-colors">
+                            <FileSpreadsheet className="w-3.5 h-3.5" /> Export Excel
+                        </button>
+                        <button onClick={exportCSV} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded hover:bg-blue-100 border border-blue-100 transition-colors">
+                            <Download className="w-3.5 h-3.5" /> Export CSV
+                        </button>
+                        <button
+                            onClick={() => setIsAllEmployeesModalOpen(true)}
+                            disabled={selectedEmployeeIds.length === 0}
+                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded hover:bg-indigo-100 border border-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <FileText className="w-3.5 h-3.5" /> View Selected
+                        </button>
+                    </div>
+                </div>
+
+                {/* Main Content */}
+                <div className="bg-white rounded-b-xl shadow-sm border border-gray-200 p-6 flex-1">
+                    {isLoading ? (
+                        <div className="flex justify-center items-center py-20">
+                            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
                         </div>
-                    </div>
-
-                    {/* Table Header Info */}
-                    <div className="px-6 py-4 border-b border-gray-100">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h3 className="font-bold text-gray-900 text-sm">All Employee</h3>
-                                <p className="text-xs text-gray-500 mt-1">Period: {new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' })} | Employees: {filtereddata.length}</p>
-                            </div>
+                    ) : monthlyData.length === 0 ? (
+                        <div className="text-center py-20 text-gray-500">
+                            No payroll records found for the selected period.
                         </div>
-                    </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {monthlyData.map((monthData) => {
+                                const monthKey = `${monthData.year}-${monthData.monthNumber}`;
+                                return (
+                                    <MonthSection
+                                        key={monthKey}
+                                        year={monthData.year}
+                                        month={monthData.month}
+                                        monthNumber={monthData.monthNumber}
+                                        status={monthData.status}
+                                        employees={monthData.employees}
+                                        totals={monthData.totals}
+                                        isExpanded={expandedMonths.has(monthKey)}
+                                        onToggle={() => toggleMonth(monthKey)}
+                                        selectedEmployeeIds={selectedEmployeeIds}
+                                        onSelectEmployee={handleSelectEmployee}
+                                        onViewEmployee={(id, companyId) => {
+                                            setSelectedEmployee({ id, companyId });
+                                            setIsModalOpen(true);
+                                        }}
+                                        companyId={selectedCompanyId || ''}
+                                        searchQuery={search}
+                                    />
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
 
-                    {/* Table */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-gray-50 text-gray-600 font-semibold sticky top-0 z-10">
-                                <tr>
-                                    <th className="px-4 py-3 border-b border-gray-200">
-                                        <input
-                                            type="checkbox"
-                                            onChange={handleSelectAll}
-                                            checked={filtereddata.length > 0 && selectedEmployeeIds.length === filtereddata.length}
-                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                                        />
-                                    </th>
-                                    <th className="px-6 py-3 border-b border-gray-200">Employee ID</th>
-                                    <th className="px-6 py-3 border-b border-gray-200">Employee Name</th>
-                                    <th className="px-6 py-3 border-b border-gray-200">Working Days</th>
-                                    <th className="px-6 py-3 border-b border-gray-200">Net Pay</th>
-                                    <th className="px-6 py-3 border-b border-gray-200">Employee EPF</th>
-                                    <th className="px-6 py-3 border-b border-gray-200">Company ETF/EPF</th>
-                                    <th className="px-6 py-3 border-b border-gray-200 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {isLoading ? (
-                                    <tr>
-                                        <td colSpan={8} className="px-6 py-12 text-center">
-                                            <div className="flex justify-center"><Loader2 className="w-6 h-6 text-blue-600 animate-spin" /></div>
-                                        </td>
-                                    </tr>
-                                ) : filtereddata.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={8} className="px-6 py-12 text-center text-gray-500">No records found.</td>
-                                    </tr>
-                                ) : (
-                                    filtereddata.map((record, index) => (
-                                        <tr key={index} className="hover:bg-gray-50 transition-colors group">
-                                            <td className="px-4 py-3">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedEmployeeIds.includes(record.employeeId)}
-                                                    onChange={() => handleSelectEmployee(record.employeeId)}
-                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                                                />
-                                            </td>
-                                            <td className="px-6 py-3 font-semibold text-gray-900">{record.employeeCode || '-'}</td>
-                                            <td className="px-6 py-3 text-gray-700">{record.employeeName || '-'}</td>
-                                            <td className="px-6 py-3 text-gray-600">{record.workingDays}</td>
-                                            <td className="px-6 py-3 font-medium text-gray-900">Rs {Number(record.netPay || record.netSalary).toLocaleString()}</td>
-                                            <td className="px-6 py-3 text-gray-600">Rs: {Number(record.employeeEPF).toLocaleString()}</td>
-                                            <td className="px-6 py-3 text-gray-600">Rs: {Number(record.companyEPFETF || (Number(record.employerEPF || 0) + Number(record.etfAmount || 0))).toLocaleString()}</td>
-                                            <td className="px-6 py-3 text-right">
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedEmployee({
-                                                            id: record.employeeId,
-                                                            companyId: selectedCompanyId || ''
-                                                        });
-                                                        setIsModalOpen(true);
-                                                    }}
-                                                    className="px-3 py-1 border border-blue-200 text-blue-600 rounded hover:bg-blue-50 text-xs transition-colors"
-                                                >
-                                                    View
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Footer Summary */}
-                    <div className="bg-gray-50 border-t border-gray-200 p-6">
+                {/* Overall Totals Footer */}
+                {monthlyData.length > 0 && (
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+                        <h3 className="text-sm font-semibold text-gray-600 mb-4 uppercase tracking-wide">Overall Totals ({overallTotals.totalMonths} months)</h3>
                         <div className="grid grid-cols-5 gap-8">
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900">{summary.totalEmployees}</div>
+                                <div className="text-2xl font-bold text-gray-900">{overallTotals.totalEmployees}</div>
                                 <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide">Total Employees</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">Rs: {summary.totalGross.toLocaleString()}</div>
+                                <div className="text-2xl font-bold text-blue-600">Rs {overallTotals.totalGrossPay.toLocaleString()}</div>
                                 <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide">Total Gross Pay</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">Rs: {summary.totalNet.toLocaleString()}</div>
+                                <div className="text-2xl font-bold text-blue-600">Rs {overallTotals.totalNetPay.toLocaleString()}</div>
                                 <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide">Total Net Pay</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">Rs: {summary.totalEmployeeEpf.toLocaleString()}</div>
+                                <div className="text-2xl font-bold text-blue-600">Rs {overallTotals.totalEmployeeEPF.toLocaleString()}</div>
                                 <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide">Total Employee EPF</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">Rs: {summary.totalCompanyContrib.toLocaleString()}</div>
+                                <div className="text-2xl font-bold text-blue-600">Rs {overallTotals.totalCompanyEPFETF.toLocaleString()}</div>
                                 <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide">Total Company EPF/ETF</div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             </div>
@@ -425,8 +417,8 @@ const Reports = () => {
                     onClose={() => setIsAllEmployeesModalOpen(false)}
                     selectedEmployeeIds={selectedEmployeeIds}
                     companyId={selectedCompanyId || ''}
-                    month={month + 1}
-                    year={year}
+                    month={startMonth + 1}
+                    year={startYear}
                 />
             )}
         </div>
