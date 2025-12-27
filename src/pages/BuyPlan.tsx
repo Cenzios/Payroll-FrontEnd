@@ -113,15 +113,19 @@ const BuyPlan = () => {
       return;
     }
 
+
     try {
-      // Use the actual plan UUID from your database
-      const BASIC_PLAN_ID = '0f022c11-2a3c-49f5-9d11-30082882a8e9';
+      // ✅ Get selected plan ID from localStorage (set in GetPlan page)
+      const selectedPlanId = localStorage.getItem('reg_planId') || '0f022c11-2a3c-49f5-9d11-30082882a8e9'; // Fallback to Basic plan
 
       console.log('📤 Creating subscription for:', userEmail);
+      console.log('📋 Selected Plan ID:', selectedPlanId);
+
       await axiosInstance.post('/subscription/subscribe', {
         email: userEmail,
-        planId: BASIC_PLAN_ID,
+        planId: selectedPlanId,
       });
+
 
       // ✅ 2. Create Company (ONLY if payment succeeded)
       const tempCompanyName = localStorage.getItem('temp_companyName');
