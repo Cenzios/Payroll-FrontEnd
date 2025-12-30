@@ -31,9 +31,9 @@ const AuthLayout = ({ children, title, subtitle, illustration }: AuthLayoutProps
             <img
               src={logo}
               alt="Cenzios Logo"
-              className="w-10 h-10 object-contain"
+              className="w-36 h-36 object-contain"
             />
-            <h1 className="text-4xl font-semibold tracking-tight">Payroll</h1>
+            
           </div>
 
           <h2 className="text-4xl font-semibold mb-4 leading-tight">
