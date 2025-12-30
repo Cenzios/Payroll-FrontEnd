@@ -108,8 +108,8 @@ const Login = () => {
 
   return (
     <AuthLayout
-      title="Welcome Back"
-      subtitle="Sign in to your account"
+      title="Welcome back!"
+      subtitle="Please login to access your account."
     >
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -119,9 +119,18 @@ const Login = () => {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
+          {/* ✅ GOOGLE LOGIN BUTTON */}
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className="w-full mt-3 bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center gap-3"
+          >
+            <GoogleIcon />
+            Continue with Google
+          </button>
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-700 mt-6 mb-2"
           >
             Email Address
           </label>
@@ -183,7 +192,7 @@ const Login = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          className="w-full bg-[#3A8BFF] text-white font-semibold py-3 px-4 rounded-lg hover:bg-[#337AEB] focus:outline-none focus:ring-2 focus:ring-[#3A8BFF] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
         >
           {isLoading ? (
             <>
@@ -194,15 +203,7 @@ const Login = () => {
             'Sign In'
           )}
         </button>
-        {/* ✅ GOOGLE LOGIN BUTTON */}
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          className="w-full mt-3 bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center gap-3"
-        >
-          <GoogleIcon />
-          Continue with Google
-        </button>
+
 
       </form>
 

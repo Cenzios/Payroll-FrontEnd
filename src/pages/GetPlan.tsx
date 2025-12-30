@@ -5,6 +5,7 @@ import { setAuthFromToken, setSignupEmail, setTempPlanId } from '../store/slices
 import { jwtDecode } from 'jwt-decode';
 import PlanCard from '../components/PlanCard';
 import { PLANS, getAllPlans } from '../constants/plans';
+import bgIllustration from '../assets/images/Background-illustration.svg';
 
 interface DecodedToken {
   userId: string;
@@ -60,7 +61,9 @@ const GetPlan = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col items-center justify-center px-4 py-16">
+    <div className="min-h-screen relative overflow-hidden 
+  bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
+  flex flex-col items-center justify-center px-4 py-16">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
 
       <h1 className="text-4xl font-bold text-center text-gray-900 mb-12 relative z-10">
@@ -103,6 +106,16 @@ const GetPlan = () => {
           isHighlighted={false}
           showButton={true}
           onSelectPlan={() => handleSelectPlan(PLANS.ENTERPRISE.id)}
+        />
+      </div>
+      {/* Background Wave - Bottom Right */}
+      <div className="absolute bottom-[-350px] right-[-200px] 
+                w-[700px] h-[700px] 
+                z-0 pointer-events-none">
+        <img
+          src={bgIllustration}
+          alt="Background Wave"
+          className="w-full h-full object-contain rotate-0"
         />
       </div>
     </div>
