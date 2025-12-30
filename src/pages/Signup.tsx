@@ -83,6 +83,9 @@ const Signup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
+      // ✅ Flag as normal email signup
+      localStorage.setItem('signup_method', 'email');
+
       const result = await dispatch(startSignup(formData));
       if (startSignup.fulfilled.match(result)) {
         navigate('/verify-info');

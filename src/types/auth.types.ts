@@ -65,6 +65,7 @@ export interface AuthState {
   isLoading: boolean;
   error: string | null;
   signupEmail: string | null;
-  tempPassword?: string | null;
-  tempPlanId?: string | null;
+  tempPassword: string | null;
+  tempPlanId: string | null;
+  selectedCompanyId: string | null;
 }

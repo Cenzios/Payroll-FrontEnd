@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setTempPassword, clearError, setSignupEmail } from '../store/slices/authSlice';
+import { setTempPassword, clearError, setSignupEmail, loginUser } from '../store/slices/authSlice';
 import { Lock, Loader2, Eye, EyeOff, Mail, ArrowRight } from 'lucide-react';
 import passwordIllustration from '../assets/images/password-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
@@ -105,6 +105,19 @@ const SetPassword = () => {
       });
 
       console.log('Password saved successfully:', res.data);
+
+      // ✅ Auto-login to ensure we have a token for creating company in BuyPlan
+      console.log('Creating session...');
+      const loginResult = await dispatch(loginUser({
+        email: signupEmail,
+        password: formData.password
+      }));
+
+      if (loginUser.rejected.match(loginResult)) {
+        throw new Error('Auto-login failed after password set');
+      }
+
+      console.log('✅ Auto-login successful');
 
       // ✅ Optional: save to redux if needed for next step
       dispatch(setTempPassword(formData.password));

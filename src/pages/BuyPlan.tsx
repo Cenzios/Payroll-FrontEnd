@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
-import { Check, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
 import visaIcon from '../assets/images/visa.svg';
 import paypalIcon from '../assets/images/paypal.svg';
 import mastercardIcon from '../assets/images/mastercard.svg';
 import gpayIcon from '../assets/images/gpay.svg';
 import axiosInstance from '../api/axios';
+import PlanCard from '../components/PlanCard';
+import { PLANS, getPlanById } from '../constants/plans';
+import TermsModal from '../components/TermsModal';
 
 const BuyPlan = () => {
 
@@ -15,6 +18,13 @@ const BuyPlan = () => {
 
   const navigate = useNavigate();
   const { isLoading, error, signupEmail, user, token } = useAppSelector((state) => state.auth);
+
+  // ✅ Get selected plan dynamically
+  const selectedPlanId = localStorage.getItem('reg_planId') || PLANS.BASIC.id;
+  const selectedPlan = getPlanById(selectedPlanId) || PLANS.BASIC;
+
+  // ✅ Terms modal state
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     paymentMethod: 'visa',
@@ -32,15 +42,7 @@ const BuyPlan = () => {
     cvc: '',
   });
 
-  const features = [
-    'Payroll processing for up to 10 employees',
-    'Automatic salary & deduction calculations',
-    'Monthly payslip generation (PDF/CSV/Excel)',
-    'Employee profile management',
-    'Manage multiple company',
-    'Payroll report generations',
-    'Secure dashboard for administrators',
-  ];
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -113,15 +115,51 @@ const BuyPlan = () => {
       return;
     }
 
+
     try {
-      // Use the actual plan UUID from your database
-      const BASIC_PLAN_ID = '0f022c11-2a3c-49f5-9d11-30082882a8e9';
+      // ✅ Get selected plan ID from localStorage (set in GetPlan page)
+      const selectedPlanId = localStorage.getItem('reg_planId') || '0f022c11-2a3c-49f5-9d11-30082882a8e9'; // Fallback to Basic plan
 
       console.log('📤 Creating subscription for:', userEmail);
+      console.log('📋 Selected Plan ID:', selectedPlanId);
+
       await axiosInstance.post('/subscription/subscribe', {
         email: userEmail,
-        planId: BASIC_PLAN_ID,
+        planId: selectedPlanId,
       });
+
+
+      // ✅ 2. Create Company (ONLY if payment succeeded)
+      const tempCompanyName = localStorage.getItem('temp_companyName');
+
+      if (tempCompanyName) {
+        try {
+          console.log('🏢 Creating company:', tempCompanyName);
+          // Assuming companyApi is imported or available via axios
+          // We'll use axios directly here if companyApi isn't easily reachable, 
+          // but better to use the import if possible. 
+          // Let's stick to the plan: call companyApi.createCompany
+
+          // Wait a bit to ensure subscription is propagated
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          await axiosInstance.post('/company', {
+            name: tempCompanyName,
+            email: userEmail || 'active@user.com',
+            address: 'Not Provided',
+            contactNumber: '',
+            departments: []
+          });
+
+          console.log('✅ Company created successfully');
+          localStorage.removeItem('temp_companyName'); // Cleanup
+        } catch (companyError) {
+          console.error('⚠️ Payment success, but company creation failed:', companyError);
+          // We generally continue to confirmation so they don't get stuck, 
+          // or we could show a distinct error. 
+          // Requirement: "Redirect user to dashboard" (via confirmation usually)
+        }
+      }
 
       navigate('/confirmation');
     } catch (error: any) {
@@ -145,41 +183,16 @@ const BuyPlan = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-xl p-8 text-white">
-            <div className="mb-6">
-              <p className="text-sm font-semibold uppercase tracking-wide mb-3 text-blue-100">
-                BASIC PLAN
-              </p>
-              <div className="flex items-baseline gap-2 mb-4">
-                <h2 className="text-5xl font-bold">RS: 150</h2>
-                <span className="text-blue-100">per employee</span>
-              </div>
-              <p className="text-sm text-blue-50 leading-relaxed">
-                Get essential payroll features with basic plan. Pay only a one-time Rs. 2,500 registration fee in
-                the first month. After that, the price of your subscription is based on the number of
-                employees—simple, flexible, and affordable.
-              </p>
-            </div>
-
-            <div className="space-y-3 mb-8">
-              {features.map((feature, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="mt-0.5">
-                    <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3 h-3 text-blue-600" strokeWidth={3} />
-                    </div>
-                  </div>
-                  <span className="text-white/90 text-sm">{feature}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="bg-white rounded-xl px-4 py-2 text-center">
-              <p className="text-gray-700 text-sm font-semibold">
-                First Month Fee Rs. <span className="text-xl font-bold">2,500</span>
-              </p>
-            </div>
-          </div>
+          {/* Dynamic Plan Card - Shows Selected Plan */}
+          <PlanCard
+            planName={selectedPlan.name}
+            price={selectedPlan.price}
+            registrationFee={selectedPlan.registrationFee}
+            description={selectedPlan.description}
+            features={selectedPlan.features}
+            isHighlighted={true}
+            showButton={false}
+          />
 
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -421,13 +434,22 @@ const BuyPlan = () => {
 
               <div className="flex justify-center gap-6 text-xs text-gray-500">
                 <button type="button" className="hover:text-gray-700">Instructions</button>
-                <button type="button" className="hover:text-gray-700">Terms of Use</button>
+                <button
+                  type="button"
+                  onClick={() => setIsTermsOpen(true)}
+                  className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
+                >
+                  Terms of Use
+                </button>
                 <button type="button" className="hover:text-gray-700">Privacy</button>
               </div>
             </form>
           </div>
         </div>
       </div>
+
+      {/* Terms & Conditions Modal */}
+      <TermsModal isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
     </div>
   );
 };

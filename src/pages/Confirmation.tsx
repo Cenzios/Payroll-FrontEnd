@@ -1,10 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { useAppDispatch } from '../store/hooks';
+import { logout } from '../store/slices/authSlice';
 import celebrationImg from '../assets/images/celebration-illustration.svg';
 
 
 const Confirmation = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const style = document.createElement('style');
@@ -27,7 +30,19 @@ const Confirmation = () => {
   }, []);
 
   const handleContinue = () => {
-    navigate('/dashboard');
+    const signupMethod = localStorage.getItem('signup_method');
+
+    // ✅ Clear the flag so it doesn't affect future sessions
+    localStorage.removeItem('signup_method');
+
+    if (signupMethod === 'email') {
+      // 1. Normal User -> Manual Login Required
+      dispatch(logout()); // Ensure session is cleared
+      navigate('/login');
+    } else {
+      // 2. Google/Others -> Go to Dashboard
+      navigate('/dashboard');
+    }
   };
 
   return (

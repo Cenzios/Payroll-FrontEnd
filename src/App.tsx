@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Signup from './pages/Signup';
+import Settings from './pages/Settings';
 import VerifyInfo from './pages/VerifyInfo';
 import VerifyEmail from './pages/VerifyEmail';
 import SetPassword from './pages/SetPassword';
@@ -9,6 +10,10 @@ import BuyPlan from './pages/BuyPlan';
 import Confirmation from './pages/Confirmation';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Companies from './pages/Companies';
+import Employees from './pages/Employees';
+import Salary from './pages/Salary'; // Import Salary
+import Reports from './pages/Reports';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
@@ -34,6 +39,47 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/companies"
+          element={
+            <ProtectedRoute>
+              <Companies />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/employees"
+          element={
+            <ProtectedRoute>
+              <Employees />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/salary"
+          element={
+            <ProtectedRoute>
+              <Salary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <Reports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           }
         />

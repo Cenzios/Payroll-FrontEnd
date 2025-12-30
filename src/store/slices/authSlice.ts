@@ -25,6 +25,7 @@ const initialState: AuthState = {
   error: null,
   tempPassword: null,
   tempPlanId: null,
+  selectedCompanyId: localStorage.getItem('selectedCompanyId') || null,
 };
 
 interface DecodedToken {
@@ -198,6 +199,16 @@ const authSlice = createSlice({
     setTempPlanId: (state, action) => {
       state.tempPlanId = action.payload;
     },
+    setSelectedCompanyId: (state, action) => {
+      state.selectedCompanyId = action.payload;
+      localStorage.setItem('selectedCompanyId', action.payload);
+    },
+    updateUser: (state, action) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+        localStorage.setItem('user', JSON.stringify(state.user));
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -275,5 +286,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, setSignupEmail, clearSignupEmail, setTempPassword, setTempPlanId, setAuthFromToken } = authSlice.actions;
+export const { logout, clearError, setSignupEmail, clearSignupEmail, setTempPassword, setTempPlanId, setAuthFromToken, setSelectedCompanyId, updateUser } = authSlice.actions;
 export default authSlice.reducer;
