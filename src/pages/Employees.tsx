@@ -243,7 +243,7 @@ const Employees = () => {
                 ) : (
                     <div className="flex gap-6">
                         {/* Left Column - Employee List */}
-                        <div className="w-1/3 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                        <div className="w-1/2 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
                             {/* Search */}
                             <div className="p-4 border-b border-gray-100">
                                 <div className="relative">
