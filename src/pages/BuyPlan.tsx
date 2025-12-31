@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
 import { Loader2 } from 'lucide-react';
@@ -10,7 +10,8 @@ import gpayIcon from '../assets/images/gpay.svg';
 import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
 import { PLANS, getPlanById } from '../constants/plans';
-import TermsModal from '../components/TermsModal';
+import bgIllustration from '../assets/images/Background-illustration.svg';
+
 
 const BuyPlan = () => {
 
@@ -23,8 +24,14 @@ const BuyPlan = () => {
   const selectedPlanId = localStorage.getItem('reg_planId') || PLANS.BASIC.id;
   const selectedPlan = getPlanById(selectedPlanId) || PLANS.BASIC;
 
-  // ✅ Terms modal state
-  const [isTermsOpen, setIsTermsOpen] = useState(false);
+  // ✅ Enforce Terms Acceptance
+  useEffect(() => {
+    const termsAccepted = localStorage.getItem('termsAccepted');
+    if (termsAccepted !== 'true') {
+      // Redirect if not accepted
+      navigate('/terms-and-conditions', { replace: true });
+    }
+  }, [navigate]);
 
   const [formData, setFormData] = useState({
     paymentMethod: 'visa',
@@ -169,7 +176,12 @@ const BuyPlan = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center px-4 py-12 relative">
+    <div
+      className="min-h-screen relative overflow-hidden
+  bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
+  flex items-center justify-center px-4 py-12"
+    >
+
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
       <div className="w-full max-w-5xl relative z-10">
         <h1 className="text-4xl font-bold text-center text-gray-900 mb-10">
@@ -182,7 +194,7 @@ const BuyPlan = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
           {/* Dynamic Plan Card - Shows Selected Plan */}
           <PlanCard
             planName={selectedPlan.name}
@@ -436,7 +448,7 @@ const BuyPlan = () => {
                 <button type="button" className="hover:text-gray-700">Instructions</button>
                 <button
                   type="button"
-                  onClick={() => setIsTermsOpen(true)}
+                  onClick={() => window.open('/terms-and-conditions', '_blank')}
                   className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
                 >
                   Terms of Use
@@ -448,8 +460,18 @@ const BuyPlan = () => {
         </div>
       </div>
 
-      {/* Terms & Conditions Modal */}
-      <TermsModal isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
+      {/* Background Wave - Bottom Right */}
+      <div
+        className="absolute bottom-[-350px] right-[-200px]
+  w-[700px] h-[700px]
+  z-0 pointer-events-none"
+      >
+        <img
+          src={bgIllustration}
+          alt="Background Wave"
+          className="w-full h-full object-contain"
+        />
+      </div>
     </div>
   );
 };

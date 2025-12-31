@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import logo from '../assets/images/logo.svg';
 import {
     LayoutDashboard,
     Users,
@@ -28,13 +29,12 @@ const Sidebar = () => {
     return (
         <div className="w-64 bg-white h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 overflow-y-auto">
             {/* Logo Section */}
-            <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center gap-2">
-                    <div className="text-2xl font-bold">
-                        <span className="text-blue-600">P</span>
-                        <span className="text-gray-800">ayroll</span>
-                    </div>
-                </div>
+            <div className="p-6 border-b border-gray-200 flex items-center justify-center">
+                <img
+                    src={logo}
+                    alt="Payroll Logo"
+                    className="h-10 object-contain"
+                />
             </div>
 
             {/* Navigation Items */}

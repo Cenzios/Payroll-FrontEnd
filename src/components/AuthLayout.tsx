@@ -29,26 +29,45 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
         {/* Center Composition */}
         <div className="relative w-full max-w-lg aspect-square flex items-center justify-center">
           {/* We position these absolutely relative to this container to create the layered effect */}
-          {/* Bottom layer - Kit 2 (Charts/Graphs looking thing) */}
-          <img
-            src={kit2}
-            alt="Dashboard UI"
-            className="absolute bottom-[-120px] right-[-60px] transform -translate-x-1/2 -translate-y-1/2 w-[30] h-auto object-contain z-10"
-          />
+          {/* Bottom layer - Kit 2 */}
+          <div
+            className="absolute bottom-[-120px] right-[-60px]
+  -translate-x-1/2 -translate-y-1/2 z-10"
+          >
+            <img
+              src={kit2}
+              alt="Dashboard UI"
+              className="w-[30] h-auto object-contain
+    animate-[float_4s_ease-in-out_infinite]"
+            />
+          </div>
 
-          {/* Middle layer - Illustration Asset (The background elements/blobs) */}
-          <img
-            src={illustrationAsset}
-            alt="Background Elements"
-            className="absolute top-[190px] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full object-contain z-0 opacity-100"
-          />
+          {/* Middle layer - Illustration Asset */}
+          <div
+            className="absolute top-[190px] left-1/2
+  -translate-x-1/2 -translate-y-1/2
+  w-full h-full z-0"
+          >
+            <img
+              src={illustrationAsset}
+              alt="Background Elements"
+              className="w-full h-full object-contain
+    animate-[float-slow_10s_ease-in-out_infinite]"
+            />
+          </div>
 
-          {/* Top layer - Main Image (User profile/card) */}
-          <img
-            src={mainImage}
-            alt="User Profile"
-            className="absolute top-30 left-[80px] transform -translate-x-1/2 -translate-y-1/2 w-[80] h-auto object-contain z-60"
-          />
+          {/* Top layer - Main Image */}
+          <div
+            className="absolute top-30 left-[80px]
+  -translate-x-1/2 -translate-y-1/2 z-60"
+          >
+            <img
+              src={mainImage}
+              alt="User Profile"
+              className="w-[80] h-auto object-contain
+    animate-[float_3.5s_ease-in-out_infinite]"
+            />
+          </div>
         </div>
         {/* Background Waves - Left Center */}
         <div className="absolute top-[680px] -left-32 w-[520px] h-[520px] 

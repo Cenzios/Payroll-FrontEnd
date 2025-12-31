@@ -6,6 +6,7 @@ import VerifyEmail from './pages/VerifyEmail';
 import SetPassword from './pages/SetPassword';
 import SetCompany from './pages/SetCompany';
 import GetPlan from './pages/GetPlan';
+import TermsAndConditions from './pages/TermsAndConditions';
 import BuyPlan from './pages/BuyPlan';
 import Confirmation from './pages/Confirmation';
 import Login from './pages/Login';
@@ -29,6 +30,7 @@ function App() {
         <Route path="/set-password" element={<SetPassword />} />
         <Route path="/set-company" element={<SetCompany />} />
         <Route path="/get-plan" element={<GetPlan />} />
+        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="/buy-plan" element={<BuyPlan />} />
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/confirmation-fail" element={<ConfirmationFail />} />

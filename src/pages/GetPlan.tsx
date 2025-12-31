@@ -56,8 +56,8 @@ const GetPlan = () => {
 
     console.log('✅ Plan selected:', planId);
 
-    // ✅ Navigate to buy-plan page
-    navigate('/buy-plan');
+    // ✅ Navigate to terms-and-conditions page
+    navigate('/terms-and-conditions');
   };
 
   return (
