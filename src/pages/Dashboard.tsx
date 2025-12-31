@@ -13,7 +13,8 @@ import {
   CreditCard,
   Plus,
   ChevronDown,
-  Building2
+  Building2,
+  Bell
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
@@ -194,90 +195,132 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className="flex-1 ml-64">
-        {/* Header */}
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-          <div className="px-8 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'}
-                </h1>
-                <p className="text-sm text-gray-500 mt-0.5">Here's your dashboard overview</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
+  <div className="px-8 py-4 flex items-center justify-between">
 
-              {/* Company Switcher */}
-              <div className="relative">
-                <button
-                  onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
-                  className="flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium"
-                >
-                  <Building2 className="w-4 h-4 text-gray-500" />
-                  {selectedCompany ? selectedCompany.name : "Select Company"}
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
-                </button>
+    {/* LEFT */}
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900">
+        {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'}
+      </h1>
+      <p className="text-sm text-gray-500">
+        Here's your dashboard overview
+      </p>
+    </div>
 
-                {isCompanyDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
-                    {companies.map(company => (
-                      <button
-                        key={company.id}
-                        onClick={() => {
-                          dispatch(setSelectedCompanyId(company.id));
-                          setIsCompanyDropdownOpen(false);
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-blue-50 text-gray-700 text-sm flex items-center gap-2"
-                      >
-                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                        {company.name}
-                      </button>
-                    ))}
-                    <div className="border-t border-gray-100 mt-1 pt-1">
-                      <button
-                        onClick={() => {
-                          setIsCompanyDropdownOpen(false);
-                          openAddCompany();
-                        }}
-                        className="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-sm font-medium flex items-center gap-2"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Add New Company
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+    {/* RIGHT */}
+    <div className="flex items-center gap-3">
 
+      {/* Company Switcher */}
+      <div className="relative">
+        <button
+          onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+          className="
+            flex items-center gap-2
+            px-4 py-2
+            rounded-xl
+            border border-gray-200
+            bg-white
+            hover:bg-gray-50
+            text-sm font-medium text-gray-700
+          "
+        >
+          <Building2 className="w-4 h-4 text-gray-500" />
+          {selectedCompany ? selectedCompany.name : 'Select Company'}
+          <ChevronDown className="w-4 h-4 text-gray-400" />
+        </button>
+
+        {isCompanyDropdownOpen && (
+          <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+            {companies.map(company => (
               <button
-                onClick={openAddCompany}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                key={company.id}
+                onClick={() => {
+                  dispatch(setSelectedCompanyId(company.id));
+                  setIsCompanyDropdownOpen(false);
+                }}
+                className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2"
+              >
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                {company.name}
+              </button>
+            ))}
+
+            <div className="border-t mt-1 pt-1">
+              <button
+                onClick={() => {
+                  setIsCompanyDropdownOpen(false);
+                  openAddCompany();
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Add New Company
               </button>
-
-              <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                  {user?.fullName?.charAt(0) || 'U'}
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium text-gray-900">
-                    {user?.fullName || 'User'}
-                  </div>
-                  <div className="text-xs text-gray-500">{user?.role || 'Admin'}</div>
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
             </div>
           </div>
-        </header>
+        )}
+      </div>
+
+      {/* Add New Company */}
+      <button
+        onClick={openAddCompany}
+        className="
+          flex items-center gap-2
+          bg-blue-600 hover:bg-blue-700
+          text-white
+          px-4 py-2
+          rounded-xl
+          text-sm font-semibold
+        "
+      >
+        <Plus className="w-4 h-4" />
+        Add New Company
+      </button>
+
+      {/* Notification */}
+      <button
+  className="
+    w-10 h-10
+    rounded-xl
+    bg-gray-100 hover:bg-gray-200
+    flex items-center justify-center
+    relative
+  "
+>
+  <Bell className="w-5 h-5 text-gray-600" />
+
+  {/* Optional unread dot */}
+  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
+</button>
+
+      {/* User */}
+      <div className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-xl">
+        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+          {user?.fullName?.charAt(0) || 'U'}
+        </div>
+        <div className="leading-tight">
+          <div className="text-sm font-medium text-gray-900">
+            {user?.fullName}
+          </div>
+          <div className="text-xs text-gray-500">
+            {user?.role || 'Admin'}
+          </div>
+        </div>
+      </div>
+
+      {/* Logout */}
+      <button
+        onClick={handleLogout}
+        className="w-10 h-10 rounded-xl hover:bg-gray-100 flex items-center justify-center"
+      >
+        <LogOut className="w-5 h-5 text-gray-600" />
+      </button>
+
+    </div>
+  </div>
+</header>
+
 
         {/* Dashboard Content */}
         <main className="p-8">
@@ -317,99 +360,122 @@ const Dashboard = () => {
             />
           </div>
 
-          {/* Quick Actions */}
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <QuickAction
-                icon={FileText}
-                title="Generate Payslips"
-                description="Create monthly payslips"
-                bgColor="bg-gradient-to-br from-blue-500 to-blue-600"
-              />
-              <div onClick={openAddEmployee} className="cursor-pointer">
-                <QuickAction
-                  icon={UserPlus}
-                  title="Add Employee"
-                  description="Register new staff member"
-                  bgColor="bg-gradient-to-br from-green-500 to-green-600"
-                />
-              </div>
-              <QuickAction
-                icon={BarChart3}
-                title="View Reports"
-                description="Access detailed analytics"
-                bgColor="bg-gradient-to-br from-purple-500 to-purple-600"
-              />
-              <div onClick={() => setIsAddonModalOpen(true)} className="cursor-pointer">
-                <QuickAction
-                  icon={CreditCard}
-                  title="Change Plan"
-                  description="Change subscription plan"
-                  bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
-                />
-              </div>
-            </div>
-          </div>
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
-          {/* Employee Usage Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Employee Usage</h3>
-                <span className="text-sm text-gray-500">Current Plan ({dashboardData.planName || 'Unknown'})</span>
-              </div>
-              <div className="flex items-center justify-center py-8">
-                <div className="relative w-48 h-48">
-                  {/* Simple donut chart representation */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-4xl font-bold text-gray-900">{dashboardData.totalEmployees}/{dashboardData.maxEmployees || 0}</div>
-                      <div className="text-sm text-gray-500 mt-1">Employees</div>
-                    </div>
-                  </div>
-                  <svg className="w-full h-full transform -rotate-90">
-                    <circle
-                      cx="96"
-                      cy="96"
-                      r="80"
-                      stroke="#E5E7EB"
-                      strokeWidth="16"
-                      fill="none"
-                    />
-                    <circle
-                      cx="96"
-                      cy="96"
-                      r="80"
-                      stroke="#F59E0B"
-                      strokeWidth="16"
-                      fill="none"
-                      strokeDasharray={`${(dashboardData.totalEmployees / (dashboardData.maxEmployees || 1)) * 502.4} 502.4`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
+  {/* LEFT – Quick Actions */}
+  <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
+    <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      Quick Actions
+    </h2>
 
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Remaining Slots</h3>
-              <div className="space-y-4">
-                <div className="text-center py-8">
-                  <div className="text-5xl font-bold text-orange-500 mb-2">{dashboardData.remainingSlots || 0} left</div>
-                  <p className="text-sm text-gray-600 mb-6">
-                    You can add {dashboardData.remainingSlots || 0} more employees to your current plan
-                  </p>
-                  <button
-                    onClick={() => setIsAddonModalOpen(true)}
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                  >
-                    Get More Slots
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <QuickAction
+        icon={FileText}
+        title="Generate Payslips"
+        description="Create monthly payslips"
+        bgColor="bg-gradient-to-br from-blue-500 to-blue-600"
+      />
+
+      <div onClick={openAddEmployee}>
+        <QuickAction
+          icon={UserPlus}
+          title="Add Employee"
+          description="Register new staff member"
+          bgColor="bg-gradient-to-br from-green-500 to-green-600"
+        />
+      </div>
+
+      <QuickAction
+        icon={BarChart3}
+        title="View Reports"
+        description="Access detailed analytics"
+        bgColor="bg-gradient-to-br from-purple-500 to-purple-600"
+      />
+
+      <div onClick={() => setIsAddonModalOpen(true)}>
+        <QuickAction
+          icon={CreditCard}
+          title="Change Plan"
+          description="Change subscription plan"
+          bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
+        />
+      </div>
+    </div>
+  </div>
+
+  {/* RIGHT – Employee Usage */}
+  <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6">
+    {/* Header */}
+  <div className="flex items-center justify-between mb-4">
+    <div>
+      <h3 className="text-lg font-semibold text-gray-900">
+        Employee Usage
+      </h3>
+      <p className="text-sm text-gray-500">
+        Current Plan: {dashboardData.planName || 'Professional'}
+      </p>
+    </div>
+
+    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+      <Users className="w-5 h-5 text-blue-600" />
+    </div>
+  </div>
+
+  {/* Center count */}
+  <div className="text-center my-6">
+    <div className="text-3xl font-bold text-gray-900">
+      {dashboardData.totalEmployees}/{dashboardData.maxEmployees}
+    </div>
+    <div className="text-sm text-gray-500">
+      Employees
+    </div>
+  </div>
+
+  {/* Progress bar */}
+  <div className="mb-3">
+    <div className="w-full h-3 bg-blue-100 rounded-full overflow-hidden">
+      <div
+        className="h-full bg-blue-600 rounded-full"
+        style={{
+          width: `${Math.min(
+            (dashboardData.totalEmployees / dashboardData.maxEmployees) * 100,
+            100
+          )}%`
+        }}
+      />
+    </div>
+  </div>
+
+  {/* Used / Remaining */}
+  <div className="flex justify-between text-sm text-gray-600 mb-6">
+    <span>{dashboardData.totalEmployees} Used</span>
+    <span>
+      {dashboardData.maxEmployees - dashboardData.totalEmployees} Remaining
+    </span>
+  </div>
+
+  {/* Remaining slots */}
+  <div className="flex justify-between items-center mb-4">
+    <span className="text-sm text-gray-600">
+      Remaining Slots
+    </span>
+    <span className="text-lg font-bold text-orange-500">
+      {dashboardData.remainingSlots} left
+    </span>
+  </div>
+
+  {/* Action */}
+  <button
+    onClick={() => setIsAddonModalOpen(true)}
+    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold"
+  >
+    Get More Slots
+  </button>
+  </div>
+
+</div>
+
+          
         </main>
       </div>
 

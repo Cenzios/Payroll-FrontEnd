@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import PaymentFailImg from '../assets/images/PaymentFail-illustration.svg';
+import bgIllustration from '../assets/images/Background-illustration.svg';
+
 
 const ConfirmationFail = () => {
     const navigate = useNavigate();
@@ -50,6 +52,35 @@ const ConfirmationFail = () => {
                     </div>
                 </div>
             </div>
+            {/* Background Illustration - Top Right */}
+<div className="
+  absolute 
+  top-[-250px] right-[-200px]
+  w-[600px] h-[600px]
+  z-0
+  pointer-events-none
+">
+  <img
+    src={bgIllustration}
+    alt="Background Decoration"
+    className="w-full h-full object-contain"
+  />
+</div>
+
+{/* Background Illustration - Bottom Left */}
+<div className="
+  absolute 
+  bottom-[-300px] left-[-200px]
+  w-[700px] h-[700px]
+  z-0
+  pointer-events-none
+">
+  <img
+    src={bgIllustration}
+    alt="Background Decoration"
+    className="w-full h-full object-contain rotate-180"
+  />
+</div>
         </div>
     );
 };
