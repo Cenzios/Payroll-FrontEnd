@@ -69,13 +69,13 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
             />
           </div>
         </div>
-        {/* Background Waves - Left Center */}
-        <div className="absolute top-[680px] -left-32 w-[520px] h-[520px] 
-                -translate-y-1/2 z-0 opacity-100 pointer-events-none">
+        {/* Background Waves - Bottom Left (Stable on all screens) */}
+        <div className="absolute bottom-[-290px] -left-40 w-[520px] h-[520px] 
+  z-0 pointer-events-none">
           <img
             src={bgIllustration}
             alt="Background Wave"
-            className="w-96 h-96 object-contain"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
