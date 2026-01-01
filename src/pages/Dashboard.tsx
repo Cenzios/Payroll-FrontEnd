@@ -23,7 +23,7 @@ import UniversalDrawer from '../components/UniversalDrawer';
 import ConfirmationModal from '../components/ConfirmationModal';
 import AddonModal from '../components/AddonModal';
 import Toast from '../components/Toast';
-import { Company, CreateCompanyRequest } from '../types/company.types';
+import { CreateCompanyRequest } from '../types/company.types';
 import { CreateEmployeeRequest } from '../types/employee.types';
 import {
   useGetDashboardSummaryQuery,
@@ -312,32 +312,24 @@ const Dashboard = () => {
                   title="Total Employees"
                   value={dashboardData?.totalEmployees?.toString() || '0'}
                   subtitle="Current Company"
-                  iconBgColor="bg-blue-100"
-                  iconColor="text-blue-600"
                 />
                 <StatCard
                   icon={DollarSign}
                   title="Total Salary Paid"
                   value={`Rs ${dashboardData?.totalSalaryPaidThisMonth?.toLocaleString() || '0'}`}
                   subtitle="This Month"
-                  iconBgColor="bg-green-100"
-                  iconColor="text-green-600"
                 />
                 <StatCard
                   icon={TrendingUp}
                   title="Company EPF Amount"
                   value={`Rs ${dashboardData?.totalCompanyETF?.toLocaleString() || '0'}`} // Note: using ETF field for now as per controller
                   subtitle="This Month"
-                  iconBgColor="bg-purple-100"
-                  iconColor="text-purple-600"
                 />
                 <StatCard
                   icon={CreditCard}
                   title="Total Employee EPF"
                   value={`Rs ${dashboardData?.totalEmployeeEPF?.toLocaleString() || '0'}`}
                   subtitle="This Month"
-                  iconBgColor="bg-orange-100"
-                  iconColor="text-orange-600"
                 />
               </div>
             </div>

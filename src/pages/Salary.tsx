@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { Search, Loader2, Download, FileText, FileSpreadsheet, Calculator, Wallet } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { employeeApi } from '../api/employeeApi';
+import { useGetEmployeesQuery } from '../store/apiSlice';
 import { salaryApi } from '../api/salaryApi';
 import { Employee } from '../types/employee.types';
 import Toast from '../components/Toast';
+import SalaryListSkeleton from '../components/skeletons/SalaryListSkeleton';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -30,8 +31,6 @@ const Salary = () => {
         selectedYear
     } = useAppSelector((state) => state.salary);
 
-    const [employees, setEmployees] = useState<Employee[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
     const [search, setSearch] = useState('');
 
     // Selection State
@@ -40,23 +39,18 @@ const Salary = () => {
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-    // Fetch Employees
-    useEffect(() => {
-        const fetchEmployees = async () => {
-            if (!selectedCompanyId) return;
-            try {
-                setIsLoading(true);
-                // ✅ Fetch ONLY ACTIVE employees for Salary generation
-                const data = await employeeApi.getEmployees(selectedCompanyId, 1, 100, search, 'ACTIVE');
-                setEmployees(data.employees);
-            } catch (error: any) {
-                setToast({ message: error.message || 'Failed to fetch employees', type: 'error' });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchEmployees();
-    }, [selectedCompanyId, search]);
+    // RTK Query for Employees
+    const { data, isLoading } = useGetEmployeesQuery({
+        companyId: selectedCompanyId || '',
+        page: 1,
+        limit: 100,
+        search,
+        status: 'ACTIVE' // Fetch ACTIVE only
+    }, {
+        skip: !selectedCompanyId
+    });
+
+    const employees = data?.employees || [];
 
     // Helper functions for Redux State
     const getEmployeeValues = (empId: string) => {
@@ -380,9 +374,7 @@ const Salary = () => {
                     {/* LEFT SIDE: Employee Salary Cards */}
                     <div className="w-1/2 overflow-y-auto pr-2 space-y-4">
                         {isLoading ? (
-                            <div className="flex justify-center p-12">
-                                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                            </div>
+                            <SalaryListSkeleton />
                         ) : employees.length === 0 ? (
                             <div className="text-center p-12 text-gray-500">No employees found.</div>
                         ) : (
