@@ -39,6 +39,17 @@ const Salary = () => {
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+    // Touch tracking for validation
+    const [touchedFields, setTouchedFields] = useState<{
+        month: boolean;
+        companyDays: boolean;
+        employeeDays: Record<string, boolean>;
+    }>({
+        month: false,
+        companyDays: false,
+        employeeDays: {}
+    });
+
     // RTK Query for Employees
     const { data, isLoading } = useGetEmployeesQuery({
         companyId: selectedCompanyId || '',
@@ -59,12 +70,75 @@ const Salary = () => {
         return { workedDays, isEpfEnabled };
     };
 
+    // --- Validation Logic ---
+    const getMaxAllowedDays = (year: number, month: number) => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+
+        // If future month entirely
+        if (year > currentYear || (year === currentYear && month > currentMonth)) {
+            return 0; // Invalid
+        }
+
+        // If current month, return days elapsed so far
+        if (year === currentYear && month === currentMonth) {
+            return now.getDate();
+        }
+
+        // If past month, return total days in that month
+        return new Date(year, month + 1, 0).getDate();
+    };
+
+    const maxAllowedCompanyDays = getMaxAllowedDays(selectedYear, selectedMonth);
+    const isFutureMonth = new Date(selectedYear, selectedMonth) > new Date(new Date().getFullYear(), new Date().getMonth());
+
+    // Derived Errors (only shown if touched)
+    const monthError = (touchedFields.month && isFutureMonth) ? 'Cannot generate for future months' : null;
+
+    const companyDaysError = (touchedFields.companyDays && (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays))
+        ? `Must be between 1 and ${maxAllowedCompanyDays} days`
+        : null;
+
+    const getEmployeeError = (empId: string, workedDays: number) => {
+        if (!touchedFields.employeeDays[empId]) return null;
+        if (workedDays < 0) return 'Cannot be negative';
+        if (workedDays > companyWorkingDays) return `Cannot exceed company days (${companyWorkingDays})`;
+        return null;
+    };
+
+    // Check if ANY validation error exists (for button disable)
+    const hasAnyError = () => {
+        if (isFutureMonth) return true;
+        if (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays) return true;
+        if (selectedEmployee) {
+            const { workedDays } = getEmployeeValues(selectedEmployee.id);
+            if (workedDays < 0 || workedDays > companyWorkingDays) return true;
+        }
+        return false;
+    };
+
     const handleCompanyWorkingDaysChange = (val: number) => {
+        setTouchedFields(prev => ({ ...prev, companyDays: true }));
         dispatch(setCompanyWorkingDays(val));
     };
 
     const handleEmployeeWorkedDaysChange = (empId: string, val: number) => {
+        setTouchedFields(prev => ({
+            ...prev,
+            employeeDays: { ...prev.employeeDays, [empId]: true }
+        }));
         dispatch(setEmployeeWorkedDays({ id: empId, days: val }));
+    };
+
+    const handleMonthChange = (month: number) => {
+        setTouchedFields(prev => ({ ...prev, month: true }));
+        dispatch(setMonth(month));
+    };
+
+    const handleYearChange = (year: number) => {
+        setTouchedFields(prev => ({ ...prev, month: true }));
+        dispatch(setYear(year));
     };
 
     const handleToggleEpfEtf = (empId: string) => {
@@ -77,6 +151,19 @@ const Salary = () => {
         setSelectedEmployee(emp);
 
         const { workedDays, isEpfEnabled } = getEmployeeValues(emp.id);
+
+        // FINAL VALIDATION BLOCK - Mark all as touched and check
+        setTouchedFields({
+            month: true,
+            companyDays: true,
+            employeeDays: { ...touchedFields.employeeDays, [emp.id]: true }
+        });
+
+        if (isFutureMonth || companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays || workedDays < 0 || workedDays > companyWorkingDays) {
+            setToast({ message: 'Please fix validation errors before generating', type: 'error' });
+            return;
+        }
+
         const dailyRate = emp.dailyRate;
         const basicSalary = dailyRate * workedDays;
 
@@ -337,7 +424,7 @@ const Salary = () => {
                     <div className="flex items-center gap-4">
                         <select
                             value={selectedMonth}
-                            onChange={(e) => dispatch(setMonth(parseInt(e.target.value)))}
+                            onChange={(e) => handleMonthChange(parseInt(e.target.value))}
                             className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
                         >
                             {Array.from({ length: 12 }, (_, i) => (
@@ -348,7 +435,7 @@ const Salary = () => {
                         </select>
                         <select
                             value={selectedYear}
-                            onChange={(e) => dispatch(setYear(parseInt(e.target.value)))}
+                            onChange={(e) => handleYearChange(parseInt(e.target.value))}
                             className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
                         >
                             {Array.from({ length: 6 }, (_, i) => {
@@ -363,6 +450,7 @@ const Salary = () => {
                                 type="number"
                                 value={companyWorkingDays}
                                 onChange={(e) => handleCompanyWorkingDaysChange(parseInt(e.target.value) || 0)}
+                                onBlur={() => setTouchedFields(prev => ({ ...prev, companyDays: true }))}
                                 className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center font-bold text-gray-800"
                                 min="0" max="31"
                             />
@@ -380,6 +468,7 @@ const Salary = () => {
                         ) : (
                             employees.map(emp => {
                                 const { workedDays, isEpfEnabled } = getEmployeeValues(emp.id);
+                                const empError = getEmployeeError(emp.id, workedDays);
                                 return (
                                     <div
                                         key={emp.id}
@@ -424,6 +513,10 @@ const Salary = () => {
                                                                 type="number"
                                                                 value={workedDays}
                                                                 onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
+                                                                onBlur={() => setTouchedFields(prev => ({
+                                                                    ...prev,
+                                                                    employeeDays: { ...prev.employeeDays, [emp.id]: true }
+                                                                }))}
                                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
                                                                 min="0"
                                                                 max="31"
@@ -457,8 +550,11 @@ const Salary = () => {
                                                             e.stopPropagation();
                                                             handleGeneratePayslip(emp);
                                                         }}
-                                                        disabled={isSaving}
-                                                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm hover:shadow active:scale-95 flex items-center gap-2"
+                                                        disabled={isSaving || hasAnyError()}
+                                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 ${(isSaving || hasAnyError())
+                                                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                            : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow active:scale-95'
+                                                            }`}
                                                     >
                                                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Generate Pay-slip'}
                                                     </button>
