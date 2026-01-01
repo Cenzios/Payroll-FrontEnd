@@ -6,16 +6,37 @@ import SuccessModal from '../components/SuccessModal';
 import ConfirmationModal from '../components/ConfirmationModal'; // Import ConfirmationModal
 import AddonModal from '../components/AddonModal'; // Import AddonModal
 import { useAppSelector } from '../store/hooks';
-import { employeeApi } from '../api/employeeApi';
+import {
+    useGetEmployeesQuery,
+    useCreateEmployeeMutation,
+    useUpdateEmployeeMutation,
+    useDeleteEmployeeMutation
+} from '../store/apiSlice';
 import { Employee } from '../types/employee.types';
 import Toast from '../components/Toast';
+import TableSkeleton from '../components/skeletons/TableSkeleton';
 
 const Employees = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
-    const [employees, setEmployees] = useState<Employee[]>([]);
-    const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
     const [search, setSearch] = useState('');
+
+    // RTK Query
+    const { data, isLoading, isError, error } = useGetEmployeesQuery({
+        companyId: selectedCompanyId || '',
+        page: 1,
+        limit: 100,
+        search
+    }, {
+        skip: !selectedCompanyId
+    });
+
+    const employees = data?.employees || [];
+
+    const [createEmployee] = useCreateEmployeeMutation();
+    const [updateEmployee] = useUpdateEmployeeMutation();
+    const [deleteEmployee] = useDeleteEmployeeMutation();
+
+    const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
 
@@ -46,35 +67,27 @@ const Employees = () => {
     // Edit State
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
-    // Fetch Employees
-    const fetchEmployees = async () => {
-        if (!selectedCompanyId) return;
-        try {
-            setIsLoading(true);
-            const data = await employeeApi.getEmployees(selectedCompanyId, 1, 100, search);
-            setEmployees(data.employees);
-
-            // Refresh selected employee if it was updated
-            if (selectedEmployee) {
-                const updated = data.employees.find(e => e.id === selectedEmployee.id);
-                if (updated) setSelectedEmployee(updated);
-            }
-        } catch (error: any) {
-            setToast({ message: error.message, type: 'error' });
-        } finally {
-            setIsLoading(false);
+    // Select first employee default logic
+    useEffect(() => {
+        if (employees.length > 0 && !selectedEmployee) {
+            setSelectedEmployee(employees[0]);
         }
-    };
+    }, [employees, selectedEmployee]);
+
+    // Error handling
+    useEffect(() => {
+        if (isError && error) {
+            const err = error as any;
+            setToast({ message: err?.data?.message || 'Failed to fetch employees', type: 'error' });
+        }
+    }, [isError, error]);
 
     useEffect(() => {
-  if (employees.length > 0 && !selectedEmployee) {
-    setSelectedEmployee(employees[0]);
-  }
-}, [employees, selectedEmployee]);
+        if (employees.length > 0 && !selectedEmployee) {
+            setSelectedEmployee(employees[0]);
+        }
+    }, [employees, selectedEmployee]);
 
-    useEffect(() => {
-        fetchEmployees();
-    }, [selectedCompanyId, search]);
 
     // Close menu on outside click
     useEffect(() => {
@@ -105,15 +118,19 @@ const Employees = () => {
         try {
             if (editingEmployee) {
                 if (!selectedCompanyId) throw new Error("No company selected");
-                await employeeApi.updateEmployee(selectedCompanyId, editingEmployee.id, data);
+                await updateEmployee({
+                    id: editingEmployee.id,
+                    companyId: selectedCompanyId,
+                    data
+                }).unwrap();
             } else {
-                await employeeApi.createEmployee(data);
+                await createEmployee(data).unwrap();
             }
             setIsDrawerOpen(false);
             setEditingEmployee(null); // Reset edit state
             setModalMessage(editingEmployee ? 'The employee has been successfully updated.' : 'The employee has been successfully saved.');
             setShowSuccessModal(true);
-            fetchEmployees();
+            // Cache invalidation handles refresh
         } catch (error: any) {
             if (error.message && error.message.includes('limit reached')) {
                 handleOpenLimitModal();
@@ -140,10 +157,13 @@ const Employees = () => {
             onConfirm: async () => {
                 try {
                     if (!selectedCompanyId) return;
-                    // Assuming updateEmployee handles partial updates including status
-                    await employeeApi.updateEmployee(selectedCompanyId, employee.id, { status: 'INACTIVE' } as any);
+                    await updateEmployee({
+                        id: employee.id,
+                        companyId: selectedCompanyId,
+                        data: { status: 'INACTIVE' } as any
+                    }).unwrap();
                     setToast({ message: 'Employee deactivated successfully', type: 'success' });
-                    fetchEmployees();
+                    // Cache refresh
                 } catch (error: any) {
                     setToast({ message: error.message || 'Failed to deactivate', type: 'error' });
                 } finally {
@@ -166,12 +186,11 @@ const Employees = () => {
                         setToast({ message: "Company ID is missing", type: "error" });
                         return;
                     }
-                    // Pass companyId in data object for DELETE request
-                    await employeeApi.deleteEmployee(selectedCompanyId, employee.id);
+                    await deleteEmployee({ id: employee.id, companyId: selectedCompanyId }).unwrap();
                     setToast({ message: 'Employee removed successfully', type: 'success' });
                     // Provide feedback - maybe navigate away if selected?
                     if (selectedEmployee?.id === employee.id) setSelectedEmployee(null);
-                    fetchEmployees();
+                    // Cache refresh
                 } catch (error: any) {
                     setToast({ message: error.message || 'Failed to remove', type: 'error' });
                 } finally {
@@ -191,9 +210,13 @@ const Employees = () => {
             onConfirm: async () => {
                 try {
                     if (!selectedCompanyId) return;
-                    await employeeApi.updateEmployee(selectedCompanyId, employee.id, { status: 'ACTIVE' } as any);
+                    await updateEmployee({
+                        id: employee.id,
+                        companyId: selectedCompanyId,
+                        data: { status: 'ACTIVE' } as any
+                    }).unwrap();
                     setToast({ message: 'Employee activated successfully', type: 'success' });
-                    fetchEmployees();
+                    // Cache refresh
                 } catch (error: any) {
                     setToast({ message: error.message || 'Failed to activate', type: 'error' });
                 } finally {
@@ -272,8 +295,8 @@ const Employees = () => {
                             {/* List */}
                             <div className="max-h-[calc(100vh-220px)] overflow-y-auto">
                                 {isLoading ? (
-                                    <div className="flex justify-center p-8">
-                                        <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                                    <div className="p-4">
+                                        <TableSkeleton rows={5} />
                                     </div>
                                 ) : employees.length === 0 ? (
                                     <div className="p-8 text-center text-gray-500 text-sm">
@@ -287,11 +310,10 @@ const Employees = () => {
                                                 onClick={() => setSelectedEmployee(emp)}
                                                 className={`p-4 flex items-center justify-between cursor-pointer group
   transition-all duration-200 hover:bg-gray-50
-  ${
-    selectedEmployee?.id === emp.id
-      ? 'bg-white/60 backdrop-blur-md shadow-md ring-1 ring-blue-300/50'
-      : ''
-  }
+  ${selectedEmployee?.id === emp.id
+                                                        ? 'bg-white/60 backdrop-blur-md shadow-md ring-1 ring-blue-300/50'
+                                                        : ''
+                                                    }
 `}
                                             >
                                                 <div className="flex items-center gap-3 overflow-hidden">
@@ -455,16 +477,16 @@ const Employees = () => {
                                             </div>
 
                                             <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
-  <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-600 font-semibold">
-    Rs:
-  </div>
-  <div>
-    <p className="text-xs font-medium text-gray-500 uppercase">Daily Rate</p>
-    <p className="text-sm font-medium text-gray-900">
-      {selectedEmployee.dailyRate.toFixed(2)}
-    </p>
-  </div>
-</div>
+                                                <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-600 font-semibold">
+                                                    Rs:
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-medium text-gray-500 uppercase">Daily Rate</p>
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {selectedEmployee.dailyRate.toFixed(2)}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
 
                                     </div>
@@ -522,7 +544,7 @@ const Employees = () => {
                     setToast({ message: 'Slots purchased successfully!', type: 'success' });
                     // Optionally refresh data - employees not affected directly unless we show limits here? 
                     // But we can re-fetch just in case.
-                    fetchEmployees();
+                    // fetchEmployees(); // Handled by tags
                 }}
                 onUpgradePlan={() => {
                     setIsAddonModalOpen(false);

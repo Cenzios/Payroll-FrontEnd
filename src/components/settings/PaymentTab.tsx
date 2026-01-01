@@ -3,6 +3,8 @@ import { CreditCard, Plus, Trash2, ShieldCheck, Crown, ExternalLink, RefreshCcw,
 import AddCardDrawer from './AddCardDrawer';
 import logo from '../../assets/images/logo.svg';
 import { useNavigate } from 'react-router-dom';
+import { useGetSubscriptionQuery } from '../../store/apiSlice';
+import PaymentPlanSkeleton from '../../components/skeletons/PaymentPlanSkeleton';
 // Dummy static paths based on project assets
 const VISA_ICON = '/src/assets/images/visa.svg';
 const MASTERCARD_ICON = '/src/assets/images/mastercard.svg';
@@ -40,38 +42,7 @@ const PaymentTab = () => {
         setIsAddCardOpen(false);
     };
 
-    const [subscription, setSubscription] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-
-    const fetchSubscription = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            console.log('🔍 Fetching subscription with token:', token ? 'Present' : 'Missing');
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/subscription/current`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            console.log('🔍 Response Status:', response.status);
-            const data = await response.json();
-            console.log('🔍 Subscription Data:', data);
-            if (data.success) {
-                setSubscription(data.data);
-            } else {
-                console.error('❌ API returned success: false', data.message);
-            }
-        } catch (err) {
-            console.error('❌ Fetch Error:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Use a flag to avoid double fetching in React 18 strict mode if needed, 
-    // but standard useEffect dependency array is fine here.
-    useState(() => {
-        fetchSubscription();
-    });
+    const { data: subscription, isLoading: loading } = useGetSubscriptionQuery();
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -160,7 +131,7 @@ const PaymentTab = () => {
 
                 <div className="lg:col-span-2">
                     {loading ? (
-                        <div className="h-48 bg-gray-50 rounded-[2rem] animate-pulse" />
+                        <PaymentPlanSkeleton />
                     ) : subscription ? (
                         <>
                             <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm relative overflow-hidden group">

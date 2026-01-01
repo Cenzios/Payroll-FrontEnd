@@ -23,11 +23,15 @@ import UniversalDrawer from '../components/UniversalDrawer';
 import ConfirmationModal from '../components/ConfirmationModal';
 import AddonModal from '../components/AddonModal';
 import Toast from '../components/Toast';
-import { companyApi } from '../api/companyApi';
-import { employeeApi } from '../api/employeeApi';
-import { dashboardApi } from '../api/dashboardApi';
 import { Company, CreateCompanyRequest } from '../types/company.types';
 import { CreateEmployeeRequest } from '../types/employee.types';
+import {
+  useGetDashboardSummaryQuery,
+  useGetCompaniesQuery,
+  useCreateCompanyMutation,
+  useCreateEmployeeMutation
+} from '../store/apiSlice';
+import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -40,20 +44,23 @@ const Dashboard = () => {
   const [drawerMode, setDrawerMode] = useState<'company' | 'employee'>('company');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
-
-  const [companies, setCompanies] = useState<Company[]>([]);
-  // Derived state
-  const selectedCompany = companies.find(c => c.id === selectedCompanyId) || null;
-
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
 
-  const [dashboardData, setDashboardData] = useState<any>({
-    totalEmployees: 0,
-    totalSalaryPaidThisMonth: 0,
-    totalCompanyETF: 0,
-    totalEmployeeEPF: 0,
-    remainingSlots: 0,
+  // RTK Query hooks
+  const { data: companies = [] } = useGetCompaniesQuery(undefined, {
+    skip: !user // Skip if user not logged in
   });
+
+  const { data: dashboardData, isLoading: isDashboardLoading } = useGetDashboardSummaryQuery(selectedCompanyId || undefined, {
+    skip: !user, // or !selectedCompanyId if strictly required, but backend might handle optional
+    refetchOnMountOrArgChange: true // Ensure fresh data on mount if needed, or rely on cache time
+  });
+
+  const [createCompany] = useCreateCompanyMutation();
+  const [createEmployee] = useCreateEmployeeMutation();
+
+  // Derived state
+  const selectedCompany = companies.find(c => c.id === selectedCompanyId) || null;
 
   // Handle Google OAuth callback for existing users
   useEffect(() => {
@@ -68,43 +75,14 @@ const Dashboard = () => {
     }
   }, [searchParams, dispatch]);
 
-  // Fetch Companies
-  const fetchCompanies = async () => {
-    try {
-      const data = await companyApi.getCompanies();
-      setCompanies(data);
-      if (data.length > 0 && !selectedCompanyId) {
-        dispatch(setSelectedCompanyId(data[0].id));
-      } else if (data.length > 0 && selectedCompanyId && !data.find(c => c.id === selectedCompanyId)) {
-        // If selected ID exists but provided company is not in the list (e.g. deleted/unauthorized), fallback to first
-        dispatch(setSelectedCompanyId(data[0].id));
-      }
-    } catch (error) {
-      console.error("Failed to load companies");
-    }
-  };
-
+  // Effect to set default selected company
   useEffect(() => {
-    if (user) {
-      fetchCompanies();
+    if (companies.length > 0 && !selectedCompanyId) {
+      dispatch(setSelectedCompanyId(companies[0].id));
+    } else if (companies.length > 0 && selectedCompanyId && !companies.find(c => c.id === selectedCompanyId)) {
+      dispatch(setSelectedCompanyId(companies[0].id));
     }
-  }, [user]);
-
-  // Fetch Dashboard Summary
-  const fetchSummary = async () => {
-    try {
-      const data = await dashboardApi.getSummary(selectedCompany?.id);
-      setDashboardData(data);
-    } catch (error) {
-      console.error("Failed to load dashboard summary");
-    }
-  };
-
-  useEffect(() => {
-    if (user) { // Fetch global summary even if no company selected initially, or filter if company selected
-      fetchSummary();
-    }
-  }, [selectedCompany, user]);
+  }, [companies, selectedCompanyId, dispatch]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -148,22 +126,23 @@ const Dashboard = () => {
   const handleDrawerSubmit = async (data: any) => {
     try {
       if (drawerMode === 'company') {
-        await companyApi.createCompany(data as CreateCompanyRequest);
+        await createCompany(data as CreateCompanyRequest).unwrap();
         setToast({ message: 'Company created successfully!', type: 'success' });
-        fetchCompanies(); // Refresh list
+        // Refetch handled by cache invalidation tags
       } else {
-        await employeeApi.createEmployee(data as CreateEmployeeRequest);
+        await createEmployee(data as CreateEmployeeRequest).unwrap();
         setToast({ message: 'Employee created successfully!', type: 'success' });
-        fetchSummary(); // Refresh stats
+        // Refetch handled by cache invalidation tags
       }
       setIsDrawerOpen(false);
     } catch (error: any) {
-      if (error.message && error.message.includes('limit reached')) {
+      const errorMsg = error?.data?.message || 'Operation failed';
+      if (errorMsg.includes('limit reached')) {
         // Parse limit if needed or just show generic message based on error
         // The error message from backend: "Company limit reached (2). Plan allows 2..."
         openLimitModal(drawerMode, 0, 0);
       } else {
-        setToast({ message: error.message || 'Operation failed', type: 'error' });
+        setToast({ message: errorMsg, type: 'error' });
       }
     }
   };
@@ -323,42 +302,46 @@ const Dashboard = () => {
 
 
         {/* Dashboard Content */}
-        <main className="p-8">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatCard
-              icon={Users}
-              title="Total Employees"
-              value={dashboardData.totalEmployees.toString()}
-              subtitle="Current Company"
-              iconBgColor="bg-blue-100"
-              iconColor="text-blue-600"
-            />
-            <StatCard
-              icon={DollarSign}
-              title="Total Salary Paid"
-              value={`Rs ${dashboardData.totalSalaryPaidThisMonth.toLocaleString()}`}
-              subtitle="This Month"
-              iconBgColor="bg-green-100"
-              iconColor="text-green-600"
-            />
-            <StatCard
-              icon={TrendingUp}
-              title="Company EPF Amount"
-              value={`Rs ${dashboardData.totalCompanyETF?.toLocaleString() || '0'}`} // Note: using ETF field for now as per controller
-              subtitle="This Month"
-              iconBgColor="bg-purple-100"
-              iconColor="text-purple-600"
-            />
-            <StatCard
-              icon={CreditCard}
-              title="Total Employee EPF"
-              value={`Rs ${dashboardData.totalEmployeeEPF.toLocaleString()}`}
-              subtitle="This Month"
-              iconBgColor="bg-orange-100"
-              iconColor="text-orange-600"
-            />
-          </div>
+        <main className="p-0">
+          {isDashboardLoading ? <DashboardSkeleton /> : (
+            <div className="p-8">
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <StatCard
+                  icon={Users}
+                  title="Total Employees"
+                  value={dashboardData?.totalEmployees?.toString() || '0'}
+                  subtitle="Current Company"
+                  iconBgColor="bg-blue-100"
+                  iconColor="text-blue-600"
+                />
+                <StatCard
+                  icon={DollarSign}
+                  title="Total Salary Paid"
+                  value={`Rs ${dashboardData?.totalSalaryPaidThisMonth?.toLocaleString() || '0'}`}
+                  subtitle="This Month"
+                  iconBgColor="bg-green-100"
+                  iconColor="text-green-600"
+                />
+                <StatCard
+                  icon={TrendingUp}
+                  title="Company EPF Amount"
+                  value={`Rs ${dashboardData?.totalCompanyETF?.toLocaleString() || '0'}`} // Note: using ETF field for now as per controller
+                  subtitle="This Month"
+                  iconBgColor="bg-purple-100"
+                  iconColor="text-purple-600"
+                />
+                <StatCard
+                  icon={CreditCard}
+                  title="Total Employee EPF"
+                  value={`Rs ${dashboardData?.totalEmployeeEPF?.toLocaleString() || '0'}`}
+                  subtitle="This Month"
+                  iconBgColor="bg-orange-100"
+                  iconColor="text-orange-600"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
@@ -414,7 +397,7 @@ const Dashboard = () => {
                     Employee Usage
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Current Plan: {dashboardData.planName || 'Professional'}
+                    Current Plan: {dashboardData?.planName || 'Professional'}
                   </p>
                 </div>
 
@@ -426,7 +409,7 @@ const Dashboard = () => {
               {/* Center count */}
               <div className="text-center my-6">
                 <div className="text-3xl font-bold text-gray-900">
-                  {dashboardData.totalEmployees}/{dashboardData.maxEmployees}
+                  {dashboardData?.totalEmployees}/{dashboardData?.maxEmployees}
                 </div>
                 <div className="text-sm text-gray-500">
                   Employees
@@ -440,7 +423,7 @@ const Dashboard = () => {
                     className="h-full bg-blue-600 rounded-full"
                     style={{
                       width: `${Math.min(
-                        (dashboardData.totalEmployees / dashboardData.maxEmployees) * 100,
+                        ((dashboardData?.totalEmployees || 0) / (dashboardData?.maxEmployees || 1)) * 100,
                         100
                       )}%`
                     }}
@@ -450,9 +433,9 @@ const Dashboard = () => {
 
               {/* Used / Remaining */}
               <div className="flex justify-between text-sm text-gray-600 mb-6">
-                <span>{dashboardData.totalEmployees} Used</span>
+                <span>{dashboardData?.totalEmployees} Used</span>
                 <span>
-                  {dashboardData.maxEmployees - dashboardData.totalEmployees} Remaining
+                  {(dashboardData?.maxEmployees || 0) - (dashboardData?.totalEmployees || 0)} Remaining
                 </span>
               </div>
 
@@ -462,7 +445,7 @@ const Dashboard = () => {
                   Remaining Slots
                 </span>
                 <span className="text-lg font-bold text-orange-500">
-                  {dashboardData.remainingSlots} left
+                  {dashboardData?.remainingSlots} left
                 </span>
               </div>
 
@@ -476,8 +459,6 @@ const Dashboard = () => {
             </div>
 
           </div>
-
-
         </main>
       </div>
 
@@ -515,7 +496,7 @@ const Dashboard = () => {
         onClose={() => setIsAddonModalOpen(false)}
         onSuccess={() => {
           setToast({ message: 'Slots purchased successfully!', type: 'success' });
-          fetchSummary();
+          // fetchSummary(); // Handled by tags
         }}
         onUpgradePlan={() => {
           setIsAddonModalOpen(false);

@@ -1,49 +1,42 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Building2, Loader2 } from 'lucide-react';
+import { Plus, Building2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import CompanyCard from '../components/CompanyCard';
 import UniversalDrawer from '../components/UniversalDrawer';
 import Toast from '../components/Toast';
-import { companyApi } from '../api/companyApi';
-import { Company, CreateCompanyRequest } from '../types/company.types';
+import { CreateCompanyRequest } from '../types/company.types';
+import { useGetCompaniesQuery, useCreateCompanyMutation } from '../store/apiSlice';
+import TableSkeleton from '../components/skeletons/TableSkeleton';
 
 const Companies = () => {
     const navigate = useNavigate();
-    const [companies, setCompanies] = useState<Company[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { data: companies = [], isLoading, isError, error } = useGetCompaniesQuery();
+    const [createCompany] = useCreateCompanyMutation();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-    const fetchCompanies = async () => {
-        try {
-            setIsLoading(true);
-            const data = await companyApi.getCompanies();
-            setCompanies(data);
-        } catch (error: any) {
-            setToast({ message: error.message || 'Failed to fetch companies', type: 'error' });
-            // If unauthorized, redirect to login
-            if (error.message?.includes('401') || error.message?.includes('unauthorized')) {
-                navigate('/login');
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
+    // Redirect on 401 error
     useEffect(() => {
-        fetchCompanies();
-    }, []);
+        if (isError && error) {
+            const err = error as any;
+            if (err?.status === 401 || err?.data?.message?.includes('unauthorized')) {
+                navigate('/login');
+            } else {
+                setToast({ message: err?.data?.message || 'Failed to fetch companies', type: 'error' });
+            }
+        }
+    }, [isError, error, navigate]);
 
     const handleAddCompany = async (data: CreateCompanyRequest) => {
         try {
-            await companyApi.createCompany(data);
+            await createCompany(data).unwrap();
             setToast({ message: 'Company created successfully!', type: 'success' });
             setIsDrawerOpen(false);
-            // Refresh company list
-            fetchCompanies();
+            // Cache invalidation handles refresh
         } catch (error: any) {
-            setToast({ message: error.message || 'Failed to create company', type: 'error' });
+            const errorMsg = error?.data?.message || 'Failed to create company';
+            setToast({ message: errorMsg, type: 'error' });
         }
     };
 
@@ -75,9 +68,7 @@ const Companies = () => {
                 {/* Companies Content */}
                 <main className="p-8">
                     {isLoading ? (
-                        <div className="flex items-center justify-center py-20">
-                            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                        </div>
+                        <TableSkeleton rows={3} />
                     ) : companies.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20">
                             <div className="bg-gray-100 p-6 rounded-full mb-4">
