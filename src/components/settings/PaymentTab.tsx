@@ -40,6 +40,39 @@ const PaymentTab = () => {
         setIsAddCardOpen(false);
     };
 
+    const [subscription, setSubscription] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    const fetchSubscription = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            console.log('🔍 Fetching subscription with token:', token ? 'Present' : 'Missing');
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/subscription/current`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            console.log('🔍 Response Status:', response.status);
+            const data = await response.json();
+            console.log('🔍 Subscription Data:', data);
+            if (data.success) {
+                setSubscription(data.data);
+            } else {
+                console.error('❌ API returned success: false', data.message);
+            }
+        } catch (err) {
+            console.error('❌ Fetch Error:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Use a flag to avoid double fetching in React 18 strict mode if needed, 
+    // but standard useEffect dependency array is fine here.
+    useState(() => {
+        fetchSubscription();
+    });
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Credit Cards Section */}
@@ -126,79 +159,93 @@ const PaymentTab = () => {
                 </div>
 
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm relative overflow-hidden group">
-                        {/* Background Decoration */}
-                        <div className="absolute top-0 right-0 p-8 opacity-[0.03] scale-150 rotate-12 group-hover:scale-[1.7] transition-transform duration-700">
-                            <Crown className="h-24 w-24 text-blue-600" />
-                        </div>
+                    {loading ? (
+                        <div className="h-48 bg-gray-50 rounded-[2rem] animate-pulse" />
+                    ) : subscription ? (
+                        <>
+                            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm relative overflow-hidden group">
+                                {/* Background Decoration */}
+                                <div className="absolute top-0 right-0 p-8 opacity-[0.03] scale-150 rotate-12 group-hover:scale-[1.7] transition-transform duration-700">
+                                    <Crown className="h-24 w-24 text-blue-600" />
+                                </div>
 
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-                            <div className="space-y-6">
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-100">
-                                            <ShieldCheck className="h-6 w-6 text-white" />
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-100">
+                                                    <ShieldCheck className="h-6 w-6 text-white" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="flex items-center gap-3">
+                                                        <img
+                                                            src={logo}
+                                                            alt="Payroll Logo"
+                                                            className="h-8 object-contain"
+                                                        />
+
+                                                        <span className="bg-blue-600 text-white text-[16px] font-bold px-6 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap">
+                                                            {subscription.planName} Plan
+                                                        </span>
+                                                    </h4>
+                                                    <div className="flex items-center gap-2 text-blue-600 font-medium mt-1">
+                                                        <span className="text-sm font-semibold">Rs</span>
+                                                        <span className="text-xl">{subscription.pricePerEmployee}</span>
+                                                        <span className="text-sm text-gray-400 font-normal">/per employee</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="flex items-center gap-3">
-                                                <img
-                                                    src={logo}
-                                                    alt="Payroll Logo"
-                                                    className="h-8 object-contain"
-                                                />
 
-                                                <span className="bg-blue-600 text-white text-[16px] font-bold px-6 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap">
-                                                    Basic Plan
-                                                </span>
-                                            </h4>
-                                            <div className="flex items-center gap-2 text-blue-600 font-medium mt-1">
-                                                <span className="text-sm font-semibold">Rs</span>
-                                                <span className="text-xl">100</span>
-                                                <span className="text-sm text-gray-400 font-normal">/per employee</span>
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-blue-50 rounded-lg">
+                                                    <Users className="h-4 w-4 text-blue-600" />
+                                                </div>
+                                                <div className="flex items-center gap-1 whitespace-nowrap">
+                                                    <span className="text-xs text-gray-400">Total Employees:</span>
+                                                    <span className="text-sm font-semibold text-gray-900">
+                                                        {subscription.usedEmployees} / {subscription.totalAllowedEmployees}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 pl-32">
+                                                <div className="p-2 bg-blue-50 rounded-lg">
+                                                    <Calendar className="h-4 w-4 text-blue-600" />
+                                                </div>
+                                                <div className="flex items-center gap-1 whitespace-nowrap">
+                                                    <span className="text-xs text-gray-400">Next Billing:</span>
+                                                    <span className="text-sm font-semibold text-gray-900">
+                                                        {new Date(subscription.nextBillingDate).toLocaleDateString()}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-blue-50 rounded-lg">
-                                            <Users className="h-4 w-4 text-blue-600" />
-                                        </div>
-                                        <div className="flex items-center gap-1 whitespace-nowrap">
-                                            <span className="text-xs text-gray-400">Total Employees:</span>
-                                            <span className="text-sm font-semibold text-gray-900">10 Employees</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3 pl-32">
-                                        <div className="p-2 bg-blue-50 rounded-lg">
-                                            <Calendar className="h-4 w-4 text-blue-600" />
-                                        </div>
-                                        <div className="flex items-center gap-1 whitespace-nowrap">
-                                            <span className="text-xs text-gray-400">Next Billing:</span>
-                                            <span className="text-sm font-semibold text-gray-900">26/11/2026</span>
-                                        </div>
+                                    <div className="relative z-10 flex flex-col sm:flex-row gap-3">
+                                        <button className="px-6 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-all order-2 sm:order-1 capitalize whitespace-nowrap">
+                                            Cancel plan
+                                        </button>
+                                        <button
+                                            onClick={() => navigate('/get-plan?isPlanChange=true')}
+                                            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 order-1 sm:order-2 shadow-lg shadow-blue-100 whitespace-nowrap"
+                                        >
+                                            Change Plan <ExternalLink className="h-4 w-4" />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="relative z-10 flex flex-col sm:flex-row gap-3">
-                                <button className="px-6 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-all order-2 sm:order-1 capitalize whitespace-nowrap">
-                                    Cancel plan
-                                </button>
-                                <button
-                                    onClick={() => navigate('/get-plan')}
-                                    className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 order-1 sm:order-2 shadow-lg shadow-blue-100 whitespace-nowrap"
-                                >
-                                    Change Plan <ExternalLink className="h-4 w-4" />
-                                </button>
+                            <div className="mt-4 flex items-center gap-2 text-xs text-gray-400 font-medium">
+                                <RefreshCcw className="h-3 w-3" /> Auto-renewal is enabled for this subscription
                             </div>
+                        </>
+                    ) : (
+                        <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-2xl">
+                            <p className="text-gray-400 text-sm">No active subscription found</p>
                         </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center gap-2 text-xs text-gray-400 font-medium">
-                        <RefreshCcw className="h-3 w-3" /> Auto-renewal is enabled for this subscription
-                    </div>
+                    )}
                 </div>
             </div>
 

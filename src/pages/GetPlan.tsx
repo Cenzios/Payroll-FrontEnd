@@ -56,8 +56,11 @@ const GetPlan = () => {
 
     console.log('✅ Plan selected:', planId);
 
-    // ✅ Navigate to terms-and-conditions page
-    navigate('/terms-and-conditions');
+    // ✅ Check if we are in "Change Plan" mode
+    const isPlanChange = searchParams.get('isPlanChange') === 'true';
+
+    // ✅ Navigate to terms-and-conditions page (pass the flag forward)
+    navigate(`/terms-and-conditions?isPlanChange=${isPlanChange}`);
   };
 
   return (

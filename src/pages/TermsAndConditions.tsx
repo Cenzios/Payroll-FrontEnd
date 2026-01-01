@@ -1,10 +1,13 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 
 
 const TermsAndConditions = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams(); // ✅ Get query params
+    const isPlanChange = searchParams.get('isPlanChange') === 'true'; // ✅ Check flag
+
     const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
     const contentRef = useRef<HTMLDivElement | null>(null);
 
@@ -22,11 +25,12 @@ const TermsAndConditions = () => {
 
     const handleAccept = () => {
         localStorage.setItem('termsAccepted', 'true');
-        navigate('/buy-plan');
+        // ✅ Propagate flag to BuyPlan
+        navigate(`/buy-plan?isPlanChange=${isPlanChange}`);
     };
 
     const handleCancel = () => {
-        navigate('/get-plan');
+        navigate(`/get-plan?isPlanChange=${isPlanChange}`);
     };
 
     return (
@@ -226,17 +230,17 @@ const TermsAndConditions = () => {
                 </div>
             </div>
             {/* Background Wave - Bottom Left (Flipped) */}
-<div
-  className="absolute bottom-[-350px] left-[-200px]
+            <div
+                className="absolute bottom-[-350px] left-[-200px]
   w-[700px] h-[700px]
   z-0 pointer-events-none"
->
-  <img
-    src={bgIllustration}
-    alt="Background Wave"
-    className="w-full h-full object-contain scale-x-[-1]"
-  />
-</div>
+            >
+                <img
+                    src={bgIllustration}
+                    alt="Background Wave"
+                    className="w-full h-full object-contain scale-x-[-1]"
+                />
+            </div>
 
         </div>
     );

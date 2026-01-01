@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
 import { Loader2 } from 'lucide-react';
 import { jwtDecode } from 'jwt-decode';
@@ -14,10 +14,9 @@ import bgIllustration from '../assets/images/Background-illustration.svg';
 
 
 const BuyPlan = () => {
-
-
-
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isPlanChange = searchParams.get('isPlanChange') === 'true'; // ✅ Detect plan change mode
   const { isLoading, error, signupEmail, user, token } = useAppSelector((state) => state.auth);
 
   // ✅ Get selected plan dynamically
@@ -28,8 +27,8 @@ const BuyPlan = () => {
   useEffect(() => {
     const termsAccepted = localStorage.getItem('termsAccepted');
     if (termsAccepted !== 'true') {
-      // Redirect if not accepted
-      navigate('/terms-and-conditions', { replace: true });
+      // Redirect if not accepted (pass flag)
+      navigate(`/terms-and-conditions?isPlanChange=${isPlanChange}`, { replace: true });
     }
   }, [navigate]);
 
@@ -127,6 +126,26 @@ const BuyPlan = () => {
       // ✅ Get selected plan ID from localStorage (set in GetPlan page)
       const selectedPlanId = localStorage.getItem('reg_planId') || '0f022c11-2a3c-49f5-9d11-30082882a8e9'; // Fallback to Basic plan
 
+      if (isPlanChange) {
+        // ------------------------------------------------------------------
+        // 🔥 PLAN CHANGE FLOW (Existing User)
+        // ------------------------------------------------------------------
+        console.log('🔄 Changing plan to:', selectedPlanId);
+        const token = localStorage.getItem('token'); // Need auth token
+
+        await axiosInstance.post('/subscription/change-plan',
+          { newPlanId: selectedPlanId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        console.log('✅ Plan changed successfully');
+        navigate('/settings?tab=payment'); // Redirect to settings
+        return;
+      }
+
+      // ------------------------------------------------------------------
+      // ⭐ NEW SIGNUP FLOW (New User)
+      // ------------------------------------------------------------------
       console.log('📤 Creating subscription for:', userEmail);
       console.log('📋 Selected Plan ID:', selectedPlanId);
 
@@ -170,7 +189,7 @@ const BuyPlan = () => {
 
       navigate('/confirmation');
     } catch (error: any) {
-      console.error('❌ Subscription failed:', error);
+      console.error('❌ Action failed:', error);
       navigate('/confirmation-fail');
     }
   };
@@ -185,7 +204,7 @@ const BuyPlan = () => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
       <div className="w-full max-w-5xl relative z-10">
         <h1 className="text-4xl font-bold text-center text-gray-900 mb-10">
-          Complete Registration Payment
+          {isPlanChange ? 'Confirm Plan Change' : 'Complete Registration Payment'}
         </h1>
 
         {error && (
@@ -440,7 +459,7 @@ const BuyPlan = () => {
                     Processing...
                   </>
                 ) : (
-                  'Next'
+                  isPlanChange ? 'Confirm Change' : 'Next'
                 )}
               </button>
 
