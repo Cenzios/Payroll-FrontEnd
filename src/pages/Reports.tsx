@@ -49,59 +49,40 @@ const Reports = () => {
     const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
     const checkAndUpdateData = async () => {
-    if (!selectedCompanyId) return;
-    setIsLoading(true);
-    
-    // ✅ LOG INPUT VALUES
-    console.group('📊 Reports Page - Fetching Data');
-    console.log('Selected Company ID:', selectedCompanyId);
-    console.log('Date Range (UI State):', {
-        startMonth,
-        startYear,
-        endMonth,
-        endYear
-    });
-    console.log('Date Range (API Call):', {
-        startMonth: startMonth + 1,
-        startYear,
-        endMonth: endMonth + 1,
-        endYear
-    });
-    console.groupEnd();
-    
-    try {
-        const response = await salaryApi.getSalaryReport(
-            selectedCompanyId,
-            startMonth + 1,
-            startYear,
-            endMonth + 1,
-            endYear
-        );
-        
-        const reportData = response.data;
-        console.log('✅ Report Data Received:', reportData);
-        
-        setMonthlyData(reportData.monthlyData || []);
-        setOverallTotals(reportData.overallTotals || {
-            totalMonths: 0,
-            totalEmployees: 0,
-            totalGrossPay: 0,
-            totalNetPay: 0,
-            totalEmployeeEPF: 0,
-            totalCompanyEPFETF: 0
-        });
+        if (!selectedCompanyId) return;
+        setIsLoading(true);
 
-    } catch (error: any) {
-        console.group('❌ Reports Page Error');
-        console.error('Error Object:', error);
-        console.error('Status:', error.response?.status);
-        console.error('Response Data:', error.response?.data);
-        console.error('Response Headers:', error.response?.headers);
+        // ✅ LOG INPUT VALUES
+        console.group('📊 Reports Page - Fetching Data');
+        console.log('Selected Company ID:', selectedCompanyId);
+        console.log('Date Range (UI State):', {
+            startMonth,
+            startYear,
+            endMonth,
+            endYear
+        });
+        console.log('Date Range (API Call):', {
+            startMonth: startMonth + 1,
+            startYear,
+            endMonth: endMonth + 1,
+            endYear
+        });
         console.groupEnd();
-        
-        if (error.response?.status === 404) {
-            setMonthlyData([]);
-            setOverallTotals({
+
+        try {
+            const response = await salaryApi.getSalaryReport(
+                selectedCompanyId,
+                startMonth + 1,
+                startYear,
+                endMonth + 1,
+                endYear
+            );
+
+            const reportData = response.data;
+            console.log('✅ Report Data Received:', reportData);
+
+            setMonthlyData(reportData.monthlyData || []);
+            setOverallTotals(reportData.overallTotals || {
                 totalMonths: 0,
                 totalEmployees: 0,
                 totalGrossPay: 0,
@@ -109,16 +90,35 @@ const Reports = () => {
                 totalEmployeeEPF: 0,
                 totalCompanyEPFETF: 0
             });
-        } else {
-            setToast({ 
-                message: `Error ${error.response?.status}: ${error.response?.data?.message || error.message}`, 
-                type: 'error' 
-            });
+
+        } catch (error: any) {
+            console.group('❌ Reports Page Error');
+            console.error('Error Object:', error);
+            console.error('Status:', error.response?.status);
+            console.error('Response Data:', error.response?.data);
+            console.error('Response Headers:', error.response?.headers);
+            console.groupEnd();
+
+            if (error.response?.status === 404) {
+                setMonthlyData([]);
+                setOverallTotals({
+                    totalMonths: 0,
+                    totalEmployees: 0,
+                    totalGrossPay: 0,
+                    totalNetPay: 0,
+                    totalEmployeeEPF: 0,
+                    totalCompanyEPFETF: 0
+                });
+            } else {
+                setToast({
+                    message: `Error ${error.response?.status}: ${error.response?.data?.message || error.message}`,
+                    type: 'error'
+                });
+            }
+        } finally {
+            setIsLoading(false);
         }
-    } finally {
-        setIsLoading(false);
-    }
-};
+    };
 
     // Initial Load
     useEffect(() => {
@@ -137,6 +137,25 @@ const Reports = () => {
 
         checkAndUpdateData();
     };
+
+    useEffect(() => {
+        if (monthlyData.length === 0) return;
+
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1; // API monthNumber is 1-based
+
+        const currentMonthKey = `${currentYear}-${currentMonth}`;
+
+        setExpandedMonths(prev => {
+            // Prevent overriding user interactions
+            if (prev.size > 0) return prev;
+
+            const newSet = new Set(prev);
+            newSet.add(currentMonthKey);
+            return newSet;
+        });
+    }, [monthlyData]);
 
     const handleReset = () => {
         const currentDate = new Date();

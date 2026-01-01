@@ -196,26 +196,26 @@ const Dashboard = () => {
       {/* Main Content */}
       <div className="flex-1 ml-64">
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-  <div className="px-8 py-4 flex items-center justify-between">
+          <div className="px-8 py-4 flex items-center justify-between">
 
-    {/* LEFT */}
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900">
-        {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'}
-      </h1>
-      <p className="text-sm text-gray-500">
-        Here's your dashboard overview
-      </p>
-    </div>
+            {/* LEFT */}
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'}
+              </h1>
+              <p className="text-sm text-gray-500">
+                Here's your dashboard overview
+              </p>
+            </div>
 
-    {/* RIGHT */}
-    <div className="flex items-center gap-3">
+            {/* RIGHT */}
+            <div className="flex items-center gap-3">
 
-      {/* Company Switcher */}
-      <div className="relative">
-        <button
-          onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
-          className="
+              {/* Company Switcher */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                  className="
             flex items-center gap-2
             px-4 py-2
             rounded-xl
@@ -224,48 +224,48 @@ const Dashboard = () => {
             hover:bg-gray-50
             text-sm font-medium text-gray-700
           "
-        >
-          <Building2 className="w-4 h-4 text-gray-500" />
-          {selectedCompany ? selectedCompany.name : 'Select Company'}
-          <ChevronDown className="w-4 h-4 text-gray-400" />
-        </button>
+                >
+                  <Building2 className="w-4 h-4 text-gray-500" />
+                  {selectedCompany ? selectedCompany.name : 'Select Company'}
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </button>
 
-        {isCompanyDropdownOpen && (
-          <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
-            {companies.map(company => (
+                {isCompanyDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+                    {companies.map(company => (
+                      <button
+                        key={company.id}
+                        onClick={() => {
+                          dispatch(setSelectedCompanyId(company.id));
+                          setIsCompanyDropdownOpen(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-blue-500" />
+                        {company.name}
+                      </button>
+                    ))}
+
+                    <div className="border-t mt-1 pt-1">
+                      <button
+                        onClick={() => {
+                          setIsCompanyDropdownOpen(false);
+                          openAddCompany();
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add New Company
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Add New Company */}
               <button
-                key={company.id}
-                onClick={() => {
-                  dispatch(setSelectedCompanyId(company.id));
-                  setIsCompanyDropdownOpen(false);
-                }}
-                className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center gap-2"
-              >
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
-                {company.name}
-              </button>
-            ))}
-
-            <div className="border-t mt-1 pt-1">
-              <button
-                onClick={() => {
-                  setIsCompanyDropdownOpen(false);
-                  openAddCompany();
-                }}
-                className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add New Company
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Add New Company */}
-      <button
-        onClick={openAddCompany}
-        className="
+                onClick={openAddCompany}
+                className="
           flex items-center gap-2
           bg-blue-600 hover:bg-blue-700
           text-white
@@ -273,53 +273,53 @@ const Dashboard = () => {
           rounded-xl
           text-sm font-semibold
         "
-      >
-        <Plus className="w-4 h-4" />
-        Add New Company
-      </button>
+              >
+                <Plus className="w-4 h-4" />
+                Add New Company
+              </button>
 
-      {/* Notification */}
-      <button
-  className="
+              {/* Notification */}
+              <button
+                className="
     w-10 h-10
     rounded-xl
     bg-gray-100 hover:bg-gray-200
     flex items-center justify-center
     relative
   "
->
-  <Bell className="w-5 h-5 text-gray-600" />
+              >
+                <Bell className="w-5 h-5 text-gray-600" />
 
-  {/* Optional unread dot */}
-  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
-</button>
+                {/* Optional unread dot */}
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
+              </button>
 
-      {/* User */}
-      <div className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-xl">
-        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-          {user?.fullName?.charAt(0) || 'U'}
-        </div>
-        <div className="leading-tight">
-          <div className="text-sm font-medium text-gray-900">
-            {user?.fullName}
+              {/* User */}
+              <div className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-xl">
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                  {user?.fullName?.charAt(0) || 'U'}
+                </div>
+                <div className="leading-tight">
+                  <div className="text-sm font-medium text-gray-900">
+                    {user?.fullName}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {user?.role || 'Admin'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Logout */}
+              <button
+                onClick={handleLogout}
+                className="w-10 h-10 rounded-xl hover:bg-gray-100 flex items-center justify-center"
+              >
+                <LogOut className="w-5 h-5 text-gray-600" />
+              </button>
+
+            </div>
           </div>
-          <div className="text-xs text-gray-500">
-            {user?.role || 'Admin'}
-          </div>
-        </div>
-      </div>
-
-      {/* Logout */}
-      <button
-        onClick={handleLogout}
-        className="w-10 h-10 rounded-xl hover:bg-gray-100 flex items-center justify-center"
-      >
-        <LogOut className="w-5 h-5 text-gray-600" />
-      </button>
-
-    </div>
-  </div>
-</header>
+        </header>
 
 
         {/* Dashboard Content */}
@@ -360,122 +360,124 @@ const Dashboard = () => {
             />
           </div>
 
-         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
-  {/* LEFT – Quick Actions */}
-  <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
-    <h2 className="text-lg font-semibold text-gray-900 mb-4">
-      Quick Actions
-    </h2>
+            {/* LEFT – Quick Actions */}
+            <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Quick Actions
+              </h2>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <QuickAction
-        icon={FileText}
-        title="Generate Payslips"
-        description="Create monthly payslips"
-        bgColor="bg-gradient-to-br from-blue-500 to-blue-600"
-      />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <QuickAction
+                  icon={FileText}
+                  title="Generate Payslips"
+                  description="Create monthly payslips"
+                  bgColor="bg-gradient-to-br from-blue-500 to-blue-600"
+                  onClick={() => navigate('/salary')}
+                />
 
-      <div onClick={openAddEmployee}>
-        <QuickAction
-          icon={UserPlus}
-          title="Add Employee"
-          description="Register new staff member"
-          bgColor="bg-gradient-to-br from-green-500 to-green-600"
-        />
-      </div>
+                <div onClick={openAddEmployee}>
+                  <QuickAction
+                    icon={UserPlus}
+                    title="Add Employee"
+                    description="Register new staff member"
+                    bgColor="bg-gradient-to-br from-green-500 to-green-600"
+                  />
+                </div>
 
-      <QuickAction
-        icon={BarChart3}
-        title="View Reports"
-        description="Access detailed analytics"
-        bgColor="bg-gradient-to-br from-purple-500 to-purple-600"
-      />
+                <QuickAction
+                  icon={BarChart3}
+                  title="View Reports"
+                  description="Access detailed analytics"
+                  bgColor="bg-gradient-to-br from-purple-500 to-purple-600"
+                  onClick={() => navigate('/reports')}
+                />
 
-      <div onClick={() => setIsAddonModalOpen(true)}>
-        <QuickAction
-          icon={CreditCard}
-          title="Change Plan"
-          description="Change subscription plan"
-          bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
-        />
-      </div>
-    </div>
-  </div>
+                <div onClick={() => setIsAddonModalOpen(true)}>
+                  <QuickAction
+                    icon={CreditCard}
+                    title="Change Plan"
+                    description="Change subscription plan"
+                    bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
+                  />
+                </div>
+              </div>
+            </div>
 
-  {/* RIGHT – Employee Usage */}
-  <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6">
-    {/* Header */}
-  <div className="flex items-center justify-between mb-4">
-    <div>
-      <h3 className="text-lg font-semibold text-gray-900">
-        Employee Usage
-      </h3>
-      <p className="text-sm text-gray-500">
-        Current Plan: {dashboardData.planName || 'Professional'}
-      </p>
-    </div>
+            {/* RIGHT – Employee Usage */}
+            <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Employee Usage
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Current Plan: {dashboardData.planName || 'Professional'}
+                  </p>
+                </div>
 
-    <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-      <Users className="w-5 h-5 text-blue-600" />
-    </div>
-  </div>
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
 
-  {/* Center count */}
-  <div className="text-center my-6">
-    <div className="text-3xl font-bold text-gray-900">
-      {dashboardData.totalEmployees}/{dashboardData.maxEmployees}
-    </div>
-    <div className="text-sm text-gray-500">
-      Employees
-    </div>
-  </div>
+              {/* Center count */}
+              <div className="text-center my-6">
+                <div className="text-3xl font-bold text-gray-900">
+                  {dashboardData.totalEmployees}/{dashboardData.maxEmployees}
+                </div>
+                <div className="text-sm text-gray-500">
+                  Employees
+                </div>
+              </div>
 
-  {/* Progress bar */}
-  <div className="mb-3">
-    <div className="w-full h-3 bg-blue-100 rounded-full overflow-hidden">
-      <div
-        className="h-full bg-blue-600 rounded-full"
-        style={{
-          width: `${Math.min(
-            (dashboardData.totalEmployees / dashboardData.maxEmployees) * 100,
-            100
-          )}%`
-        }}
-      />
-    </div>
-  </div>
+              {/* Progress bar */}
+              <div className="mb-3">
+                <div className="w-full h-3 bg-blue-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-600 rounded-full"
+                    style={{
+                      width: `${Math.min(
+                        (dashboardData.totalEmployees / dashboardData.maxEmployees) * 100,
+                        100
+                      )}%`
+                    }}
+                  />
+                </div>
+              </div>
 
-  {/* Used / Remaining */}
-  <div className="flex justify-between text-sm text-gray-600 mb-6">
-    <span>{dashboardData.totalEmployees} Used</span>
-    <span>
-      {dashboardData.maxEmployees - dashboardData.totalEmployees} Remaining
-    </span>
-  </div>
+              {/* Used / Remaining */}
+              <div className="flex justify-between text-sm text-gray-600 mb-6">
+                <span>{dashboardData.totalEmployees} Used</span>
+                <span>
+                  {dashboardData.maxEmployees - dashboardData.totalEmployees} Remaining
+                </span>
+              </div>
 
-  {/* Remaining slots */}
-  <div className="flex justify-between items-center mb-4">
-    <span className="text-sm text-gray-600">
-      Remaining Slots
-    </span>
-    <span className="text-lg font-bold text-orange-500">
-      {dashboardData.remainingSlots} left
-    </span>
-  </div>
+              {/* Remaining slots */}
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-sm text-gray-600">
+                  Remaining Slots
+                </span>
+                <span className="text-lg font-bold text-orange-500">
+                  {dashboardData.remainingSlots} left
+                </span>
+              </div>
 
-  {/* Action */}
-  <button
-    onClick={() => setIsAddonModalOpen(true)}
-    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold"
-  >
-    Get More Slots
-  </button>
-  </div>
+              {/* Action */}
+              <button
+                onClick={() => setIsAddonModalOpen(true)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold"
+              >
+                Get More Slots
+              </button>
+            </div>
 
-</div>
+          </div>
 
-          
+
         </main>
       </div>
 
@@ -517,7 +519,7 @@ const Dashboard = () => {
         }}
         onUpgradePlan={() => {
           setIsAddonModalOpen(false);
-          navigate('/settings?tab=subscription');
+          navigate('/settings?tab=payment');
         }}
       />
     </div>

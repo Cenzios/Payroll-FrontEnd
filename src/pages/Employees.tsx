@@ -67,6 +67,12 @@ const Employees = () => {
     };
 
     useEffect(() => {
+  if (employees.length > 0 && !selectedEmployee) {
+    setSelectedEmployee(employees[0]);
+  }
+}, [employees, selectedEmployee]);
+
+    useEffect(() => {
         fetchEmployees();
     }, [selectedCompanyId, search]);
 
@@ -223,7 +229,12 @@ const Employees = () => {
                                 }
                                 openAddDrawer();
                             }}
-                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                            className="flex items-center gap-2
+          bg-blue-600 hover:bg-blue-700
+          text-white
+          px-4 py-2
+          rounded-xl
+          text-sm font-semibold"
                         >
                             <span className="hidden sm:inline">Add Employee</span>
                             <Plus className="w-5 h-5" />
@@ -243,7 +254,7 @@ const Employees = () => {
                 ) : (
                     <div className="flex gap-6">
                         {/* Left Column - Employee List */}
-                        <div className="w-1/2 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                        <div className="w-1/2 bg-white rounded-2xl shadow-lg border border-gray-200 ring-1 ring-black/5 flex flex-col overflow-hidden">
                             {/* Search */}
                             <div className="p-4 border-b border-gray-100">
                                 <div className="relative">
@@ -274,8 +285,14 @@ const Employees = () => {
                                             <div
                                                 key={emp.id}
                                                 onClick={() => setSelectedEmployee(emp)}
-                                                className={`p-4 flex items-center justify-between cursor-pointer transition-colors hover:bg-gray-50 group ${selectedEmployee?.id === emp.id ? 'bg-blue-50/60' : ''
-                                                    }`}
+                                                className={`p-4 flex items-center justify-between cursor-pointer group
+  transition-all duration-200 hover:bg-gray-50
+  ${
+    selectedEmployee?.id === emp.id
+      ? 'bg-white/60 backdrop-blur-md shadow-md ring-1 ring-blue-300/50'
+      : ''
+  }
+`}
                                             >
                                                 <div className="flex items-center gap-3 overflow-hidden">
                                                     {/* Avatar */}
@@ -291,7 +308,7 @@ const Employees = () => {
                                                                 <span className="px-1.5 py-0.5 bg-red-100 text-red-600 text-[10px] rounded font-medium">Inactive</span>
                                                             )}
                                                         </div>
-                                                        <p className="text-xs text-gray-500 truncate">{emp.email || 'No email'}</p>
+                                                        <p className="text-xs text-gray-500 truncate">{emp.employeeId || 'No Employee ID'}</p>
                                                     </div>
                                                 </div>
 
@@ -359,7 +376,7 @@ const Employees = () => {
                         </div>
 
                         {/* Right Column - Employee Details */}
-                        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100">
+                        <div className="flex-1 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200">
                             {selectedEmployee ? (
                                 <div className="p-8">
                                     {/* Profile Header */}
@@ -382,8 +399,8 @@ const Employees = () => {
                                     </div>
 
                                     {/* Details Grid */}
-                                    <div className="grid grid-cols-1 gap-6 max-w-2xl">
-                                        <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50/50">
+                                    <div className="grid grid-cols-1 gap-[-2px] max-w-2xl">
+                                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
                                             <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400">
                                                 <User className="w-5 h-5" />
                                             </div>
@@ -394,7 +411,7 @@ const Employees = () => {
                                         </div>
 
                                         {/* ... (Other details same as before) */}
-                                        <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50/50">
+                                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
                                             <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400">
                                                 <Mail className="w-5 h-5" />
                                             </div>
@@ -404,7 +421,7 @@ const Employees = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50/50">
+                                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
                                             <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400">
                                                 <MapPin className="w-5 h-5" />
                                             </div>
@@ -414,7 +431,7 @@ const Employees = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50/50">
+                                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
                                             <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400">
                                                 <Phone className="w-5 h-5" />
                                             </div>
@@ -424,8 +441,8 @@ const Employees = () => {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-6">
-                                            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50/50">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
                                                 <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400">
                                                     <Calendar className="w-5 h-5" />
                                                 </div>
@@ -437,17 +454,17 @@ const Employees = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50/50">
-                                                <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400">
-                                                    <DollarSign className="w-5 h-5" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-medium text-gray-500 uppercase">Daily Rate</p>
-                                                    <p className="text-sm font-medium text-gray-900">
-                                                        {selectedEmployee.dailyRate.toFixed(2)}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
+  <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-600 font-semibold">
+    Rs:
+  </div>
+  <div>
+    <p className="text-xs font-medium text-gray-500 uppercase">Daily Rate</p>
+    <p className="text-sm font-medium text-gray-900">
+      {selectedEmployee.dailyRate.toFixed(2)}
+    </p>
+  </div>
+</div>
                                         </div>
 
                                     </div>

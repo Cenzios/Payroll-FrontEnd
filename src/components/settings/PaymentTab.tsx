@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { CreditCard, Plus, Trash2, ShieldCheck, Crown, ExternalLink, RefreshCcw, Calendar, Users, DollarSign } from 'lucide-react';
 import AddCardDrawer from './AddCardDrawer';
-
+import logo from '../../assets/images/logo.svg';
+import { useNavigate } from 'react-router-dom';
 // Dummy static paths based on project assets
 const VISA_ICON = '/src/assets/images/visa.svg';
 const MASTERCARD_ICON = '/src/assets/images/mastercard.svg';
@@ -15,6 +16,8 @@ interface Card {
 }
 
 const PaymentTab = () => {
+    const navigate = useNavigate();
+
     const [cards, setCards] = useState<Card[]>([
         { id: '1', brand: 'mastercard', last4: '1075', expiry: '02/28', isDefault: true },
         { id: '2', brand: 'visa', last4: '1075', expiry: '02/28', isDefault: false }
@@ -137,12 +140,19 @@ const PaymentTab = () => {
                                             <ShieldCheck className="h-6 w-6 text-white" />
                                         </div>
                                         <div>
-                                            <h4 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                                Payrole
-                                                <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Basic</span>
+                                            <h4 className="flex items-center gap-3">
+                                                <img
+                                                    src={logo}
+                                                    alt="Payroll Logo"
+                                                    className="h-8 object-contain"
+                                                />
+
+                                                <span className="bg-blue-600 text-white text-[16px] font-bold px-6 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap">
+                                                    Basic Plan
+                                                </span>
                                             </h4>
                                             <div className="flex items-center gap-2 text-blue-600 font-medium mt-1">
-                                                <DollarSign className="h-4 w-4" />
+                                                <span className="text-sm font-semibold">Rs</span>
                                                 <span className="text-xl">100</span>
                                                 <span className="text-sm text-gray-400 font-normal">/per employee</span>
                                             </div>
@@ -155,28 +165,31 @@ const PaymentTab = () => {
                                         <div className="p-2 bg-blue-50 rounded-lg">
                                             <Users className="h-4 w-4 text-blue-600" />
                                         </div>
-                                        <div>
-                                            <div className="text-xs text-gray-400">Total Employees</div>
-                                            <div className="text-sm font-semibold text-gray-900">10 Employees</div>
+                                        <div className="flex items-center gap-1 whitespace-nowrap">
+                                            <span className="text-xs text-gray-400">Total Employees:</span>
+                                            <span className="text-sm font-semibold text-gray-900">10 Employees</span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3 pl-32">
                                         <div className="p-2 bg-blue-50 rounded-lg">
                                             <Calendar className="h-4 w-4 text-blue-600" />
                                         </div>
-                                        <div>
-                                            <div className="text-xs text-gray-400">Next Billing</div>
-                                            <div className="text-sm font-semibold text-gray-900">26/11/2026</div>
+                                        <div className="flex items-center gap-1 whitespace-nowrap">
+                                            <span className="text-xs text-gray-400">Next Billing:</span>
+                                            <span className="text-sm font-semibold text-gray-900">26/11/2026</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-3">
-                                <button className="px-6 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-all order-2 sm:order-1 capitalize">
+                            <div className="relative z-10 flex flex-col sm:flex-row gap-3">
+                                <button className="px-6 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-all order-2 sm:order-1 capitalize whitespace-nowrap">
                                     Cancel plan
                                 </button>
-                                <button className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 order-1 sm:order-2 shadow-lg shadow-blue-100">
+                                <button
+                                    onClick={() => navigate('/get-plan')}
+                                    className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 order-1 sm:order-2 shadow-lg shadow-blue-100 whitespace-nowrap"
+                                >
                                     Change Plan <ExternalLink className="h-4 w-4" />
                                 </button>
                             </div>

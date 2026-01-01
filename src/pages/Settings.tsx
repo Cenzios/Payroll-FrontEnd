@@ -1,10 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import AccountTab from '../components/settings/AccountTab';
 import PaymentTab from '../components/settings/PaymentTab';
 
 const Settings = () => {
-    const [activeTab, setActiveTab] = useState<'account' | 'payment'>('account');
+    const [searchParams] = useSearchParams();
+
+    const initialTab = searchParams.get('tab') === 'payment'
+        ? 'payment'
+        : 'account';
+
+    const [activeTab, setActiveTab] = useState<'account' | 'payment'>(initialTab);
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab === 'payment' || tab === 'account') {
+            setActiveTab(tab);
+        }
+    }, [searchParams]);
 
     return (
         <div className="flex bg-gray-50 min-h-screen">
@@ -17,7 +30,7 @@ const Settings = () => {
                     </div>
                 </header>
                 <main className="p-8">
-                    <div className="max-w-4xl">
+                    <div className="max-w-6xl">
                         {/* Tabs Navigation */}
                         <div className="flex border-b border-gray-200 mb-8">
                             <button

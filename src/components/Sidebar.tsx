@@ -30,11 +30,13 @@ const Sidebar = () => {
         <div className="w-64 bg-white h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 overflow-y-auto">
             {/* Logo Section */}
             <div className="p-6 border-b border-gray-200 flex items-center justify-center">
-                <img
-                    src={logo}
-                    alt="Payroll Logo"
-                    className="h-10 object-contain"
-                />
+                <NavLink to="/dashboard" className="cursor-pointer">
+                    <img
+                        src={logo}
+                        alt="Payroll Logo"
+                        className="h-10 object-contain"
+                    />
+                </NavLink>
             </div>
 
             {/* Navigation Items */}
