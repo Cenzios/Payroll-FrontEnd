@@ -20,7 +20,8 @@ const initialState: AuthState = {
     ? JSON.parse(localStorage.getItem('user')!)
     : null,
   token: localStorage.getItem('token') || null,
-  signupEmail: localStorage.getItem('reg_email') || null, // ✅ Persist email
+  signupToken: localStorage.getItem('signup_token') || null, // ✅ Persist signup token
+  signupEmail: localStorage.getItem('reg_email') || null,
   isLoading: false,
   error: null,
   tempPassword: null,
@@ -44,9 +45,16 @@ export const startSignup = createAsyncThunk(
         '/auth/start-signup',
         userData
       );
-      // ✅ Store email in localStorage
+      // ✅ Store in localStorage
       localStorage.setItem('reg_email', userData.email);
-      return { email: userData.email, message: response.data.message };
+      if (response.data.signupToken) {
+        localStorage.setItem('signup_token', response.data.signupToken);
+      }
+      return {
+        email: userData.email,
+        signupToken: response.data.signupToken,
+        message: response.data.message
+      };
     } catch (error: any) {
       const message =
         error.response?.data?.message ||
@@ -64,7 +72,9 @@ export const verifyEmail = createAsyncThunk(
       const response = await axiosInstance.get<VerifyEmailResponse>(
         `/auth/verify-email?token=${token}`
       );
-      return response.data;
+      // Store the verification JWT as signupToken for the next step
+      localStorage.setItem('signup_token', token);
+      return { ...response.data, signupToken: token };
     } catch (error: any) {
       const message =
         error.response?.data?.message ||
@@ -80,11 +90,11 @@ export const setPassword = createAsyncThunk(
   async (data: SetPasswordRequest, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post<SetPasswordResponse>(
-        '/auth/save-password',
+        '/auth/set-password', // ✅ Changed from /save-password
         data
       );
-      // ✅ Don't clear email yet, needed for final registration
-      // localStorage.removeItem('reg_email');
+      // Clear signup token upon success
+      localStorage.removeItem('signup_token');
       return response.data;
     } catch (error: any) {
       const message =
@@ -176,11 +186,13 @@ const authSlice = createSlice({
       state.token = null;
       state.error = null;
       state.signupEmail = null;
+      state.signupToken = null;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('reg_email');
       localStorage.removeItem('reg_password');
       localStorage.removeItem('reg_planId');
+      localStorage.removeItem('signup_token');
     },
     clearError: (state) => {
       state.error = null;
@@ -192,6 +204,10 @@ const authSlice = createSlice({
     clearSignupEmail: (state) => {
       state.signupEmail = null;
       localStorage.removeItem('reg_email');
+    },
+    setSignupToken: (state, action) => {
+      state.signupToken = action.payload;
+      localStorage.setItem('signup_token', action.payload);
     },
     setTempPassword: (state, action) => {
       state.tempPassword = action.payload;
@@ -219,6 +235,7 @@ const authSlice = createSlice({
       .addCase(startSignup.fulfilled, (state, action) => {
         state.isLoading = false;
         state.signupEmail = action.payload.email;
+        state.signupToken = action.payload.signupToken || null;
         state.error = null;
       })
       .addCase(startSignup.rejected, (state, action) => {
@@ -229,10 +246,15 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(verifyEmail.fulfilled, (state) => {
+      .addCase(verifyEmail.fulfilled, (state, action) => {
         state.isLoading = false;
         state.error = null;
-        // ✅ Keep signupEmail - don't clear it yet
+        if (action.payload.email) {
+          state.signupEmail = action.payload.email;
+        }
+        if (action.payload.signupToken) {
+          state.signupToken = action.payload.signupToken;
+        }
       })
       .addCase(verifyEmail.rejected, (state, action) => {
         state.isLoading = false;
@@ -245,7 +267,7 @@ const authSlice = createSlice({
       .addCase(setPassword.fulfilled, (state) => {
         state.isLoading = false;
         state.error = null;
-        // state.signupEmail = null; // ✅ Keep email for final registration
+        state.signupToken = null;
       })
       .addCase(setPassword.rejected, (state, action) => {
         state.isLoading = false;
@@ -286,5 +308,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, setSignupEmail, clearSignupEmail, setTempPassword, setTempPlanId, setAuthFromToken, setSelectedCompanyId, updateUser } = authSlice.actions;
+export const { logout, clearError, setSignupEmail, clearSignupEmail, setSignupToken, setTempPassword, setTempPlanId, setAuthFromToken, setSelectedCompanyId, updateUser } = authSlice.actions;
 export default authSlice.reducer;
