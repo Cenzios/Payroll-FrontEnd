@@ -179,7 +179,8 @@ const Salary = () => {
             etfEmployer = 0;
         }
 
-        const totalDeductions = epfEmployee;
+        const tax = 0; // Tax will be calculated by backend
+        const totalDeductions = epfEmployee + tax;
         const netSalary = basicSalary - totalDeductions;
 
         const details = {
@@ -187,6 +188,7 @@ const Salary = () => {
             epfEmployee,
             epfEmployer,
             etfEmployer,
+            tax,
             totalDeductions,
             netSalary,
             workedDays,
@@ -273,6 +275,7 @@ const Salary = () => {
             head: [['Description', 'Amount (Rs.)']],
             body: [
                 ['EPF Employee (8%)', previewPayslip.epfEmployee > 0 ? previewPayslip.epfEmployee.toLocaleString() : '-'],
+                ['Tax (PAYE)', previewPayslip.tax.toLocaleString()],
                 ['Total Deductions', previewPayslip.totalDeductions.toLocaleString()]
             ],
             theme: 'plain',
@@ -339,6 +342,7 @@ const Salary = () => {
             [],
             ['DEDUCTIONS', 'Amount (Rs.)'],
             ['EPF Employee (8%)', previewPayslip.epfEmployee],
+            ['Tax (PAYE)', previewPayslip.tax],
             ['Total Deductions', previewPayslip.totalDeductions],
             [],
             ['NET SALARY PAYABLE', previewPayslip.netSalary],
@@ -373,6 +377,7 @@ const Salary = () => {
             [],
             ['DEDUCTIONS', 'Amount (Rs.)'],
             ['EPF Employee (8%)', previewPayslip.epfEmployee],
+            ['Tax (PAYE)', previewPayslip.tax],
             ['Total Deductions', previewPayslip.totalDeductions],
             [],
             ['NET SALARY PAYABLE', previewPayslip.netSalary],
@@ -624,6 +629,10 @@ const Salary = () => {
                                                     <div className="flex justify-between mb-1">
                                                         <span>EPF Employee (8%)</span>
                                                         <span>{previewPayslip.epfEmployee > 0 ? previewPayslip.epfEmployee.toLocaleString() : '-'}</span>
+                                                    </div>
+                                                    <div className="flex justify-between mb-1">
+                                                        <span>Tax (PAYE)</span>
+                                                        <span>{previewPayslip.tax.toLocaleString()}</span>
                                                     </div>
                                                     <div className="flex justify-between mb-1 font-semibold border-t border-gray-200 pt-1 mt-1">
                                                         <span>Total Deductions</span>

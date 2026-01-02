@@ -20,6 +20,7 @@ interface MonthlyData {
     workedDays: number;
     grossPay: number;
     netPay: number;
+    tax: number;
     deductions: number;
     employeeEPF: number;
     companyEPFETF: number;
@@ -109,6 +110,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
             row.workedDays.toString(),
             `RS ${row.grossPay.toLocaleString()}`,
             `RS ${row.netPay.toLocaleString()}`,
+            `RS ${row.tax.toLocaleString()}`,
             `RS ${row.deductions.toLocaleString()}`,
             `RS ${row.employeeEPF.toLocaleString()}`,
             `RS ${row.companyEPFETF.toLocaleString()}`
@@ -120,6 +122,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
             employeeData.annualTotals.workedDays.toString(),
             `RS ${employeeData.annualTotals.grossPay.toLocaleString()}`,
             `RS ${employeeData.annualTotals.netPay.toLocaleString()}`,
+            `RS ${(employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF).toLocaleString()}`,
             `RS ${employeeData.annualTotals.deductions.toLocaleString()}`,
             `RS ${employeeData.annualTotals.employeeEPF.toLocaleString()}`,
             `RS ${employeeData.annualTotals.companyEPFETF.toLocaleString()}`
@@ -127,7 +130,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
 
         autoTable(doc, {
             startY: yPos,
-            head: [['Month', 'Worked Days', 'Gross Pay', 'Net Pay', 'Deductions', 'Employee EPF', 'Company EPF/ETF']],
+            head: [['Month', 'Worked Days', 'Gross Pay', 'Net Pay', 'Tax', 'Deductions', 'Employee EPF', 'Company EPF/ETF']],
             body: tableData,
             styles: { fontSize: 8 },
             headStyles: { fillColor: [37, 99, 235], fontStyle: 'bold' },
@@ -156,12 +159,13 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
             ['Joined Date:', employeeData.joinedDate],
             [],
             ['Monthly Breakdown'],
-            ['Month', 'Worked Days', 'Gross Pay', 'Net Pay', 'Deductions', 'Employee EPF', 'Company EPF/ETF'],
+            ['Month', 'Worked Days', 'Gross Pay', 'Net Pay', 'Tax', 'Deductions', 'Employee EPF', 'Company EPF/ETF'],
             ...employeeData.monthlyBreakdown.map(row => [
                 row.month,
                 row.workedDays,
                 row.grossPay,
                 row.netPay,
+                row.tax,
                 row.deductions,
                 row.employeeEPF,
                 row.companyEPFETF
@@ -171,6 +175,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
                 employeeData.annualTotals.workedDays,
                 employeeData.annualTotals.grossPay,
                 employeeData.annualTotals.netPay,
+                employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF,
                 employeeData.annualTotals.deductions,
                 employeeData.annualTotals.employeeEPF,
                 employeeData.annualTotals.companyEPFETF
@@ -195,12 +200,13 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
             ['Joined Date:', employeeData.joinedDate],
             [],
             ['Monthly Breakdown'],
-            ['Month', 'Worked Days', 'Gross Pay', 'Net Pay', 'Deductions', 'Employee EPF', 'Company EPF/ETF'],
+            ['Month', 'Worked Days', 'Gross Pay', 'Net Pay', 'Tax', 'Deductions', 'Employee EPF', 'Company EPF/ETF'],
             ...employeeData.monthlyBreakdown.map(row => [
                 row.month,
                 row.workedDays,
                 row.grossPay,
                 row.netPay,
+                row.tax,
                 row.deductions,
                 row.employeeEPF,
                 row.companyEPFETF
@@ -210,6 +216,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
                 employeeData.annualTotals.workedDays,
                 employeeData.annualTotals.grossPay,
                 employeeData.annualTotals.netPay,
+                employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF,
                 employeeData.annualTotals.deductions,
                 employeeData.annualTotals.employeeEPF,
                 employeeData.annualTotals.companyEPFETF
@@ -307,6 +314,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
                                                         <th className="px-4 py-3 text-center font-semibold">Worked Days</th>
                                                         <th className="px-4 py-3 text-right font-semibold">Gross Pay</th>
                                                         <th className="px-4 py-3 text-right font-semibold">Net Pay</th>
+                                                        <th className="px-4 py-3 text-right font-semibold">Tax</th>
                                                         <th className="px-4 py-3 text-right font-semibold">Deductions</th>
                                                         <th className="px-4 py-3 text-right font-semibold">Employee EPF</th>
                                                         <th className="px-4 py-3 text-right font-semibold">Company EPF/ETF</th>
@@ -319,6 +327,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
                                                             <td className="px-4 py-3 text-center text-gray-700">{row.workedDays}</td>
                                                             <td className="px-4 py-3 text-right text-gray-900">RS: {row.grossPay.toLocaleString()}</td>
                                                             <td className="px-4 py-3 text-right text-gray-900">RS: {row.netPay.toLocaleString()}</td>
+                                                            <td className="px-4 py-3 text-right text-gray-900">RS: {row.tax.toLocaleString()}</td>
                                                             <td className="px-4 py-3 text-right text-gray-900">RS: {row.deductions.toLocaleString()}</td>
                                                             <td className="px-4 py-3 text-right text-gray-900">RS: {row.employeeEPF.toLocaleString()}</td>
                                                             <td className="px-4 py-3 text-right text-gray-900">RS: {row.companyEPFETF.toLocaleString()}</td>
@@ -332,6 +341,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
                                                         <td className="px-4 py-3 font-bold text-center">{employeeData.annualTotals.workedDays}</td>
                                                         <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.grossPay.toLocaleString()}</td>
                                                         <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.netPay.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 font-bold text-right">RS: {(employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF).toLocaleString()}</td>
                                                         <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.deductions.toLocaleString()}</td>
                                                         <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.employeeEPF.toLocaleString()}</td>
                                                         <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.companyEPFETF.toLocaleString()}</td>
