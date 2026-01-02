@@ -42,7 +42,7 @@ const Reports = () => {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAllEmployeesModalOpen, setIsAllEmployeesModalOpen] = useState(false);
-    const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; companyId: string } | null>(null);
+    const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; companyId: string; month: number; year: number } | null>(null);
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
 
     // Expand/collapse state for months
@@ -401,7 +401,12 @@ const Reports = () => {
                                         selectedEmployeeIds={selectedEmployeeIds}
                                         onSelectEmployee={handleSelectEmployee}
                                         onViewEmployee={(id, companyId) => {
-                                            setSelectedEmployee({ id, companyId });
+                                            setSelectedEmployee({
+                                                id,
+                                                companyId,
+                                                month: monthData.monthNumber,
+                                                year: monthData.year
+                                            });
                                             setIsModalOpen(true);
                                         }}
                                         companyId={selectedCompanyId || ''}
@@ -455,6 +460,8 @@ const Reports = () => {
                     }}
                     employeeId={selectedEmployee.id}
                     companyId={selectedEmployee.companyId}
+                    month={selectedEmployee.month}
+                    year={selectedEmployee.year}
                 />
             )}
 

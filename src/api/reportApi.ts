@@ -9,15 +9,15 @@ export const reportApi = {
      * @param companyId - UUID of the company
      * @returns Employee info and monthly salary breakdown
      */
-    getEmployeePayrollSummary: async (employeeId: string, companyId: string) => {
+    getEmployeePayrollSummary: async (employeeId: string, companyId: string, month: number, year: number) => {
         const token = localStorage.getItem('token');
-        const currentYear = new Date().getFullYear();
 
         const response = await axios.get(`${API_URL}/reports/employee-payroll-summary`, {
             params: {
                 employeeId,
                 companyId,
-                year: currentYear
+                month,
+                year
             },
             headers: { Authorization: `Bearer ${token}` }
         });

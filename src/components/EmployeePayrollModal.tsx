@@ -11,6 +11,8 @@ interface EmployeePayrollModalProps {
     onClose: () => void;
     employeeId: string;
     companyId: string;
+    month: number;
+    year: number;
 }
 
 interface MonthlyData {
@@ -40,22 +42,22 @@ interface EmployeeData {
     };
 }
 
-const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId }: EmployeePayrollModalProps) => {
+const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, year }: EmployeePayrollModalProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const [employeeData, setEmployeeData] = useState<EmployeeData | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     useEffect(() => {
-        if (isOpen && employeeId && companyId) {
+        if (isOpen && employeeId && companyId && month && year) {
             fetchEmployeeData();
         }
-    }, [isOpen, employeeId, companyId]);
+    }, [isOpen, employeeId, companyId, month, year]);
 
     const fetchEmployeeData = async () => {
         setIsLoading(true);
         try {
-            console.log('Fetching data for:', { employeeId, companyId });
-            const response = await reportApi.getEmployeePayrollSummary(employeeId, companyId);
+            console.log('Fetching data for:', { employeeId, companyId, month, year });
+            const response = await reportApi.getEmployeePayrollSummary(employeeId, companyId, month, year);
             console.log('API Response:', response);
 
             // The API returns { success, message, data: {...} }
@@ -114,7 +116,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId }: Employ
 
         // Add totals row
         tableData.push([
-            'ANNUAL TOTALS',
+            'SELECTED MONTH TOTALS',
             employeeData.annualTotals.workedDays.toString(),
             `RS ${employeeData.annualTotals.grossPay.toLocaleString()}`,
             `RS ${employeeData.annualTotals.netPay.toLocaleString()}`,
@@ -165,7 +167,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId }: Employ
                 row.companyEPFETF
             ]),
             [
-                'ANNUAL TOTALS',
+                'SELECTED MONTH TOTALS',
                 employeeData.annualTotals.workedDays,
                 employeeData.annualTotals.grossPay,
                 employeeData.annualTotals.netPay,
@@ -204,7 +206,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId }: Employ
                 row.companyEPFETF
             ]),
             [
-                'ANNUAL TOTALS',
+                'SELECTED MONTH TOTALS',
                 employeeData.annualTotals.workedDays,
                 employeeData.annualTotals.grossPay,
                 employeeData.annualTotals.netPay,
@@ -326,7 +328,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId }: Employ
                                                 {/* Annual Totals Footer */}
                                                 <tfoot className="bg-blue-600 text-white">
                                                     <tr>
-                                                        <td className="px-4 py-3 font-bold text-left">ANNUAL TOTALS</td>
+                                                        <td className="px-4 py-3 font-bold text-left">SELECTED MONTH TOTALS</td>
                                                         <td className="px-4 py-3 font-bold text-center">{employeeData.annualTotals.workedDays}</td>
                                                         <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.grossPay.toLocaleString()}</td>
                                                         <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.netPay.toLocaleString()}</td>
