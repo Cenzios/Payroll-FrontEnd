@@ -248,35 +248,42 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId }: Employ
                     {/* Content */}
                     <div className="flex-1 overflow-y-auto p-6">
                         {isLoading ? (
-                            <div className="flex justify-center items-center h-64">
+                            <div className="flex justify-center items-center h-32">
                                 <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
                             </div>
                         ) : employeeData ? (
                             <>
                                 {/* Employee Information */}
-                                <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                                    <div className="grid grid-cols-2 gap-x-12 gap-y-4">
-                                        <div>
-                                            <label className="text-sm font-semibold text-gray-600">Employee Name:</label>
-                                            <p className="text-base font-medium text-gray-900 mt-1">{employeeData.employeeName}</p>
+                                <div className="bg-gray-50 rounded-lg p-1 mb-3">
+                                    <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-600">Employee Name:</span>
+                                            <span className="text-base font-medium text-gray-900">{employeeData.employeeName}</span>
                                         </div>
-                                        <div>
-                                            <label className="text-sm font-semibold text-gray-600">Employee ID:</label>
-                                            <p className="text-base font-medium text-gray-900 mt-1">{employeeData.employeeCode}</p>
+
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-600">Employee ID:</span>
+                                            <span className="text-base font-medium text-gray-900">{employeeData.employeeCode}</span>
                                         </div>
-                                        <div>
-                                            <label className="text-sm font-semibold text-gray-600">Position:</label>
-                                            <p className="text-base font-medium text-gray-900 mt-1">{employeeData.designation}</p>
+
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-600">Position:</span>
+                                            <span className="text-base font-medium text-gray-900">{employeeData.designation}</span>
                                         </div>
-                                        <div>
-                                            <label className="text-sm font-semibold text-gray-600">Daily Rate:</label>
-                                            <p className="text-base font-medium text-gray-900 mt-1">RS: {employeeData.dailyRate.toLocaleString()}</p>
+
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-600">Daily Rate:</span>
+                                            <span className="text-base font-medium text-gray-900">
+                                                RS: {employeeData.dailyRate.toLocaleString()}
+                                            </span>
                                         </div>
-                                        <div>
-                                            <label className="text-sm font-semibold text-gray-600">Joined Date:</label>
-                                            <p className="text-base font-medium text-gray-900 mt-1">{employeeData.joinedDate}</p>
+
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-600">Joined Date:</span>
+                                            <span className="text-base font-medium text-gray-900">{employeeData.joinedDate}</span>
                                         </div>
                                     </div>
+
                                 </div>
 
                                 {/* Monthly Breakdown Table */}
