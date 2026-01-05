@@ -34,6 +34,8 @@ function App() {
         <Route path="/buy-plan" element={<BuyPlan />} />
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/confirmation-fail" element={<ConfirmationFail />} />
+        <Route path="/payment/success" element={<Confirmation />} />
+        <Route path="/payment/cancel" element={<ConfirmationFail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
         <Route

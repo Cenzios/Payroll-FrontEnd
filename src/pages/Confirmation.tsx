@@ -1,15 +1,68 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppDispatch } from '../store/hooks';
 import { logout } from '../store/slices/authSlice';
 import celebrationImg from '../assets/images/celebration-illustration.svg';
 import bgIllustration from '../assets/images/Background-illustration.svg';
+import axiosInstance from '../api/axios';
+import { Loader2 } from 'lucide-react';
 
 
 
 const Confirmation = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [status, setStatus] = useState<'verifying' | 'active' | 'failed'>('verifying');
+
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+
+    const checkSubscriptionStatus = async () => {
+      try {
+        const authToken = localStorage.getItem('token');
+        if (!authToken) {
+          setStatus('failed');
+          return;
+        }
+
+        const response = await axiosInstance.get('/subscription/current', {
+          headers: { Authorization: `Bearer ${authToken}` }
+        });
+
+        const subStatus = response.data.data.status;
+
+        if (subStatus === 'ACTIVE') {
+          setStatus('active');
+          clearInterval(pollInterval);
+        } else if (subStatus === 'FAILED') {
+          setStatus('failed');
+          clearInterval(pollInterval);
+          navigate('/confirmation-fail');
+        }
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+      }
+    };
+
+    // Initial check
+    checkSubscriptionStatus();
+
+    // Start polling every 3 seconds
+    pollInterval = setInterval(checkSubscriptionStatus, 3000);
+
+    // Timeout after 60 seconds
+    const timeout = setTimeout(() => {
+      if (status === 'verifying') {
+        clearInterval(pollInterval);
+        setStatus('failed');
+      }
+    }, 60000);
+
+    return () => {
+      clearInterval(pollInterval);
+      clearTimeout(timeout);
+    };
+  }, [navigate]);
 
   useEffect(() => {
     const style = document.createElement('style');
@@ -62,69 +115,105 @@ const Confirmation = () => {
         />
       ))}
 
-      <div className="w-full max-w-lg relative z-10">
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+      <div className="w-full max-lg relative z-10 flex justify-center">
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-lg">
           <div className="px-8 py-12 text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-8">
-              Congratulations!
-            </h1>
+            {status === 'verifying' ? (
+              <>
+                <h1 className="text-3xl font-bold text-gray-900 mb-8">
+                  Verifying Payment
+                </h1>
+                <div className="mb-8 flex justify-center">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-blue-100 rounded-full blur-3xl opacity-50 animate-pulse"></div>
+                    <Loader2 className="w-32 h-32 text-blue-600 animate-spin relative z-10" />
+                  </div>
+                </div>
+                <div className="mb-8 space-y-2 text-gray-600">
+                  <p className="font-medium text-gray-700">Please wait while we confirm your payment with PayHere.</p>
+                  <p>Do not close this window or press the back button.</p>
+                </div>
+              </>
+            ) : status === 'active' ? (
+              <>
+                <h1 className="text-3xl font-bold text-gray-900 mb-8">
+                  Congratulations!
+                </h1>
 
-            <div className="mb-8 relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full blur-3xl opacity-50"></div>
-              <img
-                src={celebrationImg}
-                alt="Celebration"
-                className="w-64 h-64 mx-auto object-contain relative z-10"
-              />
-            </div>
+                <div className="mb-8 relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full blur-3xl opacity-50"></div>
+                  <img
+                    src={celebrationImg}
+                    alt="Celebration"
+                    className="w-64 h-64 mx-auto object-contain relative z-10"
+                  />
+                </div>
 
-            <div className="mb-8 space-y-2">
-              <p className="text-gray-700 font-medium">
-                Your Stripe payment was successful!
-              </p>
-              <p className="text-gray-600">
-                and your Cenzios company is just created.
-              </p>
-            </div>
+                <div className="mb-8 space-y-2">
+                  <p className="text-gray-700 font-medium">
+                    Your PayHere payment was successful!
+                  </p>
+                  <p className="text-gray-600">
+                    and your Cenzios account is now active.
+                  </p>
+                </div>
 
-            <button
-              onClick={handleContinue}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-4 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              Continue to Log in
-            </button>
+                <button
+                  onClick={handleContinue}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-4 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  Continue to Log in
+                </button>
+              </>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold text-red-600 mb-8">
+                  Verification Timeout
+                </h1>
+                <div className="mb-8 space-y-2 text-gray-600">
+                  <p>It's taking longer than expected to verify your payment.</p>
+                  <p>If you've completed the payment, your account will be active shortly.</p>
+                </div>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="w-full bg-gray-600 text-white font-semibold py-4 rounded-xl hover:bg-gray-700 transition-all duration-200"
+                >
+                  Go to Login
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
       {/* Background Illustration - Top Right */}
-<div className="
+      <div className="
   absolute 
   top-[-250px] right-[-200px]
   w-[600px] h-[600px]
   z-0
   pointer-events-none
 ">
-  <img
-    src={bgIllustration}
-    alt="Background Decoration"
-    className="w-full h-full object-contain"
-  />
-</div>
+        <img
+          src={bgIllustration}
+          alt="Background Decoration"
+          className="w-full h-full object-contain"
+        />
+      </div>
 
-{/* Background Illustration - Bottom Left */}
-<div className="
+      {/* Background Illustration - Bottom Left */}
+      <div className="
   absolute 
   bottom-[-300px] left-[-200px]
   w-[700px] h-[700px]
   z-0
   pointer-events-none
 ">
-  <img
-    src={bgIllustration}
-    alt="Background Decoration"
-    className="w-full h-full object-contain rotate-180"
-  />
-</div>
+        <img
+          src={bgIllustration}
+          alt="Background Decoration"
+          className="w-full h-full object-contain rotate-180"
+        />
+      </div>
     </div>
   );
 };

@@ -120,99 +120,38 @@ const BuyPlan = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
-
-    // ✅ Try multiple sources for email (supports both normal and Google OAuth users)
-    let userEmail = signupEmail;
-
-    if (!userEmail && user?.email) {
-      // Fallback 1: Get from user object (Google OAuth users)
-      userEmail = user.email;
-      console.log('📧 Using email from user object:', userEmail);
-    }
-
-    if (!userEmail && token) {
-      // Fallback 2: Decode token to get email
-      try {
-        const decoded: any = jwtDecode(token);
-        userEmail = decoded.email;
-        console.log('📧 Using email from token:', userEmail);
-      } catch (error) {
-        console.error('❌ Error decoding token:', error);
-      }
-    }
-
-    if (!userEmail) {
-      console.error('❌ Missing subscription email', { signupEmail, user, token });
-      alert('Unable to determine user email. Please try logging in again.');
-      return;
-    }
-
-
     try {
       const authToken = localStorage.getItem('token');
+      if (!authToken) throw new Error('No auth token found');
 
-      if (isPlanChange) {
-        // ------------------------------------------------------------------
-        // 🔥 PLAN CHANGE FLOW (Existing User)
-        // ------------------------------------------------------------------
-        console.log('🔄 Changing plan via backend:', selectedPlanId);
-
-        await axiosInstance.post('/subscription/change-plan',
-          { newPlanId: selectedPlanId },
-          { headers: { Authorization: `Bearer ${authToken}` } }
-        );
-
-        console.log('✅ Plan changed successfully');
-        navigate('/settings?tab=payment'); // Redirect to settings
-        return;
-      }
-
-      // ------------------------------------------------------------------
-      // ⭐ NEW SIGNUP FLOW (New User)
-      // ------------------------------------------------------------------
-      console.log('📤 Activating subscription via backend...');
-
-      // ✅ Activate the PENDING_ACTIVATION subscription
-      await axiosInstance.post('/subscription/activate', {}, {
+      console.log('💳 Creating PayHere payment session...');
+      const response = await axiosInstance.post('/subscription/create-payment-session', {}, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
 
-      console.log('✅ Subscription activated successfully');
+      const payload = response.data.data;
+      console.log('🚀 Redirecting to PayHere Sandbox:', payload);
 
-      // ✅ 2. Create Company (ONLY if activation succeeded)
-      const tempCompanyName = localStorage.getItem('temp_companyName');
+      // Create a hidden form and submit it
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://sandbox.payhere.lk/pay/checkout';
 
-      if (tempCompanyName) {
-        try {
-          console.log('🏢 Creating company:', tempCompanyName);
+      Object.keys(payload).forEach(key => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = payload[key];
+        form.appendChild(input);
+      });
 
-          // Wait a bit to ensure subscription state is fully updated in DB
-          await new Promise(resolve => setTimeout(resolve, 500));
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
 
-          await axiosInstance.post('/company', {
-            name: tempCompanyName,
-            email: userEmail || 'active@user.com',
-            address: 'Not Provided',
-            contactNumber: '',
-            departments: []
-          }, {
-            headers: { Authorization: `Bearer ${authToken}` }
-          });
-
-          console.log('✅ Company created successfully');
-          localStorage.removeItem('temp_companyName'); // Cleanup
-        } catch (companyError) {
-          console.error('⚠️ Activation success, but company creation failed:', companyError);
-          // If company creation fails, we might still want to proceed to confirmation 
-          // or show a specific error. For now, following original flow behavior.
-        }
-      }
-
-      navigate('/confirmation');
     } catch (error: any) {
-      console.error('❌ Action failed:', error);
-      alert(error.response?.data?.message || 'Payment processing failed. Please try again.');
+      console.error('❌ Payment initialization failed:', error);
+      alert(error.response?.data?.message || 'Failed to initialize payment. Please try again.');
     }
   };
 
