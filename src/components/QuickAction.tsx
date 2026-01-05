@@ -20,7 +20,7 @@ const QuickAction = ({
             onClick={onClick}
             className={`${bgColor} p-6 rounded-xl text-left hover:scale-105 transition-transform duration-200 shadow-sm hover:shadow-md w-full`}
         >
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 font-sans">
                 <div className="bg-white bg-opacity-20 p-3 rounded-lg w-fit">
                     <Icon className="w-6 h-6 text-white" />
                 </div>

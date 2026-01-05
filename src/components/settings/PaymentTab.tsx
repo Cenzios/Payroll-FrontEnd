@@ -6,8 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { useGetSubscriptionQuery } from '../../store/apiSlice';
 import PaymentPlanSkeleton from '../../components/skeletons/PaymentPlanSkeleton';
 // Dummy static paths based on project assets
-const VISA_ICON = '/src/assets/images/visa.svg';
-const MASTERCARD_ICON = '/src/assets/images/mastercard.svg';
+import visaIcon from '../../assets/images/visa.svg';
+import mastercardIcon from '../../assets/images/mastercard.svg';
 
 interface Card {
     id: string;
@@ -72,7 +72,7 @@ const PaymentTab = () => {
                             <div className="flex items-center gap-6">
                                 <div className="w-16 h-10 flex items-center justify-center p-2 rounded-lg bg-white border border-gray-100 shadow-sm">
                                     <img
-                                        src={card.brand === 'visa' ? VISA_ICON : MASTERCARD_ICON}
+                                        src={card.brand === 'visa' ? visaIcon : mastercardIcon}
                                         alt={card.brand}
                                         className="h-full object-contain"
                                     />

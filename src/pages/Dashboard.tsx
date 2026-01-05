@@ -222,7 +222,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 font-sans">
       <Sidebar />
 
       {/* Main Content */}
@@ -284,7 +284,7 @@ const Dashboard = () => {
           text-white
           px-4 py-2
           rounded-xl
-          text-sm font-semibold
+          text-sm 
         "
               >
                 <Plus className="w-4 h-4" />
@@ -368,8 +368,8 @@ const Dashboard = () => {
                 />
                 <StatCard
                   icon={TrendingUp}
-                  title="Company EPF Amount"
-                  value={`Rs ${dashboardData?.totalCompanyETF?.toLocaleString() || '0'}`} // Note: using ETF field for now as per controller
+                  title="Company EPF/ETF Amount"
+                  value={`Rs ${((dashboardData?.totalCompanyEPF || 0) + (dashboardData?.totalCompanyETF || 0)).toLocaleString()}`}
                   subtitle="This Month"
                 />
                 <StatCard
