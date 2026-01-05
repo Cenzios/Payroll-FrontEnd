@@ -40,12 +40,12 @@ const StatCard = ({
       </div>
 
       {/* Title */}
-      <div className="text-sm text-gray-700 mb-1">
+      <div className="text-sm text-gray-700 mb-1 font-medium">
         {title}
       </div>
 
       {/* Value */}
-      <div className="text-2xl font-bold text-gray-900">
+      <div className="text-2xl font-medium text-gray-900">
         {value}
       </div>
     </div>

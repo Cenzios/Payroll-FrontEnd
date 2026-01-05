@@ -3,8 +3,9 @@ import { useEffect } from 'react';
 import { useAppDispatch } from '../store/hooks';
 import { setAuthFromToken, setSignupEmail, setTempPlanId } from '../store/slices/authSlice';
 import { jwtDecode } from 'jwt-decode';
+import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
-import { PLANS, getAllPlans } from '../constants/plans';
+import { PLANS } from '../constants/plans';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 
 interface DecodedToken {
@@ -47,20 +48,44 @@ const GetPlan = () => {
     }
   }, [searchParams, dispatch]);
 
-  const handleSelectPlan = (planId: string) => {
-    // ✅ Set plan ID in Redux
-    dispatch(setTempPlanId(planId));
+  const handleSelectPlan = async (planId: string) => {
+    try {
+      // ✅ Get token for authenticated request
+      const token = localStorage.getItem('token');
 
-    // ✅ Also save to localStorage for persistence (following existing pattern)
-    localStorage.setItem('reg_planId', planId);
+      if (!token) {
+        console.error('❌ No auth token found. Please login.');
+        navigate('/login');
+        return;
+      }
 
-    console.log('✅ Plan selected:', planId);
+      // ✅ Secure plan selection via backend
+      console.log('📤 Selecting plan via backend:', planId);
 
-    // ✅ Check if we are in "Change Plan" mode
-    const isPlanChange = searchParams.get('isPlanChange') === 'true';
+      const response = await axiosInstance.post(
+        '/subscription/select-plan',
+        { planId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    // ✅ Navigate to terms-and-conditions page (pass the flag forward)
-    navigate(`/terms-and-conditions?isPlanChange=${isPlanChange}`);
+      console.log('✅ Backend plan selection success:', response.data);
+
+      // ✅ Set plan ID in Redux (keep for UI sync)
+      dispatch(setTempPlanId(planId));
+
+      // ✅ Save subscription data to localStorage for persistence
+      localStorage.setItem('subscriptionId', response.data.data.subscriptionId);
+      localStorage.setItem('reg_planId', planId);
+
+      // ✅ Check if we are in "Change Plan" mode
+      const isPlanChange = searchParams.get('isPlanChange') === 'true';
+
+      // ✅ Navigate to terms-and-conditions page (pass the flag forward)
+      navigate(`/terms-and-conditions?isPlanChange=${isPlanChange}`);
+    } catch (error: any) {
+      console.error('❌ Failed to select plan:', error);
+      alert(error.response?.data?.message || 'Plan selection failed. Please try again.');
+    }
   };
 
   return (
