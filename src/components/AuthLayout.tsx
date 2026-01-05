@@ -95,17 +95,17 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
             {/* Mobile Logo (visible only on small screens) */}
             <div className="lg:hidden flex items-center gap-2 mb-8">
               <img src={logo} alt="Payroll Logo" className="h-8" />
-              <span className="text-[#3A8BFF] text-2xl font-bold">ayroll</span>
+              <span className="text-[#3A8BFF] text-[28px] font-medium">ayroll</span>
             </div>
 
             {title && (
-              <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
+              <h2 className="text-[28px] font-medium text-gray-900 leading-tight">
                 {title}
               </h2>
             )}
 
             {subtitle && (
-              <p className="text-gray-500 mt-3 text-base">
+              <p className="text-gray-500 mt-3 text-[16px] font-normal leading-[1.7]">
                 {subtitle}
               </p>
             )}

@@ -232,10 +232,10 @@ const Dashboard = () => {
 
             {/* LEFT */}
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-[28px] font-medium text-gray-900 leading-tight">
                 {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'}
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-[16px] font-normal text-gray-500 leading-[1.7]">
                 Here's your dashboard overview
               </p>
             </div>

@@ -408,8 +408,8 @@ const Salary = () => {
                 {/* Header */}
                 <header className="flex items-center justify-between mb-8 shrink-0">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Salary</h1>
-                        <p className="text-sm text-gray-500 mt-1">View and calculate employee salaries</p>
+                        <h1 className="text-[28px] font-medium text-gray-900 leading-tight">Salary</h1>
+                        <p className="text-[16px] font-normal text-gray-500 mt-1 leading-[1.7]">View and calculate employee salaries</p>
                     </div>
                 </header>
 

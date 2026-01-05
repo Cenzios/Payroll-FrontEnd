@@ -240,8 +240,8 @@ const Employees = () => {
                 {/* Header */}
                 <header className="flex items-center justify-between mb-8 shrink-0">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
-                        <p className="text-sm text-gray-500 mt-1">Here's your Employees overview</p>
+                        <h1 className="text-[28px] font-medium text-gray-900 leading-tight">Employees</h1>
+                        <p className="text-[16px] font-normal text-gray-500 mt-1 leading-[1.7]">Here's your Employees overview</p>
                     </div>
                     <div className="flex items-center gap-4">
                         <button
