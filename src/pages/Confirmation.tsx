@@ -197,6 +197,7 @@ const Confirmation = () => {
                 </button>
               </>
             ) : (
+              <>
                 <h1 className="text-3xl font-bold text-red-600 mb-8">
                   Verification Timeout
                 </h1>
@@ -207,7 +208,7 @@ const Confirmation = () => {
                 <div className="flex flex-col gap-3">
                   <button
                     onClick={() => {
-                        setStatus('verifying'); // Reset status to restart polling
+                      setStatus('verifying'); // Reset status to restart polling
                     }}
                     className="w-full bg-blue-600 text-white font-semibold py-4 rounded-xl hover:bg-blue-700 transition-all duration-200"
                   >
@@ -222,38 +223,38 @@ const Confirmation = () => {
                 </div>
               </>
             )}
+          </div>
         </div>
       </div>
-    </div>
-      {/* Background Illustration - Top Right */ }
-  <div className="
+      {/* Background Illustration - Top Right */}
+      <div className="
   absolute 
   top-[-250px] right-[-200px]
   w-[600px] h-[600px]
   z-0
   pointer-events-none
 ">
-    <img
-      src={bgIllustration}
-      alt="Background Decoration"
-      className="w-full h-full object-contain"
-    />
-  </div>
+        <img
+          src={bgIllustration}
+          alt="Background Decoration"
+          className="w-full h-full object-contain"
+        />
+      </div>
 
-  {/* Background Illustration - Bottom Left */ }
-  <div className="
+      {/* Background Illustration - Bottom Left */}
+      <div className="
   absolute 
   bottom-[-300px] left-[-200px]
   w-[700px] h-[700px]
   z-0
   pointer-events-none
 ">
-    <img
-      src={bgIllustration}
-      alt="Background Decoration"
-      className="w-full h-full object-contain rotate-180"
-    />
-  </div>
+        <img
+          src={bgIllustration}
+          alt="Background Decoration"
+          className="w-full h-full object-contain rotate-180"
+        />
+      </div>
     </div >
   );
 };
