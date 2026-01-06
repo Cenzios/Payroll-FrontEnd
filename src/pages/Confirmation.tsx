@@ -65,6 +65,12 @@ const Confirmation = () => {
           }
 
           setStatus('active');
+
+          // ✅ AUTO REDIRECT TO DASHBOARD
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 3000);
+
         } else if (subStatus === 'FAILED') {
           setStatus('failed');
           clearInterval(pollInterval);
@@ -116,19 +122,8 @@ const Confirmation = () => {
   }, []);
 
   const handleContinue = () => {
-    const signupMethod = localStorage.getItem('signup_method');
-
-    // ✅ Clear the flag so it doesn't affect future sessions
-    localStorage.removeItem('signup_method');
-
-    if (signupMethod === 'email') {
-      // 1. Normal User -> Manual Login Required
-      dispatch(logout()); // Ensure session is cleared
-      navigate('/login');
-    } else {
-      // 2. Google/Others -> Go to Dashboard
-      navigate('/dashboard');
-    }
+    // ✅ Always go to Dashboard on success (User is already authenticated)
+    navigate('/dashboard');
   };
 
   return (
@@ -193,7 +188,7 @@ const Confirmation = () => {
                   onClick={handleContinue}
                   className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-4 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
-                  Continue to Log in
+                  Go to Dashboard
                 </button>
               </>
             ) : (
