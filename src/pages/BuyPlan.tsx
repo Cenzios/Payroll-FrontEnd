@@ -124,6 +124,9 @@ const BuyPlan = () => {
       const authToken = localStorage.getItem('token');
       if (!authToken) throw new Error('No auth token found');
 
+      // ------------------------------------------------------------------
+      // ⭐ NEW SIGNUP FLOW (New User)
+      // ------------------------------------------------------------------
       console.log('💳 Creating PayHere payment session...');
       const response = await axiosInstance.post('/subscription/create-payment-session', {}, {
         headers: { Authorization: `Bearer ${authToken}` }

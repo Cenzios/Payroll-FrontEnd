@@ -6,6 +6,7 @@ import celebrationImg from '../assets/images/celebration-illustration.svg';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 import axiosInstance from '../api/axios';
 import { Loader2 } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode';
 
 
 
@@ -17,7 +18,7 @@ const Confirmation = () => {
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
 
-    const checkSubscriptionStatus = async () => {
+    const checkSubscriptionAndCreateCompany = async () => {
       try {
         const authToken = localStorage.getItem('token');
         if (!authToken) {
@@ -32,8 +33,38 @@ const Confirmation = () => {
         const subStatus = response.data.data.status;
 
         if (subStatus === 'ACTIVE') {
-          setStatus('active');
           clearInterval(pollInterval);
+
+          // ✅ PAYHERE SUCCESS! Now create the company if needed
+          const tempCompanyName = localStorage.getItem('temp_companyName');
+
+          if (tempCompanyName) {
+            try {
+              // Get email from token since we might have refreshed
+              const decoded: any = jwtDecode(authToken);
+              const userEmail = decoded.email;
+
+              console.log('🏢 Creating company after payment:', tempCompanyName);
+
+              await axiosInstance.post('/company', {
+                name: tempCompanyName,
+                email: userEmail || 'active@user.com',
+                address: 'Not Provided',
+                contactNumber: '',
+                departments: []
+              }, {
+                headers: { Authorization: `Bearer ${authToken}` }
+              });
+
+              console.log('✅ Company created successfully');
+              localStorage.removeItem('temp_companyName'); // Cleanup to prevent duplicates
+            } catch (err) {
+              console.error('⚠️ Activation success, but company creation failed:', err);
+              // We proceed to success state anyway, user can create company later if needed
+            }
+          }
+
+          setStatus('active');
         } else if (subStatus === 'FAILED') {
           setStatus('failed');
           clearInterval(pollInterval);
@@ -45,10 +76,10 @@ const Confirmation = () => {
     };
 
     // Initial check
-    checkSubscriptionStatus();
+    checkSubscriptionAndCreateCompany();
 
     // Start polling every 3 seconds
-    pollInterval = setInterval(checkSubscriptionStatus, 3000);
+    pollInterval = setInterval(checkSubscriptionAndCreateCompany, 3000);
 
     // Timeout after 60 seconds
     const timeout = setTimeout(() => {
@@ -62,7 +93,7 @@ const Confirmation = () => {
       clearInterval(pollInterval);
       clearTimeout(timeout);
     };
-  }, [navigate]);
+  }, [navigate, status]); // Added status dependency
 
   useEffect(() => {
     const style = document.createElement('style');
@@ -166,55 +197,64 @@ const Confirmation = () => {
                 </button>
               </>
             ) : (
-              <>
                 <h1 className="text-3xl font-bold text-red-600 mb-8">
                   Verification Timeout
                 </h1>
                 <div className="mb-8 space-y-2 text-gray-600">
                   <p>It's taking longer than expected to verify your payment.</p>
-                  <p>If you've completed the payment, your account will be active shortly.</p>
+                  <p>If you've completed the payment, please check again or contact support.</p>
                 </div>
-                <button
-                  onClick={() => navigate('/login')}
-                  className="w-full bg-gray-600 text-white font-semibold py-4 rounded-xl hover:bg-gray-700 transition-all duration-200"
-                >
-                  Go to Login
-                </button>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={() => {
+                        setStatus('verifying'); // Reset status to restart polling
+                    }}
+                    className="w-full bg-blue-600 text-white font-semibold py-4 rounded-xl hover:bg-blue-700 transition-all duration-200"
+                  >
+                    Check Again
+                  </button>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="w-full bg-gray-100 text-gray-600 font-semibold py-4 rounded-xl hover:bg-gray-200 transition-all duration-200"
+                  >
+                    Go to Login
+                  </button>
+                </div>
               </>
             )}
-          </div>
         </div>
       </div>
-      {/* Background Illustration - Top Right */}
-      <div className="
+    </div>
+      {/* Background Illustration - Top Right */ }
+  <div className="
   absolute 
   top-[-250px] right-[-200px]
   w-[600px] h-[600px]
   z-0
   pointer-events-none
 ">
-        <img
-          src={bgIllustration}
-          alt="Background Decoration"
-          className="w-full h-full object-contain"
-        />
-      </div>
+    <img
+      src={bgIllustration}
+      alt="Background Decoration"
+      className="w-full h-full object-contain"
+    />
+  </div>
 
-      {/* Background Illustration - Bottom Left */}
-      <div className="
+  {/* Background Illustration - Bottom Left */ }
+  <div className="
   absolute 
   bottom-[-300px] left-[-200px]
   w-[700px] h-[700px]
   z-0
   pointer-events-none
 ">
-        <img
-          src={bgIllustration}
-          alt="Background Decoration"
-          className="w-full h-full object-contain rotate-180"
-        />
-      </div>
-    </div>
+    <img
+      src={bgIllustration}
+      alt="Background Decoration"
+      className="w-full h-full object-contain rotate-180"
+    />
+  </div>
+    </div >
   );
 };
 
