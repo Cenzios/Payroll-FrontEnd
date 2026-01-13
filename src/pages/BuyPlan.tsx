@@ -67,20 +67,36 @@ const BuyPlan = () => {
       if (!authToken) throw new Error('No auth token found');
 
       // ------------------------------------------------------------------
-      // ⭐ NEW SIGNUP FLOW (New User)
+      // ⭐ NEW START: Payment Intent Flow
       // ------------------------------------------------------------------
-      console.log('💳 Creating PayHere payment session...');
-      const response = await axiosInstance.post('/subscription/create-payment-session', {}, {
+      const planToBuy = activeSubscription?.planName ? activeSubscription.planName : selectedPlan.name; // Logic if needed, but mainly we use IDs
+
+      // 1. Create Payment Intent
+      console.log('📝 Creating Payment Intent...');
+      const intentRes = await axiosInstance.post('/payments/intents', {
+        planId: isPlanChange ? selectedPlan.id : (localStorage.getItem('reg_planId') || PLANS.BASIC.id),
+        amount: isPlanChange ? selectedPlan.price : selectedPlan.price, // Use correct price logic
+        currency: 'LKR'
+      }, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
 
-      const payload = response.data.data;
-      console.log('🚀 Redirecting to PayHere Sandbox:', payload);
+      const intent = intentRes.data.data;
+      console.log('✅ Intent Created:', intent.id);
 
-      // Create a hidden form and submit it
+      // 2. Get PayHere Payload for this Intent
+      console.log('🔐 Fetching PayHere Payload...');
+      const payloadRes = await axiosInstance.get(`/payments/intents/${intent.id}/payhere`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+
+      const payload = payloadRes.data.data;
+      console.log('🚀 Redirecting to PayHere...', payload);
+
+      // 3. Create Hidden Form & Submit
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action = 'https://sandbox.payhere.lk/pay/checkout';
+      form.action = 'https://sandbox.payhere.lk/pay/checkout'; // Use sandbox for now as per previous code
 
       Object.keys(payload).forEach(key => {
         const input = document.createElement('input');
