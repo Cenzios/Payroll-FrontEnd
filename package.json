@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.0",
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.6.1",
     "@supabase/supabase-js": "^2.57.4",
     "axios": "^1.13.2",
     "jspdf": "^3.0.4",

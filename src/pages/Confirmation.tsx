@@ -11,6 +11,7 @@ import { jwtDecode } from 'jwt-decode';
 
 
 const Confirmation = () => {
+  
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [status, setStatus] = useState<'verifying' | 'active' | 'failed'>('verifying');
