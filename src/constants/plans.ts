@@ -18,7 +18,7 @@ export const PLANS: Record<string, Plan> = {
     BASIC: {
         id: PLAN_IDS.BASIC,
         name: "Basic",
-        price: 100,
+        price: 200,
         registrationFee: 2500,
         description: "Get essential payroll features with basic plan. Pay only a one-time Rs. 2,500 registration fee in the first month. From the second month, your subscription is based on the number of employees—simple, flexible, and affordable.",
         features: [
@@ -34,7 +34,7 @@ export const PLANS: Record<string, Plan> = {
     PROFESSIONAL: {
         id: PLAN_IDS.PROFESSIONAL,
         name: "Professional",
-        price: 75,
+        price: 175,
         registrationFee: 5000,
         description: "Get essential payroll features with basic plan. Pay only a one-time Rs. 5,000 registration fee in the first month. From the second month, your subscription is based on the number of employees—simple, flexible, and affordable.",
         features: [
@@ -50,7 +50,7 @@ export const PLANS: Record<string, Plan> = {
     ENTERPRISE: {
         id: PLAN_IDS.ENTERPRISE,
         name: "Enterprise",
-        price: 50,
+        price: 250,
         registrationFee: 7500,
         description: "Get essential payroll features with basic plan. Pay only a one-time Rs. 7,500 registration fee in the first month. From the second month, your subscription is based on the number of employees—simple, flexible, and affordable.",
         features: [
