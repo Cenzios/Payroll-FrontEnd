@@ -1,5 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useAppDispatch } from '../store/hooks';
 import { setAuthFromToken, setSignupEmail, setTempPlanId } from '../store/slices/authSlice';
 import { jwtDecode } from 'jwt-decode';
@@ -48,6 +49,26 @@ const GetPlan = () => {
     }
   }, [searchParams, dispatch]);
 
+  const [apiPlans, setApiPlans] = useState<Plan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch plans from API
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await axiosInstance.get('/plans'); // Assuming this endpoint exists or should be created
+        if (response.data.success) {
+          setApiPlans(response.data.data);
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch plans:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPlans();
+  }, []);
+
   const handleSelectPlan = async (planId: string) => {
     try {
       // ✅ Get token for authenticated request
@@ -88,6 +109,28 @@ const GetPlan = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  // Map API plans to their respective slots by name or ID, merging pricing only
+  const mergePlanDetails = (localPlan: any) => {
+    const apiPlan = apiPlans.find(p => p.id === localPlan.id);
+    return {
+      ...localPlan,
+      employeePrice: apiPlan?.employeePrice || localPlan.employeePrice || localPlan.price,
+      registrationFee: apiPlan?.registrationFee || localPlan.registrationFee,
+    };
+  };
+
+  const professionalPlan = mergePlanDetails(PLANS.PROFESSIONAL);
+  const basicPlan = mergePlanDetails(PLANS.BASIC);
+  const enterprisePlan = mergePlanDetails(PLANS.ENTERPRISE);
+
   return (
     <div className="min-h-screen relative overflow-hidden 
   bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
@@ -100,40 +143,43 @@ const GetPlan = () => {
 
       {/* Three Plan Cards */}
       <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-        {/* Professional Plan (Left - Highlighted) */}
+        {/* Professional Plan (Left) */}
         <PlanCard
-          planName={PLANS.PROFESSIONAL.name}
-          price={PLANS.PROFESSIONAL.price}
-          registrationFee={PLANS.PROFESSIONAL.registrationFee}
-          description={PLANS.PROFESSIONAL.description}
-          features={PLANS.PROFESSIONAL.features}
+          planName={professionalPlan.name}
+          price={professionalPlan.employeePrice || professionalPlan.price}
+          registrationFee={professionalPlan.registrationFee}
+          description={professionalPlan.description}
+          features={professionalPlan.features}
           isHighlighted={false}
           showButton={true}
-          onSelectPlan={() => handleSelectPlan(PLANS.PROFESSIONAL.id)}
+          showPerEmployeePrice={true}
+          onSelectPlan={() => handleSelectPlan(professionalPlan.id)}
         />
 
         {/* Basic Plan (Center - Highlighted) */}
         <PlanCard
-          planName={PLANS.BASIC.name}
-          price={PLANS.BASIC.price}
-          registrationFee={PLANS.BASIC.registrationFee}
-          description={PLANS.BASIC.description}
-          features={PLANS.BASIC.features}
+          planName={basicPlan.name}
+          price={basicPlan.employeePrice || basicPlan.price}
+          registrationFee={basicPlan.registrationFee}
+          description={basicPlan.description}
+          features={basicPlan.features}
           isHighlighted={true}
           showButton={true}
-          onSelectPlan={() => handleSelectPlan(PLANS.BASIC.id)}
+          showPerEmployeePrice={true}
+          onSelectPlan={() => handleSelectPlan(basicPlan.id)}
         />
 
         {/* Enterprise Plan (Right) */}
         <PlanCard
-          planName={PLANS.ENTERPRISE.name}
-          price={PLANS.ENTERPRISE.price}
-          registrationFee={PLANS.ENTERPRISE.registrationFee}
-          description={PLANS.ENTERPRISE.description}
-          features={PLANS.ENTERPRISE.features}
+          planName={enterprisePlan.name}
+          price={enterprisePlan.employeePrice || enterprisePlan.price}
+          registrationFee={enterprisePlan.registrationFee}
+          description={enterprisePlan.description}
+          features={enterprisePlan.features}
           isHighlighted={false}
           showButton={true}
-          onSelectPlan={() => handleSelectPlan(PLANS.ENTERPRISE.id)}
+          showPerEmployeePrice={true}
+          onSelectPlan={() => handleSelectPlan(enterprisePlan.id)}
         />
       </div>
       {/* Background Wave - Bottom Right */}

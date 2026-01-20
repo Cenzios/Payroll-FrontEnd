@@ -12,10 +12,6 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import CheckoutForm from '../components/CheckoutForm';
 
-console.log(
-  'Stripe PK:',
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-);
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
@@ -81,7 +77,7 @@ const BuyPlan = () => {
         if (!authToken) return;
 
         const planId = isPlanChange ? selectedPlan.id : (localStorage.getItem('reg_planId') || PLANS.BASIC.id);
-        const amount = selectedPlan.price; // Simplified for now
+        const amount = activeSubscription?.registrationFee || selectedPlan.registrationFee; // Use API fee if available
 
         console.log('📝 Creating Stripe Intent for Plan:', planId);
 
@@ -140,10 +136,11 @@ const BuyPlan = () => {
             {/* Dynamic Plan Card - Shows Selected Plan */}
             <PlanCard
               planName={activeSubscription?.planName || selectedPlan.name}
-              price={activeSubscription?.pricePerEmployee || selectedPlan.price}
-              registrationFee={selectedPlan.registrationFee}
+              price={activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price}
+              registrationFee={activeSubscription?.registrationFee || selectedPlan.registrationFee}
               description={selectedPlan.description}
               features={selectedPlan.features}
+              showPerEmployeePrice={true}
               isHighlighted={true}
               showButton={false}
             />
@@ -160,7 +157,7 @@ const BuyPlan = () => {
               {clientSecret && (
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
                   <CheckoutForm
-                    amount={selectedPlan.price}
+                    amount={activeSubscription?.registrationFee || selectedPlan.registrationFee}
                     currency="LKR"
                   />
                 </Elements>

@@ -8,7 +8,8 @@ export const PLAN_IDS = {
 export interface Plan {
     id: string;
     name: string;
-    price: number;
+    price: number; // For compatibility (mapped from employeePrice in API)
+    employeePrice: number;
     registrationFee: number;
     description: string;
     features: string[];
@@ -19,6 +20,7 @@ export const PLANS: Record<string, Plan> = {
         id: PLAN_IDS.BASIC,
         name: "Basic",
         price: 200,
+        employeePrice: 200,
         registrationFee: 2500,
         description: "Get essential payroll features with basic plan. Pay only a one-time Rs. 2,500 registration fee in the first month. From the second month, your subscription is based on the number of employees—simple, flexible, and affordable.",
         features: [
@@ -35,6 +37,7 @@ export const PLANS: Record<string, Plan> = {
         id: PLAN_IDS.PROFESSIONAL,
         name: "Professional",
         price: 175,
+        employeePrice: 175,
         registrationFee: 5000,
         description: "Get essential payroll features with basic plan. Pay only a one-time Rs. 5,000 registration fee in the first month. From the second month, your subscription is based on the number of employees—simple, flexible, and affordable.",
         features: [
@@ -51,6 +54,7 @@ export const PLANS: Record<string, Plan> = {
         id: PLAN_IDS.ENTERPRISE,
         name: "Enterprise",
         price: 250,
+        employeePrice: 250,
         registrationFee: 7500,
         description: "Get essential payroll features with basic plan. Pay only a one-time Rs. 7,500 registration fee in the first month. From the second month, your subscription is based on the number of employees—simple, flexible, and affordable.",
         features: [
