@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAppDispatch } from '../store/hooks';
 import { logout } from '../store/slices/authSlice';
 import celebrationImg from '../assets/images/celebration-illustration.svg';
@@ -11,15 +11,22 @@ import { jwtDecode } from 'jwt-decode';
 
 
 const Confirmation = () => {
-  
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [status, setStatus] = useState<'verifying' | 'active' | 'failed'>('verifying');
+
+  // Using ref to track execution status across renders and intervals
+  const isCheckingRef = useRef(false);
 
   useEffect(() => {
     let pollInterval: NodeJS.Timeout;
 
     const checkSubscriptionAndCreateCompany = async () => {
+      // 🛡️ Prevent overlapping checks
+      if (isCheckingRef.current) return;
+      isCheckingRef.current = true;
+
       try {
         const authToken = localStorage.getItem('token');
         if (!authToken) {
@@ -36,10 +43,13 @@ const Confirmation = () => {
         if (subStatus === 'ACTIVE') {
           clearInterval(pollInterval);
 
-          // ✅ PAYHERE SUCCESS! Now create the company if needed
+          // Double check to ensure we don't accidentally run this logic twice if multiple fast polls happened
           const tempCompanyName = localStorage.getItem('temp_companyName');
 
           if (tempCompanyName) {
+            // 🛡️ Clear immediately to prevent other racing threads from picking it up
+            localStorage.removeItem('temp_companyName');
+
             try {
               // Get email from token since we might have refreshed
               const decoded: any = jwtDecode(authToken);
@@ -58,10 +68,10 @@ const Confirmation = () => {
               });
 
               console.log('✅ Company created successfully');
-              localStorage.removeItem('temp_companyName'); // Cleanup to prevent duplicates
             } catch (err) {
               console.error('⚠️ Activation success, but company creation failed:', err);
-              // We proceed to success state anyway, user can create company later if needed
+              // Store it back if it failed? No, we don't want to retry indefinitely on the confirmation page.
+              // They can create it manually in dashboard.
             }
           }
 
@@ -79,6 +89,9 @@ const Confirmation = () => {
         }
       } catch (error) {
         console.error('Error checking subscription status:', error);
+      } finally {
+        // Release lock
+        isCheckingRef.current = false;
       }
     };
 
