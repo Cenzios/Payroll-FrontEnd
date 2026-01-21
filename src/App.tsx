@@ -18,10 +18,12 @@ import Reports from './pages/Reports';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
+import RenewPlanModal from './components/RenewPlanModal';
 
 function App() {
   return (
     <Router>
+      <RenewPlanModal />
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/signup" element={<Signup />} />

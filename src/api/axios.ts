@@ -28,6 +28,15 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
+    // 🛡️ Handle Subscription Blocking
+    if (error.response?.status === 403 && error.response?.data?.code === 'SUBSCRIPTION_BLOCKED') {
+      window.dispatchEvent(new Event('open-renew-modal'));
+      // Prevent default error handling (toast) by returning a pending promise or specific error
+      // But usually interceptors must reject. We will reject but the UI should know not to toast.
+      // For now, we just triggering the modal.
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
