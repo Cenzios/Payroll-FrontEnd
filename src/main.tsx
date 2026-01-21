@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { store } from './store/store';
 import App from './App.tsx';
 import './index.css';
+import './api/axios';
 
 
 createRoot(document.getElementById('root')!).render(
