@@ -1,24 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import AccountTab from '../components/settings/AccountTab';
-import PaymentTab from '../components/settings/PaymentTab';
+import SubscriptionSection from '../components/settings/SubscriptionSection';
 
 const Settings = () => {
-    const [searchParams] = useSearchParams();
-
-    const initialTab = searchParams.get('tab') === 'payment'
-        ? 'payment'
-        : 'account';
-
-    const [activeTab, setActiveTab] = useState<'account' | 'payment'>(initialTab);
-    useEffect(() => {
-        const tab = searchParams.get('tab');
-        if (tab === 'payment' || tab === 'account') {
-            setActiveTab(tab);
-        }
-    }, [searchParams]);
-
     return (
         <div className="flex bg-gray-50 min-h-screen">
             <Sidebar />
@@ -26,37 +10,14 @@ const Settings = () => {
                 <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
                     <div className="px-8 py-4">
                         <h1 className="text-[28px] font-medium text-gray-900 leading-tight">Settings</h1>
-                        <p className="text-[16px] font-normal text-gray-500 mt-1 leading-[1.7]">Manage your account and preferences</p>
+                        <p className="text-[16px] font-normal text-gray-500 mt-1 leading-[1.7]">Manage your account and subscription</p>
                     </div>
                 </header>
                 <main className="p-8">
-                    <div className="max-w-6xl">
-                        {/* Tabs Navigation */}
-                        <div className="flex border-b border-gray-200 mb-8">
-                            <button
-                                onClick={() => setActiveTab('account')}
-                                className={`px-6 py-3 font-medium transition-colors border-b-2 ${activeTab === 'account'
-                                    ? 'border-blue-600 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                                    }`}
-                            >
-                                Account
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('payment')}
-                                className={`px-6 py-3 font-medium transition-colors border-b-2 ${activeTab === 'payment'
-                                    ? 'border-blue-600 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                                    }`}
-                            >
-                                Payment Details
-                            </button>
-                        </div>
-
-                        {/* Tab Content */}
-                        <div className="space-y-8 animate-in fade-in duration-500">
-                            {activeTab === 'account' ? <AccountTab /> : <PaymentTab />}
-                        </div>
+                    <div className="max-w-6xl space-y-8 animate-in fade-in duration-500">
+                        <AccountTab />
+                        <hr className="border-gray-200" />
+                        <SubscriptionSection />
                     </div>
                 </main>
             </div>
