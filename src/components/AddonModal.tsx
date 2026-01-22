@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Minus, Plus, CreditCard, Loader2 } from 'lucide-react';
 import { subscriptionApi } from '../api/subscriptionApi';
+import { useGetActiveSubscriptionQuery } from '../store/apiSlice';
 
 interface AddonModalProps {
     isOpen: boolean;
@@ -10,11 +11,15 @@ interface AddonModalProps {
 }
 
 const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalProps) => {
+    const { data: activeSub, isLoading: isPriceLoading } = useGetActiveSubscriptionQuery(undefined, {
+        skip: !isOpen,
+    });
+
     const [slots, setSlots] = useState(1);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState('');
 
-    const PRICE_PER_SLOT = 150;
+    const pricePerSlot = activeSub?.subscription?.plan?.employeePrice || 0;
 
     const handleIncrement = () => setSlots(prev => prev + 1);
     const handleDecrement = () => setSlots(prev => (prev > 1 ? prev - 1 : 1));
@@ -59,7 +64,7 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
                             <button
                                 onClick={handleDecrement}
                                 className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50"
-                                disabled={slots <= 1}
+                                disabled={slots <= 1 || isPriceLoading}
                             >
                                 <Minus className="w-4 h-4" />
                             </button>
@@ -71,6 +76,7 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
                             <button
                                 onClick={handleIncrement}
                                 className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                                disabled={isPriceLoading}
                             >
                                 <Plus className="w-4 h-4" />
                             </button>
@@ -87,18 +93,26 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
 
                     {/* Pricing */}
                     <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-600">Price per slot</span>
-                            <span className="font-medium text-green-600">Rs. {PRICE_PER_SLOT.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-gray-600">Number of additional slots</span>
-                            <span className="font-medium text-blue-600">{slots}</span>
-                        </div>
-                        <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                            <span className="font-bold text-gray-900">Total</span>
-                            <span className="font-bold text-xl text-blue-600">Rs. {(PRICE_PER_SLOT * slots).toFixed(2)}</span>
-                        </div>
+                        {isPriceLoading ? (
+                            <div className="flex justify-center p-4">
+                                <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                            </div>
+                        ) : (
+                            <>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-600">Price per slot</span>
+                                    <span className="font-medium text-green-600">Rs. {pricePerSlot.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-600">Number of additional slots</span>
+                                    <span className="font-medium text-blue-600">{slots}</span>
+                                </div>
+                                <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
+                                    <span className="font-bold text-gray-900">Total</span>
+                                    <span className="font-bold text-xl text-blue-600">Rs. {(pricePerSlot * slots).toFixed(2)}</span>
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     {error && (

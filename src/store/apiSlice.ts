@@ -104,6 +104,10 @@ export const apiSlice = createApi({
             query: () => ({ url: '/subscription/current', method: 'GET' }),
             providesTags: ['Subscription'],
         }),
+        getActiveSubscription: builder.query<any, void>({
+            query: () => ({ url: '/subscription/active', method: 'GET' }),
+            providesTags: ['Subscription'],
+        }),
 
         changePlan: builder.mutation<any, { newPlanId: string }>({
             query: (data) => ({
@@ -134,6 +138,7 @@ export const {
     useUpdateEmployeeMutation,
     useDeleteEmployeeMutation,
     useGetSubscriptionQuery,
+    useGetActiveSubscriptionQuery,
     useChangePlanMutation,
     useAddAddonMutation
 } = apiSlice;
