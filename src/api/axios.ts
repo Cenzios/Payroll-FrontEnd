@@ -62,9 +62,15 @@ axiosInstance.interceptors.response.use(
 
     /* 🔐 AUTH HANDLING */
     if (status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Check if we are already on the login page or making a login request
+      const isLoginPage = window.location.pathname === '/login';
+      const isLoginRequest = error.config?.url?.includes('/auth/login');
+
+      if (!isLoginPage && !isLoginRequest) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
       return Promise.reject(error);
     }
 
