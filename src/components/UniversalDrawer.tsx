@@ -86,7 +86,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^(?!.*\.\.)[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$/;
     const phoneRegex = /^\+94\s?\d{9}$/;
 
     const validateField = (field: string, value: any, formMode: 'company' | 'employee') => {
@@ -220,6 +220,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
 
                 const finalEmployeeData = {
                     ...employeeData,
+                    email: employeeData.email?.trim() || undefined,
                     companyId: companyId || employeeData.companyId,
                     // Ensure defaults if empty
                     department: employeeData.department || 'General',

@@ -68,7 +68,7 @@ const AccountTab = () => {
     }, [selectedCompany]);
 
     // Validation Regex
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^(?!.*\.\.)[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$/;
     const phoneRegex = /^\+94\d{9}$/;
 
     const validatePersonal = (field: string, value: string) => {
