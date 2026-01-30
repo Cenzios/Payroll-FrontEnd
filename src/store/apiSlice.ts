@@ -125,6 +125,14 @@ export const apiSlice = createApi({
                 data
             }),
             invalidatesTags: ['Subscription', 'Dashboard']
+        }),
+
+        cancelSubscription: builder.mutation<any, void>({
+            query: () => ({
+                url: '/subscription/cancel',
+                method: 'POST',
+            }),
+            invalidatesTags: ['Subscription', 'Dashboard']
         })
     }),
 });
@@ -140,5 +148,6 @@ export const {
     useGetSubscriptionQuery,
     useGetActiveSubscriptionQuery,
     useChangePlanMutation,
-    useAddAddonMutation
+    useAddAddonMutation,
+    useCancelSubscriptionMutation
 } = apiSlice;

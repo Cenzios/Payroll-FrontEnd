@@ -1,15 +1,52 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Crown, ShieldCheck, Users, Calendar, ExternalLink, RefreshCcw } from 'lucide-react';
-import { useGetSubscriptionQuery } from '../../store/apiSlice';
+import { useGetSubscriptionQuery, useCancelSubscriptionMutation } from '../../store/apiSlice';
 import PaymentPlanSkeleton from '../../components/skeletons/PaymentPlanSkeleton';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import Toast from '../../components/Toast';
 import logo from '../../assets/images/logo.svg';
 
 const SubscriptionSection = () => {
     const navigate = useNavigate();
     const { data: subscription, isLoading: loading } = useGetSubscriptionQuery();
+    const [cancelSubscription, { isLoading: isCancelling }] = useCancelSubscriptionMutation();
+
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    const handleCancelPlan = async () => {
+        try {
+            await cancelSubscription().unwrap();
+            setToast({ message: 'Subscription cancelled successfully', type: 'success' });
+            setShowCancelModal(false);
+        } catch (error: any) {
+            setToast({ message: error?.data?.message || 'Failed to cancel subscription', type: 'error' });
+            setShowCancelModal(false);
+        }
+    };
 
     return (
         <section className="mt-8">
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
+            <ConfirmationModal
+                isOpen={showCancelModal}
+                onClose={() => setShowCancelModal(false)}
+                onConfirm={handleCancelPlan}
+                title="Cancel Subscription"
+                message="Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your billing cycle."
+                confirmText={isCancelling ? 'Cancelling...' : 'Yes, Cancel'}
+                cancelText="Keep Subscription"
+                variant="danger"
+            />
+
             <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <Crown className="h-5 w-5 text-blue-600" />
@@ -83,8 +120,12 @@ const SubscriptionSection = () => {
                             </div>
 
                             <div className="relative z-10 flex flex-col sm:flex-row gap-3">
-                                <button className="px-6 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-all order-2 sm:order-1 capitalize whitespace-nowrap">
-                                    Cancel plan
+                                <button
+                                    onClick={() => setShowCancelModal(true)}
+                                    disabled={isCancelling}
+                                    className="px-6 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-all order-2 sm:order-1 capitalize whitespace-nowrap disabled:opacity-50"
+                                >
+                                    {isCancelling ? 'Cancelling...' : 'Cancel plan'}
                                 </button>
                                 <button
                                     onClick={() => navigate('/get-plan?isPlanChange=true')}
