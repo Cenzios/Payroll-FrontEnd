@@ -86,8 +86,9 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-    const emailRegex = /^(?!.*\.\.)[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const phoneRegex = /^\+94\s?\d{9}$/;
+    const employeePhoneRegex = /^(\+94\d{9}|0\d{9})$/;
 
     const validateField = (field: string, value: any, formMode: 'company' | 'employee') => {
         let error = '';
@@ -121,7 +122,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                     break;
                 case 'contactNumber':
                     if (!value) error = 'Contact number is required';
-                    else if (!phoneRegex.test(value)) error = 'Must be +94 followed by 9 digits';
+                    else if (!employeePhoneRegex.test(value)) error = 'Must be +94XXXXXXXXX or 0XXXXXXXXX (10 digits)';
                     break;
                 case 'designation':
                     if (!value || !value.trim()) error = 'Designation is required';
