@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout, setAuthFromToken, setSelectedCompanyId } from '../store/slices/authSlice';
@@ -30,6 +30,8 @@ import {
   useGetCompaniesQuery,
   useCreateCompanyMutation,
   useCreateEmployeeMutation,
+  useGetNotificationsQuery,
+  useMarkNotificationAsReadMutation,
   apiSlice
 } from '../store/apiSlice';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
@@ -40,7 +42,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
-  const { user, selectedCompanyId } = useAppSelector((state) => state.auth);
+  const { user, selectedCompanyId, token } = useAppSelector((state) => state.auth);
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -49,19 +51,27 @@ const Dashboard = () => {
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const urlToken = searchParams.get('token');
+  const isTokenPending = !!urlToken && urlToken !== token;
 
   // RTK Query hooks
   const { data: companies = [] } = useGetCompaniesQuery(undefined, {
-    skip: !user // Skip if user not logged in
+    skip: !user || isTokenPending
   });
 
   const { data: dashboardData, isLoading: isDashboardLoading } = useGetDashboardSummaryQuery(selectedCompanyId || undefined, {
-    skip: !user, // or !selectedCompanyId if strictly required, but backend might handle optional
+    skip: !user || isTokenPending,
   });
 
   const [createCompany] = useCreateCompanyMutation();
   const [createEmployee] = useCreateEmployeeMutation();
+
+  const { data: dbNotifications = [] } = useGetNotificationsQuery(undefined, {
+    skip: !user || isTokenPending
+  });
+
+  const [markAsRead] = useMarkNotificationAsReadMutation();
 
   // Derived state
   const selectedCompany = companies.find(c => c.id === selectedCompanyId) || null;
@@ -88,53 +98,26 @@ const Dashboard = () => {
     }
   }, [companies, selectedCompanyId, dispatch]);
 
-  // Generate Notifications Logic
-  useEffect(() => {
-    if (!dashboardData) return;
+  // Map DB notifications to UI notifications
+  const uiNotifications: Notification[] = dbNotifications.map(n => ({
+    id: n.id,
+    type: n.type === 'ERROR' ? 'alert' : n.type.toLowerCase() as 'info' | 'warning',
+    message: n.message,
+    timestamp: new Date(n.createdAt).toLocaleDateString(),
+    read: n.isRead
+  }));
 
-    const newNotifications: Notification[] = [];
-    const today = new Date();
+  const unreadCount = uiNotifications.filter(n => !n.read).length;
 
-    // 1. Employee Usage Check
-    const total = dashboardData.totalEmployees || 0;
-    const max = dashboardData.maxEmployees || 1;
-    const usagePercent = (total / max) * 100;
+  const handleMarkAsRead = useCallback(async () => {
+    // Mark all unread notifications as read on backend
+    const unreadIds = dbNotifications.filter(n => !n.isRead).map(n => n.id);
+    if (unreadIds.length === 0) return;
 
-    if (usagePercent >= 90) {
-      newNotifications.push({
-        id: 'limit-1',
-        type: 'alert',
-        message: 'You’ve reached your employee limit. Add slots or upgrade your plan.',
-        timestamp: today.toLocaleDateString(),
-        read: false
-      });
+    for (const id of unreadIds) {
+      await markAsRead(id);
     }
-
-    // 2. Subscription Expiry Check (Mock logic as dashboardData doesn't explicitly store nextBillingDate in top level usually, but assuming we can derive or it's static for now logic)
-    // Actually we can check dashboardData.remainingSlots or similar, but for now strict to requirement:
-    // We don't have expiry date in dashboard summary easily, so I will stick to usage notification and maybe a generic one if plan is 'Basic'.
-    // BUT! Since subscription data is fetched in PaymentTab, we might not have it here. 
-    // Optimization: The user prompt says "Subscription expires < 7 days". 
-    // Without subscription data here, I'll simulate it or skip it to avoid fake data unless critical.
-    // However, I CAN check "Auto-renewal" if it was in dashboard summary.
-    // Let's add a dummy "Auto-renewal Enabled" notification as requested by user ("Auto-renewal is enabled for your subscription").
-
-    newNotifications.push({
-      id: 'renew-1',
-      type: 'info',
-      message: 'Auto-renewal is enabled for your subscription.',
-      timestamp: today.toLocaleDateString(),
-      read: true // Default read to not annoy
-    });
-
-    setNotifications(newNotifications);
-  }, [dashboardData]);
-
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const handleMarkAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
+  }, [dbNotifications, markAsRead]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -294,7 +277,13 @@ const Dashboard = () => {
               {/* Notification */}
               <div className="relative">
                 <button
-                  onClick={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
+                  onClick={() => {
+                    const nextState = !isNotificationDropdownOpen;
+                    setIsNotificationDropdownOpen(nextState);
+                    if (nextState) {
+                      handleMarkAsRead();
+                    }
+                  }}
                   className="
                     w-10 h-10
                     rounded-xl
@@ -315,7 +304,7 @@ const Dashboard = () => {
                 <NotificationDropdown
                   isOpen={isNotificationDropdownOpen}
                   onClose={() => setIsNotificationDropdownOpen(false)}
-                  notifications={notifications}
+                  notifications={uiNotifications}
                   onMarkAsRead={handleMarkAsRead}
                 />
               </div>

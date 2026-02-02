@@ -28,13 +28,12 @@ const NotificationDropdown = ({ isOpen, onClose, notifications, onMarkAsRead }: 
 
         if (isOpen) {
             document.addEventListener('mousedown', handleClickOutside);
-            onMarkAsRead();
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isOpen, onClose, onMarkAsRead]);
+    }, [isOpen, onClose]);
 
     if (!isOpen) return null;
 

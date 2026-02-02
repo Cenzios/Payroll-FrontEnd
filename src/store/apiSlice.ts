@@ -2,6 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { axiosBaseQuery } from '../api/baseQuery';
 import { Company, CreateCompanyRequest } from '../types/company.types';
 import { Employee, CreateEmployeeRequest } from '../types/employee.types';
+import { Notification, NotificationType } from '../types/notification.types';
 
 // Define types locally if not exported from files, or reuse existing types
 // We'll trust the types exist or use 'any' where strict typing isn't critical for the task
@@ -32,7 +33,7 @@ interface GetEmployeesResponse {
 export const apiSlice = createApi({
     reducerPath: 'api',
     baseQuery: axiosBaseQuery({ baseUrl: '' }), // baseUrl handled by axiosInstance
-    tagTypes: ['Dashboard', 'Company', 'Employee', 'Subscription'],
+    tagTypes: ['Dashboard', 'Company', 'Employee', 'Subscription', 'Notification'],
     endpoints: (builder) => ({
         // --- DASHBOARD ---
         getDashboardSummary: builder.query<DashboardSummary, string | undefined>({
@@ -133,6 +134,37 @@ export const apiSlice = createApi({
                 method: 'POST',
             }),
             invalidatesTags: ['Subscription', 'Dashboard']
+        }),
+
+        // --- NOTIFICATIONS ---
+        getNotifications: builder.query<Notification[], { includeRead?: boolean } | void>({
+            query: (params) => ({
+                url: '/notifications',
+                method: 'GET',
+                params: params || {},
+            }),
+            providesTags: ['Notification'],
+        }),
+
+        getUnreadCount: builder.query<{ count: number }, void>({
+            query: () => ({ url: '/notifications/unread-count', method: 'GET' }),
+            providesTags: ['Notification'],
+        }),
+
+        markNotificationAsRead: builder.mutation<Notification, string>({
+            query: (id) => ({
+                url: `/notifications/${id}/read`,
+                method: 'PUT',
+            }),
+            invalidatesTags: ['Notification'],
+        }),
+
+        deleteNotification: builder.mutation<Notification, string>({
+            query: (id) => ({
+                url: `/notifications/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Notification'],
         })
     }),
 });
@@ -149,5 +181,9 @@ export const {
     useGetActiveSubscriptionQuery,
     useChangePlanMutation,
     useAddAddonMutation,
-    useCancelSubscriptionMutation
+    useCancelSubscriptionMutation,
+    useGetNotificationsQuery,
+    useGetUnreadCountQuery,
+    useMarkNotificationAsReadMutation,
+    useDeleteNotificationMutation
 } = apiSlice;
