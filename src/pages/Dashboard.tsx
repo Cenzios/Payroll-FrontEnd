@@ -32,6 +32,7 @@ import {
   useCreateEmployeeMutation,
   useGetNotificationsQuery,
   useMarkNotificationAsReadMutation,
+  useDeleteAllNotificationsMutation,
   apiSlice
 } from '../store/apiSlice';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
@@ -72,6 +73,7 @@ const Dashboard = () => {
   });
 
   const [markAsRead] = useMarkNotificationAsReadMutation();
+  const [deleteAllNotifications] = useDeleteAllNotificationsMutation();
 
   // Derived state
   const selectedCompany = companies.find(c => c.id === selectedCompanyId) || null;
@@ -118,6 +120,16 @@ const Dashboard = () => {
       await markAsRead(id);
     }
   }, [dbNotifications, markAsRead]);
+
+  const handleClearAll = async () => {
+    try {
+      await deleteAllNotifications().unwrap();
+      setIsNotificationDropdownOpen(false);
+      setToast({ message: 'All notifications cleared', type: 'success' });
+    } catch (error) {
+      setToast({ message: 'Failed to clear notifications', type: 'error' });
+    }
+  };
 
   const handleLogout = () => {
     dispatch(logout());
@@ -305,7 +317,7 @@ const Dashboard = () => {
                   isOpen={isNotificationDropdownOpen}
                   onClose={() => setIsNotificationDropdownOpen(false)}
                   notifications={uiNotifications}
-                  onMarkAsRead={handleMarkAsRead}
+                  onClearAll={handleClearAll}
                 />
               </div>
 

@@ -165,6 +165,14 @@ export const apiSlice = createApi({
                 method: 'DELETE',
             }),
             invalidatesTags: ['Notification'],
+        }),
+
+        deleteAllNotifications: builder.mutation<void, void>({
+            query: () => ({
+                url: '/notifications/all',
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Notification'],
         })
     }),
 });
@@ -185,5 +193,6 @@ export const {
     useGetNotificationsQuery,
     useGetUnreadCountQuery,
     useMarkNotificationAsReadMutation,
-    useDeleteNotificationMutation
+    useDeleteNotificationMutation,
+    useDeleteAllNotificationsMutation
 } = apiSlice;

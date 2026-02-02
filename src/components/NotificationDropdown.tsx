@@ -13,10 +13,10 @@ interface NotificationDropdownProps {
     isOpen: boolean;
     onClose: () => void;
     notifications: Notification[];
-    onMarkAsRead: () => void;
+    onClearAll: () => void;
 }
 
-const NotificationDropdown = ({ isOpen, onClose, notifications, onMarkAsRead }: NotificationDropdownProps) => {
+const NotificationDropdown = ({ isOpen, onClose, notifications, onClearAll }: NotificationDropdownProps) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -70,7 +70,7 @@ const NotificationDropdown = ({ isOpen, onClose, notifications, onMarkAsRead }: 
                         {notifications.map((notification) => (
                             <div
                                 key={notification.id}
-                                className={`p-4 hover:bg-gray-50 transition-colors flex gap-3 ${!notification.read ? 'bg-blue-50/30' : ''}`}
+                                className={`p-4 hover:bg-gray-50 transition-all flex gap-3 cursor-pointer group relative border-l-4 ${!notification.read ? 'bg-blue-50/30 border-blue-600' : 'border-transparent hover:border-gray-200'}`}
                             >
                                 <div className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center
                   ${notification.type === 'alert' ? 'bg-red-100 text-red-600' :
@@ -97,6 +97,20 @@ const NotificationDropdown = ({ isOpen, onClose, notifications, onMarkAsRead }: 
                     </div>
                 )}
             </div>
+
+            {notifications.length > 0 && (
+                <div className="px-4 py-3 border-t border-gray-50 bg-gray-50/50 rounded-b-2xl">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onClearAll();
+                        }}
+                        className="w-full py-2 text-sm font-medium text-blue-600 hover:text-blue-700 bg-white border border-gray-200 hover:border-blue-200 rounded-xl transition-all shadow-sm active:scale-[0.98]"
+                    >
+                        Clear All Notifications
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
