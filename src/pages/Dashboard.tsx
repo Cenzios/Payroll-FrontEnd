@@ -33,11 +33,14 @@ import {
   useGetNotificationsQuery,
   useMarkNotificationAsReadMutation,
   useDeleteAllNotificationsMutation,
+  useGetSalaryTrendQuery,
   apiSlice
 } from '../store/apiSlice';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import NotificationDropdown, { Notification } from '../components/NotificationDropdown';
 import CompanySwitcher from '../components/CompanySwitcher';
+import DashboardChart from '../components/DashboardChart';
+import { PieChart } from 'lucide-react';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -52,6 +55,7 @@ const Dashboard = () => {
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const [chartRange, setChartRange] = useState('yearly');
 
   const urlToken = searchParams.get('token');
   const isTokenPending = !!urlToken && urlToken !== token;
@@ -69,6 +73,13 @@ const Dashboard = () => {
   const [createEmployee] = useCreateEmployeeMutation();
 
   const { data: dbNotifications = [] } = useGetNotificationsQuery(undefined, {
+    skip: !user || isTokenPending
+  });
+
+  const { data: salaryTrend = [], isLoading: isTrendLoading } = useGetSalaryTrendQuery({
+    companyId: selectedCompanyId || undefined,
+    range: chartRange
+  }, {
     skip: !user || isTokenPending
   });
 
@@ -222,127 +233,77 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className="flex-1 ml-64">
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+        <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
           <div className="px-8 py-4 flex items-center justify-between">
 
             {/* LEFT */}
             <div>
-              <h1 className="text-[28px] font-medium text-gray-900 leading-tight">
+              <h1 className="text-[32px] font-bold text-gray-900 tracking-tight">
                 {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'}
               </h1>
-              <p className="text-[16px] font-normal text-gray-500 leading-[1.7]">
-                Here's your dashboard overview
+              <p className="text-[15px] font-medium text-gray-400 mt-1">
+                Here's your dashboard overview.
               </p>
             </div>
 
             {/* RIGHT */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-6">
 
-              {/* Company Switcher */}
-              <div className="relative">
-                <button
-                  onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
-                  className="
-            flex items-center gap-2
-            px-4 py-2
-            rounded-xl
-            border border-gray-200
-            bg-white
-            hover:bg-gray-50
-            text-sm font-medium text-gray-700
-          "
-                >
-                  <Building2 className="w-4 h-4 text-gray-500" />
-                  {selectedCompany ? selectedCompany.name : 'Select Company'}
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
-                </button>
-
-                <CompanySwitcher
-                  isOpen={isCompanyDropdownOpen}
-                  onClose={() => setIsCompanyDropdownOpen(false)}
-                  companies={companies}
-                  selectedCompanyId={selectedCompanyId}
-                  onSelectCompany={(id) => dispatch(setSelectedCompanyId(id))}
-                  onAddNew={() => {
-                    setIsCompanyDropdownOpen(false); // Close first
-                    openAddCompany();
-                  }}
-                />
-              </div>
-
-              {/* Add New Company */}
+              {/* Add New Company Button - Integrated into header */}
               <button
                 onClick={openAddCompany}
-                className="
-          flex items-center gap-2
-          bg-blue-600 hover:bg-blue-700
-          text-white
-          px-4 py-2
-          rounded-xl
-          text-sm 
-        "
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95"
               >
-                <Plus className="w-4 h-4" />
                 Add New Company
+                <Plus className="w-4 h-4" />
               </button>
 
-              {/* Notification */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    const nextState = !isNotificationDropdownOpen;
-                    setIsNotificationDropdownOpen(nextState);
-                    if (nextState) {
-                      handleMarkAsRead();
-                    }
-                  }}
-                  className="
-                    w-10 h-10
-                    rounded-xl
-                    bg-gray-100 hover:bg-gray-200
-                    flex items-center justify-center
-                    relative
-                    transition-colors
-                  "
-                >
-                  <Bell className="w-5 h-5 text-gray-600" />
+              <div className="flex items-center gap-4">
+                {/* Notification */}
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      const nextState = !isNotificationDropdownOpen;
+                      setIsNotificationDropdownOpen(nextState);
+                      if (nextState) {
+                        handleMarkAsRead();
+                      }
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
+                  >
+                    <Bell className="w-6 h-6 text-gray-400" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+                    )}
+                  </button>
 
-                  {/* Unread dot */}
-                  {unreadCount > 0 && (
-                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
-                  )}
-                </button>
-
-                <NotificationDropdown
-                  isOpen={isNotificationDropdownOpen}
-                  onClose={() => setIsNotificationDropdownOpen(false)}
-                  notifications={uiNotifications}
-                  onClearAll={handleClearAll}
-                />
-              </div>
-
-              {/* User */}
-              <div className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-xl">
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-                  {user?.fullName?.charAt(0) || 'U'}
+                  <NotificationDropdown
+                    isOpen={isNotificationDropdownOpen}
+                    onClose={() => setIsNotificationDropdownOpen(false)}
+                    notifications={uiNotifications}
+                    onClearAll={handleClearAll}
+                  />
                 </div>
-                <div className="leading-tight">
-                  <div className="text-sm font-medium text-gray-900">
-                    {user?.fullName}
+
+                {/* User Section */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold">
+                    {user?.fullName?.charAt(0).toUpperCase() || 'A'}
+                    {user?.fullName?.split(' ')[1]?.charAt(0).toUpperCase() || 'B'}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    {user?.role || 'Admin'}
+                  <div className="hidden sm:block">
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-bold text-gray-900">
+                        {selectedCompany ? selectedCompany.name : (user?.fullName || 'User')}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">
+                      {user?.role || 'Admin'}
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {/* Logout */}
-              <button
-                onClick={handleLogout}
-                className="w-10 h-10 rounded-xl hover:bg-gray-100 flex items-center justify-center"
-              >
-                <LogOut className="w-5 h-5 text-gray-600" />
-              </button>
 
             </div>
           </div>
@@ -350,155 +311,95 @@ const Dashboard = () => {
 
 
         {/* Dashboard Content */}
-        <main className="p-0">
+        <main className="p-8">
           {isDashboardLoading ? <DashboardSkeleton /> : (
-            <div className="p-8">
+            <>
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard
                   icon={Users}
                   title="Total Employees"
                   value={dashboardData?.totalEmployees?.toString() || '0'}
-                  subtitle="Current Company"
                 />
                 <StatCard
                   icon={DollarSign}
                   title="Total Salary Paid"
                   value={`Rs ${dashboardData?.totalSalaryPaidThisMonth?.toLocaleString() || '0'}`}
-                  subtitle="This Month"
                 />
                 <StatCard
-                  icon={TrendingUp}
+                  icon={Plus}
                   title="Company EPF/ETF Amount"
                   value={`Rs ${((dashboardData?.totalCompanyEPF || 0) + (dashboardData?.totalCompanyETF || 0)).toLocaleString()}`}
-                  subtitle="This Month"
                 />
                 <StatCard
-                  icon={CreditCard}
+                  icon={PieChart}
                   title="Total Employee EPF"
                   value={`Rs ${dashboardData?.totalEmployeeEPF?.toLocaleString() || '0'}`}
-                  subtitle="This Month"
                 />
               </div>
-            </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                {/* Left (2/3) – Chart */}
+                <div className="lg:col-span-2 max-h-[450px]">
+                  <DashboardChart
+                    data={salaryTrend}
+                    onRangeChange={setChartRange}
+                    currentRange={chartRange}
+                    isLoading={isTrendLoading}
+                  />
+                </div>
+
+                {/* Right (1/3) – Quick Actions */}
+                <div className="lg:col-span-1">
+                  <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 h-full">
+                    <h2 className="text-xl font-bold text-gray-900 mb-8">Quick Actions</h2>
+
+                    <div className="grid grid-cols-1 gap-6">
+                      <QuickAction
+                        icon={FileText}
+                        title="Generate Payslips"
+                        description="Create monthly payslips"
+                        bgColor="bg-blue-50/30"
+                        btnColor="bg-blue-600"
+                        btnText="Generate Pay-slip"
+                        onClick={() => navigate('/salary')}
+                      />
+
+                      <QuickAction
+                        icon={UserPlus}
+                        title="Add Employee"
+                        description="Register new staff member"
+                        bgColor="bg-emerald-50/30"
+                        btnColor="bg-emerald-500"
+                        btnText="Add Employee"
+                        onClick={openAddEmployee}
+                      />
+
+                      <QuickAction
+                        icon={BarChart3}
+                        title="View Reports"
+                        description="Access detailed analytics"
+                        bgColor="bg-orange-50/30"
+                        btnColor="bg-orange-400"
+                        btnText="View Reports"
+                        onClick={() => navigate('/reports')}
+                      />
+
+                      <QuickAction
+                        icon={CreditCard}
+                        title="Change Plan"
+                        description="Change subscription plan"
+                        bgColor="bg-purple-50/30"
+                        btnColor="bg-purple-400"
+                        btnText="Change Plan"
+                        onClick={() => setIsAddonModalOpen(true)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-
-            {/* LEFT – Quick Actions */}
-            <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Quick Actions
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <QuickAction
-                  icon={FileText}
-                  title="Generate Payslips"
-                  description="Create monthly payslips"
-                  bgColor="bg-gradient-to-br from-blue-500 to-blue-600"
-                  onClick={() => navigate('/salary')}
-                />
-
-                <div onClick={openAddEmployee}>
-                  <QuickAction
-                    icon={UserPlus}
-                    title="Add Employee"
-                    description="Register new staff member"
-                    bgColor="bg-gradient-to-br from-green-500 to-green-600"
-                  />
-                </div>
-
-                <QuickAction
-                  icon={BarChart3}
-                  title="View Reports"
-                  description="Access detailed analytics"
-                  bgColor="bg-gradient-to-br from-purple-500 to-purple-600"
-                  onClick={() => navigate('/reports')}
-                />
-
-                <div onClick={() => setIsAddonModalOpen(true)}>
-                  <QuickAction
-                    icon={CreditCard}
-                    title="Change Plan"
-                    description="Change subscription plan"
-                    bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT – Employee Usage */}
-            <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Employee Usage
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Current Plan: {dashboardData?.planName || 'Professional'}
-                  </p>
-                </div>
-
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-blue-600" />
-                </div>
-              </div>
-
-              {/* Center count */}
-              <div className="text-center my-6">
-                <div className="text-3xl font-bold text-gray-900">
-                  {dashboardData?.totalEmployees}/{dashboardData?.maxEmployees}
-                </div>
-                <div className="text-sm text-gray-500">
-                  Employees
-                </div>
-              </div>
-
-              {/* Progress bar */}
-              <div className="mb-3">
-                <div className="w-full h-3 bg-blue-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-blue-600 rounded-full"
-                    style={{
-                      width: `${Math.min(
-                        ((dashboardData?.totalEmployees || 0) / (dashboardData?.maxEmployees || 1)) * 100,
-                        100
-                      )}%`
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Used / Remaining */}
-              <div className="flex justify-between text-sm text-gray-600 mb-6">
-                <span>{dashboardData?.totalEmployees} Used</span>
-                <span>
-                  {(dashboardData?.maxEmployees || 0) - (dashboardData?.totalEmployees || 0)} Remaining
-                </span>
-              </div>
-
-              {/* Remaining slots */}
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-sm text-gray-600">
-                  Remaining Slots
-                </span>
-                <span className="text-lg font-bold text-orange-500">
-                  {dashboardData?.remainingSlots} left
-                </span>
-              </div>
-
-              {/* Action */}
-              <button
-                onClick={() => setIsAddonModalOpen(true)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold"
-              >
-                Get More Slots
-              </button>
-            </div>
-
-          </div>
         </main>
       </div>
 
