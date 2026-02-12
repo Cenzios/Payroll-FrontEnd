@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout, setAuthFromToken, setSelectedCompanyId } from '../store/slices/authSlice';
@@ -6,7 +6,6 @@ import {
   LogOut,
   Users,
   DollarSign,
-  TrendingUp,
   FileText,
   UserPlus,
   BarChart3,
@@ -14,11 +13,13 @@ import {
   Plus,
   ChevronDown,
   Building2,
-  Bell
+  Bell,
+  PieChart
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import QuickAction from '../components/QuickAction';
+import SalaryPaidSummary from '../components/SalaryPaidSummary';
 import UniversalDrawer from '../components/UniversalDrawer';
 import ConfirmationModal from '../components/ConfirmationModal';
 import AddonModal from '../components/AddonModal';
@@ -112,7 +113,6 @@ const Dashboard = () => {
   const unreadCount = uiNotifications.filter(n => !n.read).length;
 
   const handleMarkAsRead = useCallback(async () => {
-    // Mark all unread notifications as read on backend
     const unreadIds = dbNotifications.filter(n => !n.isRead).map(n => n.id);
     if (unreadIds.length === 0) return;
 
@@ -158,9 +158,8 @@ const Dashboard = () => {
       type: 'warning',
       title: `${type === 'company' ? 'Companies' : 'Employees'} Limit Reached`,
       message: `You’ve reached the maximum number of ${type === 'company' ? 'Companies' : 'Employees'} allowed on your current plan. To add more ${type === 'company' ? 'Companies' : 'Employees'}, please ${type === 'company' ? 'upgrade your plan' : 'purchase more slots'}.`,
-      confirmText: 'Update Plan', // Kept generic "Update Plan"
+      confirmText: 'Update Plan',
       onConfirm: () => {
-        // For companies, go to settings. For employees, open AddonModal as it's about slots.
         if (type === 'company') {
           navigate('/settings?tab=subscription');
         } else {
@@ -176,18 +175,14 @@ const Dashboard = () => {
       if (drawerMode === 'company') {
         await createCompany(data as CreateCompanyRequest).unwrap();
         setToast({ message: 'Company created successfully!', type: 'success' });
-        // Refetch handled by cache invalidation tags
       } else {
         await createEmployee(data as CreateEmployeeRequest).unwrap();
         setToast({ message: 'Employee created successfully!', type: 'success' });
-        // Refetch handled by cache invalidation tags
       }
       setIsDrawerOpen(false);
     } catch (error: any) {
       const errorMsg = error?.data?.message || 'Operation failed';
       if (errorMsg.includes('limit reached')) {
-        // Parse limit if needed or just show generic message based on error
-        // The error message from backend: "Company limit reached (2). Plan allows 2..."
         openLimitModal(drawerMode, 0, 0);
       } else {
         setToast({ message: errorMsg, type: 'error' });
@@ -264,29 +259,20 @@ const Dashboard = () => {
                   selectedCompanyId={selectedCompanyId}
                   onSelectCompany={(id) => dispatch(setSelectedCompanyId(id))}
                   onAddNew={() => {
-                    setIsCompanyDropdownOpen(false); // Close first
+                    setIsCompanyDropdownOpen(false);
                     openAddCompany();
                   }}
                 />
               </div>
 
-              {/* Add New Company */}
               <button
                 onClick={openAddCompany}
-                className="
-          flex items-center gap-2
-          bg-blue-600 hover:bg-blue-700
-          text-white
-          px-4 py-2
-          rounded-xl
-          text-sm 
-        "
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm"
               >
                 <Plus className="w-4 h-4" />
                 Add New Company
               </button>
 
-              {/* Notification */}
               <div className="relative">
                 <button
                   onClick={() => {
@@ -296,23 +282,13 @@ const Dashboard = () => {
                       handleMarkAsRead();
                     }
                   }}
-                  className="
-                    w-10 h-10
-                    rounded-xl
-                    bg-gray-100 hover:bg-gray-200
-                    flex items-center justify-center
-                    relative
-                    transition-colors
-                  "
+                  className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center relative transition-colors"
                 >
                   <Bell className="w-5 h-5 text-gray-600" />
-
-                  {/* Unread dot */}
                   {unreadCount > 0 && (
                     <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
                   )}
                 </button>
-
                 <NotificationDropdown
                   isOpen={isNotificationDropdownOpen}
                   onClose={() => setIsNotificationDropdownOpen(false)}
@@ -321,22 +297,16 @@ const Dashboard = () => {
                 />
               </div>
 
-              {/* User */}
               <div className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-xl">
                 <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
                   {user?.fullName?.charAt(0) || 'U'}
                 </div>
                 <div className="leading-tight">
-                  <div className="text-sm font-medium text-gray-900">
-                    {user?.fullName}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {user?.role || 'Admin'}
-                  </div>
+                  <div className="text-sm font-medium text-gray-900">{user?.fullName}</div>
+                  <div className="text-xs text-gray-500">{user?.role || 'Admin'}</div>
                 </div>
               </div>
 
-              {/* Logout */}
               <button
                 onClick={handleLogout}
                 className="w-10 h-10 rounded-xl hover:bg-gray-100 flex items-center justify-center"
@@ -349,160 +319,93 @@ const Dashboard = () => {
         </header>
 
 
-        {/* Dashboard Content */}
-        <main className="p-0">
+        <main className="p-8">
           {isDashboardLoading ? <DashboardSkeleton /> : (
-            <div className="p-8">
+            <>
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard
                   icon={Users}
                   title="Total Employees"
                   value={dashboardData?.totalEmployees?.toString() || '0'}
-                  subtitle="Current Company"
                 />
                 <StatCard
                   icon={DollarSign}
                   title="Total Salary Paid"
                   value={`Rs ${dashboardData?.totalSalaryPaidThisMonth?.toLocaleString() || '0'}`}
-                  subtitle="This Month"
                 />
                 <StatCard
-                  icon={TrendingUp}
+                  icon={Plus}
                   title="Company EPF/ETF Amount"
                   value={`Rs ${((dashboardData?.totalCompanyEPF || 0) + (dashboardData?.totalCompanyETF || 0)).toLocaleString()}`}
-                  subtitle="This Month"
                 />
                 <StatCard
-                  icon={CreditCard}
+                  icon={PieChart}
                   title="Total Employee EPF"
                   value={`Rs ${dashboardData?.totalEmployeeEPF?.toLocaleString() || '0'}`}
-                  subtitle="This Month"
                 />
               </div>
-            </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                {/* Left (2/3) – Salary Paid Summary Chart */}
+                <div className="lg:col-span-2">
+                  <SalaryPaidSummary companyId={selectedCompanyId || ''} />
+                </div>
+
+                {/* Right (1/3) – Quick Actions */}
+                <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+                  <h2 className="text-[20px] font-bold text-gray-900 mb-6">
+                    Quick Actions
+                  </h2>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <QuickAction
+                      icon={FileText}
+                      title="Generate Payslips"
+                      description="Create monthly payslips"
+                      bgColor="bg-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
+                      actionText="Generate Pay-slip"
+                      onClick={() => navigate('/salary')}
+                    />
+
+                    <QuickAction
+                      icon={UserPlus}
+                      title="Add Employee"
+                      description="Register new staff member"
+                      bgColor="bg-[#00C292]"
+                      lightBgColor="bg-[#E6FAF5]"
+                      actionText="Add Employee"
+                      onClick={openAddEmployee}
+                    />
+
+                    <QuickAction
+                      icon={BarChart3}
+                      title="View Reports"
+                      description="Access detailed analytics"
+                      bgColor="bg-[#FFB13A]"
+                      lightBgColor="bg-[#FFF5E9]"
+                      actionText="View Reports"
+                      onClick={() => navigate('/reports')}
+                    />
+
+                    <QuickAction
+                      icon={CreditCard}
+                      title="Change Plan"
+                      description="Change subscription plan"
+                      bgColor="bg-[#9B8AFB]"
+                      lightBgColor="bg-[#F1EFFF]"
+                      actionText="Change Plan"
+                      onClick={() => setIsAddonModalOpen(true)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
           )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-
-            {/* LEFT – Quick Actions */}
-            <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Quick Actions
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <QuickAction
-                  icon={FileText}
-                  title="Generate Payslips"
-                  description="Create monthly payslips"
-                  bgColor="bg-gradient-to-br from-blue-500 to-blue-600"
-                  onClick={() => navigate('/salary')}
-                />
-
-                <div onClick={openAddEmployee}>
-                  <QuickAction
-                    icon={UserPlus}
-                    title="Add Employee"
-                    description="Register new staff member"
-                    bgColor="bg-gradient-to-br from-green-500 to-green-600"
-                  />
-                </div>
-
-                <QuickAction
-                  icon={BarChart3}
-                  title="View Reports"
-                  description="Access detailed analytics"
-                  bgColor="bg-gradient-to-br from-purple-500 to-purple-600"
-                  onClick={() => navigate('/reports')}
-                />
-
-                <div onClick={() => setIsAddonModalOpen(true)}>
-                  <QuickAction
-                    icon={CreditCard}
-                    title="Change Plan"
-                    description="Change subscription plan"
-                    bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT – Employee Usage */}
-            <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Employee Usage
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Current Plan: {dashboardData?.planName || 'Professional'}
-                  </p>
-                </div>
-
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-blue-600" />
-                </div>
-              </div>
-
-              {/* Center count */}
-              <div className="text-center my-6">
-                <div className="text-3xl font-bold text-gray-900">
-                  {dashboardData?.totalEmployees}/{dashboardData?.maxEmployees}
-                </div>
-                <div className="text-sm text-gray-500">
-                  Employees
-                </div>
-              </div>
-
-              {/* Progress bar */}
-              <div className="mb-3">
-                <div className="w-full h-3 bg-blue-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-blue-600 rounded-full"
-                    style={{
-                      width: `${Math.min(
-                        ((dashboardData?.totalEmployees || 0) / (dashboardData?.maxEmployees || 1)) * 100,
-                        100
-                      )}%`
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Used / Remaining */}
-              <div className="flex justify-between text-sm text-gray-600 mb-6">
-                <span>{dashboardData?.totalEmployees} Used</span>
-                <span>
-                  {(dashboardData?.maxEmployees || 0) - (dashboardData?.totalEmployees || 0)} Remaining
-                </span>
-              </div>
-
-              {/* Remaining slots */}
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-sm text-gray-600">
-                  Remaining Slots
-                </span>
-                <span className="text-lg font-bold text-orange-500">
-                  {dashboardData?.remainingSlots} left
-                </span>
-              </div>
-
-              {/* Action */}
-              <button
-                onClick={() => setIsAddonModalOpen(true)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold"
-              >
-                Get More Slots
-              </button>
-            </div>
-
-          </div>
         </main>
       </div>
 
-      {/* Universal Drawer */}
       <UniversalDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
@@ -511,7 +414,6 @@ const Dashboard = () => {
         companyId={selectedCompany?.id}
       />
 
-      {/* Toast Notification */}
       {toast && (
         <Toast
           message={toast.message}
@@ -519,7 +421,7 @@ const Dashboard = () => {
           onClose={() => setToast(null)}
         />
       )}
-      {/* Confirmation Modal */}
+
       <ConfirmationModal
         isOpen={confirmation.isOpen}
         onClose={() => setConfirmation(prev => ({ ...prev, isOpen: false }))}
@@ -530,13 +432,11 @@ const Dashboard = () => {
         confirmText={confirmation.confirmText}
       />
 
-      {/* Addon Modal */}
       <AddonModal
         isOpen={isAddonModalOpen}
         onClose={() => setIsAddonModalOpen(false)}
         onSuccess={() => {
           setToast({ message: 'Slots purchased successfully!', type: 'success' });
-          // fetchSummary(); // Handled by tags
         }}
         onUpgradePlan={() => {
           setIsAddonModalOpen(false);

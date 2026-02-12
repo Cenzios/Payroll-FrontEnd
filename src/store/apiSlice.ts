@@ -173,7 +173,16 @@ export const apiSlice = createApi({
                 method: 'DELETE',
             }),
             invalidatesTags: ['Notification'],
-        })
+        }),
+
+        getSalaryTrend: builder.query<{ name: string; total: number }[], { companyId?: string; range?: string }>({
+            query: ({ companyId, range }) => ({
+                url: '/dashboard/salary-trend',
+                method: 'GET',
+                params: { companyId, range: range || 'yearly' },
+            }),
+            providesTags: ['Dashboard'],
+        }),
     }),
 });
 
@@ -194,5 +203,6 @@ export const {
     useGetUnreadCountQuery,
     useMarkNotificationAsReadMutation,
     useDeleteNotificationMutation,
-    useDeleteAllNotificationsMutation
+    useDeleteAllNotificationsMutation,
+    useGetSalaryTrendQuery
 } = apiSlice;

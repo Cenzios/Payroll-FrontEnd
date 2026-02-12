@@ -4,7 +4,9 @@ interface QuickActionProps {
     icon: LucideIcon;
     title: string;
     description: string;
-    bgColor: string;
+    bgColor: string; // This will now be the icon/button color
+    lightBgColor: string; // This will be the card background color
+    actionText: string;
     onClick?: () => void;
 }
 
@@ -13,25 +15,37 @@ const QuickAction = ({
     title,
     description,
     bgColor,
+    lightBgColor,
+    actionText,
     onClick
 }: QuickActionProps) => {
     return (
-        <button
-            onClick={onClick}
-            className={`${bgColor} p-6 rounded-xl text-left hover:scale-105 transition-transform duration-200 shadow-sm hover:shadow-md w-full`}
-        >
-            <div className="flex flex-col gap-3 font-sans">
-                <div className="bg-white bg-opacity-20 p-3 rounded-lg w-fit">
+        <div className={`${lightBgColor} p-6 rounded-2xl flex flex-col h-full border border-transparent shadow-sm transition-all hover:shadow-md`}>
+            <div className="flex items-start gap-4 mb-6">
+                <div className={`${bgColor} p-3 rounded-xl shadow-sm flex-shrink-0`}>
                     <Icon className="w-6 h-6 text-white" />
                 </div>
-                <div>
-                    <div className="text-white font-semibold text-lg">{title}</div>
-                    <div className="text-white text-opacity-90 text-sm mt-1">
+                <div className="flex-1">
+                    <h3 className="text-[17px] font-bold text-gray-900 leading-tight">
+                        {title}
+                    </h3>
+                    <p className="text-[14px] text-gray-500 mt-1.5 leading-relaxed">
                         {description}
-                    </div>
+                    </p>
                 </div>
             </div>
-        </button>
+
+            <button
+                onClick={onClick}
+                className={`
+                    w-full py-2.5 rounded-xl text-white font-semibold text-sm
+                    ${bgColor} hover:opacity-90 transition-all active:scale-[0.98]
+                    shadow-sm mt-auto
+                `}
+            >
+                {actionText}
+            </button>
+        </div>
     );
 };
 
