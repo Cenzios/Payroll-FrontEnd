@@ -50,7 +50,7 @@ const DashboardChart = ({ data, onRangeChange, currentRange, isLoading }: Dashbo
     const currentRangeLabel = ranges.find(r => r.value === currentRange)?.label || 'Yearly';
 
     return (
-        <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 h-full flex flex-col">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 h-full flex flex-col">
             <div className="flex items-center justify-between mb-8">
                 <h3 className="text-xl font-bold text-gray-900">Salary Paid Summary</h3>
 
