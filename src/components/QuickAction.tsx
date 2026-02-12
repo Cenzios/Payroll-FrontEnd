@@ -4,9 +4,9 @@ interface QuickActionProps {
     icon: LucideIcon;
     title: string;
     description: string;
-    bgColor: string;
-    btnColor: string;
-    btnText: string;
+    bgColor: string; // This will now be the icon/button color
+    lightBgColor: string; // This will be the card background color
+    actionText: string;
     onClick?: () => void;
 }
 
@@ -15,27 +15,35 @@ const QuickAction = ({
     title,
     description,
     bgColor,
-    btnColor,
-    btnText,
+    lightBgColor,
+    actionText,
     onClick
 }: QuickActionProps) => {
     return (
-        <div className={`${bgColor} p-6 rounded-[2rem] flex flex-col h-full shadow-sm hover:shadow-md transition-shadow`}>
-            <div className="flex gap-4 mb-6">
-                <div className="bg-white p-3 rounded-2xl shadow-sm shrink-0 flex items-center justify-center w-12 h-12">
-                    <Icon className="w-6 h-6 text-blue-600" />
+        <div className={`${lightBgColor} p-6 rounded-2xl flex flex-col h-full border border-transparent shadow-sm transition-all hover:shadow-md`}>
+            <div className="flex items-start gap-4 mb-6">
+                <div className={`${bgColor} p-3 rounded-xl shadow-sm flex-shrink-0`}>
+                    <Icon className="w-6 h-6 text-white" />
                 </div>
-                <div>
-                    <h4 className="text-[17px] font-bold text-gray-900">{title}</h4>
-                    <p className="text-[14px] text-gray-500 font-medium leading-snug">{description}</p>
+                <div className="flex-1">
+                    <h3 className="text-[17px] font-bold text-gray-900 leading-tight">
+                        {title}
+                    </h3>
+                    <p className="text-[14px] text-gray-500 mt-1.5 leading-relaxed">
+                        {description}
+                    </p>
                 </div>
             </div>
 
             <button
                 onClick={onClick}
-                className={`mt-auto w-full py-2.5 rounded-xl ${btnColor} text-white font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm`}
+                className={`
+                    w-full py-2.5 rounded-xl text-white font-semibold text-sm
+                    ${bgColor} hover:opacity-90 transition-all active:scale-[0.98]
+                    shadow-sm mt-auto
+                `}
             >
-                {btnText}
+                {actionText}
             </button>
         </div>
     );

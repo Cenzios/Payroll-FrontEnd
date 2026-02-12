@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout, setAuthFromToken, setSelectedCompanyId } from '../store/slices/authSlice';
@@ -6,7 +6,6 @@ import {
   LogOut,
   Users,
   DollarSign,
-  TrendingUp,
   FileText,
   UserPlus,
   BarChart3,
@@ -14,11 +13,13 @@ import {
   Plus,
   ChevronDown,
   Building2,
-  Bell
+  Bell,
+  PieChart
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import QuickAction from '../components/QuickAction';
+import SalaryPaidSummary from '../components/SalaryPaidSummary';
 import UniversalDrawer from '../components/UniversalDrawer';
 import ConfirmationModal from '../components/ConfirmationModal';
 import AddonModal from '../components/AddonModal';
@@ -33,14 +34,11 @@ import {
   useGetNotificationsQuery,
   useMarkNotificationAsReadMutation,
   useDeleteAllNotificationsMutation,
-  useGetSalaryTrendQuery,
   apiSlice
 } from '../store/apiSlice';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import NotificationDropdown, { Notification } from '../components/NotificationDropdown';
 import CompanySwitcher from '../components/CompanySwitcher';
-import DashboardChart from '../components/DashboardChart';
-import { PieChart } from 'lucide-react';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -55,7 +53,6 @@ const Dashboard = () => {
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
-  const [chartRange, setChartRange] = useState('yearly');
 
   const urlToken = searchParams.get('token');
   const isTokenPending = !!urlToken && urlToken !== token;
@@ -73,13 +70,6 @@ const Dashboard = () => {
   const [createEmployee] = useCreateEmployeeMutation();
 
   const { data: dbNotifications = [] } = useGetNotificationsQuery(undefined, {
-    skip: !user || isTokenPending
-  });
-
-  const { data: salaryTrend = [], isLoading: isTrendLoading } = useGetSalaryTrendQuery({
-    companyId: selectedCompanyId || undefined,
-    range: chartRange
-  }, {
     skip: !user || isTokenPending
   });
 
@@ -123,7 +113,6 @@ const Dashboard = () => {
   const unreadCount = uiNotifications.filter(n => !n.read).length;
 
   const handleMarkAsRead = useCallback(async () => {
-    // Mark all unread notifications as read on backend
     const unreadIds = dbNotifications.filter(n => !n.isRead).map(n => n.id);
     if (unreadIds.length === 0) return;
 
@@ -169,9 +158,8 @@ const Dashboard = () => {
       type: 'warning',
       title: `${type === 'company' ? 'Companies' : 'Employees'} Limit Reached`,
       message: `You’ve reached the maximum number of ${type === 'company' ? 'Companies' : 'Employees'} allowed on your current plan. To add more ${type === 'company' ? 'Companies' : 'Employees'}, please ${type === 'company' ? 'upgrade your plan' : 'purchase more slots'}.`,
-      confirmText: 'Update Plan', // Kept generic "Update Plan"
+      confirmText: 'Update Plan',
       onConfirm: () => {
-        // For companies, go to settings. For employees, open AddonModal as it's about slots.
         if (type === 'company') {
           navigate('/settings?tab=subscription');
         } else {
@@ -187,18 +175,14 @@ const Dashboard = () => {
       if (drawerMode === 'company') {
         await createCompany(data as CreateCompanyRequest).unwrap();
         setToast({ message: 'Company created successfully!', type: 'success' });
-        // Refetch handled by cache invalidation tags
       } else {
         await createEmployee(data as CreateEmployeeRequest).unwrap();
         setToast({ message: 'Employee created successfully!', type: 'success' });
-        // Refetch handled by cache invalidation tags
       }
       setIsDrawerOpen(false);
     } catch (error: any) {
       const errorMsg = error?.data?.message || 'Operation failed';
       if (errorMsg.includes('limit reached')) {
-        // Parse limit if needed or just show generic message based on error
-        // The error message from backend: "Company limit reached (2). Plan allows 2..."
         openLimitModal(drawerMode, 0, 0);
       } else {
         setToast({ message: errorMsg, type: 'error' });
@@ -233,84 +217,108 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className="flex-1 ml-64">
-        <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
           <div className="px-8 py-4 flex items-center justify-between">
 
             {/* LEFT */}
             <div>
-              <h1 className="text-[32px] font-bold text-gray-900 tracking-tight">
+              <h1 className="text-[28px] font-medium text-gray-900 leading-tight">
                 {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'}
               </h1>
-              <p className="text-[15px] font-medium text-gray-400 mt-1">
-                Here's your dashboard overview.
+              <p className="text-[16px] font-normal text-gray-500 leading-[1.7]">
+                Here's your dashboard overview
               </p>
             </div>
 
             {/* RIGHT */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
 
-              {/* Add New Company Button - Integrated into header */}
+              {/* Company Switcher */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                  className="
+            flex items-center gap-2
+            px-4 py-2
+            rounded-xl
+            border border-gray-200
+            bg-white
+            hover:bg-gray-50
+            text-sm font-medium text-gray-700
+          "
+                >
+                  <Building2 className="w-4 h-4 text-gray-500" />
+                  {selectedCompany ? selectedCompany.name : 'Select Company'}
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </button>
+
+                <CompanySwitcher
+                  isOpen={isCompanyDropdownOpen}
+                  onClose={() => setIsCompanyDropdownOpen(false)}
+                  companies={companies}
+                  selectedCompanyId={selectedCompanyId}
+                  onSelectCompany={(id) => dispatch(setSelectedCompanyId(id))}
+                  onAddNew={() => {
+                    setIsCompanyDropdownOpen(false);
+                    openAddCompany();
+                  }}
+                />
+              </div>
+
               <button
                 onClick={openAddCompany}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95"
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm"
               >
-                Add New Company
                 <Plus className="w-4 h-4" />
+                Add New Company
               </button>
 
-              <div className="flex items-center gap-4">
-                {/* Notification */}
-                <div className="relative">
-                  <button
-                    onClick={() => {
-                      const nextState = !isNotificationDropdownOpen;
-                      setIsNotificationDropdownOpen(nextState);
-                      if (nextState) {
-                        handleMarkAsRead();
-                      }
-                    }}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
-                  >
-                    <Bell className="w-6 h-6 text-gray-400" />
-                    {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
-                    )}
-                  </button>
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    const nextState = !isNotificationDropdownOpen;
+                    setIsNotificationDropdownOpen(nextState);
+                    if (nextState) {
+                      handleMarkAsRead();
+                    }
+                  }}
+                  className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center relative transition-colors"
+                >
+                  <Bell className="w-5 h-5 text-gray-600" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+                  )}
+                </button>
+                <NotificationDropdown
+                  isOpen={isNotificationDropdownOpen}
+                  onClose={() => setIsNotificationDropdownOpen(false)}
+                  notifications={uiNotifications}
+                  onClearAll={handleClearAll}
+                />
+              </div>
 
-                  <NotificationDropdown
-                    isOpen={isNotificationDropdownOpen}
-                    onClose={() => setIsNotificationDropdownOpen(false)}
-                    notifications={uiNotifications}
-                    onClearAll={handleClearAll}
-                  />
+              <div className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-xl">
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                  {user?.fullName?.charAt(0) || 'U'}
                 </div>
-
-                {/* User Section */}
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold">
-                    {user?.fullName?.charAt(0).toUpperCase() || 'A'}
-                    {user?.fullName?.split(' ')[1]?.charAt(0).toUpperCase() || 'B'}
-                  </div>
-                  <div className="hidden sm:block">
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm font-bold text-gray-900">
-                        {selectedCompany ? selectedCompany.name : (user?.fullName || 'User')}
-                      </span>
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
-                    </div>
-                    <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">
-                      {user?.role || 'Admin'}
-                    </div>
-                  </div>
+                <div className="leading-tight">
+                  <div className="text-sm font-medium text-gray-900">{user?.fullName}</div>
+                  <div className="text-xs text-gray-500">{user?.role || 'Admin'}</div>
                 </div>
               </div>
+
+              <button
+                onClick={handleLogout}
+                className="w-10 h-10 rounded-xl hover:bg-gray-100 flex items-center justify-center"
+              >
+                <LogOut className="w-5 h-5 text-gray-600" />
+              </button>
 
             </div>
           </div>
         </header>
 
 
-        {/* Dashboard Content */}
         <main className="p-8">
           {isDashboardLoading ? <DashboardSkeleton /> : (
             <>
@@ -339,62 +347,57 @@ const Dashboard = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                {/* Left (2/3) – Chart */}
-                <div className="lg:col-span-2 max-h-[450px]">
-                  <DashboardChart
-                    data={salaryTrend}
-                    onRangeChange={setChartRange}
-                    currentRange={chartRange}
-                    isLoading={isTrendLoading}
-                  />
+                {/* Left (2/3) – Salary Paid Summary Chart */}
+                <div className="lg:col-span-2">
+                  <SalaryPaidSummary companyId={selectedCompanyId || ''} />
                 </div>
 
                 {/* Right (1/3) – Quick Actions */}
-                <div className="lg:col-span-1">
-                  <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 h-full">
-                    <h2 className="text-xl font-bold text-gray-900 mb-8">Quick Actions</h2>
+                <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+                  <h2 className="text-[20px] font-bold text-gray-900 mb-6">
+                    Quick Actions
+                  </h2>
 
-                    <div className="grid grid-cols-1 gap-6">
-                      <QuickAction
-                        icon={FileText}
-                        title="Generate Payslips"
-                        description="Create monthly payslips"
-                        bgColor="bg-blue-50/30"
-                        btnColor="bg-blue-600"
-                        btnText="Generate Pay-slip"
-                        onClick={() => navigate('/salary')}
-                      />
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <QuickAction
+                      icon={FileText}
+                      title="Generate Payslips"
+                      description="Create monthly payslips"
+                      bgColor="bg-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
+                      actionText="Generate Pay-slip"
+                      onClick={() => navigate('/salary')}
+                    />
 
-                      <QuickAction
-                        icon={UserPlus}
-                        title="Add Employee"
-                        description="Register new staff member"
-                        bgColor="bg-emerald-50/30"
-                        btnColor="bg-emerald-500"
-                        btnText="Add Employee"
-                        onClick={openAddEmployee}
-                      />
+                    <QuickAction
+                      icon={UserPlus}
+                      title="Add Employee"
+                      description="Register new staff member"
+                      bgColor="bg-[#00C292]"
+                      lightBgColor="bg-[#E6FAF5]"
+                      actionText="Add Employee"
+                      onClick={openAddEmployee}
+                    />
 
-                      <QuickAction
-                        icon={BarChart3}
-                        title="View Reports"
-                        description="Access detailed analytics"
-                        bgColor="bg-orange-50/30"
-                        btnColor="bg-orange-400"
-                        btnText="View Reports"
-                        onClick={() => navigate('/reports')}
-                      />
+                    <QuickAction
+                      icon={BarChart3}
+                      title="View Reports"
+                      description="Access detailed analytics"
+                      bgColor="bg-[#FFB13A]"
+                      lightBgColor="bg-[#FFF5E9]"
+                      actionText="View Reports"
+                      onClick={() => navigate('/reports')}
+                    />
 
-                      <QuickAction
-                        icon={CreditCard}
-                        title="Change Plan"
-                        description="Change subscription plan"
-                        bgColor="bg-purple-50/30"
-                        btnColor="bg-purple-400"
-                        btnText="Change Plan"
-                        onClick={() => setIsAddonModalOpen(true)}
-                      />
-                    </div>
+                    <QuickAction
+                      icon={CreditCard}
+                      title="Change Plan"
+                      description="Change subscription plan"
+                      bgColor="bg-[#9B8AFB]"
+                      lightBgColor="bg-[#F1EFFF]"
+                      actionText="Change Plan"
+                      onClick={() => setIsAddonModalOpen(true)}
+                    />
                   </div>
                 </div>
               </div>
@@ -403,7 +406,6 @@ const Dashboard = () => {
         </main>
       </div>
 
-      {/* Universal Drawer */}
       <UniversalDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
@@ -412,7 +414,6 @@ const Dashboard = () => {
         companyId={selectedCompany?.id}
       />
 
-      {/* Toast Notification */}
       {toast && (
         <Toast
           message={toast.message}
@@ -420,7 +421,7 @@ const Dashboard = () => {
           onClose={() => setToast(null)}
         />
       )}
-      {/* Confirmation Modal */}
+
       <ConfirmationModal
         isOpen={confirmation.isOpen}
         onClose={() => setConfirmation(prev => ({ ...prev, isOpen: false }))}
@@ -431,13 +432,11 @@ const Dashboard = () => {
         confirmText={confirmation.confirmText}
       />
 
-      {/* Addon Modal */}
       <AddonModal
         isOpen={isAddonModalOpen}
         onClose={() => setIsAddonModalOpen(false)}
         onSuccess={() => {
           setToast({ message: 'Slots purchased successfully!', type: 'success' });
-          // fetchSummary(); // Handled by tags
         }}
         onUpgradePlan={() => {
           setIsAddonModalOpen(false);
