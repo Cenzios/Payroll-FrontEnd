@@ -221,7 +221,9 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
 
                 const finalEmployeeData = {
                     ...employeeData,
-                    email: employeeData.email?.trim() || undefined,
+                    email: employeeData.email?.trim() || "",
+                    designation: employeeData.designation?.trim() || "",
+                    address: employeeData.address?.trim() || "",
                     companyId: companyId || employeeData.companyId,
                     // Ensure defaults if empty
                     department: employeeData.department || 'General',
