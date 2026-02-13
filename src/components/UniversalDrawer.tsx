@@ -125,7 +125,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                     else if (!employeePhoneRegex.test(value)) error = 'Must be +94XXXXXXXXX or 0XXXXXXXXX (10 digits)';
                     break;
                 case 'designation':
-                    if (!value || !value.trim()) error = 'Designation is required';
+                    // Optional
                     break;
                 case 'dailyRate':
                     if (value === undefined || value === null || value === '' || isNaN(Number(value))) error = 'Daily rate is required';
@@ -136,7 +136,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                     else if (new Date(value) > new Date()) error = 'Joined date cannot be in the future';
                     break;
                 case 'address':
-                    if (!value || !value.trim()) error = 'Address is required';
+                    // Optional
                     break;
             }
         }
@@ -167,7 +167,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
             const requiredFields: (keyof CreateCompanyRequest)[] = ['name', 'email', 'address', 'contactNumber'];
             return requiredFields.every(field => !validateField(field, companyData[field], 'company'));
         } else {
-            const requiredFields: (keyof CreateEmployeeRequest)[] = ['fullName', 'employeeId', 'contactNumber', 'designation', 'dailyRate', 'joinedDate', 'address'];
+            const requiredFields: (keyof CreateEmployeeRequest)[] = ['fullName', 'employeeId', 'contactNumber', 'dailyRate', 'joinedDate'];
             return requiredFields.every(field => !validateField(field, (employeeData as any)[field], 'employee')) &&
                 (!employeeData.email || !validateField('email', employeeData.email, 'employee'));
         }
@@ -399,6 +399,22 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                 />
                                                 {touched.fullName && errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
                                             </div>
+
+                                            {/* Daily Rate */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Daily Rate (Rs)</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={employeeData.dailyRate || ''}
+                                                    onChange={(e) => handleEmployeeChange('dailyRate', parseFloat(e.target.value) || 0)}
+                                                    onBlur={() => handleBlur('dailyRate')}
+                                                    placeholder="0.00"
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.dailyRate && errors.dailyRate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                />
+                                                {touched.dailyRate && errors.dailyRate && <p className="text-red-500 text-xs mt-1">{errors.dailyRate}</p>}
+                                            </div>
+
                                             {/* Employee ID (Manual Input) */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
@@ -411,19 +427,6 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                     className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeId && errors.employeeId ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                 />
                                                 {touched.employeeId && errors.employeeId && <p className="text-red-500 text-xs mt-1">{errors.employeeId}</p>}
-                                            </div>
-                                            {/* Email (New) */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Email (Optional)</label>
-                                                <input
-                                                    type="email"
-                                                    value={employeeData.email}
-                                                    onChange={(e) => handleEmployeeChange('email', e.target.value)}
-                                                    onBlur={() => handleBlur('email')}
-                                                    placeholder="employee@example.com"
-                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                />
-                                                {touched.email && errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                                             </div>
 
                                             {/* Contact Number */}
@@ -439,9 +442,24 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                 />
                                                 {touched.contactNumber && errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
                                             </div>
+
+                                            {/* Email (New) */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Email (Optional)</label>
+                                                <input
+                                                    type="email"
+                                                    value={employeeData.email}
+                                                    onChange={(e) => handleEmployeeChange('email', e.target.value)}
+                                                    onBlur={() => handleBlur('email')}
+                                                    placeholder="employee@example.com"
+                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                />
+                                                {touched.email && errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                                            </div>
+
                                             {/* Designation */}
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Designation (Optional)</label>
                                                 <input
                                                     type="text"
                                                     value={employeeData.designation}
@@ -452,23 +470,10 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                 />
                                                 {touched.designation && errors.designation && <p className="text-red-500 text-xs mt-1">{errors.designation}</p>}
                                             </div>
-                                            {/* Daily Rate */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Daily Rate (Rs)</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    value={employeeData.dailyRate || ''}
-                                                    onChange={(e) => handleEmployeeChange('dailyRate', parseFloat(e.target.value) || 0)}
-                                                    onBlur={() => handleBlur('dailyRate')}
-                                                    placeholder="0.00"
-                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.dailyRate && errors.dailyRate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                />
-                                                {touched.dailyRate && errors.dailyRate && <p className="text-red-500 text-xs mt-1">{errors.dailyRate}</p>}
-                                            </div>
+
                                             {/* Address */}
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Address (Optional)</label>
                                                 <input
                                                     type="text"
                                                     value={employeeData.address}

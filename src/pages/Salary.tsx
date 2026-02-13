@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Loader2, Download, FileText, FileSpreadsheet, Calculator, Wallet } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { useGetEmployeesQuery } from '../store/apiSlice';
+import { useGetEmployeesQuery, useGetCompaniesQuery } from '../store/apiSlice';
 import { salaryApi } from '../api/salaryApi';
 import { Employee } from '../types/employee.types';
 import Toast from '../components/Toast';
@@ -62,6 +62,11 @@ const Salary = () => {
     });
 
     const employees = data?.employees || [];
+
+    // Fetch Companies to get the name
+    const { data: companies } = useGetCompaniesQuery();
+    const selectedCompany = companies?.find(c => c.id === selectedCompanyId);
+    const companyName = selectedCompany?.name || 'Company Name';
 
     // Helper functions for Redux State
     const getEmployeeValues = (empId: string) => {
@@ -234,7 +239,7 @@ const Salary = () => {
 
         // Header
         doc.setFontSize(18);
-        doc.text('COMPANY NAME (PVT) LTD', 105, 20, { align: 'center' });
+        doc.text(companyName.toUpperCase(), 105, 20, { align: 'center' });
         doc.setFontSize(12);
         doc.text(`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`, 105, 30, { align: 'center' });
 
@@ -327,7 +332,7 @@ const Salary = () => {
         if (!previewPayslip || !selectedEmployee) return;
 
         const wsData = [
-            ['COMPANY NAME (PVT) LTD'],
+            [companyName.toUpperCase()],
             [`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
             [],
             ['Employee Name', selectedEmployee.fullName],
@@ -362,7 +367,7 @@ const Salary = () => {
         if (!previewPayslip || !selectedEmployee) return;
 
         const wsData = [
-            ['COMPANY NAME (PVT) LTD'],
+            [companyName.toUpperCase()],
             [`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
             [],
             ['Employee Name', selectedEmployee.fullName],
@@ -591,7 +596,7 @@ const Salary = () => {
 
                                                 {/* Header */}
                                                 <div className="text-center mb-6 border-b-2 border-gray-800 pb-4">
-                                                    <h2 className="text-lg font-bold uppercase tracking-wider">Company Name (Pvt) Ltd</h2>
+                                                    <h2 className="text-lg font-bold uppercase tracking-wider">{companyName}</h2>
                                                     <p className="text-xs font-semibold mt-1">Pay Slip - {new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
                                                 </div>
 
