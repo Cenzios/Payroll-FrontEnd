@@ -1,20 +1,43 @@
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon } from "lucide-react";
 
 interface StatCardProps {
   icon: LucideIcon;
   title: string;
   value: string | number;
-  subtitle?: string;
+  showLastMonth?: boolean;
 }
 
 const StatCard = ({
   icon: Icon,
   title,
   value,
-  subtitle = 'Latest Month',
+  showLastMonth = false,
 }: StatCardProps) => {
+  const now = new Date();
+
+  let monthIndex = now.getMonth();
+  let year = now.getFullYear();
+
+  // If this card should show last month
+  if (showLastMonth) {
+    if (monthIndex === 0) {
+      // If January → go to December previous year
+      monthIndex = 11;
+      year = year - 1;
+    } else {
+      monthIndex = monthIndex - 1;
+    }
+  }
+
+  const displayDate = new Date(year, monthIndex);
+
+  const monthLabel = displayDate.toLocaleString("default", {
+    month: "short",
+  });
+
   return (
-    <div className="
+    <div
+      className="
       relative
       rounded-[2rem]
       p-6
@@ -29,7 +52,13 @@ const StatCard = ({
       hover:shadow-blue-200/40
       transition-all
       group
-    ">
+    "
+    >
+      {/* Month Label */}
+      <div className="absolute top-5 right-6 text-sm font-semibold text-blue-500">
+        {monthLabel}
+      </div>
+
       {/* Icon */}
       <div className="w-12 h-12 rounded-2xl bg-white/80 flex items-center justify-center mb-4 shadow-sm transition-transform group-hover:scale-110">
         <Icon className="w-6 h-6 text-blue-700" />
