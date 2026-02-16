@@ -125,7 +125,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                     else if (!employeePhoneRegex.test(value)) error = 'Must be +94XXXXXXXXX or 0XXXXXXXXX (10 digits)';
                     break;
                 case 'designation':
-                    // Optional
+                    if (value && /\d/.test(value)) error = 'Designation cannot contain numbers';
                     break;
                 case 'dailyRate':
                     if (value === undefined || value === null || value === '' || isNaN(Number(value))) error = 'Daily rate is required';
@@ -465,7 +465,10 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                 <input
                                                     type="text"
                                                     value={employeeData.designation}
-                                                    onChange={(e) => handleEmployeeChange('designation', e.target.value)}
+                                                    onChange={(e) => {
+                                                        const filteredValue = e.target.value.replace(/[0-9]/g, '');
+                                                        handleEmployeeChange('designation', filteredValue);
+                                                    }}
                                                     onBlur={() => handleBlur('designation')}
                                                     placeholder="Software Engineer"
                                                     className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.designation && errors.designation ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}

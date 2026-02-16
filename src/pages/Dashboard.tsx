@@ -369,6 +369,7 @@ const Dashboard = () => {
                   icon={DollarSign}
                   title="Last Month Salary Paid"
                   value={`Rs ${lastMonthSalary.toLocaleString()}`}
+                  showLastMonth={true}
                 />
                 <StatCard
                   icon={Plus}
