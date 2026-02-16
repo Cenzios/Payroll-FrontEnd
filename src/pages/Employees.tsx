@@ -15,6 +15,7 @@ import {
 import { Employee } from '../types/employee.types';
 import Toast from '../components/Toast';
 import TableSkeleton from '../components/skeletons/TableSkeleton';
+import PortalDropdown from '../components/PortalDropdown';
 
 const Employees = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
@@ -42,7 +43,7 @@ const Employees = () => {
 
     // Kebab Menu State
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
+    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     // Confirmation Modal State
     const [confirmation, setConfirmation] = useState<{
@@ -88,17 +89,13 @@ const Employees = () => {
         }
     }, [employees, selectedEmployee]);
 
-
-    // Close menu on outside click
+    // Sync menu anchor with activeMenuId
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setActiveMenuId(null);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+        if (!activeMenuId) {
+            setMenuAnchor(null);
+        }
+    }, [activeMenuId]);
+
 
     const handleOpenLimitModal = () => {
         setConfirmation({
@@ -141,14 +138,19 @@ const Employees = () => {
         }
     };
 
+    const closeMenu = () => {
+        setActiveMenuId(null);
+        setMenuAnchor(null);
+    };
+
     const handleEdit = (employee: Employee) => {
         setEditingEmployee(employee);
         setIsDrawerOpen(true);
-        setActiveMenuId(null);
+        closeMenu();
     };
 
     const handleDeactivate = (employee: Employee) => {
-        setActiveMenuId(null);
+        closeMenu();
         setConfirmation({
             isOpen: true,
             type: 'warning',
@@ -174,7 +176,7 @@ const Employees = () => {
     };
 
     const handleRemove = (employee: Employee) => {
-        setActiveMenuId(null);
+        closeMenu();
         setConfirmation({
             isOpen: true,
             type: 'danger',
@@ -201,7 +203,7 @@ const Employees = () => {
     };
 
     const handleActivate = (employee: Employee) => {
-        setActiveMenuId(null);
+        closeMenu();
         setConfirmation({
             isOpen: true,
             type: 'info',
@@ -231,6 +233,18 @@ const Employees = () => {
         setEditingEmployee(null);
         setIsDrawerOpen(true);
     };
+
+    const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>, employeeId: string) => {
+        event.stopPropagation();
+        if (activeMenuId === employeeId) {
+            closeMenu();
+        } else {
+            setMenuAnchor(event.currentTarget);
+            setActiveMenuId(employeeId);
+        }
+    };
+
+    const activeMenuEmployee = employees.find(e => e.id === activeMenuId);
 
     return (
         <div className="flex min-h-screen bg-gray-50">
@@ -340,55 +354,11 @@ const Employees = () => {
                                                         <span className="hidden sm:inline">{emp.contactNumber}</span>
                                                     </div>
                                                     <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setActiveMenuId(activeMenuId === emp.id ? null : emp.id);
-                                                        }}
+                                                        onClick={(e) => handleMenuClick(e, emp.id)}
                                                         className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
                                                     >
                                                         <MoreVertical className="w-4 h-4" />
                                                     </button>
-
-                                                    {/* Kebab Menu */}
-                                                    {activeMenuId === emp.id && (
-                                                        <div
-                                                            ref={menuRef}
-                                                            className="absolute right-0 top-8 w-40 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-1"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                        >
-                                                            <button
-                                                                onClick={() => handleEdit(emp)}
-                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                            >
-                                                                <Edit className="w-4 h-4" />
-                                                                Edit
-                                                            </button>
-                                                            {emp.status === 'INACTIVE' ? (
-                                                                <button
-                                                                    onClick={() => handleActivate(emp)}
-                                                                    className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
-                                                                >
-                                                                    <User className="w-4 h-4" />
-                                                                    Activate
-                                                                </button>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={() => handleDeactivate(emp)}
-                                                                    className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
-                                                                >
-                                                                    <Ban className="w-4 h-4" />
-                                                                    Deactivate
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                onClick={() => handleRemove(emp)}
-                                                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                                Remove
-                                                            </button>
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </div>
                                         ))}
@@ -561,6 +531,49 @@ const Employees = () => {
                     onClose={() => setToast(null)}
                 />
             )}
+
+            {/* Portal Dropdown Menu */}
+            <PortalDropdown
+                anchorEl={menuAnchor}
+                open={!!activeMenuId && !!menuAnchor}
+                onClose={closeMenu}
+            >
+                {activeMenuEmployee && (
+                    <>
+                        <button
+                            onClick={() => handleEdit(activeMenuEmployee)}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        >
+                            <Edit className="w-4 h-4" />
+                            Edit
+                        </button>
+                        {activeMenuEmployee.status === 'INACTIVE' ? (
+                            <button
+                                onClick={() => handleActivate(activeMenuEmployee)}
+                                className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+                            >
+                                <User className="w-4 h-4" />
+                                Activate
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => handleDeactivate(activeMenuEmployee)}
+                                className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
+                            >
+                                <Ban className="w-4 h-4" />
+                                Deactivate
+                            </button>
+                        )}
+                        <button
+                            onClick={() => handleRemove(activeMenuEmployee)}
+                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Remove
+                        </button>
+                    </>
+                )}
+            </PortalDropdown>
         </div>
     );
 };

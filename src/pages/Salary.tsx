@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Loader2, Download, FileText, FileSpreadsheet, Calculator, Wallet } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { useGetEmployeesQuery } from '../store/apiSlice';
+import { useGetEmployeesQuery, useGetCompaniesQuery } from '../store/apiSlice';
 import { salaryApi } from '../api/salaryApi';
 import { Employee } from '../types/employee.types';
 import Toast from '../components/Toast';
@@ -62,6 +62,11 @@ const Salary = () => {
     });
 
     const employees = data?.employees || [];
+
+    // Fetch Companies to get the name
+    const { data: companies } = useGetCompaniesQuery();
+    const selectedCompany = companies?.find(c => c.id === selectedCompanyId);
+    const companyName = selectedCompany?.name || 'Company Name';
 
     // Helper functions for Redux State
     const getEmployeeValues = (empId: string) => {
@@ -193,7 +198,11 @@ const Salary = () => {
             netSalary,
             workedDays,
             dailyRate,
-            isEpfEnabled
+            isEpfEnabled,
+            epf8: epfEmployee, // For display purposes
+            epf12: epfEmployer, // For display purposes
+            etf3: etfEmployer, // For display purposes
+            deductions: [{ name: 'Tax (PAYE)', amount: tax }] // Assuming tax is the only other deduction for now
         };
 
         dispatch(setPreviewPayslip(details));
@@ -234,7 +243,7 @@ const Salary = () => {
 
         // Header
         doc.setFontSize(18);
-        doc.text('COMPANY NAME (PVT) LTD', 105, 20, { align: 'center' });
+        doc.text(companyName.toUpperCase(), 105, 20, { align: 'center' });
         doc.setFontSize(12);
         doc.text(`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`, 105, 30, { align: 'center' });
 
@@ -269,48 +278,63 @@ const Salary = () => {
 
         // Deductions
         doc.text('DEDUCTIONS', 14, currentY);
+        currentY += 5;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
 
-        autoTable(doc, {
-            startY: currentY + 5,
-            head: [['Description', 'Amount (Rs.)']],
-            body: [
-                ['EPF Employee (8%)', previewPayslip.epfEmployee > 0 ? previewPayslip.epfEmployee.toLocaleString() : '-'],
-                ['Tax (PAYE)', previewPayslip.tax.toLocaleString()],
-                ['Total Deductions', previewPayslip.totalDeductions.toLocaleString()]
-            ],
-            theme: 'plain',
-            styles: { fontSize: 10, cellPadding: 2 },
-            columnStyles: { 1: { halign: 'right' } }
+        // Add Employee EPF only if enabled
+        if (previewPayslip.isEpfEnabled) {
+            doc.text('EPF Employee (8%)', 14, currentY);
+            doc.text(previewPayslip.epf8.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
+            currentY += 7;
+        }
+
+        // Add other deductions (e.g., Tax)
+        previewPayslip.deductions.forEach(d => {
+            doc.text(d.name, 14, currentY);
+            doc.text(d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
+            currentY += 7;
         });
 
-        currentY = (doc as any).lastAutoTable.finalY + 10;
+        // Total Deductions
+        doc.setLineWidth(0.2);
+        doc.line(14, currentY, 196, currentY);
+        currentY += 2;
+        doc.setFont('helvetica', 'bold');
+        doc.text('Total Deductions', 14, currentY);
+        doc.text(previewPayslip.totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
+        currentY += 10;
 
         // Net Salary
         doc.setLineWidth(0.5);
         doc.line(14, currentY, 196, currentY);
         doc.setFontSize(12);
         doc.text('NET SALARY', 14, currentY + 8);
-        doc.text(`Net Salary Payable (Rs.) : ${previewPayslip.netSalary.toLocaleString()}`, 196, currentY + 8, { align: 'right' });
+        doc.text(`Net Salary Payable (Rs.) : ${previewPayslip.netSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 196, currentY + 8, { align: 'right' });
         doc.line(14, currentY + 12, 196, currentY + 12);
         doc.line(14, currentY + 14, 196, currentY + 14);
 
         currentY += 25;
 
         // Employer Contributions
-        doc.setFontSize(10);
-        doc.text('EMPLOYER CONTRIBUTIONS (Not included in Net Salary)', 14, currentY);
-        autoTable(doc, {
-            startY: currentY + 5,
-            body: [
-                ['EPF Employer (12%)', previewPayslip.epfEmployer.toLocaleString()],
-                ['ETF Employer (3%)', previewPayslip.etfEmployer.toLocaleString()]
-            ],
-            theme: 'plain',
-            styles: { fontSize: 9, cellPadding: 1 },
-            columnStyles: { 1: { halign: 'right' } }
-        });
-
-        currentY = (doc as any).lastAutoTable.finalY + 30;
+        if (previewPayslip.isEpfEnabled) {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text('EMPLOYER CONTRIBUTIONS (Not included in Net Salary)', 14, currentY);
+            autoTable(doc, {
+                startY: currentY + 5,
+                body: [
+                    ['EPF Employer (12%)', previewPayslip.epf12.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })],
+                    ['ETF Employer (3%)', previewPayslip.etf3.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })]
+                ],
+                theme: 'plain',
+                styles: { fontSize: 9, cellPadding: 1 },
+                columnStyles: { 1: { halign: 'right' } }
+            });
+            currentY = (doc as any).lastAutoTable.finalY + 30;
+        } else {
+            currentY += 10; // Adjust spacing if no employer contributions
+        }
 
         // Signatures
         doc.text('Prepared By : ___________________', 14, currentY);
@@ -327,7 +351,7 @@ const Salary = () => {
         if (!previewPayslip || !selectedEmployee) return;
 
         const wsData = [
-            ['COMPANY NAME (PVT) LTD'],
+            [companyName.toUpperCase()],
             [`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
             [],
             ['Employee Name', selectedEmployee.fullName],
@@ -341,15 +365,17 @@ const Salary = () => {
             ['Gross Earnings', previewPayslip.basicSalary],
             [],
             ['DEDUCTIONS', 'Amount (Rs.)'],
-            ['EPF Employee (8%)', previewPayslip.epfEmployee],
-            ['Tax (PAYE)', previewPayslip.tax],
+            ...(previewPayslip.isEpfEnabled ? [['EPF Employee (8%)', previewPayslip.epf8]] : []),
+            ...previewPayslip.deductions.map(d => [d.name, d.amount]),
             ['Total Deductions', previewPayslip.totalDeductions],
             [],
             ['NET SALARY PAYABLE', previewPayslip.netSalary],
             [],
-            ['EMPLOYER CONTRIBUTIONS', 'Amount (Rs.)'],
-            ['EPF Employer (12%)', previewPayslip.epfEmployer],
-            ['ETF Employer (3%)', previewPayslip.etfEmployer]
+            ...(previewPayslip.isEpfEnabled ? [
+                ['EMPLOYER CONTRIBUTIONS', 'Amount (Rs.)'],
+                ['EPF Employer (12%)', previewPayslip.epf12],
+                ['ETF Employer (3%)', previewPayslip.etf3]
+            ] : [])
         ];
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -362,7 +388,7 @@ const Salary = () => {
         if (!previewPayslip || !selectedEmployee) return;
 
         const wsData = [
-            ['COMPANY NAME (PVT) LTD'],
+            [companyName.toUpperCase()],
             [`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
             [],
             ['Employee Name', selectedEmployee.fullName],
@@ -376,15 +402,17 @@ const Salary = () => {
             ['Gross Earnings', previewPayslip.basicSalary],
             [],
             ['DEDUCTIONS', 'Amount (Rs.)'],
-            ['EPF Employee (8%)', previewPayslip.epfEmployee],
-            ['Tax (PAYE)', previewPayslip.tax],
+            ...(previewPayslip.isEpfEnabled ? [['EPF Employee (8%)', previewPayslip.epf8]] : []),
+            ...previewPayslip.deductions.map(d => [d.name, d.amount]),
             ['Total Deductions', previewPayslip.totalDeductions],
             [],
             ['NET SALARY PAYABLE', previewPayslip.netSalary],
             [],
-            ['EMPLOYER CONTRIBUTIONS', 'Amount (Rs.)'],
-            ['EPF Employer (12%)', previewPayslip.epfEmployer],
-            ['ETF Employer (3%)', previewPayslip.etfEmployer]
+            ...(previewPayslip.isEpfEnabled ? [
+                ['EMPLOYER CONTRIBUTIONS', 'Amount (Rs.)'],
+                ['EPF Employer (12%)', previewPayslip.epf12],
+                ['ETF Employer (3%)', previewPayslip.etf3]
+            ] : [])
         ];
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -535,18 +563,23 @@ const Salary = () => {
                                                     <h4 className="flex items-center gap-2 text-sm font-semibold text-red-600 mb-3">
                                                         <Wallet className="w-4 h-4" /> Deductions
                                                     </h4>
-                                                    <label className="flex items-center gap-3 cursor-pointer group">
-                                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isEpfEnabled ? 'bg-blue-600 border-blue-600' : 'border-gray-300 bg-white'}`}>
-                                                            {isEpfEnabled && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
-                                                        </div>
-                                                        <input
-                                                            type="checkbox"
-                                                            className="hidden"
-                                                            checked={isEpfEnabled}
-                                                            onChange={() => handleToggleEpfEtf(emp.id)}
-                                                        />
-                                                        <span className="text-sm text-gray-700 font-medium group-hover:text-gray-900">Apply EPF / ETF</span>
-                                                    </label>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-sm font-medium text-gray-700">Apply EPF / ETF</span>
+                                                        <button
+                                                            onClick={() => handleToggleEpfEtf(emp.id)}
+                                                            className={`
+                                                                relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                                                                ${isEpfEnabled ? 'bg-blue-600' : 'bg-gray-200'}
+                                                            `}
+                                                        >
+                                                            <span
+                                                                className={`
+                                                                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                                                                    ${isEpfEnabled ? 'translate-x-6' : 'translate-x-1'}
+                                                                `}
+                                                            />
+                                                        </button>
+                                                    </div>
                                                 </div>
 
                                                 <div className="pt-2 flex justify-end">
@@ -591,7 +624,7 @@ const Salary = () => {
 
                                                 {/* Header */}
                                                 <div className="text-center mb-6 border-b-2 border-gray-800 pb-4">
-                                                    <h2 className="text-lg font-bold uppercase tracking-wider">Company Name (Pvt) Ltd</h2>
+                                                    <h2 className="text-lg font-bold uppercase tracking-wider">{companyName}</h2>
                                                     <p className="text-xs font-semibold mt-1">Pay Slip - {new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
                                                 </div>
 
@@ -624,43 +657,56 @@ const Salary = () => {
                                                 </div>
 
                                                 {/* Deductions */}
-                                                <div className="mb-6">
-                                                    <div className="border-b border-gray-800 font-bold mb-2 pb-1">DEDUCTIONS</div>
-                                                    <div className="flex justify-between mb-1">
-                                                        <span>EPF Employee (8%)</span>
-                                                        <span>{previewPayslip.epfEmployee > 0 ? previewPayslip.epfEmployee.toLocaleString() : '-'}</span>
-                                                    </div>
-                                                    <div className="flex justify-between mb-1">
-                                                        <span>Tax (PAYE)</span>
-                                                        <span>{previewPayslip.tax.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="flex justify-between mb-1 font-semibold border-t border-gray-200 pt-1 mt-1">
-                                                        <span>Total Deductions</span>
-                                                        <span>{previewPayslip.totalDeductions.toLocaleString()}</span>
+                                                <div className="mb-4">
+                                                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Deductions</h4>
+                                                    <div className="space-y-1">
+                                                        {previewPayslip.isEpfEnabled && (
+                                                            <div className="flex justify-between text-sm">
+                                                                <span className="text-gray-600">EPF (8%)</span>
+                                                                <span className="font-medium text-red-600">-Rs {previewPayslip.epf8.toFixed(2)}</span>
+                                                            </div>
+                                                        )}
+                                                        {previewPayslip.deductions.map((d, i) => (
+                                                            <div key={i} className="flex justify-between text-sm">
+                                                                <span className="text-gray-600">{d.name}</span>
+                                                                <span className="font-medium text-red-600">-Rs {d.amount.toFixed(2)}</span>
+                                                            </div>
+                                                        ))}
+                                                        <div className="flex justify-between text-sm font-medium pt-1 border-t border-gray-100 mt-1">
+                                                            <span className="text-gray-800">Total Deductions</span>
+                                                            <span className="text-red-600">-Rs {
+                                                                ((previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) + previewPayslip.deductions.reduce((sum, d) => sum + d.amount, 0)).toFixed(2)
+                                                            }</span>
+                                                        </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Net Salary */}
-                                                <div className="mb-6 border-y-2 border-gray-800 py-3 bg-gray-50">
-                                                    <div className="flex justify-between text-base font-bold">
-                                                        <span>NET SALARY PAYABLE</span>
-                                                        <span>Rs. {previewPayslip.netSalary.toLocaleString()}</span>
+                                                <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-base font-bold text-gray-900">Net Salary</span>
+                                                        <span className="text-xl font-bold text-blue-600">
+                                                            Rs {previewPayslip.netSalary.toFixed(2)}
+                                                        </span>
                                                     </div>
                                                 </div>
 
                                                 {/* Employer Contributions */}
-                                                <div className="mb-8">
-                                                    <div className="text-[10px] text-center font-semibold mb-2 text-gray-500 uppercase">Employer Contributions (Not included in Net Salary)</div>
-                                                    <div className="flex justify-between mb-1 text-xs text-gray-600">
-                                                        <span>EPF Employer 12%</span>
-                                                        <span>{previewPayslip.epfEmployer.toLocaleString()}</span>
+                                                {previewPayslip.isEpfEnabled && (
+                                                    <div className="border-t border-gray-100 pt-4">
+                                                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Employer Contributions</h4>
+                                                        <div className="space-y-1">
+                                                            <div className="flex justify-between text-sm">
+                                                                <span className="text-gray-600">EPF (12%)</span>
+                                                                <span className="font-medium text-gray-900">Rs {previewPayslip.epf12.toFixed(2)}</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-sm">
+                                                                <span className="text-gray-600">ETF (3%)</span>
+                                                                <span className="font-medium text-gray-900">Rs {previewPayslip.etf3.toFixed(2)}</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex justify-between mb-1 text-xs text-gray-600">
-                                                        <span>ETF Employer 3%</span>
-                                                        <span>{previewPayslip.etfEmployer.toLocaleString()}</span>
-                                                    </div>
-                                                </div>
-
+                                                )}
                                                 {/* Signatures */}
                                                 <div className="mt-12 pt-4 border-t border-gray-300 flex justify-between text-[10px] text-gray-500">
                                                     <div>Prepared By : 25/11/2026</div>

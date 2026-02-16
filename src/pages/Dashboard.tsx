@@ -39,6 +39,7 @@ import {
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import NotificationDropdown, { Notification } from '../components/NotificationDropdown';
 import CompanySwitcher from '../components/CompanySwitcher';
+import { salaryApi } from '../api/salaryApi';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -65,6 +66,41 @@ const Dashboard = () => {
   const { data: dashboardData, isLoading: isDashboardLoading } = useGetDashboardSummaryQuery(selectedCompanyId || undefined, {
     skip: !user || isTokenPending,
   });
+
+  const [lastMonthSalary, setLastMonthSalary] = useState(0);
+
+  useEffect(() => {
+    const fetchLastMonthSalary = async () => {
+      if (selectedCompanyId) {
+        try {
+          const now = new Date();
+          const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+          // For report API: using 1-indexed months
+          // e.g., if now is Feb (1), last month is Jan (0). API expects 1 for Jan.
+          // So lastMonthDate.getMonth() + 1 gives 1-based index.
+
+          const response = await salaryApi.getSalaryReport(
+            selectedCompanyId,
+            lastMonthDate.getMonth() + 1, // Start Month
+            lastMonthDate.getFullYear(), // Start Year
+            lastMonthDate.getMonth() + 1, // End Month
+            lastMonthDate.getFullYear()  // End Year
+          );
+
+          // The API returns monthlyData array. We need the total for that single month.
+          // Assuming monthlyData[0] is what we need if array is not empty.
+          const total = response.data?.monthlyData?.[0]?.totals?.totalNetPay || 0;
+          setLastMonthSalary(total);
+        } catch (error) {
+          console.error("Failed to fetch last month salary:", error);
+          setLastMonthSalary(0);
+        }
+      }
+    };
+
+    fetchLastMonthSalary();
+  }, [selectedCompanyId]);
 
   const [createCompany] = useCreateCompanyMutation();
   const [createEmployee] = useCreateEmployeeMutation();
@@ -331,8 +367,8 @@ const Dashboard = () => {
                 />
                 <StatCard
                   icon={DollarSign}
-                  title="Total Salary Paid"
-                  value={`Rs ${dashboardData?.totalSalaryPaidThisMonth?.toLocaleString() || '0'}`}
+                  title="Last Month Salary Paid"
+                  value={`Rs ${lastMonthSalary.toLocaleString()}`}
                 />
                 <StatCard
                   icon={Plus}
