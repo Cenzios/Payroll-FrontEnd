@@ -2,7 +2,6 @@ export interface Employee {
     id: string;
     fullName: string;
     address: string;
-    nic: string;
     employeeId: string;
     contactNumber: string;
     joinedDate: string;
@@ -20,7 +19,6 @@ export interface Employee {
 export interface CreateEmployeeRequest {
     fullName: string;
     address: string;
-    nic: string;
     employeeId: string;
     contactNumber: string;
     joinedDate: string;

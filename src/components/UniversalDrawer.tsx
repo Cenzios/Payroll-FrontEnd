@@ -26,7 +26,6 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
     const [employeeData, setEmployeeData] = useState<Partial<CreateEmployeeRequest>>({
         fullName: '',
         address: '',
-        nic: 'PENDING',
         employeeId: '',
         contactNumber: '',
         joinedDate: new Date().toISOString().split('T')[0],
@@ -69,7 +68,6 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                     setEmployeeData({
                         fullName: '',
                         address: '',
-                        nic: 'PENDING',
                         employeeId: '',
                         contactNumber: '',
                         joinedDate: new Date().toISOString().split('T')[0],
@@ -227,7 +225,6 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                     companyId: companyId || employeeData.companyId,
                     // Ensure defaults if empty
                     department: employeeData.department || 'General',
-                    nic: employeeData.nic || 'PENDING',
                 } as CreateEmployeeRequest;
 
                 await onSubmit(finalEmployeeData);
@@ -504,7 +501,6 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                             </div>
                                             {/* Hidden Fields */}
                                             <input type="hidden" value={employeeData.department} />
-                                            <input type="hidden" value={employeeData.nic} />
                                         </div>
                                     </div>
                                 </>
