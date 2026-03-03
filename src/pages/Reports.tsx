@@ -178,11 +178,12 @@ const Reports = () => {
         });
     };
 
-    const handleSelectEmployee = (employeeId: string) => {
+    const handleSelectEmployee = (employeeId: string, month: number, year: number) => {
+        const compositeKey = `${employeeId}-${year}-${month}`;
         setSelectedEmployeeIds(prev =>
-            prev.includes(employeeId)
-                ? prev.filter(id => id !== employeeId)
-                : [...prev, employeeId]
+            prev.includes(compositeKey)
+                ? prev.filter(id => id !== compositeKey)
+                : [...prev, compositeKey]
         );
     };
 
@@ -195,11 +196,19 @@ const Reports = () => {
 
         let startY = 30;
         monthlyData.forEach((monthData) => {
+            // Filter employees if any are selected
+            const filteredEmployees = selectedEmployeeIds.length > 0
+                ? monthData.employees.filter((emp: any) => selectedEmployeeIds.includes(`${emp.employeeId}-${monthData.year}-${monthData.monthNumber}`))
+                : monthData.employees;
+
+            // Skip month if no employees match the selection
+            if (filteredEmployees.length === 0) return;
+
             doc.setFontSize(12);
             doc.text(`${monthData.month} ${monthData.year}`, 14, startY);
             startY += 5;
 
-            const tableBody = monthData.employees.map((emp: any) => [
+            const tableBody = filteredEmployees.map((emp: any) => [
                 emp.employeeCode || '-',
                 emp.employeeName || '-',
                 emp.workingDays,
@@ -228,10 +237,18 @@ const Reports = () => {
         ];
 
         monthlyData.forEach((monthData) => {
+            // Filter employees if any are selected
+            const filteredEmployees = selectedEmployeeIds.length > 0
+                ? monthData.employees.filter((emp: any) => selectedEmployeeIds.includes(emp.employeeId))
+                : monthData.employees;
+
+            // Skip month if no employees match the selection
+            if (filteredEmployees.length === 0) return;
+
             wsData.push([`${monthData.month} ${monthData.year}`]);
             wsData.push(['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF']);
 
-            monthData.employees.forEach((emp: any) => {
+            filteredEmployees.forEach((emp: any) => {
                 wsData.push([
                     emp.employeeCode || '-',
                     emp.employeeName || '-',
@@ -258,10 +275,18 @@ const Reports = () => {
         ];
 
         monthlyData.forEach((monthData) => {
+            // Filter employees if any are selected
+            const filteredEmployees = selectedEmployeeIds.length > 0
+                ? monthData.employees.filter((emp: any) => selectedEmployeeIds.includes(emp.employeeId))
+                : monthData.employees;
+
+            // Skip month if no employees match the selection
+            if (filteredEmployees.length === 0) return;
+
             wsData.push([`${monthData.month} ${monthData.year}`]);
             wsData.push(['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF']);
 
-            monthData.employees.forEach((emp: any) => {
+            filteredEmployees.forEach((emp: any) => {
                 wsData.push([
                     emp.employeeCode || '-',
                     emp.employeeName || '-',

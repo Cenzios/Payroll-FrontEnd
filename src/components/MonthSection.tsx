@@ -30,7 +30,7 @@ interface MonthSectionProps {
     isExpanded: boolean;
     onToggle: () => void;
     selectedEmployeeIds: string[];
-    onSelectEmployee: (id: string) => void;
+    onSelectEmployee: (id: string, month: number, year: number) => void;
     onViewEmployee: (id: string, companyId: string) => void;
     companyId: string;
     searchQuery?: string;
@@ -39,6 +39,7 @@ interface MonthSectionProps {
 const MonthSection: React.FC<MonthSectionProps> = ({
     year,
     month,
+    monthNumber,
     status,
     employees,
     totals,
@@ -83,8 +84,8 @@ const MonthSection: React.FC<MonthSectionProps> = ({
 
                         {/* Status Badge */}
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${status === 'Completed'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-yellow-100 text-yellow-700'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-yellow-100 text-yellow-700'
                             }`}>
                             {status}
                         </span>
@@ -120,18 +121,18 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                             <th className="px-4 py-3 border-b border-gray-200">
                                                 <input
                                                     type="checkbox"
-                                                    checked={filteredEmployees.length > 0 && filteredEmployees.every(emp => selectedEmployeeIds.includes(emp.employeeId))}
+                                                    checked={filteredEmployees.length > 0 && filteredEmployees.every(emp => selectedEmployeeIds.includes(`${emp.employeeId}-${year}-${monthNumber}`))}
                                                     onChange={(e) => {
                                                         if (e.target.checked) {
                                                             filteredEmployees.forEach(emp => {
-                                                                if (!selectedEmployeeIds.includes(emp.employeeId)) {
-                                                                    onSelectEmployee(emp.employeeId);
+                                                                if (!selectedEmployeeIds.includes(`${emp.employeeId}-${year}-${monthNumber}`)) {
+                                                                    onSelectEmployee(emp.employeeId, monthNumber, year);
                                                                 }
                                                             });
                                                         } else {
                                                             filteredEmployees.forEach(emp => {
-                                                                if (selectedEmployeeIds.includes(emp.employeeId)) {
-                                                                    onSelectEmployee(emp.employeeId);
+                                                                if (selectedEmployeeIds.includes(`${emp.employeeId}-${year}-${monthNumber}`)) {
+                                                                    onSelectEmployee(emp.employeeId, monthNumber, year);
                                                                 }
                                                             });
                                                         }
@@ -154,8 +155,8 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                 <td className="px-4 py-3">
                                                     <input
                                                         type="checkbox"
-                                                        checked={selectedEmployeeIds.includes(employee.employeeId)}
-                                                        onChange={() => onSelectEmployee(employee.employeeId)}
+                                                        checked={selectedEmployeeIds.includes(`${employee.employeeId}-${year}-${monthNumber}`)}
+                                                        onChange={() => onSelectEmployee(employee.employeeId, monthNumber, year)}
                                                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                     />
                                                 </td>
