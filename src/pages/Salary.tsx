@@ -112,14 +112,23 @@ const Salary = () => {
         return null;
     };
 
+    const isBeforeJoinedDate = (emp: Employee, year: number, month: number) => {
+        const joinedDate = new Date(emp.joinedDate);
+        const joinedYear = joinedDate.getFullYear();
+        const joinedMonth = joinedDate.getMonth();
+
+        if (year < joinedYear) return true;
+        if (year === joinedYear && month < joinedMonth) return true;
+        return false;
+    };
+
     // Check if ANY validation error exists (for button disable)
-    const hasAnyError = () => {
+    const hasAnyError = (emp: Employee) => {
         if (isFutureMonth) return true;
+        if (isBeforeJoinedDate(emp, selectedYear, selectedMonth)) return true;
         if (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays) return true;
-        if (selectedEmployee) {
-            const { workedDays } = getEmployeeValues(selectedEmployee.id);
-            if (workedDays < 0 || workedDays > companyWorkingDays) return true;
-        }
+        const { workedDays } = getEmployeeValues(emp.id);
+        if (workedDays < 0 || workedDays > companyWorkingDays) return true;
         return false;
     };
 
@@ -164,7 +173,7 @@ const Salary = () => {
             employeeDays: { ...touchedFields.employeeDays, [emp.id]: true }
         });
 
-        if (isFutureMonth || companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays || workedDays < 0 || workedDays > companyWorkingDays) {
+        if (isFutureMonth || isBeforeJoinedDate(emp, selectedYear, selectedMonth) || companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays || workedDays < 0 || workedDays > companyWorkingDays) {
             setToast({ message: 'Please fix validation errors before generating', type: 'error' });
             return;
         }
@@ -588,8 +597,8 @@ const Salary = () => {
                                                             e.stopPropagation();
                                                             handleGeneratePayslip(emp);
                                                         }}
-                                                        disabled={isSaving || hasAnyError()}
-                                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 ${(isSaving || hasAnyError())
+                                                        disabled={isSaving || hasAnyError(emp)}
+                                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 ${(isSaving || hasAnyError(emp))
                                                             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                                             : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow active:scale-95'
                                                             }`}
