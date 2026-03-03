@@ -230,7 +230,8 @@ const Salary = () => {
                 employeeEPF: epfEmployee,
                 employerEPF: epfEmployer,
                 etfAmount: etfEmployer,
-                netSalary: netSalary
+                netSalary: netSalary,
+                isEpfEnabled: isEpfEnabled
             });
             setToast({ message: 'Salary saved successfully!', type: 'success' });
         } catch (error: any) {
@@ -252,7 +253,9 @@ const Salary = () => {
 
         // Header
         doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
         doc.text(companyName.toUpperCase(), 105, 20, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(12);
         doc.text(`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`, 105, 30, { align: 'center' });
 
@@ -280,7 +283,15 @@ const Salary = () => {
             ],
             theme: 'plain',
             styles: { fontSize: 10, cellPadding: 2 },
-            columnStyles: { 1: { halign: 'right' } }
+            headStyles: { halign: 'left' },
+            columnStyles: {
+                1: { halign: 'right' }
+            },
+            didParseCell: (data) => {
+                if (data.section === 'head' && data.column.index === 1) {
+                    data.cell.styles.halign = 'right';
+                }
+            }
         });
 
         let currentY = (doc as any).lastAutoTable.finalY + 10;
@@ -301,17 +312,25 @@ const Salary = () => {
         // Add other deductions (e.g., Tax)
         previewPayslip.deductions.forEach(d => {
             doc.text(d.name, 14, currentY);
-            doc.text(d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
+            if (previewPayslip.isEpfEnabled) {
+                doc.text(d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
+            } else {
+                doc.text('N/A', 196, currentY, { align: 'right' });
+            }
             currentY += 7;
         });
 
         // Total Deductions
         doc.setLineWidth(0.2);
         doc.line(14, currentY, 196, currentY);
-        currentY += 2;
+        currentY += 6; // Add space after the line
         doc.setFont('helvetica', 'bold');
         doc.text('Total Deductions', 14, currentY);
-        doc.text(previewPayslip.totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
+        if (previewPayslip.isEpfEnabled) {
+            doc.text(previewPayslip.totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
+        } else {
+            doc.text('N/A', 196, currentY, { align: 'right' });
+        }
         currentY += 10;
 
         // Net Salary
@@ -678,14 +697,19 @@ const Salary = () => {
                                                         {previewPayslip.deductions.map((d, i) => (
                                                             <div key={i} className="flex justify-between text-sm">
                                                                 <span className="text-gray-600">{d.name}</span>
-                                                                <span className="font-medium text-red-600">-Rs {d.amount.toFixed(2)}</span>
+                                                                <span className="font-medium text-red-600">
+                                                                    {previewPayslip.isEpfEnabled ? `-Rs ${d.amount.toFixed(2)}` : 'N/A'}
+                                                                </span>
                                                             </div>
                                                         ))}
                                                         <div className="flex justify-between text-sm font-medium pt-1 border-t border-gray-100 mt-1">
                                                             <span className="text-gray-800">Total Deductions</span>
-                                                            <span className="text-red-600">-Rs {
-                                                                ((previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) + previewPayslip.deductions.reduce((sum, d) => sum + d.amount, 0)).toFixed(2)
-                                                            }</span>
+                                                            <span className="text-red-600">
+                                                                {previewPayslip.isEpfEnabled
+                                                                    ? `-Rs ${((previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) + previewPayslip.deductions.reduce((sum, d) => sum + d.amount, 0)).toFixed(2)}`
+                                                                    : 'N/A'
+                                                                }
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
