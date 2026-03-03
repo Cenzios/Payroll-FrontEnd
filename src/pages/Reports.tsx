@@ -388,13 +388,6 @@ const Reports = () => {
                         <button onClick={exportCSV} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded hover:bg-blue-100 border border-blue-100 transition-colors">
                             <Download className="w-3.5 h-3.5" /> Export CSV
                         </button>
-                        <button
-                            onClick={() => setIsAllEmployeesModalOpen(true)}
-                            disabled={selectedEmployeeIds.length === 0}
-                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded hover:bg-indigo-100 border border-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <FileText className="w-3.5 h-3.5" /> View Selected
-                        </button>
                     </div>
                 </div>
 
