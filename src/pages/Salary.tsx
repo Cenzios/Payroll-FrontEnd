@@ -252,7 +252,9 @@ const Salary = () => {
 
         // Header
         doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
         doc.text(companyName.toUpperCase(), 105, 20, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(12);
         doc.text(`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`, 105, 30, { align: 'center' });
 
@@ -308,7 +310,7 @@ const Salary = () => {
         // Total Deductions
         doc.setLineWidth(0.2);
         doc.line(14, currentY, 196, currentY);
-        currentY += 2;
+        currentY += 6; // Add space after the line
         doc.setFont('helvetica', 'bold');
         doc.text('Total Deductions', 14, currentY);
         doc.text(previewPayslip.totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
