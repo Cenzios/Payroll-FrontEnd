@@ -14,9 +14,10 @@ interface NotificationDropdownProps {
     onClose: () => void;
     notifications: Notification[];
     onClearAll: () => void;
+    onNotificationClick: (notification: Notification) => void;
 }
 
-const NotificationDropdown = ({ isOpen, onClose, notifications, onClearAll }: NotificationDropdownProps) => {
+const NotificationDropdown = ({ isOpen, onClose, notifications, onClearAll, onNotificationClick }: NotificationDropdownProps) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -57,7 +58,7 @@ const NotificationDropdown = ({ isOpen, onClose, notifications, onClearAll }: No
                 </button>
             </div>
 
-            <div className="max-h-[400px] overflow-y-auto">
+            <div className="max-h-[400px] overflow-y-auto overflow-x-hidden">
                 {notifications.length === 0 ? (
                     <div className="px-6 py-12 text-center">
                         <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -70,9 +71,15 @@ const NotificationDropdown = ({ isOpen, onClose, notifications, onClearAll }: No
                         {notifications.map((notification) => (
                             <div
                                 key={notification.id}
-                                className={`p-4 hover:bg-gray-50 transition-all flex gap-3 cursor-pointer group relative border-l-4 ${!notification.read ? 'bg-blue-50/30 border-blue-600' : 'border-transparent hover:border-gray-200'}`}
+                                onClick={() => onNotificationClick(notification)}
+                                className={`p-4 transition-all flex gap-3 cursor-pointer group relative border-l-4 
+                                    ${!notification.read
+                                        ? 'bg-blue-50/40 border-blue-600 hover:bg-blue-50/60'
+                                        : 'bg-white border-transparent hover:bg-gray-50 hover:border-gray-200'
+                                    } 
+                                    hover:translate-x-1 duration-200`}
                             >
-                                <div className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center
+                                <div className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-110
                   ${notification.type === 'alert' ? 'bg-red-100 text-red-600' :
                                         notification.type === 'warning' ? 'bg-orange-100 text-orange-600' :
                                             'bg-blue-100 text-blue-600'}`}
@@ -82,7 +89,7 @@ const NotificationDropdown = ({ isOpen, onClose, notifications, onClearAll }: No
                                             <Info className="w-4 h-4" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-gray-900 leading-snug mb-1">
+                                    <p className="text-sm text-gray-900 leading-snug mb-1 font-medium group-hover:text-blue-700 transition-colors">
                                         {notification.message}
                                     </p>
                                     <p className="text-xs text-gray-400 font-medium">
@@ -90,7 +97,7 @@ const NotificationDropdown = ({ isOpen, onClose, notifications, onClearAll }: No
                                     </p>
                                 </div>
                                 {!notification.read && (
-                                    <div className="mt-2 w-2 h-2 rounded-full bg-blue-600 shrink-0" />
+                                    <div className="mt-2 w-2 h-2 rounded-full bg-blue-600 shrink-0 shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
                                 )}
                             </div>
                         ))}

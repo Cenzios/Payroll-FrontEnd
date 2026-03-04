@@ -317,23 +317,29 @@ const Employees = () => {
                                         No employees found.
                                     </div>
                                 ) : (
-                                    <div className="divide-y divide-gray-50 pb-20"> {/* pb-20 for menu space */}
+                                    <div className="divide-y divide-gray-100 pb-20">
                                         {employees.map((emp) => (
                                             <div
                                                 key={emp.id}
                                                 onClick={() => setSelectedEmployee(emp)}
-                                                className={`p-4 flex items-center justify-between cursor-pointer group
-  transition-all duration-200 hover:bg-gray-50
-  ${selectedEmployee?.id === emp.id
-                                                        ? 'bg-white/60 backdrop-blur-md shadow-md ring-1 ring-blue-300/50'
-                                                        : ''
+                                                className={`p-4 flex items-center justify-between cursor-pointer
+                            transition-all duration-200
+                            hover:bg-blue-50/60 hover:shadow-sm hover:scale-[1.01]
+                            ${selectedEmployee?.id === emp.id
+                                                        ? 'bg-blue-50 shadow-md ring-1 ring-blue-300/50 scale-[1.01]'
+                                                        : 'hover:translate-x-1'
                                                     }
-`}
+                        `}
                                             >
                                                 <div className="flex items-center gap-3 overflow-hidden">
                                                     {/* Avatar */}
-                                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                                                        <span className="text-blue-600 font-semibold text-sm">
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-200
+                                ${selectedEmployee?.id === emp.id
+                                                            ? 'bg-blue-500 shadow-md shadow-blue-200'
+                                                            : 'bg-blue-100 group-hover:bg-blue-200'
+                                                        }`}>
+                                                        <span className={`font-semibold text-sm transition-colors duration-200
+                                    ${selectedEmployee?.id === emp.id ? 'text-white' : 'text-blue-600'}`}>
                                                             {emp.fullName.charAt(0).toUpperCase()}
                                                         </span>
                                                     </div>
@@ -348,14 +354,14 @@ const Employees = () => {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-2 shrink-0 relative"> {/* Relative for menu */}
-                                                    <div className="text-xs text-gray-400 flex items-center gap-1">
+                                                <div className="flex items-center gap-2 shrink-0 relative">
+                                                    <div className="text-xs text-gray-400 flex items-center gap-1 transition-colors duration-200 group-hover:text-blue-400">
                                                         <Phone className="w-3 h-3" />
                                                         <span className="hidden sm:inline">{emp.contactNumber}</span>
                                                     </div>
                                                     <button
                                                         onClick={(e) => handleMenuClick(e, emp.id)}
-                                                        className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+                                                        className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors duration-150"
                                                     >
                                                         <MoreVertical className="w-4 h-4" />
                                                     </button>

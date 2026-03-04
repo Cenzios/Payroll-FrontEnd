@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
     XAxis,
     YAxis,
@@ -18,16 +19,12 @@ interface SalaryPaidSummaryProps {
 const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
     const [timeRange, setTimeRange] = useState('Monthly');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [data, setData] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
 
     const ranges = ['Monthly', '3 monthly', '6 monthly', 'yearly'];
 
-    const fetchData = async () => {
-        if (!companyId) return;
-        setIsLoading(true);
-
-        try {
+    const { data, isLoading } = useQuery({
+        queryKey: ['salaryPaidSummary', companyId, timeRange],
+        queryFn: async () => {
             const end = new Date();
             const start = new Date();
 
@@ -44,23 +41,16 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
                 end.getFullYear()
             );
 
-            const chartData = (response.data.monthlyData || []).map((m: any) => ({
+            return (response.data.monthlyData || []).map((m: any) => ({
                 name: m.month.substring(0, 3),
                 value: m.totals?.totalNetPay || 0,
                 fullValue: m.totals?.totalNetPay || 0
             }));
+        },
+        enabled: !!companyId,
+    });
 
-            setData(chartData);
-        } catch (error) {
-            console.error('Error fetching chart data:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, [companyId, timeRange]);
+    const chartData = data || [];
 
     const formatYAxis = (tick: any) => {
         if (tick >= 1000) return `${tick / 1000}k`;
@@ -119,7 +109,7 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
                 )}
 
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         <defs>
                             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />

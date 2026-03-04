@@ -2,13 +2,14 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { axiosBaseQuery } from '../api/baseQuery';
 import { Company, CreateCompanyRequest } from '../types/company.types';
 import { Employee, CreateEmployeeRequest } from '../types/employee.types';
-import { Notification, NotificationType } from '../types/notification.types';
+import { Notification } from '../types/notification.types';
 
 // Define types locally if not exported from files, or reuse existing types
 // We'll trust the types exist or use 'any' where strict typing isn't critical for the task
 interface DashboardSummary {
     totalEmployees: number;
     totalSalaryPaidThisMonth: number;
+    totalCompanyEPF: number;
     totalCompanyETF: number;
     totalEmployeeEPF: number;
     maxEmployees: number;

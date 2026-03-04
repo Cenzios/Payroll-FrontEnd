@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout, setAuthFromToken, setSelectedCompanyId } from '../store/slices/authSlice';
@@ -33,11 +34,13 @@ import {
   useCreateEmployeeMutation,
   useGetNotificationsQuery,
   useMarkNotificationAsReadMutation,
+  useDeleteNotificationMutation,
   useDeleteAllNotificationsMutation,
   apiSlice
 } from '../store/apiSlice';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import NotificationDropdown, { Notification } from '../components/NotificationDropdown';
+import NotificationModal from '../components/NotificationModal';
 import CompanySwitcher from '../components/CompanySwitcher';
 import { salaryApi } from '../api/salaryApi';
 
@@ -54,6 +57,8 @@ const Dashboard = () => {
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
   const urlToken = searchParams.get('token');
   const isTokenPending = !!urlToken && urlToken !== token;
@@ -67,40 +72,25 @@ const Dashboard = () => {
     skip: !user || isTokenPending,
   });
 
-  const [lastMonthSalary, setLastMonthSalary] = useState(0);
+  const { data: lastMonthSalary = 0 } = useQuery({
+    queryKey: ['lastMonthSalary', selectedCompanyId],
+    queryFn: async () => {
+      if (!selectedCompanyId) return 0;
+      const now = new Date();
+      const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-  useEffect(() => {
-    const fetchLastMonthSalary = async () => {
-      if (selectedCompanyId) {
-        try {
-          const now = new Date();
-          const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const response = await salaryApi.getSalaryReport(
+        selectedCompanyId,
+        lastMonthDate.getMonth() + 1,
+        lastMonthDate.getFullYear(),
+        lastMonthDate.getMonth() + 1,
+        lastMonthDate.getFullYear()
+      );
 
-          // For report API: using 1-indexed months
-          // e.g., if now is Feb (1), last month is Jan (0). API expects 1 for Jan.
-          // So lastMonthDate.getMonth() + 1 gives 1-based index.
-
-          const response = await salaryApi.getSalaryReport(
-            selectedCompanyId,
-            lastMonthDate.getMonth() + 1, // Start Month
-            lastMonthDate.getFullYear(), // Start Year
-            lastMonthDate.getMonth() + 1, // End Month
-            lastMonthDate.getFullYear()  // End Year
-          );
-
-          // The API returns monthlyData array. We need the total for that single month.
-          // Assuming monthlyData[0] is what we need if array is not empty.
-          const total = response.data?.monthlyData?.[0]?.totals?.totalNetPay || 0;
-          setLastMonthSalary(total);
-        } catch (error) {
-          console.error("Failed to fetch last month salary:", error);
-          setLastMonthSalary(0);
-        }
-      }
-    };
-
-    fetchLastMonthSalary();
-  }, [selectedCompanyId]);
+      return response.data?.monthlyData?.[0]?.totals?.totalNetPay || 0;
+    },
+    enabled: !!selectedCompanyId,
+  });
 
   const [createCompany] = useCreateCompanyMutation();
   const [createEmployee] = useCreateEmployeeMutation();
@@ -110,6 +100,7 @@ const Dashboard = () => {
   });
 
   const [markAsRead] = useMarkNotificationAsReadMutation();
+  const [deleteNotification] = useDeleteNotificationMutation();
   const [deleteAllNotifications] = useDeleteAllNotificationsMutation();
 
   // Derived state
@@ -140,7 +131,7 @@ const Dashboard = () => {
   // Map DB notifications to UI notifications
   const uiNotifications: Notification[] = dbNotifications.map(n => ({
     id: n.id,
-    type: n.type === 'ERROR' ? 'alert' : n.type.toLowerCase() as 'info' | 'warning',
+    type: n.type === 'ERROR' ? 'warning' : n.type.toLowerCase() as 'info' | 'warning',
     message: n.message,
     timestamp: new Date(n.createdAt).toLocaleDateString(),
     read: n.isRead
@@ -156,6 +147,17 @@ const Dashboard = () => {
       await markAsRead(id);
     }
   }, [dbNotifications, markAsRead]);
+
+  const handleDeleteNotification = async (id: string) => {
+    try {
+      await deleteNotification(id).unwrap();
+      setIsNotificationModalOpen(false);
+      setSelectedNotification(null);
+      setToast({ message: 'Notification deleted', type: 'success' });
+    } catch (error) {
+      setToast({ message: 'Failed to delete notification', type: 'error' });
+    }
+  };
 
   const handleClearAll = async () => {
     try {
@@ -188,7 +190,7 @@ const Dashboard = () => {
     onConfirm: () => { },
   });
 
-  const openLimitModal = (type: 'company' | 'employee', limit: number, current: number) => {
+  const openLimitModal = (type: 'company' | 'employee') => {
     setConfirmation({
       isOpen: true,
       type: 'warning',
@@ -219,7 +221,7 @@ const Dashboard = () => {
     } catch (error: any) {
       const errorMsg = error?.data?.message || 'Operation failed';
       if (errorMsg.includes('limit reached')) {
-        openLimitModal(drawerMode, 0, 0);
+        openLimitModal(drawerMode);
       } else {
         setToast({ message: errorMsg, type: 'error' });
       }
@@ -330,8 +332,28 @@ const Dashboard = () => {
                   onClose={() => setIsNotificationDropdownOpen(false)}
                   notifications={uiNotifications}
                   onClearAll={handleClearAll}
+                  onNotificationClick={async (notification) => {
+                    setSelectedNotification(notification);
+                    setIsNotificationModalOpen(true);
+                    setIsNotificationDropdownOpen(false);
+                    // Automatically mark as read when opened if not already read
+                    if (!notification.read) {
+                      try {
+                        await markAsRead(notification.id).unwrap();
+                      } catch (err) {
+                        console.error("Failed to auto-mark notification as read:", err);
+                      }
+                    }
+                  }}
                 />
               </div>
+
+              <NotificationModal
+                isOpen={isNotificationModalOpen}
+                onClose={() => setIsNotificationModalOpen(false)}
+                notification={selectedNotification}
+                onDelete={handleDeleteNotification}
+              />
 
               <div className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-xl">
                 <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
