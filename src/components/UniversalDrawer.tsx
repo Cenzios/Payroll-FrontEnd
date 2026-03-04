@@ -33,6 +33,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
         department: 'General',
         email: '',
         dailyRate: 0,
+        otRate: 0,
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,6 +76,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                         department: 'General',
                         email: '',
                         dailyRate: 0,
+                        otRate: 0,
                     });
                 }
             }
@@ -129,6 +131,10 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                     if (value === undefined || value === null || value === '' || isNaN(Number(value))) error = 'Daily rate is required';
                     else if (Number(value) <= 0) error = 'Daily rate must be a positive number';
                     break;
+                case 'otRate':
+                    if (value !== undefined && value !== null && value !== '' && isNaN(Number(value))) error = 'OT rate must be a number';
+                    else if (Number(value) < 0) error = 'OT rate cannot be negative';
+                    break;
                 case 'joinedDate':
                     if (!value) error = 'Joined date is required';
                     else if (new Date(value) > new Date()) error = 'Joined date cannot be in the future';
@@ -180,7 +186,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                 if (err) newErrors[f] = err;
             });
         } else {
-            const fields: (keyof CreateEmployeeRequest)[] = ['fullName', 'employeeId', 'contactNumber', 'designation', 'dailyRate', 'joinedDate', 'address', 'email'];
+            const fields: (keyof CreateEmployeeRequest)[] = ['fullName', 'employeeId', 'contactNumber', 'designation', 'dailyRate', 'otRate', 'joinedDate', 'address', 'email'];
             fields.forEach(f => {
                 const err = validateField(f, (employeeData as any)[f], 'employee');
                 if (err) newErrors[f] = err;
@@ -194,7 +200,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
         if (mode === 'company') {
             ['name', 'email', 'contactNumber', 'address'].forEach(f => allTouched[f] = true);
         } else {
-            ['fullName', 'employeeId', 'contactNumber', 'designation', 'dailyRate', 'joinedDate', 'address', 'email'].forEach(f => allTouched[f] = true);
+            ['fullName', 'employeeId', 'contactNumber', 'designation', 'dailyRate', 'otRate', 'joinedDate', 'address', 'email'].forEach(f => allTouched[f] = true);
         }
         setTouched(allTouched);
 
@@ -399,19 +405,34 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                 {touched.fullName && errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
                                             </div>
 
-                                            {/* Daily Rate */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Daily Rate (Rs)</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    value={employeeData.dailyRate || ''}
-                                                    onChange={(e) => handleEmployeeChange('dailyRate', parseFloat(e.target.value) || 0)}
-                                                    onBlur={() => handleBlur('dailyRate')}
-                                                    placeholder="0.00"
-                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.dailyRate && errors.dailyRate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                />
-                                                {touched.dailyRate && errors.dailyRate && <p className="text-red-500 text-xs mt-1">{errors.dailyRate}</p>}
+                                            {/* Daily Rate & OT Rate */}
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Daily Rate (Rs)</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={employeeData.dailyRate || ''}
+                                                        onChange={(e) => handleEmployeeChange('dailyRate', parseFloat(e.target.value) || 0)}
+                                                        onBlur={() => handleBlur('dailyRate')}
+                                                        placeholder="0.00"
+                                                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.dailyRate && errors.dailyRate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                    />
+                                                    {touched.dailyRate && errors.dailyRate && <p className="text-red-500 text-xs mt-1">{errors.dailyRate}</p>}
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">OT Rate (Rs) <span className="text-xs text-gray-400 font-normal ml-1">(Optional)</span></label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={employeeData.otRate || ''}
+                                                        onChange={(e) => handleEmployeeChange('otRate', parseFloat(e.target.value) || 0)}
+                                                        onBlur={() => handleBlur('otRate')}
+                                                        placeholder="0.00"
+                                                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                    />
+                                                    {touched.otRate && errors.otRate && <p className="text-red-500 text-xs mt-1">{errors.otRate}</p>}
+                                                </div>
                                             </div>
 
                                             {/* Employee ID (Manual Input) */}

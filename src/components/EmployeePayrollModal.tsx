@@ -39,8 +39,12 @@ interface EmployeeData {
     monthlyBreakdown: MonthlyData[];
     annualTotals: {
         workedDays: number;
+        basicPay: number;
+        otAmount: number;
         grossPay: number;
         netPay: number;
+        tax: number;
+        salaryAdvance: number;
         deductions: number;
         employeeEPF: number;
         companyEPFETF: number;
@@ -127,9 +131,12 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
         tableData.push([
             'SELECTED MONTH TOTALS',
             employeeData.annualTotals.workedDays.toString(),
+            `RS ${employeeData.annualTotals.basicPay.toLocaleString()}`,
+            `RS ${employeeData.annualTotals.otAmount.toLocaleString()}`,
             `RS ${employeeData.annualTotals.grossPay.toLocaleString()}`,
             `RS ${employeeData.annualTotals.netPay.toLocaleString()}`,
-            `RS ${(employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF).toLocaleString()}`,
+            `RS ${employeeData.annualTotals.tax.toLocaleString()}`,
+            `RS ${employeeData.annualTotals.salaryAdvance.toLocaleString()}`,
             `RS ${employeeData.annualTotals.deductions.toLocaleString()}`,
             `RS ${employeeData.annualTotals.employeeEPF.toLocaleString()}`,
             `RS ${employeeData.annualTotals.companyEPFETF.toLocaleString()}`
@@ -183,8 +190,8 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
             [
                 'TOTALS',
                 employeeData.annualTotals.workedDays,
-                '',
-                '',
+                employeeData.annualTotals.basicPay,
+                employeeData.annualTotals.otAmount,
                 employeeData.annualTotals.grossPay,
                 employeeData.annualTotals.netPay,
                 employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF, // Tax approx
@@ -358,16 +365,18 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
                                                     ))}
                                                 </tbody>
                                                 {/* Annual Totals Footer */}
-                                                <tfoot className="bg-blue-600 text-white">
+                                                <tfoot className="bg-blue-600 text-white font-bold">
                                                     <tr>
-                                                        <td className="px-4 py-3 font-bold text-left">SELECTED MONTH TOTALS</td>
-                                                        <td className="px-4 py-3 font-bold text-center">{employeeData.annualTotals.workedDays}</td>
-                                                        <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.grossPay.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.netPay.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 font-bold text-right">RS: {(employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF).toLocaleString()}</td>
-                                                        <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.deductions.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.employeeEPF.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.companyEPFETF.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-left">SELECTED MONTH TOTALS</td>
+                                                        <td className="px-4 py-3 text-center">{employeeData.annualTotals.workedDays}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.basicPay.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.otAmount.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.grossPay.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.netPay.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.tax.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.salaryAdvance.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.deductions.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.employeeEPF.toLocaleString()}</td>
                                                     </tr>
                                                 </tfoot>
                                             </table>

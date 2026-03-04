@@ -24,7 +24,6 @@ interface SalaryState {
     employeeWorkedDays: Record<string, number>;
     // OT and Advance overrides
     employeeOtHours: Record<string, number>;
-    employeeOtAmount: Record<string, number>;
     employeeSalaryAdvance: Record<string, number>;
     // Toggle state helper
     employeeEpfEtf: Record<string, boolean>; // Defaults to true
@@ -38,7 +37,6 @@ const initialState: SalaryState = {
     selectedYear: new Date().getFullYear(),
     employeeWorkedDays: {},
     employeeOtHours: {},
-    employeeOtAmount: {},
     employeeSalaryAdvance: {},
     employeeEpfEtf: {},
     previewPayslip: null,
@@ -61,9 +59,6 @@ const salarySlice = createSlice({
         },
         setEmployeeOtHours: (state, action: PayloadAction<{ id: string; hours: number }>) => {
             state.employeeOtHours[action.payload.id] = action.payload.hours;
-        },
-        setEmployeeOtAmount: (state, action: PayloadAction<{ id: string; amount: number }>) => {
-            state.employeeOtAmount[action.payload.id] = action.payload.amount;
         },
         setEmployeeSalaryAdvance: (state, action: PayloadAction<{ id: string; advance: number }>) => {
             state.employeeSalaryAdvance[action.payload.id] = action.payload.advance;
@@ -93,7 +88,6 @@ export const {
     setCompanyWorkingDays,
     setEmployeeWorkedDays,
     setEmployeeOtHours,
-    setEmployeeOtAmount,
     setEmployeeSalaryAdvance,
     toggleEpfEtf,
     setMonth,

@@ -42,9 +42,12 @@ interface SummaryData {
     };
     employees: EmployeeRow[];
     totals: {
+        basicPay: number;
+        otAmount: number;
         grossPay: number;
-        netPay: number;
+        salaryAdvance: number;
         deductions: number;
+        netPay: number;
         employeeEPF: number;
         companyEPFETF: number;
     };
@@ -130,10 +133,10 @@ const AllEmployeesSummaryModal = ({
             'TOTAL AMOUNTS',
             '',
             '',
+            `RS ${summaryData.totals.basicPay.toLocaleString()}`,
+            `RS ${summaryData.totals.otAmount.toLocaleString()}`,
             `RS ${summaryData.totals.grossPay.toLocaleString()}`,
-            '',
-            '',
-            '',
+            `RS ${summaryData.totals.salaryAdvance.toLocaleString()}`,
             `RS ${summaryData.totals.deductions.toLocaleString()}`,
             `RS ${summaryData.totals.netPay.toLocaleString()}`
         ]);
@@ -184,10 +187,10 @@ const AllEmployeesSummaryModal = ({
                 'TOTAL AMOUNTS',
                 '',
                 '',
-                '',
-                '',
+                summaryData.totals.basicPay,
+                summaryData.totals.otAmount,
                 summaryData.totals.grossPay,
-                '',
+                summaryData.totals.salaryAdvance,
                 summaryData.totals.deductions,
                 summaryData.totals.netPay
             ]
@@ -210,6 +213,7 @@ const AllEmployeesSummaryModal = ({
             ['Department:', summaryData.metadata.department, '', 'Report Type:', summaryData.metadata.reportType],
             ['Total Gross Pay:', `RS ${summaryData.metadata.totalGrossPay.toLocaleString()}`],
             [],
+            ['Breakdown Table'],
             ['Emp ID', 'Name', 'Days', 'Basic', 'OT', 'Gross', 'Advance', 'Total Ded.', 'Net Pay'],
             ...summaryData.employees.map(emp => [
                 emp.employeeCode,
@@ -226,10 +230,10 @@ const AllEmployeesSummaryModal = ({
                 'TOTAL AMOUNTS',
                 '',
                 '',
-                '',
-                '',
+                summaryData.totals.basicPay,
+                summaryData.totals.otAmount,
                 summaryData.totals.grossPay,
-                '',
+                summaryData.totals.salaryAdvance,
                 summaryData.totals.deductions,
                 summaryData.totals.netPay
             ]
@@ -335,11 +339,12 @@ const AllEmployeesSummaryModal = ({
                                                 <tfoot className="bg-[#3b82f6] text-white">
                                                     <tr className="font-bold">
                                                         <td colSpan={3} className="px-3 py-3 uppercase">TOTAL AMOUNTS</td>
+                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.basicPay.toLocaleString()}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.otAmount.toLocaleString()}</td>
                                                         <td className="px-3 py-3 text-center">RS: {summaryData.totals.grossPay.toLocaleString()}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.netPay.toLocaleString()}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.salaryAdvance.toLocaleString()}</td>
                                                         <td className="px-3 py-3 text-center">RS: {summaryData.totals.deductions.toLocaleString()}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.employeeEPF.toLocaleString()}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.companyEPFETF.toLocaleString()}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.netPay.toLocaleString()}</td>
                                                     </tr>
                                                 </tfoot>
                                             </table>
