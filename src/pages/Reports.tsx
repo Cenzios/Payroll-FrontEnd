@@ -212,15 +212,20 @@ const Reports = () => {
                 emp.employeeCode || '-',
                 emp.employeeName || '-',
                 emp.workingDays,
-                emp.netPay.toLocaleString(),
+                emp.basicPay.toLocaleString(),
+                emp.otAmount.toLocaleString(),
+                emp.grossPay.toLocaleString(),
                 emp.employeeEPF.toLocaleString(),
-                emp.companyEPFETF.toLocaleString()
+                emp.salaryAdvance.toLocaleString(),
+                emp.netPay.toLocaleString()
             ]);
 
             autoTable(doc, {
                 startY,
-                head: [['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF']],
+                head: [['Emp ID', 'Name', 'Days', 'Basic', 'OT', 'Gross', 'EPF (8%)', 'Advance', 'Net Pay']],
                 body: tableBody,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [66, 133, 244] }
             });
 
             startY = (doc as any).lastAutoTable.finalY + 10;
@@ -246,16 +251,19 @@ const Reports = () => {
             if (filteredEmployees.length === 0) return;
 
             wsData.push([`${monthData.month} ${monthData.year}`]);
-            wsData.push(['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF']);
+            wsData.push(['Emp ID', 'Name', 'Days', 'Basic Salary', 'OT Amount', 'Gross Pay', 'EPF (8%)', 'Salary Advance', 'Net Pay']);
 
             filteredEmployees.forEach((emp: any) => {
                 wsData.push([
                     emp.employeeCode || '-',
                     emp.employeeName || '-',
                     emp.workingDays,
-                    emp.netPay,
+                    emp.basicPay,
+                    emp.otAmount,
+                    emp.grossPay,
                     emp.employeeEPF,
-                    emp.companyEPFETF
+                    emp.salaryAdvance,
+                    emp.netPay
                 ]);
             });
             wsData.push([]);
@@ -284,16 +292,19 @@ const Reports = () => {
             if (filteredEmployees.length === 0) return;
 
             wsData.push([`${monthData.month} ${monthData.year}`]);
-            wsData.push(['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF']);
+            wsData.push(['Emp ID', 'Name', 'Days', 'Basic Salary', 'OT Amount', 'Gross Pay', 'EPF (8%)', 'Salary Advance', 'Net Pay']);
 
             filteredEmployees.forEach((emp: any) => {
                 wsData.push([
                     emp.employeeCode || '-',
                     emp.employeeName || '-',
                     emp.workingDays,
-                    emp.netPay,
+                    emp.basicPay,
+                    emp.otAmount,
+                    emp.grossPay,
                     emp.employeeEPF,
-                    emp.companyEPFETF
+                    emp.salaryAdvance,
+                    emp.netPay
                 ]);
             });
             wsData.push([]);

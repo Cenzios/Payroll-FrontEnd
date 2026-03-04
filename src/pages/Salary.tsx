@@ -13,6 +13,9 @@ import * as XLSX from 'xlsx';
 import {
     setCompanyWorkingDays,
     setEmployeeWorkedDays,
+    setEmployeeOtHours,
+    setEmployeeOtAmount,
+    setEmployeeSalaryAdvance,
     toggleEpfEtf,
     setPreviewPayslip,
     setMonth,
@@ -25,6 +28,9 @@ const Salary = () => {
     const {
         companyWorkingDays,
         employeeWorkedDays,
+        employeeOtHours,
+        employeeOtAmount,
+        employeeSalaryAdvance,
         employeeEpfEtf,
         previewPayslip,
         selectedMonth,
@@ -72,7 +78,10 @@ const Salary = () => {
     const getEmployeeValues = (empId: string) => {
         const workedDays = employeeWorkedDays[empId] ?? companyWorkingDays;
         const isEpfEnabled = employeeEpfEtf[empId] ?? true;
-        return { workedDays, isEpfEnabled };
+        const otHours = employeeOtHours[empId] ?? 0;
+        const otAmount = employeeOtAmount[empId] ?? 0;
+        const salaryAdvance = employeeSalaryAdvance[empId] ?? 0;
+        return { workedDays, isEpfEnabled, otHours, otAmount, salaryAdvance };
     };
 
     // --- Validation Logic ---
@@ -160,11 +169,23 @@ const Salary = () => {
         dispatch(toggleEpfEtf({ id: empId, value: !currentVal }));
     };
 
+    const handleEmployeeOtHoursChange = (empId: string, val: number) => {
+        dispatch(setEmployeeOtHours({ id: empId, hours: val }));
+    };
+
+    const handleEmployeeOtAmountChange = (empId: string, val: number) => {
+        dispatch(setEmployeeOtAmount({ id: empId, amount: val }));
+    };
+
+    const handleEmployeeSalaryAdvanceChange = (empId: string, val: number) => {
+        dispatch(setEmployeeSalaryAdvance({ id: empId, advance: val }));
+    };
+
     // Handle Generate Pay Slip
     const handleGeneratePayslip = async (emp: Employee) => {
         setSelectedEmployee(emp);
 
-        const { workedDays, isEpfEnabled } = getEmployeeValues(emp.id);
+        const { workedDays, isEpfEnabled, otHours, otAmount, salaryAdvance } = getEmployeeValues(emp.id);
 
         // FINAL VALIDATION BLOCK - Mark all as touched and check
         setTouchedFields({
@@ -194,8 +215,8 @@ const Salary = () => {
         }
 
         const tax = 0; // Tax will be calculated by backend
-        const totalDeductions = epfEmployee + tax;
-        const netSalary = basicSalary - totalDeductions;
+        const totalDeductions = epfEmployee + tax + salaryAdvance;
+        const netSalary = (basicSalary + otAmount) - totalDeductions;
 
         const details = {
             basicSalary,
@@ -208,10 +229,16 @@ const Salary = () => {
             workedDays,
             dailyRate,
             isEpfEnabled,
+            otHours,
+            otAmount,
+            salaryAdvance,
             epf8: epfEmployee, // For display purposes
             epf12: epfEmployer, // For display purposes
             etf3: etfEmployer, // For display purposes
-            deductions: [{ name: 'Tax (PAYE)', amount: tax }] // Assuming tax is the only other deduction for now
+            deductions: [
+                { name: 'Tax (PAYE)', amount: tax },
+                { name: 'Salary Advance', amount: salaryAdvance }
+            ]
         };
 
         dispatch(setPreviewPayslip(details));
@@ -227,6 +254,9 @@ const Salary = () => {
                 year: selectedYear,
                 workingDays: workedDays,
                 basicPay: basicSalary,
+                otHours: otHours,
+                otAmount: otAmount,
+                salaryAdvance: salaryAdvance,
                 employeeEPF: epfEmployee,
                 employerEPF: epfEmployer,
                 etfAmount: etfEmployer,
@@ -279,7 +309,8 @@ const Salary = () => {
                 ['Working Days', companyWorkingDays.toString()],
                 ['Worked Days', previewPayslip.workedDays.toString()],
                 [`Basic Salary (${previewPayslip.dailyRate} x ${previewPayslip.workedDays})`, previewPayslip.basicSalary.toLocaleString()],
-                ['Gross Earnings', previewPayslip.basicSalary.toLocaleString()]
+                ...(previewPayslip.otAmount > 0 ? [[`OT Amount (${previewPayslip.otHours} hrs)`, previewPayslip.otAmount.toLocaleString()]] : []),
+                ['Gross Earnings', (previewPayslip.basicSalary + previewPayslip.otAmount).toLocaleString()]
             ],
             theme: 'plain',
             styles: { fontSize: 10, cellPadding: 2 },
@@ -309,14 +340,10 @@ const Salary = () => {
             currentY += 7;
         }
 
-        // Add other deductions (e.g., Tax)
+        // Add other deductions (e.g., Tax, Salary Advance)
         previewPayslip.deductions.forEach(d => {
             doc.text(d.name, 14, currentY);
-            if (previewPayslip.isEpfEnabled) {
-                doc.text(d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
-            } else {
-                doc.text('N/A', 196, currentY, { align: 'right' });
-            }
+            doc.text(d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
             currentY += 7;
         });
 
@@ -326,11 +353,7 @@ const Salary = () => {
         currentY += 6; // Add space after the line
         doc.setFont('helvetica', 'bold');
         doc.text('Total Deductions', 14, currentY);
-        if (previewPayslip.isEpfEnabled) {
-            doc.text(previewPayslip.totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
-        } else {
-            doc.text('N/A', 196, currentY, { align: 'right' });
-        }
+        doc.text(previewPayslip.totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
         currentY += 10;
 
         // Net Salary
@@ -390,7 +413,8 @@ const Salary = () => {
             ['Daily Rate', previewPayslip.dailyRate],
             ['Worked Days', previewPayslip.workedDays],
             ['Basic Salary', previewPayslip.basicSalary],
-            ['Gross Earnings', previewPayslip.basicSalary],
+            ...(previewPayslip.otAmount > 0 ? [[`OT Amount (${previewPayslip.otHours} hrs)`, previewPayslip.otAmount]] : []),
+            ['Gross Earnings', previewPayslip.basicSalary + previewPayslip.otAmount],
             [],
             ['DEDUCTIONS', 'Amount (Rs.)'],
             ...(previewPayslip.isEpfEnabled ? [['EPF Employee (8%)', previewPayslip.epf8]] : []),
@@ -427,7 +451,8 @@ const Salary = () => {
             ['Daily Rate', previewPayslip.dailyRate],
             ['Worked Days', previewPayslip.workedDays],
             ['Basic Salary', previewPayslip.basicSalary],
-            ['Gross Earnings', previewPayslip.basicSalary],
+            ...(previewPayslip.otAmount > 0 ? [[`OT Amount (${previewPayslip.otHours} hrs)`, previewPayslip.otAmount]] : []),
+            ['Gross Earnings', previewPayslip.basicSalary + previewPayslip.otAmount],
             [],
             ['DEDUCTIONS', 'Amount (Rs.)'],
             ...(previewPayslip.isEpfEnabled ? [['EPF Employee (8%)', previewPayslip.epf8]] : []),
@@ -528,7 +553,7 @@ const Salary = () => {
                             <div className="text-center p-12 text-gray-500">No employees found.</div>
                         ) : (
                             employees.map(emp => {
-                                const { workedDays, isEpfEnabled } = getEmployeeValues(emp.id);
+                                const { workedDays, isEpfEnabled, otHours, otAmount, salaryAdvance } = getEmployeeValues(emp.id);
                                 const empError = getEmployeeError(emp.id, workedDays);
                                 return (
                                     <div
@@ -583,6 +608,26 @@ const Salary = () => {
                                                                 max="31"
                                                             />
                                                         </div>
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 block mb-1">OT Hours</label>
+                                                            <input
+                                                                type="number"
+                                                                value={otHours}
+                                                                onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
+                                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
+                                                                min="0"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 block mb-1">OT Amount</label>
+                                                            <input
+                                                                type="number"
+                                                                value={otAmount}
+                                                                onChange={(e) => handleEmployeeOtAmountChange(emp.id, parseFloat(e.target.value) || 0)}
+                                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
+                                                                min="0"
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -591,22 +636,34 @@ const Salary = () => {
                                                     <h4 className="flex items-center gap-2 text-sm font-semibold text-red-600 mb-3">
                                                         <Wallet className="w-4 h-4" /> Deductions
                                                     </h4>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-sm font-medium text-gray-700">Apply EPF / ETF</span>
-                                                        <button
-                                                            onClick={() => handleToggleEpfEtf(emp.id)}
-                                                            className={`
-                                                                relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                                                                ${isEpfEnabled ? 'bg-blue-600' : 'bg-gray-200'}
-                                                            `}
-                                                        >
-                                                            <span
+                                                    <div className="grid grid-cols-2 gap-4 items-end">
+                                                        <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                            <span className="text-xs font-medium text-gray-700">Apply EPF / ETF</span>
+                                                            <button
+                                                                onClick={() => handleToggleEpfEtf(emp.id)}
                                                                 className={`
-                                                                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                                                                    ${isEpfEnabled ? 'translate-x-6' : 'translate-x-1'}
+                                                                    relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                                                                    ${isEpfEnabled ? 'bg-blue-600' : 'bg-gray-200'}
                                                                 `}
+                                                            >
+                                                                <span
+                                                                    className={`
+                                                                        inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                                                                        ${isEpfEnabled ? 'translate-x-6' : 'translate-x-1'}
+                                                                    `}
+                                                                />
+                                                            </button>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-gray-500 block mb-1">Salary Advance</label>
+                                                            <input
+                                                                type="number"
+                                                                value={salaryAdvance}
+                                                                onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
+                                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
+                                                                min="0"
                                                             />
-                                                        </button>
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -682,6 +739,16 @@ const Salary = () => {
                                                         <span>Basic Salary</span>
                                                         <span>{previewPayslip.basicSalary.toLocaleString()}</span>
                                                     </div>
+                                                    {previewPayslip.otAmount > 0 && (
+                                                        <div className="flex justify-between mb-1 font-semibold">
+                                                            <span>OT ({previewPayslip.otHours} hrs)</span>
+                                                            <span>{previewPayslip.otAmount.toLocaleString()}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex justify-between mt-2 pt-1 border-t border-gray-100 font-bold">
+                                                        <span>Gross Earnings</span>
+                                                        <span>{(previewPayslip.basicSalary + previewPayslip.otAmount).toLocaleString()}</span>
+                                                    </div>
                                                 </div>
 
                                                 {/* Deductions */}
@@ -698,17 +765,14 @@ const Salary = () => {
                                                             <div key={i} className="flex justify-between text-sm">
                                                                 <span className="text-gray-600">{d.name}</span>
                                                                 <span className="font-medium text-red-600">
-                                                                    {previewPayslip.isEpfEnabled ? `-Rs ${d.amount.toFixed(2)}` : 'N/A'}
+                                                                    -Rs {d.amount.toFixed(2)}
                                                                 </span>
                                                             </div>
                                                         ))}
                                                         <div className="flex justify-between text-sm font-medium pt-1 border-t border-gray-100 mt-1">
                                                             <span className="text-gray-800">Total Deductions</span>
                                                             <span className="text-red-600">
-                                                                {previewPayslip.isEpfEnabled
-                                                                    ? `-Rs ${((previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) + previewPayslip.deductions.reduce((sum, d) => sum + d.amount, 0)).toFixed(2)}`
-                                                                    : 'N/A'
-                                                                }
+                                                                -Rs {((previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) + previewPayslip.deductions.reduce((sum, d) => sum + d.amount, 0)).toFixed(2)}
                                                             </span>
                                                         </div>
                                                     </div>
