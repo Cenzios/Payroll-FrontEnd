@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
@@ -34,11 +34,13 @@ import {
   useCreateEmployeeMutation,
   useGetNotificationsQuery,
   useMarkNotificationAsReadMutation,
+  useDeleteNotificationMutation,
   useDeleteAllNotificationsMutation,
   apiSlice
 } from '../store/apiSlice';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import NotificationDropdown, { Notification } from '../components/NotificationDropdown';
+import NotificationModal from '../components/NotificationModal';
 import CompanySwitcher from '../components/CompanySwitcher';
 import { salaryApi } from '../api/salaryApi';
 
@@ -55,6 +57,8 @@ const Dashboard = () => {
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
   const urlToken = searchParams.get('token');
   const isTokenPending = !!urlToken && urlToken !== token;
@@ -96,6 +100,7 @@ const Dashboard = () => {
   });
 
   const [markAsRead] = useMarkNotificationAsReadMutation();
+  const [deleteNotification] = useDeleteNotificationMutation();
   const [deleteAllNotifications] = useDeleteAllNotificationsMutation();
 
   // Derived state
@@ -126,7 +131,7 @@ const Dashboard = () => {
   // Map DB notifications to UI notifications
   const uiNotifications: Notification[] = dbNotifications.map(n => ({
     id: n.id,
-    type: n.type === 'ERROR' ? 'alert' : n.type.toLowerCase() as 'info' | 'warning',
+    type: n.type === 'ERROR' ? 'warning' : n.type.toLowerCase() as 'info' | 'warning',
     message: n.message,
     timestamp: new Date(n.createdAt).toLocaleDateString(),
     read: n.isRead
@@ -142,6 +147,17 @@ const Dashboard = () => {
       await markAsRead(id);
     }
   }, [dbNotifications, markAsRead]);
+
+  const handleDeleteNotification = async (id: string) => {
+    try {
+      await deleteNotification(id).unwrap();
+      setIsNotificationModalOpen(false);
+      setSelectedNotification(null);
+      setToast({ message: 'Notification deleted', type: 'success' });
+    } catch (error) {
+      setToast({ message: 'Failed to delete notification', type: 'error' });
+    }
+  };
 
   const handleClearAll = async () => {
     try {
@@ -174,7 +190,7 @@ const Dashboard = () => {
     onConfirm: () => { },
   });
 
-  const openLimitModal = (type: 'company' | 'employee', limit: number, current: number) => {
+  const openLimitModal = (type: 'company' | 'employee') => {
     setConfirmation({
       isOpen: true,
       type: 'warning',
@@ -205,7 +221,7 @@ const Dashboard = () => {
     } catch (error: any) {
       const errorMsg = error?.data?.message || 'Operation failed';
       if (errorMsg.includes('limit reached')) {
-        openLimitModal(drawerMode, 0, 0);
+        openLimitModal(drawerMode);
       } else {
         setToast({ message: errorMsg, type: 'error' });
       }
@@ -316,8 +332,28 @@ const Dashboard = () => {
                   onClose={() => setIsNotificationDropdownOpen(false)}
                   notifications={uiNotifications}
                   onClearAll={handleClearAll}
+                  onNotificationClick={async (notification) => {
+                    setSelectedNotification(notification);
+                    setIsNotificationModalOpen(true);
+                    setIsNotificationDropdownOpen(false);
+                    // Automatically mark as read when opened if not already read
+                    if (!notification.read) {
+                      try {
+                        await markAsRead(notification.id).unwrap();
+                      } catch (err) {
+                        console.error("Failed to auto-mark notification as read:", err);
+                      }
+                    }
+                  }}
                 />
               </div>
+
+              <NotificationModal
+                isOpen={isNotificationModalOpen}
+                onClose={() => setIsNotificationModalOpen(false)}
+                notification={selectedNotification}
+                onDelete={handleDeleteNotification}
+              />
 
               <div className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-xl">
                 <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
