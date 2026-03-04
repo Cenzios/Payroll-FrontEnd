@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout, setAuthFromToken, setSelectedCompanyId } from '../store/slices/authSlice';
@@ -67,40 +68,25 @@ const Dashboard = () => {
     skip: !user || isTokenPending,
   });
 
-  const [lastMonthSalary, setLastMonthSalary] = useState(0);
+  const { data: lastMonthSalary = 0 } = useQuery({
+    queryKey: ['lastMonthSalary', selectedCompanyId],
+    queryFn: async () => {
+      if (!selectedCompanyId) return 0;
+      const now = new Date();
+      const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-  useEffect(() => {
-    const fetchLastMonthSalary = async () => {
-      if (selectedCompanyId) {
-        try {
-          const now = new Date();
-          const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const response = await salaryApi.getSalaryReport(
+        selectedCompanyId,
+        lastMonthDate.getMonth() + 1,
+        lastMonthDate.getFullYear(),
+        lastMonthDate.getMonth() + 1,
+        lastMonthDate.getFullYear()
+      );
 
-          // For report API: using 1-indexed months
-          // e.g., if now is Feb (1), last month is Jan (0). API expects 1 for Jan.
-          // So lastMonthDate.getMonth() + 1 gives 1-based index.
-
-          const response = await salaryApi.getSalaryReport(
-            selectedCompanyId,
-            lastMonthDate.getMonth() + 1, // Start Month
-            lastMonthDate.getFullYear(), // Start Year
-            lastMonthDate.getMonth() + 1, // End Month
-            lastMonthDate.getFullYear()  // End Year
-          );
-
-          // The API returns monthlyData array. We need the total for that single month.
-          // Assuming monthlyData[0] is what we need if array is not empty.
-          const total = response.data?.monthlyData?.[0]?.totals?.totalNetPay || 0;
-          setLastMonthSalary(total);
-        } catch (error) {
-          console.error("Failed to fetch last month salary:", error);
-          setLastMonthSalary(0);
-        }
-      }
-    };
-
-    fetchLastMonthSalary();
-  }, [selectedCompanyId]);
+      return response.data?.monthlyData?.[0]?.totals?.totalNetPay || 0;
+    },
+    enabled: !!selectedCompanyId,
+  });
 
   const [createCompany] = useCreateCompanyMutation();
   const [createEmployee] = useCreateEmployeeMutation();
