@@ -9,6 +9,7 @@ export interface Employee {
     department: string;
     email?: string;
     dailyRate: number;
+    otRate: number;
     epfEnabled: boolean;
     status: 'ACTIVE' | 'INACTIVE';
     companyId: string;
@@ -26,5 +27,6 @@ export interface CreateEmployeeRequest {
     department: string;
     email?: string; // Optional as per user request flow, but schema has it
     dailyRate: number;
+    otRate?: number;
     companyId: string;
 }

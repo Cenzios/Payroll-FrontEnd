@@ -18,9 +18,13 @@ interface EmployeePayrollModalProps {
 interface MonthlyData {
     month: string;
     workedDays: number;
+    basicPay: number;
+    otHours: number;
+    otAmount: number;
     grossPay: number;
     netPay: number;
     tax: number;
+    salaryAdvance: number;
     deductions: number;
     employeeEPF: number;
     companyEPFETF: number;
@@ -35,8 +39,12 @@ interface EmployeeData {
     monthlyBreakdown: MonthlyData[];
     annualTotals: {
         workedDays: number;
+        basicPay: number;
+        otAmount: number;
         grossPay: number;
         netPay: number;
+        tax: number;
+        salaryAdvance: number;
         deductions: number;
         employeeEPF: number;
         companyEPFETF: number;
@@ -108,9 +116,12 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
         const tableData = employeeData.monthlyBreakdown.map(row => [
             row.month,
             row.workedDays.toString(),
+            `RS ${row.basicPay.toLocaleString()}`,
+            `RS ${row.otAmount.toLocaleString()} (${row.otHours}h)`,
             `RS ${row.grossPay.toLocaleString()}`,
             `RS ${row.netPay.toLocaleString()}`,
             `RS ${row.tax.toLocaleString()}`,
+            `RS ${row.salaryAdvance.toLocaleString()}`,
             `RS ${row.deductions.toLocaleString()}`,
             `RS ${row.employeeEPF.toLocaleString()}`,
             `RS ${row.companyEPFETF.toLocaleString()}`
@@ -120,9 +131,12 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
         tableData.push([
             'SELECTED MONTH TOTALS',
             employeeData.annualTotals.workedDays.toString(),
+            `RS ${employeeData.annualTotals.basicPay.toLocaleString()}`,
+            `RS ${employeeData.annualTotals.otAmount.toLocaleString()}`,
             `RS ${employeeData.annualTotals.grossPay.toLocaleString()}`,
             `RS ${employeeData.annualTotals.netPay.toLocaleString()}`,
-            `RS ${(employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF).toLocaleString()}`,
+            `RS ${employeeData.annualTotals.tax.toLocaleString()}`,
+            `RS ${employeeData.annualTotals.salaryAdvance.toLocaleString()}`,
             `RS ${employeeData.annualTotals.deductions.toLocaleString()}`,
             `RS ${employeeData.annualTotals.employeeEPF.toLocaleString()}`,
             `RS ${employeeData.annualTotals.companyEPFETF.toLocaleString()}`
@@ -130,9 +144,9 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
 
         autoTable(doc, {
             startY: yPos,
-            head: [['Month', 'Worked Days', 'Gross Pay', 'Net Pay', 'Tax', 'Deductions', 'Employee EPF', 'Company EPF/ETF']],
+            head: [['Month', 'Days', 'Basic', 'OT', 'Gross', 'Net', 'Tax', 'Advance', 'Total Ded.', 'EPF 8%', 'EPF/ETF Comp']],
             body: tableData,
-            styles: { fontSize: 8 },
+            styles: { fontSize: 7 },
             headStyles: { fillColor: [37, 99, 235], fontStyle: 'bold' },
             footStyles: { fillColor: [59, 130, 246], fontStyle: 'bold' },
             didParseCell: (data) => {
@@ -159,23 +173,29 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
             ['Joined Date:', employeeData.joinedDate],
             [],
             ['Monthly Breakdown'],
-            ['Month', 'Worked Days', 'Gross Pay', 'Net Pay', 'Tax', 'Deductions', 'Employee EPF', 'Company EPF/ETF'],
+            ['Month', 'Days', 'Basic', 'OT', 'Gross', 'Net', 'Tax', 'Advance', 'Total Ded.', 'EPF 8%', 'EPF/ETF Comp'],
             ...employeeData.monthlyBreakdown.map(row => [
                 row.month,
                 row.workedDays,
+                row.basicPay,
+                row.otAmount,
                 row.grossPay,
                 row.netPay,
                 row.tax,
+                row.salaryAdvance,
                 row.deductions,
                 row.employeeEPF,
                 row.companyEPFETF
             ]),
             [
-                'SELECTED MONTH TOTALS',
+                'TOTALS',
                 employeeData.annualTotals.workedDays,
+                employeeData.annualTotals.basicPay,
+                employeeData.annualTotals.otAmount,
                 employeeData.annualTotals.grossPay,
                 employeeData.annualTotals.netPay,
-                employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF,
+                employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF, // Tax approx
+                '',
                 employeeData.annualTotals.deductions,
                 employeeData.annualTotals.employeeEPF,
                 employeeData.annualTotals.companyEPFETF
@@ -200,23 +220,29 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
             ['Joined Date:', employeeData.joinedDate],
             [],
             ['Monthly Breakdown'],
-            ['Month', 'Worked Days', 'Gross Pay', 'Net Pay', 'Tax', 'Deductions', 'Employee EPF', 'Company EPF/ETF'],
+            ['Month', 'Days', 'Basic', 'OT', 'Gross', 'Net', 'Tax', 'Advance', 'Total Ded.', 'EPF 8%', 'EPF/ETF Comp'],
             ...employeeData.monthlyBreakdown.map(row => [
                 row.month,
                 row.workedDays,
+                row.basicPay,
+                row.otAmount,
                 row.grossPay,
                 row.netPay,
                 row.tax,
+                row.salaryAdvance,
                 row.deductions,
                 row.employeeEPF,
                 row.companyEPFETF
             ]),
             [
-                'SELECTED MONTH TOTALS',
+                'TOTALS',
                 employeeData.annualTotals.workedDays,
+                '',
+                '',
                 employeeData.annualTotals.grossPay,
                 employeeData.annualTotals.netPay,
-                employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF,
+                employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF, // Tax approx
+                '',
                 employeeData.annualTotals.deductions,
                 employeeData.annualTotals.employeeEPF,
                 employeeData.annualTotals.companyEPFETF
@@ -311,40 +337,46 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
                                                 <thead className="bg-gray-800 text-white">
                                                     <tr>
                                                         <th className="px-4 py-3 text-left font-semibold">Month</th>
-                                                        <th className="px-4 py-3 text-center font-semibold">Worked Days</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Gross Pay</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Net Pay</th>
+                                                        <th className="px-4 py-3 text-center font-semibold">Days</th>
+                                                        <th className="px-4 py-3 text-right font-semibold">Basic</th>
+                                                        <th className="px-4 py-3 text-right font-semibold">OT</th>
+                                                        <th className="px-4 py-3 text-right font-semibold">Gross</th>
+                                                        <th className="px-4 py-3 text-right font-semibold">Net</th>
                                                         <th className="px-4 py-3 text-right font-semibold">Tax</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Deductions</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Employee EPF</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Company EPF/ETF</th>
+                                                        <th className="px-4 py-3 text-right font-semibold">Advance</th>
+                                                        <th className="px-4 py-3 text-right font-semibold">Total Ded.</th>
+                                                        <th className="px-4 py-3 text-right font-semibold">EPF 8%</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100">
                                                     {employeeData.monthlyBreakdown.map((row, index) => (
-                                                        <tr key={index} className="hover:bg-gray-50">
+                                                        <tr key={index} className="hover:bg-gray-50 border-b border-gray-100">
                                                             <td className="px-4 py-3 font-medium text-gray-900">{row.month}</td>
                                                             <td className="px-4 py-3 text-center text-gray-700">{row.workedDays}</td>
-                                                            <td className="px-4 py-3 text-right text-gray-900">RS: {row.grossPay.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-gray-900">RS: {row.netPay.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-gray-900">RS: {row.tax.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-gray-900">RS: {row.deductions.toLocaleString()}</td>
+                                                            <td className="px-4 py-3 text-right text-gray-900 font-medium">RS: {row.basicPay.toLocaleString()}</td>
+                                                            <td className="px-4 py-3 text-right text-green-600 font-medium">RS: {row.otAmount.toLocaleString()}</td>
+                                                            <td className="px-4 py-3 text-right text-gray-900 font-bold">RS: {row.grossPay.toLocaleString()}</td>
+                                                            <td className="px-4 py-3 text-right text-blue-600 font-bold">RS: {row.netPay.toLocaleString()}</td>
+                                                            <td className="px-4 py-3 text-right text-red-600">RS: {row.tax.toLocaleString()}</td>
+                                                            <td className="px-4 py-3 text-right text-red-600">RS: {row.salaryAdvance.toLocaleString()}</td>
+                                                            <td className="px-4 py-3 text-right text-red-700 font-medium">RS: {row.deductions.toLocaleString()}</td>
                                                             <td className="px-4 py-3 text-right text-gray-900">RS: {row.employeeEPF.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-gray-900">RS: {row.companyEPFETF.toLocaleString()}</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
                                                 {/* Annual Totals Footer */}
-                                                <tfoot className="bg-blue-600 text-white">
+                                                <tfoot className="bg-blue-600 text-white font-bold">
                                                     <tr>
-                                                        <td className="px-4 py-3 font-bold text-left">SELECTED MONTH TOTALS</td>
-                                                        <td className="px-4 py-3 font-bold text-center">{employeeData.annualTotals.workedDays}</td>
-                                                        <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.grossPay.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.netPay.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 font-bold text-right">RS: {(employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF).toLocaleString()}</td>
-                                                        <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.deductions.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.employeeEPF.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 font-bold text-right">RS: {employeeData.annualTotals.companyEPFETF.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-left">SELECTED MONTH TOTALS</td>
+                                                        <td className="px-4 py-3 text-center">{employeeData.annualTotals.workedDays}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.basicPay.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.otAmount.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.grossPay.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.netPay.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.tax.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.salaryAdvance.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.deductions.toLocaleString()}</td>
+                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.employeeEPF.toLocaleString()}</td>
                                                     </tr>
                                                 </tfoot>
                                             </table>

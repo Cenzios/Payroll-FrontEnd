@@ -13,6 +13,8 @@ import * as XLSX from 'xlsx';
 import {
     setCompanyWorkingDays,
     setEmployeeWorkedDays,
+    setEmployeeOtHours,
+    setEmployeeSalaryAdvance,
     toggleEpfEtf,
     setPreviewPayslip,
     setMonth,
@@ -25,6 +27,8 @@ const Salary = () => {
     const {
         companyWorkingDays,
         employeeWorkedDays,
+        employeeOtHours,
+        employeeSalaryAdvance,
         employeeEpfEtf,
         previewPayslip,
         selectedMonth,
@@ -72,7 +76,9 @@ const Salary = () => {
     const getEmployeeValues = (empId: string) => {
         const workedDays = employeeWorkedDays[empId] ?? companyWorkingDays;
         const isEpfEnabled = employeeEpfEtf[empId] ?? true;
-        return { workedDays, isEpfEnabled };
+        const otHours = employeeOtHours[empId] ?? 0;
+        const salaryAdvance = employeeSalaryAdvance[empId] ?? 0;
+        return { workedDays, isEpfEnabled, otHours, salaryAdvance };
     };
 
     // --- Validation Logic ---
@@ -160,11 +166,20 @@ const Salary = () => {
         dispatch(toggleEpfEtf({ id: empId, value: !currentVal }));
     };
 
+    const handleEmployeeOtHoursChange = (empId: string, val: number) => {
+        dispatch(setEmployeeOtHours({ id: empId, hours: val }));
+    };
+
+    const handleEmployeeSalaryAdvanceChange = (empId: string, val: number) => {
+        dispatch(setEmployeeSalaryAdvance({ id: empId, advance: val }));
+    };
+
     // Handle Generate Pay Slip
     const handleGeneratePayslip = async (emp: Employee) => {
         setSelectedEmployee(emp);
 
-        const { workedDays, isEpfEnabled } = getEmployeeValues(emp.id);
+        const { workedDays, isEpfEnabled, otHours, salaryAdvance } = getEmployeeValues(emp.id);
+        const otAmount = otHours * (emp.otRate || 0);
 
         // FINAL VALIDATION BLOCK - Mark all as touched and check
         setTouchedFields({
@@ -194,8 +209,8 @@ const Salary = () => {
         }
 
         const tax = 0; // Tax will be calculated by backend
-        const totalDeductions = epfEmployee + tax;
-        const netSalary = basicSalary - totalDeductions;
+        const totalDeductions = epfEmployee + tax + salaryAdvance;
+        const netSalary = (basicSalary + otAmount) - totalDeductions;
 
         const details = {
             basicSalary,
@@ -208,10 +223,16 @@ const Salary = () => {
             workedDays,
             dailyRate,
             isEpfEnabled,
+            otHours,
+            otAmount,
+            salaryAdvance,
             epf8: epfEmployee, // For display purposes
             epf12: epfEmployer, // For display purposes
             etf3: etfEmployer, // For display purposes
-            deductions: [{ name: 'Tax (PAYE)', amount: tax }] // Assuming tax is the only other deduction for now
+            deductions: [
+                { name: 'Tax (PAYE)', amount: tax },
+                { name: 'Salary Advance', amount: salaryAdvance }
+            ]
         };
 
         dispatch(setPreviewPayslip(details));
@@ -227,6 +248,9 @@ const Salary = () => {
                 year: selectedYear,
                 workingDays: workedDays,
                 basicPay: basicSalary,
+                otHours: otHours,
+                otAmount: otAmount,
+                salaryAdvance: salaryAdvance,
                 employeeEPF: epfEmployee,
                 employerEPF: epfEmployer,
                 etfAmount: etfEmployer,
@@ -279,7 +303,8 @@ const Salary = () => {
                 ['Working Days', companyWorkingDays.toString()],
                 ['Worked Days', previewPayslip.workedDays.toString()],
                 [`Basic Salary (${previewPayslip.dailyRate} x ${previewPayslip.workedDays})`, previewPayslip.basicSalary.toLocaleString()],
-                ['Gross Earnings', previewPayslip.basicSalary.toLocaleString()]
+                ...(previewPayslip.otAmount > 0 ? [[`OT Amount (${previewPayslip.otHours} hrs)`, previewPayslip.otAmount.toLocaleString()]] : []),
+                ['Gross Earnings', (previewPayslip.basicSalary + previewPayslip.otAmount).toLocaleString()]
             ],
             theme: 'plain',
             styles: { fontSize: 10, cellPadding: 2 },
@@ -309,14 +334,10 @@ const Salary = () => {
             currentY += 7;
         }
 
-        // Add other deductions (e.g., Tax)
+        // Add other deductions (e.g., Tax, Salary Advance)
         previewPayslip.deductions.forEach(d => {
             doc.text(d.name, 14, currentY);
-            if (previewPayslip.isEpfEnabled) {
-                doc.text(d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
-            } else {
-                doc.text('N/A', 196, currentY, { align: 'right' });
-            }
+            doc.text(d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
             currentY += 7;
         });
 
@@ -326,11 +347,7 @@ const Salary = () => {
         currentY += 6; // Add space after the line
         doc.setFont('helvetica', 'bold');
         doc.text('Total Deductions', 14, currentY);
-        if (previewPayslip.isEpfEnabled) {
-            doc.text(previewPayslip.totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
-        } else {
-            doc.text('N/A', 196, currentY, { align: 'right' });
-        }
+        doc.text(previewPayslip.totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
         currentY += 10;
 
         // Net Salary
@@ -390,7 +407,8 @@ const Salary = () => {
             ['Daily Rate', previewPayslip.dailyRate],
             ['Worked Days', previewPayslip.workedDays],
             ['Basic Salary', previewPayslip.basicSalary],
-            ['Gross Earnings', previewPayslip.basicSalary],
+            ...(previewPayslip.otAmount > 0 ? [[`OT Amount (${previewPayslip.otHours} hrs)`, previewPayslip.otAmount]] : []),
+            ['Gross Earnings', previewPayslip.basicSalary + previewPayslip.otAmount],
             [],
             ['DEDUCTIONS', 'Amount (Rs.)'],
             ...(previewPayslip.isEpfEnabled ? [['EPF Employee (8%)', previewPayslip.epf8]] : []),
@@ -427,7 +445,8 @@ const Salary = () => {
             ['Daily Rate', previewPayslip.dailyRate],
             ['Worked Days', previewPayslip.workedDays],
             ['Basic Salary', previewPayslip.basicSalary],
-            ['Gross Earnings', previewPayslip.basicSalary],
+            ...(previewPayslip.otAmount > 0 ? [[`OT Amount (${previewPayslip.otHours} hrs)`, previewPayslip.otAmount]] : []),
+            ['Gross Earnings', previewPayslip.basicSalary + previewPayslip.otAmount],
             [],
             ['DEDUCTIONS', 'Amount (Rs.)'],
             ...(previewPayslip.isEpfEnabled ? [['EPF Employee (8%)', previewPayslip.epf8]] : []),
@@ -526,116 +545,150 @@ const Salary = () => {
                             <SalaryListSkeleton />
                         ) : employees.length === 0 ? (
                             <div className="text-center p-12 text-gray-500">No employees found.</div>
-                        ) : (
-                            employees.map(emp => {
-                                const { workedDays, isEpfEnabled } = getEmployeeValues(emp.id);
-                                const empError = getEmployeeError(emp.id, workedDays);
-                                return (
-                                    <div
-                                        key={emp.id}
-                                        onClick={() => handleSelectEmployee(emp)}
-                                        className={`bg-white rounded-xl border p-6 cursor-pointer transition-all duration-200 ${selectedEmployee?.id === emp.id
-                                            ? 'border-blue-500 shadow-md ring-1 ring-blue-500'
-                                            : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
-                                            }`}
-                                    >
-                                        {/* Header */}
-                                        <div className="flex items-center justify-between mb-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                                                    {emp.fullName.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-gray-900">{emp.fullName}</h3>
-                                                    <p className="text-xs text-gray-500">{emp.designation}</p>
-                                                </div>
+                        ) : employees.map(emp => {
+                            const { workedDays, isEpfEnabled, otHours, salaryAdvance } = getEmployeeValues(emp.id);
+                            // otAmount is calculated inline in the UI to avoid unused variable warning here if not needed
+                            const empError = getEmployeeError(emp.id, workedDays);
+                            return (
+                                <div
+                                    key={emp.id}
+                                    onClick={() => handleSelectEmployee(emp)}
+                                    className={`bg-white rounded-xl border p-6 cursor-pointer transition-all duration-200 ${selectedEmployee?.id === emp.id
+                                        ? 'border-blue-500 shadow-md ring-1 ring-blue-500'
+                                        : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                                        }`}
+                                >
+                                    {/* Header */}
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                                                {emp.fullName.charAt(0)}
                                             </div>
-                                            <div className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-semibold rounded">
-                                                {emp.employeeId}
+                                            <div>
+                                                <h3 className="font-bold text-gray-900">{emp.fullName}</h3>
+                                                <p className="text-xs text-gray-500">{emp.designation}</p>
                                             </div>
                                         </div>
+                                        <div className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-semibold rounded">
+                                            {emp.employeeId}
+                                        </div>
+                                    </div>
 
-                                        {/* Input Controls - Visible when selected */}
-                                        {selectedEmployee?.id === emp.id && (
-                                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                                                {/* Earnings */}
-                                                <div>
-                                                    <h4 className="flex items-center gap-2 text-sm font-semibold text-green-600 mb-3">
-                                                        <Calculator className="w-4 h-4" /> Earnings
-                                                    </h4>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                                            <label className="text-xs text-gray-500 block mb-1">Daily Rate</label>
-                                                            <div className="font-semibold text-gray-900">Rs. {emp.dailyRate}</div>
+                                    {/* Input Controls - Visible when selected */}
+                                    {selectedEmployee?.id === emp.id && (
+                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            {/* Earnings */}
+                                            <div>
+                                                <h4 className="flex items-center gap-2 text-sm font-semibold text-green-600 mb-3">
+                                                    <Calculator className="w-4 h-4" /> Earnings
+                                                </h4>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                        <label className="text-xs text-gray-500 block mb-1">Daily Rate</label>
+                                                        <div className="font-semibold text-gray-900">Rs. {emp.dailyRate}</div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs text-gray-500 block mb-1">Enter Worked Days</label>
+                                                        <input
+                                                            type="number"
+                                                            value={workedDays}
+                                                            onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
+                                                            onBlur={() => setTouchedFields(prev => ({
+                                                                ...prev,
+                                                                employeeDays: { ...prev.employeeDays, [emp.id]: true }
+                                                            }))}
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
+                                                            min="0"
+                                                            max="31"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs text-gray-500 block mb-1">OT Hours</label>
+                                                        <input
+                                                            type="number"
+                                                            value={otHours}
+                                                            onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
+                                                            min="0"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs text-gray-500 block mb-1">OT Rate</label>
+                                                        <div className="bg-gray-50 px-3 py-2 border border-gray-100 rounded-lg font-semibold text-gray-900 h-[42px] flex items-center">
+                                                            Rs. {emp.otRate || 0}
                                                         </div>
-                                                        <div>
-                                                            <label className="text-xs text-gray-500 block mb-1">Enter Worked Days</label>
-                                                            <input
-                                                                type="number"
-                                                                value={workedDays}
-                                                                onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
-                                                                onBlur={() => setTouchedFields(prev => ({
-                                                                    ...prev,
-                                                                    employeeDays: { ...prev.employeeDays, [emp.id]: true }
-                                                                }))}
-                                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
-                                                                min="0"
-                                                                max="31"
-                                                            />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs text-gray-500 block mb-1">OT Amount</label>
+                                                        <div className="bg-gray-50 px-3 py-2 border border-gray-100 rounded-lg font-bold text-blue-600 h-[42px] flex items-center">
+                                                            Rs. {(otHours * (emp.otRate || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                {/* Deductions */}
-                                                <div>
-                                                    <h4 className="flex items-center gap-2 text-sm font-semibold text-red-600 mb-3">
-                                                        <Wallet className="w-4 h-4" /> Deductions
-                                                    </h4>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-sm font-medium text-gray-700">Apply EPF / ETF</span>
+                                            {/* Deductions */}
+                                            <div>
+                                                <h4 className="flex items-center gap-2 text-sm font-semibold text-red-600 mb-3">
+                                                    <Wallet className="w-4 h-4" /> Deductions
+                                                </h4>
+                                                <div className="grid grid-cols-2 gap-4 items-end">
+                                                    <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                        <span className="text-xs font-medium text-gray-700">Apply EPF / ETF</span>
                                                         <button
                                                             onClick={() => handleToggleEpfEtf(emp.id)}
                                                             className={`
-                                                                relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                                                                ${isEpfEnabled ? 'bg-blue-600' : 'bg-gray-200'}
-                                                            `}
+                                                                    relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                                                                    ${isEpfEnabled ? 'bg-blue-600' : 'bg-gray-200'}
+                                                                `}
                                                         >
                                                             <span
                                                                 className={`
-                                                                    inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                                                                    ${isEpfEnabled ? 'translate-x-6' : 'translate-x-1'}
-                                                                `}
+                                                                        inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                                                                        ${isEpfEnabled ? 'translate-x-6' : 'translate-x-1'}
+                                                                    `}
                                                             />
                                                         </button>
                                                     </div>
+                                                    <div>
+                                                        <label className="text-xs text-gray-500 block mb-1">Salary Advance</label>
+                                                        <input
+                                                            type="number"
+                                                            value={salaryAdvance}
+                                                            onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
+                                                            min="0"
+                                                        />
+                                                    </div>
                                                 </div>
+                                            </div>
 
-                                                <div className="pt-2 flex justify-end">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleGeneratePayslip(emp);
-                                                        }}
-                                                        disabled={isSaving || hasAnyError(emp)}
-                                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 ${(isSaving || hasAnyError(emp))
-                                                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                            : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow active:scale-95'
-                                                            }`}
-                                                    >
-                                                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Generate Pay-slip'}
-                                                    </button>
-                                                </div>
+                                            <div className="pt-2 flex justify-end">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleGeneratePayslip(emp);
+                                                    }}
+                                                    disabled={isSaving || hasAnyError(emp)}
+                                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 ${(isSaving || hasAnyError(emp))
+                                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                        : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow active:scale-95'
+                                                        }`}
+                                                >
+                                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Generate Pay-slip'}
+                                                </button>
                                             </div>
-                                        )}
-                                        {selectedEmployee?.id !== emp.id && (
-                                            <div className="mt-4 text-center text-sm text-gray-400 italic">
-                                                Click to calculate salary
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })
-                        )}
+                                        </div>
+                                    )}
+                                    {selectedEmployee?.id !== emp.id && (
+                                        <div className="mt-4 text-center text-sm text-gray-400 italic">
+                                            Click to calculate salary
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
+                        }
                     </div>
 
                     {/* RIGHT SIDE: Payslip Preview */}
@@ -682,6 +735,16 @@ const Salary = () => {
                                                         <span>Basic Salary</span>
                                                         <span>{previewPayslip.basicSalary.toLocaleString()}</span>
                                                     </div>
+                                                    {previewPayslip.otAmount > 0 && (
+                                                        <div className="flex justify-between mb-1 font-semibold">
+                                                            <span>OT ({previewPayslip.otHours} hrs)</span>
+                                                            <span>{previewPayslip.otAmount.toLocaleString()}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex justify-between mt-2 pt-1 border-t border-gray-100 font-bold">
+                                                        <span>Gross Earnings</span>
+                                                        <span>{(previewPayslip.basicSalary + previewPayslip.otAmount).toLocaleString()}</span>
+                                                    </div>
                                                 </div>
 
                                                 {/* Deductions */}
@@ -698,17 +761,14 @@ const Salary = () => {
                                                             <div key={i} className="flex justify-between text-sm">
                                                                 <span className="text-gray-600">{d.name}</span>
                                                                 <span className="font-medium text-red-600">
-                                                                    {previewPayslip.isEpfEnabled ? `-Rs ${d.amount.toFixed(2)}` : 'N/A'}
+                                                                    -Rs {d.amount.toFixed(2)}
                                                                 </span>
                                                             </div>
                                                         ))}
                                                         <div className="flex justify-between text-sm font-medium pt-1 border-t border-gray-100 mt-1">
                                                             <span className="text-gray-800">Total Deductions</span>
                                                             <span className="text-red-600">
-                                                                {previewPayslip.isEpfEnabled
-                                                                    ? `-Rs ${((previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) + previewPayslip.deductions.reduce((sum, d) => sum + d.amount, 0)).toFixed(2)}`
-                                                                    : 'N/A'
-                                                                }
+                                                                -Rs {((previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) + previewPayslip.deductions.reduce((sum, d) => sum + d.amount, 0)).toFixed(2)}
                                                             </span>
                                                         </div>
                                                     </div>
