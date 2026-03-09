@@ -382,8 +382,7 @@ const Salary = () => {
         }
 
         // Signatures
-        doc.text('Prepared By : ___________________', 14, currentY);
-        doc.text(`Date : ${new Date().toLocaleDateString()}`, 110, currentY);
+        doc.text(`Prepared By : ${new Date().toLocaleDateString()}`, 14, currentY);
 
         doc.text('Checked By  : ___________________', 14, currentY + 15);
 
@@ -802,7 +801,7 @@ const Salary = () => {
                                                 )}
                                                 {/* Signatures */}
                                                 <div className="mt-12 pt-4 border-t border-gray-300 flex justify-between text-[10px] text-gray-500">
-                                                    <div>Prepared By : 25/11/2026</div>
+                                                    <div>Prepared By : {new Date().toLocaleDateString()}</div>
                                                     <div>Checked By : ..............</div>
                                                 </div>
                                                 <div className="mt-4 text-[10px] text-gray-500">
