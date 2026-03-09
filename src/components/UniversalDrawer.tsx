@@ -113,6 +113,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
             switch (field) {
                 case 'fullName':
                     if (!value || value.trim().length < 2) error = 'Full name must be at least 2 characters';
+                    else if (/\d/.test(value)) error = 'Full name cannot contain numbers';
                     break;
                 case 'employeeId':
                     if (!value || !value.trim()) error = 'Employee ID is required';
