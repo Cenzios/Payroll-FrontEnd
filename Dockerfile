@@ -12,23 +12,15 @@ RUN npm run build
 # Nginx stage
 FROM nginx:alpine
 
-# Remove default nginx config
-RUN rm /etc/nginx/conf.d/default.conf
-
-# Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Remove default site files
-RUN rm -rf /usr/share/nginx/html/*
-
-# Copy React build output
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Default port = prod (6080). Override at runtime for dev.
+# Default = prod values
 ENV NGINX_PORT=6080
+ENV API_URL=https://payrollserver.cenzios.com/api/
 
-# Replace ${NGINX_PORT} in nginx config at container startup
-CMD ["/bin/sh", "-c", "envsubst '${NGINX_PORT}' < /etc/nginx/conf.d/default.conf > /tmp/default.conf && cp /tmp/default.conf /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# Replace both variables at container startup
+CMD ["/bin/sh", "-c", "envsubst '${NGINX_PORT} ${API_URL}' < /etc/nginx/conf.d/default.conf > /tmp/default.conf && cp /tmp/default.conf /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
 
 EXPOSE 6080
 EXPOSE 5090
