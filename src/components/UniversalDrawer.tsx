@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from 'react';
-import { X, Building2, UserPlus } from 'lucide-react';
+import { X, Building2, UserRound, CreditCard, MapPin, Activity, Mail, Phone, Award, Calendar, Briefcase, PlusCircle, MinusCircle } from 'lucide-react';
 import { CreateCompanyRequest } from '../types/company.types';
 import { CreateEmployeeRequest } from '../types/employee.types';
 
@@ -37,12 +37,19 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [activeTab, setActiveTab] = useState<'employee' | 'payment'>('employee');
+    const [paymentType, setPaymentType] = useState<'Monthly' | 'Daily'>('Monthly');
+    const [monthlyBasic, setMonthlyBasic] = useState('');
+    const [epfEtf, setEpfEtf] = useState('');
+    const [allowances, setAllowances] = useState<{ type: string; amount: string }[]>([{ type: '', amount: '' }]);
+    const [epfEnabled, setEpfEnabled] = useState(true);
+    const [allowanceEnabled, setAllowanceEnabled] = useState(true);
 
     // Reset forms when drawer opens/closes or mode changes or initialData changes
     useEffect(() => {
         if (isOpen) {
+            setActiveTab('employee'); // Reset tab on open
             if (mode === 'company') {
-                // If editing company in future
                 if (initialData) {
                     setCompanyData(initialData);
                 } else {
@@ -56,16 +63,11 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                 }
             } else {
                 if (initialData) {
-                    // Pre-fill employee data
                     setEmployeeData({
                         ...initialData,
-                        // Ensure optional fields are handled or API response mapped correctly
-                        // Note: API response might have different field names if not careful, but checked types match mostly.
-                        // joinedDate from API is ISO string, input type=date needs YYYY-MM-DD
                         joinedDate: initialData.joinedDate ? new Date(initialData.joinedDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                     });
                 } else {
-                    // Reset for new employee
                     setEmployeeData({
                         fullName: '',
                         address: '',
@@ -141,7 +143,6 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                     else if (new Date(value) > new Date()) error = 'Joined date cannot be in the future';
                     break;
                 case 'address':
-                    // Optional
                     break;
             }
         }
@@ -195,7 +196,6 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
         }
 
         setErrors(newErrors);
-        // Mark all as touched on submit attempt
         const allTouched: Record<string, boolean> = {};
         Object.keys(newErrors).forEach(k => allTouched[k] = true);
         if (mode === 'company') {
@@ -217,10 +217,8 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
         try {
             if (mode === 'company') {
                 await onSubmit(companyData);
-                // Don't reset if editing? For now assume close on submit
             } else {
-                if (!companyId && !initialData) { // If editing, maybe we don't need companyId passed if it's in data? But safe to require.
-                    // Actually for update, companyId is required by API
+                if (!companyId && !initialData) {
                     if (!companyId && !employeeData.companyId) throw new Error("Company ID is missing");
                 }
 
@@ -230,7 +228,6 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                     designation: employeeData.designation?.trim() || "",
                     address: employeeData.address?.trim() || "",
                     companyId: companyId || employeeData.companyId,
-                    // Ensure defaults if empty
                     department: employeeData.department || 'General',
                 } as CreateEmployeeRequest;
 
@@ -238,8 +235,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
             }
         } catch (error) {
             console.error(error);
-            // Parent handles toast? Yes.
-            throw error; // Rethrow so parent catches it for limit modal
+            throw error;
         } finally {
             setIsSubmitting(false);
         }
@@ -257,7 +253,6 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
     useEffect(() => {
         if (isOpen) {
             setShouldRender(true);
-            // Small delay to ensure the component is mounted with initial classes before starting transition
             const timer = setTimeout(() => setIsVisible(true), 10);
             return () => clearTimeout(timer);
         } else {
@@ -274,7 +269,6 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
     const title = isCompany
         ? (isEdit ? 'Edit Company' : 'Add New Company')
         : (isEdit ? 'Edit Employee' : 'Add New Employee');
-    const Icon = isCompany ? Building2 : UserPlus;
 
     return (
         <>
@@ -286,29 +280,48 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
 
             {/* Drawer */}
             <div
-                className={`fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform transition-all duration-500 ease-in-out sm:duration-700 ${isVisible ? 'translate-x-0' : 'translate-x-full'}`}
+                className={`fixed right-0 top-0 h-full w-full max-w-xl bg-gray-50 shadow-2xl z-50 transform transition-all duration-500 ease-in-out sm:duration-700 rounded-l-2xl ${isVisible ? 'translate-x-0' : 'translate-x-full'}`}
             >
                 <div className="h-full flex flex-col">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-blue-100 p-2 rounded-lg">
-                                <Icon className="w-5 h-5 text-blue-600" />
-                            </div>
-                            <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
-                        </div>
+                    <div className="px-6 pt-5 pb-0">
                         <button
                             onClick={handleClose}
                             disabled={isSubmitting}
-                            className={`p-2 hover:bg-gray-100 rounded-lg transition-all duration-500 ease-in-out disabled:opacity-50 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+                            className={`p-1.5 hover:bg-gray-200 rounded-full transition-all duration-300 disabled:opacity-50 mb-3 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
                         >
-                            <X className="w-5 h-5 text-gray-500" />
+                            <X className="w-4 h-4 text-gray-500" />
                         </button>
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">{title}</h2>
+                        {!isCompany && (
+                            <div className="flex gap-6 border-b border-gray-200">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('employee')}
+                                    className={`pb-2.5 text-sm font-medium transition-colors relative ${activeTab === 'employee' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                                >
+                                    Employee Information
+                                    {activeTab === 'employee' && (
+                                        <span className="absolute bottom-0 left-0 w-full h-[2px] bg-blue-600 rounded-t-full" />
+                                    )}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('payment')}
+                                    className={`pb-2.5 text-sm font-medium transition-colors relative ${activeTab === 'payment' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                                >
+                                    Payment Information
+                                    {activeTab === 'payment' && (
+                                        <span className="absolute bottom-0 left-0 w-full h-[2px] bg-blue-600 rounded-t-full" />
+                                    )}
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
-                        <div className="space-y-6">
+                        <div className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
                             {isCompany ? (
                                 /* COMPANY FORM */
                                 <>
@@ -375,152 +388,373 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                 </div>
                                             </div>
                                         </div>
-                                        {/* Hidden Departments */}
-                                        {/* <div className="pt-4">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Departments</label> ... </div> */}
                                     </div>
                                 </>
                             ) : (
                                 /* EMPLOYEE FORM */
                                 <>
                                     <div>
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <div className="bg-green-600 p-1.5 rounded">
-                                                <UserPlus className="w-4 h-4 text-white" />
-                                            </div>
-                                            <h3 className="font-semibold text-gray-900">Employee Information</h3>
-                                        </div>
-
                                         <div className="space-y-4">
-                                            {/* Full Name */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                                                <input
-                                                    type="text"
-                                                    value={employeeData.fullName}
-                                                    onChange={(e) => handleEmployeeChange('fullName', e.target.value)}
-                                                    onBlur={() => handleBlur('fullName')}
-                                                    placeholder="John Doe"
-                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.fullName && errors.fullName ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                />
-                                                {touched.fullName && errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
-                                            </div>
+                                            {/* ===== Employee Information Tab ===== */}
+                                            {activeTab === 'employee' && (
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center gap-3 p-3 rounded-xl mb-4 bg-blue-50 border border-blue-100">
+                                                        <div className="bg-blue-600 p-2 rounded-lg">
+                                                            <UserRound className="w-5 h-5 text-white" />
+                                                        </div>
+                                                        <span className="font-semibold text-gray-800">Employee Information</span>
+                                                    </div>
 
-                                            {/* Daily Rate & OT Rate */}
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Daily Rate (Rs)</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={employeeData.dailyRate || ''}
-                                                        onChange={(e) => handleEmployeeChange('dailyRate', parseFloat(e.target.value) || 0)}
-                                                        onBlur={() => handleBlur('dailyRate')}
-                                                        placeholder="0.00"
-                                                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.dailyRate && errors.dailyRate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                    />
-                                                    {touched.dailyRate && errors.dailyRate && <p className="text-red-500 text-xs mt-1">{errors.dailyRate}</p>}
+                                                    {/* Employee ID */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
+                                                        <div className="relative">
+                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <UserRound className="h-5 w-5 text-gray-400" />
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                value={employeeData.employeeId}
+                                                                onChange={(e) => handleEmployeeChange('employeeId', e.target.value)}
+                                                                onBlur={() => handleBlur('employeeId')}
+                                                                placeholder="Enter employee ID"
+                                                                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeId && errors.employeeId ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                            />
+                                                        </div>
+                                                        {touched.employeeId && errors.employeeId && <p className="text-red-500 text-xs mt-1">{errors.employeeId}</p>}
+                                                    </div>
+
+                                                    {/* Name */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                                                        <div className="relative">
+                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <UserRound className="h-5 w-5 text-gray-400" />
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                value={employeeData.fullName}
+                                                                onChange={(e) => handleEmployeeChange('fullName', e.target.value)}
+                                                                onBlur={() => handleBlur('fullName')}
+                                                                placeholder="Enter employee name"
+                                                                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.fullName && errors.fullName ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                            />
+                                                        </div>
+                                                        {touched.fullName && errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
+                                                    </div>
+
+                                                    {/* NIC */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">NIC</label>
+                                                        <div className="relative">
+                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <CreditCard className="h-5 w-5 text-gray-400" />
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                value={employeeData.nic || ''}
+                                                                onChange={(e) => handleEmployeeChange('nic', e.target.value)}
+                                                                placeholder="Enter employee NIC Number"
+                                                                className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Address */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                                                        <div className="relative">
+                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <MapPin className="h-5 w-5 text-gray-400" />
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                value={employeeData.address}
+                                                                onChange={(e) => handleEmployeeChange('address', e.target.value)}
+                                                                onBlur={() => handleBlur('address')}
+                                                                placeholder="Enter company address"
+                                                                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                            />
+                                                        </div>
+                                                        {touched.address && errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+                                                    </div>
+
+                                                    {/* EPF Number */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">EPF Number</label>
+                                                        <div className="relative">
+                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <Activity className="h-5 w-5 text-gray-400" />
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                value={employeeData.epfNumber || ''}
+                                                                onChange={(e) => handleEmployeeChange('epfNumber', e.target.value)}
+                                                                placeholder="Enter EPF Number"
+                                                                className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Email & Phone */}
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Email (optional)</label>
+                                                            <div className="relative">
+                                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                    <Mail className="h-5 w-5 text-gray-400" />
+                                                                </div>
+                                                                <input
+                                                                    type="email"
+                                                                    value={employeeData.email}
+                                                                    onChange={(e) => handleEmployeeChange('email', e.target.value)}
+                                                                    onBlur={() => handleBlur('email')}
+                                                                    placeholder="company@example.com"
+                                                                    className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                                />
+                                                            </div>
+                                                            {touched.email && errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                                                            <div className="relative">
+                                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                    <Phone className="h-5 w-5 text-gray-400" />
+                                                                </div>
+                                                                <input
+                                                                    type="tel"
+                                                                    value={employeeData.contactNumber}
+                                                                    onChange={(e) => handleEmployeeChange('contactNumber', e.target.value)}
+                                                                    onBlur={() => handleBlur('contactNumber')}
+                                                                    placeholder="+1 (555) 123-4567"
+                                                                    className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                                />
+                                                            </div>
+                                                            {touched.contactNumber && errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Designation */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
+                                                        <div className="relative">
+                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <Award className="h-5 w-5 text-gray-400" />
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                value={employeeData.designation}
+                                                                onChange={(e) => {
+                                                                    const filteredValue = e.target.value.replace(/[0-9]/g, '');
+                                                                    handleEmployeeChange('designation', filteredValue);
+                                                                }}
+                                                                onBlur={() => handleBlur('designation')}
+                                                                placeholder="Enter employee designation"
+                                                                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.designation && errors.designation ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                            />
+                                                        </div>
+                                                        {touched.designation && errors.designation && <p className="text-red-500 text-xs mt-1">{errors.designation}</p>}
+                                                    </div>
+
+                                                    {/* Joined Date */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Joined Date</label>
+                                                        <div className="relative">
+                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <Calendar className="h-5 w-5 text-gray-400" />
+                                                            </div>
+                                                            <input
+                                                                type="date"
+                                                                value={employeeData.joinedDate}
+                                                                onChange={(e) => handleEmployeeChange('joinedDate', e.target.value)}
+                                                                onBlur={() => handleBlur('joinedDate')}
+                                                                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.joinedDate && errors.joinedDate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                            />
+                                                        </div>
+                                                        {touched.joinedDate && errors.joinedDate && <p className="text-red-500 text-xs mt-1">{errors.joinedDate}</p>}
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">OT Rate (Rs) <span className="text-xs text-gray-400 font-normal ml-1">(Optional)</span></label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={employeeData.otRate || ''}
-                                                        onChange={(e) => handleEmployeeChange('otRate', parseFloat(e.target.value) || 0)}
-                                                        onBlur={() => handleBlur('otRate')}
-                                                        placeholder="0.00"
-                                                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                    />
-                                                    {touched.otRate && errors.otRate && <p className="text-red-500 text-xs mt-1">{errors.otRate}</p>}
+                                            )}
+
+                                            {/* ===== Payment Information Tab ===== */}
+                                            {activeTab === 'payment' && (
+                                                <div className="space-y-5">
+                                                    {/* Payment Information Banner */}
+                                                    <div className="flex items-center justify-between p-3 rounded-xl bg-blue-50 border border-blue-100">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="bg-blue-600 p-2 rounded-lg">
+                                                                <Briefcase className="w-5 h-5 text-white" />
+                                                            </div>
+                                                            <span className="font-semibold text-gray-800">Payment Information</span>
+                                                        </div>
+                                                        <select
+                                                            value={paymentType}
+                                                            onChange={(e) => setPaymentType(e.target.value as 'Monthly' | 'Daily')}
+                                                            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none cursor-pointer"
+                                                        >
+                                                            <option value="Monthly">Monthly</option>
+                                                            <option value="Daily">Daily</option>
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Monthly Basic */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Basic</label>
+                                                        <div className="relative">
+                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                value={monthlyBasic}
+                                                                onChange={(e) => setMonthlyBasic(e.target.value)}
+                                                                placeholder="Enter employee Monthly Basic"
+                                                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* EPF/ETF */}
+                                                    <div>
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEpfEnabled(!epfEnabled)}
+                                                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${epfEnabled ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                                            >
+                                                                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${epfEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                            </button>
+                                                            <span className="text-sm font-medium text-gray-700">EPF/ETF</span>
+                                                        </div>
+                                                        {epfEnabled && (
+                                                            <div className="relative">
+                                                                <input
+                                                                    type="text"
+                                                                    value={epfEtf}
+                                                                    onChange={(e) => setEpfEtf(e.target.value)}
+                                                                    placeholder="Enter EPF/ETF Amount"
+                                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* OT Rate */}
+                                                    <div>
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleEmployeeChange('otRate', employeeData.otRate ? 0 : (employeeData.otRate || 0))}
+                                                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${(employeeData.otRate && employeeData.otRate > 0) ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                                            >
+                                                                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${(employeeData.otRate && employeeData.otRate > 0) ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                            </button>
+                                                            <span className="text-sm font-medium text-gray-700">OT Rate</span>
+                                                        </div>
+                                                        <div className="relative">
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                value={employeeData.otRate || ''}
+                                                                onChange={(e) => handleEmployeeChange('otRate', parseFloat(e.target.value) || 0)}
+                                                                onBlur={() => handleBlur('otRate')}
+                                                                placeholder="Enter OT Rate (Rs)"
+                                                                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                            />
+                                                        </div>
+                                                        {touched.otRate && errors.otRate && <p className="text-red-500 text-xs mt-1">{errors.otRate}</p>}
+                                                    </div>
+
+                                                    {/* Allowance */}
+                                                    <div>
+                                                        <div className="flex items-center gap-3 mb-3">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setAllowanceEnabled(!allowanceEnabled)}
+                                                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${allowanceEnabled ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                                            >
+                                                                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${allowanceEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                            </button>
+                                                            <span className="text-sm font-medium text-gray-700">Allowance</span>
+                                                        </div>
+
+                                                        {allowanceEnabled && (
+                                                            <>
+                                                                {/* Column Headers */}
+                                                                <div className="grid grid-cols-[1fr_1fr_36px] gap-3 mb-2">
+                                                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Type</span>
+                                                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Amount</span>
+                                                                    <span></span>
+                                                                </div>
+
+                                                                {/* Allowance Rows */}
+                                                                {allowances.map((allowance, index) => (
+                                                                    <div key={index} className="grid grid-cols-[1fr_1fr_36px] gap-3 mb-2 items-center">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={allowance.type}
+                                                                            onChange={(e) => {
+                                                                                const updated = [...allowances];
+                                                                                updated[index].type = e.target.value;
+                                                                                setAllowances(updated);
+                                                                            }}
+                                                                            placeholder="Travelling"
+                                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm transition-all"
+                                                                        />
+                                                                        <input
+                                                                            type="text"
+                                                                            value={allowance.amount}
+                                                                            onChange={(e) => {
+                                                                                const updated = [...allowances];
+                                                                                updated[index].amount = e.target.value;
+                                                                                setAllowances(updated);
+                                                                            }}
+                                                                            placeholder="Enter Amount"
+                                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm transition-all"
+                                                                        />
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                if (allowances.length > 1) {
+                                                                                    setAllowances(allowances.filter((_, i) => i !== index));
+                                                                                }
+                                                                            }}
+                                                                            className="flex items-center justify-center"
+                                                                            disabled={allowances.length <= 1}
+                                                                        >
+                                                                            <MinusCircle className={`w-5 h-5 ${allowances.length <= 1 ? 'text-gray-300' : 'text-red-400 hover:text-red-600 cursor-pointer'} transition-colors`} />
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+
+                                                                {/* Add Extra Allowance Row */}
+                                                                <div
+                                                                    onClick={() => setAllowances([...allowances, { type: '', amount: '' }])}
+                                                                    className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center cursor-pointer group mt-1"
+                                                                >
+                                                                    <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg group-hover:border-blue-300 transition-colors">
+                                                                        <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+                                                                        </svg>
+                                                                        <span className="text-sm text-gray-300">Add Extra Allowances</span>
+                                                                    </div>
+                                                                    <div className="px-3 py-2 border border-gray-200 rounded-lg group-hover:border-blue-300 transition-colors">
+                                                                        <span className="text-sm text-gray-300">Enter Amount</span>
+                                                                    </div>
+                                                                    <div className="flex items-center justify-center">
+                                                                        <PlusCircle className="w-5 h-5 text-blue-400 group-hover:text-blue-600 transition-colors" />
+                                                                    </div>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Keep existing dailyRate/otRate as hidden so existing submission still works */}
+                                                    <input type="hidden" value={employeeData.dailyRate || 0} />
+                                                    <input type="hidden" value={employeeData.otRate || 0} />
                                                 </div>
-                                            </div>
+                                            )}
 
-                                            {/* Employee ID (Manual Input) */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
-                                                <input
-                                                    type="text"
-                                                    value={employeeData.employeeId}
-                                                    onChange={(e) => handleEmployeeChange('employeeId', e.target.value)}
-                                                    onBlur={() => handleBlur('employeeId')}
-                                                    placeholder="EMP001"
-                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeId && errors.employeeId ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                />
-                                                {touched.employeeId && errors.employeeId && <p className="text-red-500 text-xs mt-1">{errors.employeeId}</p>}
-                                            </div>
-
-                                            {/* Contact Number */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
-                                                <input
-                                                    type="tel"
-                                                    value={employeeData.contactNumber}
-                                                    onChange={(e) => handleEmployeeChange('contactNumber', e.target.value)}
-                                                    onBlur={() => handleBlur('contactNumber')}
-                                                    placeholder="+94 77 123 4567"
-                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                />
-                                                {touched.contactNumber && errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
-                                            </div>
-
-                                            {/* Email (New) */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Email (Optional)</label>
-                                                <input
-                                                    type="email"
-                                                    value={employeeData.email}
-                                                    onChange={(e) => handleEmployeeChange('email', e.target.value)}
-                                                    onBlur={() => handleBlur('email')}
-                                                    placeholder="employee@example.com"
-                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                />
-                                                {touched.email && errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-                                            </div>
-
-                                            {/* Designation */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Designation (Optional)</label>
-                                                <input
-                                                    type="text"
-                                                    value={employeeData.designation}
-                                                    onChange={(e) => {
-                                                        const filteredValue = e.target.value.replace(/[0-9]/g, '');
-                                                        handleEmployeeChange('designation', filteredValue);
-                                                    }}
-                                                    onBlur={() => handleBlur('designation')}
-                                                    placeholder="Software Engineer"
-                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.designation && errors.designation ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                />
-                                                {touched.designation && errors.designation && <p className="text-red-500 text-xs mt-1">{errors.designation}</p>}
-                                            </div>
-
-                                            {/* Address */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Address (Optional)</label>
-                                                <input
-                                                    type="text"
-                                                    value={employeeData.address}
-                                                    onChange={(e) => handleEmployeeChange('address', e.target.value)}
-                                                    onBlur={() => handleBlur('address')}
-                                                    placeholder="123 Street, City"
-                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                />
-                                                {touched.address && errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
-                                            </div>
-
-                                            {/* Joined Date */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Joined Date</label>
-                                                <input
-                                                    type="date"
-                                                    value={employeeData.joinedDate}
-                                                    onChange={(e) => handleEmployeeChange('joinedDate', e.target.value)}
-                                                    onBlur={() => handleBlur('joinedDate')}
-                                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.joinedDate && errors.joinedDate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                />
-                                                {touched.joinedDate && errors.joinedDate && <p className="text-red-500 text-xs mt-1">{errors.joinedDate}</p>}
-                                            </div>
                                             {/* Hidden Fields */}
                                             <input type="hidden" value={employeeData.department} />
                                         </div>
@@ -532,18 +766,36 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
 
                     {/* Footer */}
                     <div className="p-6 border-t border-gray-200">
-                        <button
-                            type="submit"
-                            onClick={handleSubmit}
-                            disabled={isSubmitting || !isFormValid()}
-                            className={`w-full text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isCompany ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
-                                }`}
-                        >
-                            {isSubmitting ? 'Saving...' : (isEdit ? 'Update' : 'Finish')}
-                        </button>
+                        {isCompany ? (
+                            <button
+                                type="submit"
+                                onClick={handleSubmit}
+                                disabled={isSubmitting || !isFormValid()}
+                                className="w-full text-white bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSubmitting ? 'Saving...' : (isEdit ? 'Update' : 'Finish')}
+                            </button>
+                        ) : activeTab === 'employee' ? (
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('payment')}
+                                className="w-full text-white bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-semibold transition-colors"
+                            >
+                                Next
+                            </button>
+                        ) : (
+                            <button
+                                type="submit"
+                                onClick={handleSubmit}
+                                disabled={isSubmitting || !isFormValid()}
+                                className="w-full text-white bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSubmitting ? 'Saving...' : (isEdit ? 'Update' : 'Finish')}
+                            </button>
+                        )}
                     </div>
-                </div >
-            </div >
+                </div>
+            </div>
         </>
     );
 };
