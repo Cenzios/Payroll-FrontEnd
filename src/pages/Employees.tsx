@@ -457,9 +457,9 @@ const Employees = () => {
                                                     Rs:
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs font-medium text-gray-500 uppercase">Daily Rate</p>
+                                                    <p className="text-xs font-medium text-gray-500 uppercase">Basic Salary</p>
                                                     <p className="text-sm font-medium text-gray-900">
-                                                        {selectedEmployee.dailyRate.toFixed(2)}
+                                                        {(selectedEmployee.basicSalary ?? 0).toFixed(2)}
                                                     </p>
                                                 </div>
                                             </div>

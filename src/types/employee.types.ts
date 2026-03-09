@@ -1,3 +1,8 @@
+export interface RecurringEntry {
+    type: string;
+    amount: number;
+}
+
 export interface Employee {
     id: string;
     fullName: string;
@@ -8,15 +13,21 @@ export interface Employee {
     designation: string;
     department: string;
     email?: string;
-    dailyRate: number;
+    basicSalary: number;
+    salaryType?: 'DAILY' | 'MONTHLY';
     otRate: number;
     epfEnabled: boolean;
+    epfNumber?: string;
+    epfEtfAmount?: number;
+    allowanceEnabled: boolean;
+    deductionEnabled: boolean;
+    employeeNIC?: string;
     status: 'ACTIVE' | 'INACTIVE';
     companyId: string;
     createdAt?: string;
     updatedAt?: string;
-    nic?: string;
-    epfNumber?: string;
+    recurringAllowances?: RecurringEntry[];
+    recurringDeductions?: RecurringEntry[];
 }
 
 export interface CreateEmployeeRequest {
@@ -27,10 +38,17 @@ export interface CreateEmployeeRequest {
     joinedDate: string;
     designation: string;
     department: string;
-    email?: string; // Optional as per user request flow, but schema has it
-    dailyRate: number;
+    email?: string;
+    basicSalary: number;
+    salaryType?: 'DAILY' | 'MONTHLY';
     otRate?: number;
-    companyId: string;
-    nic?: string;
+    epfEnabled?: boolean;
     epfNumber?: string;
+    epfEtfAmount?: number;
+    allowanceEnabled?: boolean;
+    deductionEnabled?: boolean;
+    employeeNIC?: string;
+    companyId: string;
+    recurringAllowances?: RecurringEntry[];
+    recurringDeductions?: RecurringEntry[];
 }
