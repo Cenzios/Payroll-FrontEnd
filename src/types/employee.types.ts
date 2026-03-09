@@ -15,6 +15,8 @@ export interface Employee {
     companyId: string;
     createdAt?: string;
     updatedAt?: string;
+    nic?: string;
+    epfNumber?: string;
 }
 
 export interface CreateEmployeeRequest {
@@ -29,4 +31,6 @@ export interface CreateEmployeeRequest {
     dailyRate: number;
     otRate?: number;
     companyId: string;
+    nic?: string;
+    epfNumber?: string;
 }
