@@ -12,6 +12,16 @@ interface UniversalDrawerProps {
     initialData?: any; // For edit mode
 }
 
+const Toggle = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) => (
+    <button
+        type="button"
+        onClick={onToggle}
+        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${enabled ? 'bg-blue-600' : 'bg-gray-300'}`}
+    >
+        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${enabled ? 'translate-x-4' : 'translate-x-0'}`} />
+    </button>
+);
+
 const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialData }: UniversalDrawerProps) => {
     // Company Form State
     const [companyData, setCompanyData] = useState<CreateCompanyRequest>({
@@ -32,41 +42,47 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
         designation: '',
         department: 'General',
         email: '',
-        dailyRate: 0,
+        basicSalary: 0,
+        salaryType: 'DAILY',
         otRate: 0,
+        epfEnabled: true,
+        allowanceEnabled: false,
+        deductionEnabled: false,
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeTab, setActiveTab] = useState<'employee' | 'payment'>('employee');
-    const [paymentType, setPaymentType] = useState<'Monthly' | 'Daily'>('Monthly');
-    const [monthlyBasic, setMonthlyBasic] = useState('');
+
+    // Payment tab state
     const [epfEtf, setEpfEtf] = useState('');
-    const [allowances, setAllowances] = useState<{ type: string; amount: string }[]>([{ type: '', amount: '' }]);
     const [epfEnabled, setEpfEnabled] = useState(true);
-    const [allowanceEnabled, setAllowanceEnabled] = useState(true);
+    const [allowanceEnabled, setAllowanceEnabled] = useState(false);
+    const [deductionEnabled, setDeductionEnabled] = useState(false);
+    const [allowances, setAllowances] = useState<{ type: string; amount: string }[]>([{ type: '', amount: '' }]);
+    const [deductions, setDeductions] = useState<{ type: string; amount: string }[]>([{ type: '', amount: '' }]);
 
     // Reset forms when drawer opens/closes or mode changes or initialData changes
     useEffect(() => {
         if (isOpen) {
-            setActiveTab('employee'); // Reset tab on open
+            setActiveTab('employee');
             if (mode === 'company') {
                 if (initialData) {
                     setCompanyData(initialData);
                 } else {
-                    setCompanyData({
-                        name: '',
-                        email: '',
-                        address: '',
-                        contactNumber: '',
-                        departments: [],
-                    });
+                    setCompanyData({ name: '', email: '', address: '', contactNumber: '', departments: [] });
                 }
             } else {
                 if (initialData) {
                     setEmployeeData({
                         ...initialData,
-                        joinedDate: initialData.joinedDate ? new Date(initialData.joinedDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                        joinedDate: initialData.joinedDate
+                            ? new Date(initialData.joinedDate).toISOString().split('T')[0]
+                            : new Date().toISOString().split('T')[0],
                     });
+                    setEpfEnabled(initialData.epfEnabled ?? true);
+                    setEpfEtf(initialData.epfEtfAmount?.toString() || '');
+                    setAllowanceEnabled(initialData.allowanceEnabled ?? false);
+                    setDeductionEnabled(initialData.deductionEnabled ?? false);
                 } else {
                     setEmployeeData({
                         fullName: '',
@@ -77,9 +93,19 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                         designation: '',
                         department: 'General',
                         email: '',
-                        dailyRate: 0,
+                        basicSalary: 0,
+                        salaryType: 'DAILY',
                         otRate: 0,
+                        epfEnabled: true,
+                        allowanceEnabled: false,
+                        deductionEnabled: false,
                     });
+                    setEpfEnabled(true);
+                    setEpfEtf('');
+                    setAllowanceEnabled(false);
+                    setDeductionEnabled(false);
+                    setAllowances([{ type: '', amount: '' }]);
+                    setDeductions([{ type: '', amount: '' }]);
                 }
             }
         }
@@ -130,9 +156,9 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                 case 'designation':
                     if (value && /\d/.test(value)) error = 'Designation cannot contain numbers';
                     break;
-                case 'dailyRate':
-                    if (value === undefined || value === null || value === '' || isNaN(Number(value))) error = 'Daily rate is required';
-                    else if (Number(value) <= 0) error = 'Daily rate must be a positive number';
+                case 'basicSalary':
+                    if (value === undefined || value === null || value === '' || isNaN(Number(value))) error = 'Basic salary is required';
+                    else if (Number(value) < 0) error = 'Basic salary cannot be negative';
                     break;
                 case 'otRate':
                     if (value !== undefined && value !== null && value !== '' && isNaN(Number(value))) error = 'OT rate must be a number';
@@ -173,7 +199,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
             const requiredFields: (keyof CreateCompanyRequest)[] = ['name', 'email', 'address', 'contactNumber'];
             return requiredFields.every(field => !validateField(field, companyData[field], 'company'));
         } else {
-            const requiredFields: (keyof CreateEmployeeRequest)[] = ['fullName', 'employeeId', 'contactNumber', 'dailyRate', 'joinedDate'];
+            const requiredFields: (keyof CreateEmployeeRequest)[] = ['fullName', 'employeeId', 'contactNumber', 'joinedDate'];
             return requiredFields.every(field => !validateField(field, (employeeData as any)[field], 'employee')) &&
                 (!employeeData.email || !validateField('email', employeeData.email, 'employee'));
         }
@@ -188,7 +214,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                 if (err) newErrors[f] = err;
             });
         } else {
-            const fields: (keyof CreateEmployeeRequest)[] = ['fullName', 'employeeId', 'contactNumber', 'designation', 'dailyRate', 'otRate', 'joinedDate', 'address', 'email'];
+            const fields: (keyof CreateEmployeeRequest)[] = ['fullName', 'employeeId', 'contactNumber', 'designation', 'otRate', 'joinedDate', 'address', 'email'];
             fields.forEach(f => {
                 const err = validateField(f, (employeeData as any)[f], 'employee');
                 if (err) newErrors[f] = err;
@@ -201,7 +227,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
         if (mode === 'company') {
             ['name', 'email', 'contactNumber', 'address'].forEach(f => allTouched[f] = true);
         } else {
-            ['fullName', 'employeeId', 'contactNumber', 'designation', 'dailyRate', 'otRate', 'joinedDate', 'address', 'email'].forEach(f => allTouched[f] = true);
+            ['fullName', 'employeeId', 'contactNumber', 'designation', 'otRate', 'joinedDate', 'address', 'email'].forEach(f => allTouched[f] = true);
         }
         setTouched(allTouched);
 
@@ -219,16 +245,39 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                 await onSubmit(companyData);
             } else {
                 if (!companyId && !initialData) {
-                    if (!companyId && !employeeData.companyId) throw new Error("Company ID is missing");
+                    if (!companyId && !employeeData.companyId) throw new Error('Company ID is missing');
                 }
+
+                // Build recurring allowances array
+                const recurringAllowances = allowanceEnabled
+                    ? allowances
+                        .filter(a => a.type.trim() && a.amount.trim() && parseFloat(a.amount) > 0)
+                        .map(a => ({ type: a.type.trim(), amount: parseFloat(a.amount) }))
+                    : [];
+
+                // Build recurring deductions array
+                const recurringDeductions = deductionEnabled
+                    ? deductions
+                        .filter(d => d.type.trim() && d.amount.trim() && parseFloat(d.amount) > 0)
+                        .map(d => ({ type: d.type.trim(), amount: parseFloat(d.amount) }))
+                    : [];
 
                 const finalEmployeeData = {
                     ...employeeData,
-                    email: employeeData.email?.trim() || "",
-                    designation: employeeData.designation?.trim() || "",
-                    address: employeeData.address?.trim() || "",
+                    email: employeeData.email?.trim() || '',
+                    designation: employeeData.designation?.trim() || '',
+                    address: employeeData.address?.trim() || '',
                     companyId: companyId || employeeData.companyId,
                     department: employeeData.department || 'General',
+                    basicSalary: parseFloat(String(employeeData.basicSalary)) || 0,
+                    salaryType: employeeData.salaryType || 'DAILY',
+                    otRate: parseFloat(String(employeeData.otRate)) || 0,
+                    epfEnabled,
+                    epfEtfAmount: epfEnabled && epfEtf ? parseFloat(epfEtf) : undefined,
+                    allowanceEnabled,
+                    deductionEnabled,
+                    recurringAllowances,
+                    recurringDeductions,
                 } as CreateEmployeeRequest;
 
                 await onSubmit(finalEmployeeData);
@@ -452,8 +501,8 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                             </div>
                                                             <input
                                                                 type="text"
-                                                                value={employeeData.nic || ''}
-                                                                onChange={(e) => handleEmployeeChange('nic', e.target.value)}
+                                                                value={employeeData.employeeNIC || ''}
+                                                                onChange={(e) => handleEmployeeChange('employeeNIC', e.target.value)}
                                                                 placeholder="Enter employee NIC Number"
                                                                 className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all border-gray-300 focus:ring-blue-500 focus:border-transparent"
                                                             />
@@ -472,7 +521,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                                 value={employeeData.address}
                                                                 onChange={(e) => handleEmployeeChange('address', e.target.value)}
                                                                 onBlur={() => handleBlur('address')}
-                                                                placeholder="Enter company address"
+                                                                placeholder="Enter address"
                                                                 className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                             />
                                                         </div>
@@ -509,7 +558,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                                     value={employeeData.email}
                                                                     onChange={(e) => handleEmployeeChange('email', e.target.value)}
                                                                     onBlur={() => handleBlur('email')}
-                                                                    placeholder="company@example.com"
+                                                                    placeholder="employee@example.com"
                                                                     className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                                 />
                                                             </div>
@@ -526,7 +575,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                                     value={employeeData.contactNumber}
                                                                     onChange={(e) => handleEmployeeChange('contactNumber', e.target.value)}
                                                                     onBlur={() => handleBlur('contactNumber')}
-                                                                    placeholder="+1 (555) 123-4567"
+                                                                    placeholder="0771234567"
                                                                     className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
                                                                 />
                                                             </div>
@@ -588,52 +637,47 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                             <span className="font-semibold text-gray-800">Payment Information</span>
                                                         </div>
                                                         <select
-                                                            value={paymentType}
-                                                            onChange={(e) => setPaymentType(e.target.value as 'Monthly' | 'Daily')}
+                                                            value={employeeData.salaryType || 'DAILY'}
+                                                            onChange={(e) => handleEmployeeChange('salaryType', e.target.value as 'DAILY' | 'MONTHLY')}
                                                             className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none cursor-pointer"
                                                         >
-                                                            <option value="Monthly">Monthly</option>
-                                                            <option value="Daily">Daily</option>
+                                                            <option value="MONTHLY">Monthly</option>
+                                                            <option value="DAILY">Daily</option>
                                                         </select>
                                                     </div>
 
-                                                    {/* Monthly Basic */}
+                                                    {/* Basic Salary */}
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Basic</label>
-                                                        <div className="relative">
-                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                                <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-                                                            </div>
-                                                            <input
-                                                                type="text"
-                                                                value={monthlyBasic}
-                                                                onChange={(e) => setMonthlyBasic(e.target.value)}
-                                                                placeholder="Enter employee Monthly Basic"
-                                                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                                                            />
-                                                        </div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                            {employeeData.salaryType === 'MONTHLY' ? 'Monthly Basic Salary' : 'Daily Basic Rate'} (Rs)
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={employeeData.basicSalary || ''}
+                                                            onChange={(e) => handleEmployeeChange('basicSalary', parseFloat(e.target.value) || 0)}
+                                                            onBlur={() => handleBlur('basicSalary')}
+                                                            placeholder={employeeData.salaryType === 'MONTHLY' ? 'Enter monthly basic salary' : 'Enter daily rate'}
+                                                            className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.basicSalary && errors.basicSalary ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                        />
+                                                        {touched.basicSalary && errors.basicSalary && <p className="text-red-500 text-xs mt-1">{errors.basicSalary}</p>}
                                                     </div>
 
                                                     {/* EPF/ETF */}
                                                     <div>
                                                         <div className="flex items-center gap-3 mb-2">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setEpfEnabled(!epfEnabled)}
-                                                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${epfEnabled ? 'bg-blue-600' : 'bg-gray-300'}`}
-                                                            >
-                                                                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${epfEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
-                                                            </button>
+                                                            <Toggle enabled={epfEnabled} onToggle={() => setEpfEnabled(!epfEnabled)} />
                                                             <span className="text-sm font-medium text-gray-700">EPF/ETF</span>
                                                         </div>
                                                         {epfEnabled && (
                                                             <div className="relative">
                                                                 <input
-                                                                    type="text"
+                                                                    type="number"
+                                                                    min="0"
                                                                     value={epfEtf}
                                                                     onChange={(e) => setEpfEtf(e.target.value)}
-                                                                    placeholder="Enter EPF/ETF Amount"
-                                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                                                    placeholder="Enter EPF/ETF Amount (Rs)"
+                                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                 />
                                                             </div>
                                                         )}
@@ -641,53 +685,34 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
 
                                                     {/* OT Rate */}
                                                     <div>
-                                                        <div className="flex items-center gap-3 mb-2">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleEmployeeChange('otRate', employeeData.otRate ? 0 : (employeeData.otRate || 0))}
-                                                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${(employeeData.otRate && employeeData.otRate > 0) ? 'bg-blue-600' : 'bg-gray-300'}`}
-                                                            >
-                                                                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${(employeeData.otRate && employeeData.otRate > 0) ? 'translate-x-4' : 'translate-x-0'}`} />
-                                                            </button>
-                                                            <span className="text-sm font-medium text-gray-700">OT Rate</span>
-                                                        </div>
-                                                        <div className="relative">
-                                                            <input
-                                                                type="number"
-                                                                min="0"
-                                                                value={employeeData.otRate || ''}
-                                                                onChange={(e) => handleEmployeeChange('otRate', parseFloat(e.target.value) || 0)}
-                                                                onBlur={() => handleBlur('otRate')}
-                                                                placeholder="Enter OT Rate (Rs)"
-                                                                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
-                                                            />
-                                                        </div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">OT Rate (Rs/hr)</label>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={employeeData.otRate || ''}
+                                                            onChange={(e) => handleEmployeeChange('otRate', parseFloat(e.target.value) || 0)}
+                                                            onBlur={() => handleBlur('otRate')}
+                                                            placeholder="Enter OT Rate (Rs)"
+                                                            className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? 'border-red-500 focus:ring-red-100' : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'}`}
+                                                        />
                                                         {touched.otRate && errors.otRate && <p className="text-red-500 text-xs mt-1">{errors.otRate}</p>}
                                                     </div>
 
-                                                    {/* Allowance */}
+                                                    {/* ── Allowances ── */}
                                                     <div>
                                                         <div className="flex items-center gap-3 mb-3">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setAllowanceEnabled(!allowanceEnabled)}
-                                                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${allowanceEnabled ? 'bg-blue-600' : 'bg-gray-300'}`}
-                                                            >
-                                                                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${allowanceEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
-                                                            </button>
-                                                            <span className="text-sm font-medium text-gray-700">Allowance</span>
+                                                            <Toggle enabled={allowanceEnabled} onToggle={() => setAllowanceEnabled(!allowanceEnabled)} />
+                                                            <span className="text-sm font-medium text-gray-700">Recurring Allowances</span>
                                                         </div>
 
                                                         {allowanceEnabled && (
                                                             <>
-                                                                {/* Column Headers */}
                                                                 <div className="grid grid-cols-[1fr_1fr_36px] gap-3 mb-2">
                                                                     <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Type</span>
-                                                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Amount</span>
+                                                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Amount (Rs)</span>
                                                                     <span></span>
                                                                 </div>
 
-                                                                {/* Allowance Rows */}
                                                                 {allowances.map((allowance, index) => (
                                                                     <div key={index} className="grid grid-cols-[1fr_1fr_36px] gap-3 mb-2 items-center">
                                                                         <input
@@ -702,15 +727,16 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm transition-all"
                                                                         />
                                                                         <input
-                                                                            type="text"
+                                                                            type="number"
+                                                                            min="0"
                                                                             value={allowance.amount}
                                                                             onChange={(e) => {
                                                                                 const updated = [...allowances];
                                                                                 updated[index].amount = e.target.value;
                                                                                 setAllowances(updated);
                                                                             }}
-                                                                            placeholder="Enter Amount"
-                                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm transition-all"
+                                                                            placeholder="Amount"
+                                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                         />
                                                                         <button
                                                                             type="button"
@@ -727,31 +753,95 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
                                                                     </div>
                                                                 ))}
 
-                                                                {/* Add Extra Allowance Row */}
                                                                 <div
                                                                     onClick={() => setAllowances([...allowances, { type: '', amount: '' }])}
                                                                     className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center cursor-pointer group mt-1"
                                                                 >
-                                                                    <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg group-hover:border-blue-300 transition-colors">
-                                                                        <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
-                                                                        </svg>
-                                                                        <span className="text-sm text-gray-300">Add Extra Allowances</span>
+                                                                    <div className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded-lg group-hover:border-blue-300 transition-colors">
+                                                                        <PlusCircle className="w-4 h-4 text-gray-300 group-hover:text-blue-400" />
+                                                                        <span className="text-sm text-gray-400">Add Allowance</span>
                                                                     </div>
-                                                                    <div className="px-3 py-2 border border-gray-200 rounded-lg group-hover:border-blue-300 transition-colors">
-                                                                        <span className="text-sm text-gray-300">Enter Amount</span>
+                                                                    <div className="px-3 py-2 border border-dashed border-gray-300 rounded-lg group-hover:border-blue-300 transition-colors">
+                                                                        <span className="text-sm text-gray-400">Amount</span>
                                                                     </div>
-                                                                    <div className="flex items-center justify-center">
-                                                                        <PlusCircle className="w-5 h-5 text-blue-400 group-hover:text-blue-600 transition-colors" />
-                                                                    </div>
+                                                                    <div></div>
                                                                 </div>
                                                             </>
                                                         )}
                                                     </div>
 
-                                                    {/* Keep existing dailyRate/otRate as hidden so existing submission still works */}
-                                                    <input type="hidden" value={employeeData.dailyRate || 0} />
-                                                    <input type="hidden" value={employeeData.otRate || 0} />
+                                                    {/* ── Deductions ── */}
+                                                    <div>
+                                                        <div className="flex items-center gap-3 mb-3">
+                                                            <Toggle enabled={deductionEnabled} onToggle={() => setDeductionEnabled(!deductionEnabled)} />
+                                                            <span className="text-sm font-medium text-gray-700">Recurring Deductions</span>
+                                                        </div>
+
+                                                        {deductionEnabled && (
+                                                            <>
+                                                                <div className="grid grid-cols-[1fr_1fr_36px] gap-3 mb-2">
+                                                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Type</span>
+                                                                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Amount (Rs)</span>
+                                                                    <span></span>
+                                                                </div>
+
+                                                                {deductions.map((deduction, index) => (
+                                                                    <div key={index} className="grid grid-cols-[1fr_1fr_36px] gap-3 mb-2 items-center">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={deduction.type}
+                                                                            onChange={(e) => {
+                                                                                const updated = [...deductions];
+                                                                                updated[index].type = e.target.value;
+                                                                                setDeductions(updated);
+                                                                            }}
+                                                                            placeholder="Loan"
+                                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none text-sm transition-all"
+                                                                        />
+                                                                        <input
+                                                                            type="number"
+                                                                            min="0"
+                                                                            value={deduction.amount}
+                                                                            onChange={(e) => {
+                                                                                const updated = [...deductions];
+                                                                                updated[index].amount = e.target.value;
+                                                                                setDeductions(updated);
+                                                                            }}
+                                                                            placeholder="Amount"
+                                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none text-sm transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                        />
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                if (deductions.length > 1) {
+                                                                                    setDeductions(deductions.filter((_, i) => i !== index));
+                                                                                }
+                                                                            }}
+                                                                            className="flex items-center justify-center"
+                                                                            disabled={deductions.length <= 1}
+                                                                        >
+                                                                            <MinusCircle className={`w-5 h-5 ${deductions.length <= 1 ? 'text-gray-300' : 'text-red-400 hover:text-red-600 cursor-pointer'} transition-colors`} />
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+
+                                                                <div
+                                                                    onClick={() => setDeductions([...deductions, { type: '', amount: '' }])}
+                                                                    className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center cursor-pointer group mt-1"
+                                                                >
+                                                                    <div className="flex items-center gap-2 px-3 py-2 border border-dashed border-red-200 rounded-lg group-hover:border-red-400 transition-colors">
+                                                                        <PlusCircle className="w-4 h-4 text-red-300 group-hover:text-red-500" />
+                                                                        <span className="text-sm text-gray-400">Add Deduction</span>
+                                                                    </div>
+                                                                    <div className="px-3 py-2 border border-dashed border-red-200 rounded-lg group-hover:border-red-400 transition-colors">
+                                                                        <span className="text-sm text-gray-400">Amount</span>
+                                                                    </div>
+                                                                    <div></div>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+
                                                 </div>
                                             )}
 
