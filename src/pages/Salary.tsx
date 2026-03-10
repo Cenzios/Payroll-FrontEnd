@@ -239,27 +239,38 @@ const Salary = () => {
             return;
         }
 
-        const dailyRate = emp.dailyRate;
-        const basicSalary = dailyRate * workedDays;
+        let basicSalaryForCalc = emp.basicSalary || 0;
+        let basicPay = 0;
+
+        if (emp.salaryType === 'MONTHLY') {
+            basicPay = (basicSalaryForCalc / companyWorkingDays) * workedDays;
+        } else {
+            basicPay = basicSalaryForCalc * workedDays;
+        }
+
+        const allowanceAmount = (salaryAllowances[emp.id] || []).reduce((sum, a) => sum + (a.amount || 0), 0);
+        const deductionAmount = (salaryDeductions[emp.id] || []).reduce((sum, d) => sum + (d.amount || 0), 0);
 
         // Calculations
         let epfEmployee = 0;
-        let epfEmployer = basicSalary * 0.12;
-        let etfEmployer = basicSalary * 0.03;
+        let epfEmployer = basicPay * 0.12;
+        let etfEmployer = basicPay * 0.03;
 
         if (isEpfEnabled) {
-            epfEmployee = basicSalary * 0.08;
+            epfEmployee = basicPay * 0.08;
         } else {
             epfEmployer = 0;
             etfEmployer = 0;
         }
 
         const tax = 0; // Tax will be calculated by backend
-        const totalDeductions = epfEmployee + tax + salaryAdvance;
-        const netSalary = (basicSalary + otAmount) - totalDeductions;
+        const totalDeductions = epfEmployee + tax + salaryAdvance + deductionAmount;
+        const netSalary = (basicPay + otAmount + allowanceAmount) - totalDeductions;
 
         const details = {
-            basicSalary,
+            basicSalary: emp.basicSalary || 0,
+            salaryType: emp.salaryType || 'DAILY',
+            basicPay,
             epfEmployee,
             epfEmployer,
             etfEmployer,
@@ -267,7 +278,6 @@ const Salary = () => {
             totalDeductions,
             netSalary,
             workedDays,
-            dailyRate,
             isEpfEnabled,
             otHours,
             otAmount,
@@ -277,8 +287,10 @@ const Salary = () => {
             etf3: etfEmployer, // For display purposes
             deductions: [
                 { name: 'Tax (PAYE)', amount: tax },
-                { name: 'Salary Advance', amount: salaryAdvance }
-            ]
+                { name: 'Salary Advance', amount: salaryAdvance },
+                ...(salaryDeductions[emp.id] || []).map(d => ({ name: d.type, amount: d.amount }))
+            ],
+            allowances: (salaryAllowances[emp.id] || []).map(a => ({ name: a.type, amount: a.amount }))
         };
 
         dispatch(setPreviewPayslip(details));
@@ -293,7 +305,7 @@ const Salary = () => {
                 month: selectedMonth + 1,
                 year: selectedYear,
                 workingDays: workedDays,
-                basicPay: basicSalary,
+                basicPay: basicPay,
                 otHours: otHours,
                 otAmount: otAmount,
                 salaryAdvance: salaryAdvance,
@@ -301,7 +313,10 @@ const Salary = () => {
                 employerEPF: epfEmployer,
                 etfAmount: etfEmployer,
                 netSalary: netSalary,
-                isEpfEnabled: isEpfEnabled
+                isEpfEnabled: isEpfEnabled,
+                companyWorkingDays: companyWorkingDays,
+                allowances: salaryAllowances[emp.id] || [],
+                deductions: salaryDeductions[emp.id] || []
             });
             setToast({ message: 'Salary saved successfully!', type: 'success' });
         } catch (error: any) {
@@ -345,12 +360,14 @@ const Salary = () => {
             startY: 75,
             head: [['Description', 'Amount (Rs.)']],
             body: [
-                ['Daily Rate', previewPayslip.dailyRate.toLocaleString()],
+                ['Rate Type', previewPayslip.salaryType],
+                ['Basic Rate', previewPayslip.basicSalary.toLocaleString()],
                 ['Working Days', companyWorkingDays.toString()],
                 ['Worked Days', previewPayslip.workedDays.toString()],
-                [`Basic Salary (${previewPayslip.dailyRate} x ${previewPayslip.workedDays})`, previewPayslip.basicSalary.toLocaleString()],
+                ['Calculated Basic Pay', previewPayslip.basicPay.toLocaleString()],
                 ...(previewPayslip.otAmount > 0 ? [[`OT Amount (${previewPayslip.otHours} hrs)`, previewPayslip.otAmount.toLocaleString()]] : []),
-                ['Gross Earnings', (previewPayslip.basicSalary + previewPayslip.otAmount).toLocaleString()]
+                ...(previewPayslip.allowances || []).map((a: any) => [a.name, a.amount.toLocaleString()]),
+                ['Gross Earnings', (previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0)).toLocaleString()]
             ],
             theme: 'plain',
             styles: { fontSize: 10, cellPadding: 2 },
@@ -380,11 +397,13 @@ const Salary = () => {
             currentY += 7;
         }
 
-        // Add other deductions (e.g., Tax, Salary Advance)
-        previewPayslip.deductions.forEach(d => {
-            doc.text(d.name, 14, currentY);
-            doc.text(d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
-            currentY += 7;
+        // Add other deductions (e.g., Tax, Salary Advance, Custom Deductions)
+        previewPayslip.deductions.forEach((d: any) => {
+            if (d.amount > 0) {
+                doc.text(d.name, 14, currentY);
+                doc.text(d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
+                currentY += 7;
+            }
         });
 
         // Total Deductions
@@ -449,15 +468,18 @@ const Salary = () => {
             ['Designation', selectedEmployee.designation],
             [],
             ['EARNINGS', 'Amount (Rs.)'],
-            ['Daily Rate', previewPayslip.dailyRate],
+            ['Rate Type', previewPayslip.salaryType],
+            ['Basic Rate', previewPayslip.basicSalary],
+            ['Working Days', companyWorkingDays],
             ['Worked Days', previewPayslip.workedDays],
-            ['Basic Salary', previewPayslip.basicSalary],
+            ['Calculated Basic Pay', previewPayslip.basicPay],
             ...(previewPayslip.otAmount > 0 ? [[`OT Amount (${previewPayslip.otHours} hrs)`, previewPayslip.otAmount]] : []),
-            ['Gross Earnings', previewPayslip.basicSalary + previewPayslip.otAmount],
+            ...(previewPayslip.allowances || []).map((a: any) => [a.name, a.amount]),
+            ['Gross Earnings', previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0)],
             [],
             ['DEDUCTIONS', 'Amount (Rs.)'],
             ...(previewPayslip.isEpfEnabled ? [['EPF Employee (8%)', previewPayslip.epf8]] : []),
-            ...previewPayslip.deductions.map(d => [d.name, d.amount]),
+            ...previewPayslip.deductions.filter((d: any) => d.amount > 0).map((d: any) => [d.name, d.amount]),
             ['Total Deductions', previewPayslip.totalDeductions],
             [],
             ['NET SALARY PAYABLE', previewPayslip.netSalary],
@@ -487,15 +509,18 @@ const Salary = () => {
             ['Designation', selectedEmployee.designation],
             [],
             ['EARNINGS', 'Amount (Rs.)'],
-            ['Daily Rate', previewPayslip.dailyRate],
+            ['Rate Type', previewPayslip.salaryType],
+            ['Basic Rate', previewPayslip.basicSalary],
+            ['Working Days', companyWorkingDays],
             ['Worked Days', previewPayslip.workedDays],
-            ['Basic Salary', previewPayslip.basicSalary],
+            ['Calculated Basic Pay', previewPayslip.basicPay],
             ...(previewPayslip.otAmount > 0 ? [[`OT Amount (${previewPayslip.otHours} hrs)`, previewPayslip.otAmount]] : []),
-            ['Gross Earnings', previewPayslip.basicSalary + previewPayslip.otAmount],
+            ...(previewPayslip.allowances || []).map((a: any) => [a.name, a.amount]),
+            ['Gross Earnings', previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0)],
             [],
             ['DEDUCTIONS', 'Amount (Rs.)'],
             ...(previewPayslip.isEpfEnabled ? [['EPF Employee (8%)', previewPayslip.epf8]] : []),
-            ...previewPayslip.deductions.map(d => [d.name, d.amount]),
+            ...previewPayslip.deductions.filter((d: any) => d.amount > 0).map((d: any) => [d.name, d.amount]),
             ['Total Deductions', previewPayslip.totalDeductions],
             [],
             ['NET SALARY PAYABLE', previewPayslip.netSalary],
@@ -629,8 +654,8 @@ const Salary = () => {
                                                 </h4>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                                        <label className="text-xs text-gray-500 block mb-1">Daily Rate</label>
-                                                        <div className="font-semibold text-gray-900">Rs. {emp.dailyRate}</div>
+                                                        <label className="text-xs text-gray-500 block mb-1">Rate ({emp.salaryType || 'DAILY'})</label>
+                                                        <div className="font-semibold text-gray-900">Rs. {emp.basicSalary || 0}</div>
                                                     </div>
                                                     <div>
                                                         <label className="text-xs text-gray-500 block mb-1">Enter Worked Days</label>
@@ -668,6 +693,16 @@ const Salary = () => {
                                                         <div className="bg-gray-50 px-3 py-2 border border-gray-100 rounded-lg font-bold text-blue-600 h-[42px] flex items-center">
                                                             Rs. {(otHours * (emp.otRate || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                         </div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs text-gray-500 block mb-1 text-blue-600">Salary Advance Deductions</label>
+                                                        <input
+                                                            type="number"
+                                                            value={salaryAdvance}
+                                                            onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
+                                                            className="w-full px-3 py-2 border border-gray-100 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none font-semibold text-gray-900"
+                                                            min="0"
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>
@@ -720,8 +755,8 @@ const Salary = () => {
                                                             if (allowanceToggles[emp.id]) openManageModal('allowance', emp);
                                                         }}
                                                         className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${allowanceToggles[emp.id]
-                                                                ? 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer'
-                                                                : 'border-gray-100 text-gray-300 cursor-not-allowed'
+                                                            ? 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer'
+                                                            : 'border-gray-100 text-gray-300 cursor-not-allowed'
                                                             }`}
                                                     >
                                                         <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -754,8 +789,8 @@ const Salary = () => {
                                                             if (deductionToggles[emp.id]) openManageModal('deduction', emp);
                                                         }}
                                                         className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${deductionToggles[emp.id]
-                                                                ? 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer'
-                                                                : 'border-gray-100 text-gray-300 cursor-not-allowed'
+                                                            ? 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer'
+                                                            : 'border-gray-100 text-gray-300 cursor-not-allowed'
                                                             }`}
                                                     >
                                                         <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -827,8 +862,8 @@ const Salary = () => {
                                                 <div className="mb-6">
                                                     <div className="border-b border-gray-800 font-bold mb-2 pb-1">EARNINGS</div>
                                                     <div className="flex justify-between mb-1">
-                                                        <span>Daily Rate</span>
-                                                        <span>{previewPayslip.dailyRate.toLocaleString()}</span>
+                                                        <span>{previewPayslip.salaryType === 'MONTHLY' ? 'Monthly Rate' : 'Daily Rate'}</span>
+                                                        <span>{previewPayslip.basicSalary.toLocaleString()}</span>
                                                     </div>
                                                     <div className="flex justify-between mb-1">
                                                         <span>Working Days</span>
@@ -838,16 +873,26 @@ const Salary = () => {
                                                         <span>Worked Days</span>
                                                         <span>{previewPayslip.workedDays}</span>
                                                     </div>
-                                                    <div className="flex justify-between mb-1 font-semibold">
-                                                        <span>Basic Salary</span>
-                                                        <span>{previewPayslip.basicSalary.toLocaleString()}</span>
+                                                    <div className="flex justify-between mb-1 font-semibold text-gray-800">
+                                                        <span>Calculated Basic Pay</span>
+                                                        <span>{previewPayslip.basicPay.toLocaleString()}</span>
                                                     </div>
                                                     {previewPayslip.otAmount > 0 && (
-                                                        <div className="flex justify-between mb-1 font-semibold">
+                                                        <div className="flex justify-between mb-1 font-semibold text-gray-800">
                                                             <span>OT ({previewPayslip.otHours} hrs)</span>
                                                             <span>{previewPayslip.otAmount.toLocaleString()}</span>
                                                         </div>
                                                     )}
+                                                    {previewPayslip.allowances?.map((a: any, i: number) => (
+                                                        <div key={i} className="flex justify-between mb-1 text-green-700 font-medium">
+                                                            <span>+ {a.name}</span>
+                                                            <span>{a.amount.toLocaleString()}</span>
+                                                        </div>
+                                                    ))}
+                                                    <div className="flex justify-between mt-2 pt-2 border-t border-gray-300 font-bold text-gray-900">
+                                                        <span>Gross Earnings</span>
+                                                        <span>{(previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0)).toLocaleString()}</span>
+                                                    </div>
                                                     <div className="flex justify-between mt-2 pt-1 border-t border-gray-100 font-bold">
                                                         <span>Gross Earnings</span>
                                                         <span>{(previewPayslip.basicSalary + previewPayslip.otAmount).toLocaleString()}</span>
