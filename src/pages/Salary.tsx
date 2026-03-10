@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Loader2, Download, FileText, FileSpreadsheet, Calculator, Wallet } from 'lucide-react';
+import { Search, Loader2, Download, FileText, FileSpreadsheet, Calculator, X } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { useGetEmployeesQuery, useGetCompaniesQuery } from '../store/apiSlice';
@@ -42,6 +42,39 @@ const Salary = () => {
     const [isSaving, setIsSaving] = useState(false);
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    // Allowance / Deduction local state per employee
+    const [allowanceToggles, setAllowanceToggles] = useState<Record<string, boolean>>({});
+    const [deductionToggles, setDeductionToggles] = useState<Record<string, boolean>>({});
+    const [salaryAllowances, setSalaryAllowances] = useState<Record<string, { type: string; amount: number }[]>>({});
+    const [salaryDeductions, setSalaryDeductions] = useState<Record<string, { type: string; amount: number }[]>>({});
+
+    // Manage modal state
+    const [manageModal, setManageModal] = useState<{ type: 'allowance' | 'deduction'; empId: string } | null>(null);
+    const [modalEntries, setModalEntries] = useState<{ type: string; amount: number }[]>([]);
+
+    const openManageModal = (type: 'allowance' | 'deduction', empId: string) => {
+        const existing = type === 'allowance' ? (salaryAllowances[empId] || []) : (salaryDeductions[empId] || []);
+        setModalEntries([...existing, { type: '', amount: 0 }]);
+        setManageModal({ type, empId });
+    };
+
+    const handleModalSave = () => {
+        if (!manageModal) return;
+        const validEntries = modalEntries.filter(e => e.type.trim() && e.amount > 0);
+        if (manageModal.type === 'allowance') {
+            setSalaryAllowances(prev => ({ ...prev, [manageModal.empId]: validEntries }));
+        } else {
+            setSalaryDeductions(prev => ({ ...prev, [manageModal.empId]: validEntries }));
+        }
+        setManageModal(null);
+        setModalEntries([]);
+    };
+
+    const handleModalCancel = () => {
+        setManageModal(null);
+        setModalEntries([]);
+    };
 
     // Touch tracking for validation
     const [touchedFields, setTouchedFields] = useState<{
@@ -627,41 +660,105 @@ const Salary = () => {
                                             </div>
 
                                             {/* Deductions */}
-                                            <div>
-                                                <h4 className="flex items-center gap-2 text-sm font-semibold text-red-600 mb-3">
-                                                    <Wallet className="w-4 h-4" /> Deductions
-                                                </h4>
-                                                <div className="grid grid-cols-2 gap-4 items-end">
-                                                    <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                                        <span className="text-xs font-medium text-gray-700">Apply EPF / ETF</span>
-                                                        <button
-                                                            onClick={() => handleToggleEpfEtf(emp.id)}
+                                            <div className="space-y-4">
+                                                {/* EPF/ETF Row */}
+                                                <div className="flex items-center gap-4">
+                                                    <button
+                                                        onClick={() => handleToggleEpfEtf(emp.id)}
+                                                        className={`
+                                                            relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0
+                                                            ${isEpfEnabled ? 'bg-blue-500' : 'bg-gray-300'}
+                                                        `}
+                                                    >
+                                                        <span
                                                             className={`
-                                                                    relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                                                                    ${isEpfEnabled ? 'bg-blue-600' : 'bg-gray-200'}
-                                                                `}
-                                                        >
-                                                            <span
-                                                                className={`
-                                                                        inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                                                                        ${isEpfEnabled ? 'translate-x-6' : 'translate-x-1'}
-                                                                    `}
-                                                            />
-                                                        </button>
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs text-gray-500 block mb-1">Salary Advance</label>
-                                                        <input
-                                                            type="number"
-                                                            value={salaryAdvance}
-                                                            onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
-                                                            min="0"
+                                                                inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200
+                                                                ${isEpfEnabled ? 'translate-x-6' : 'translate-x-1'}
+                                                            `}
                                                         />
+                                                    </button>
+                                                    <span className="text-sm font-medium text-gray-800 whitespace-nowrap">EPF/ETF</span>
+                                                    <input
+                                                        type="text"
+                                                        value={isEpfEnabled ? (emp.epfEtfAmount || '') : ''}
+                                                        readOnly
+                                                        placeholder="Total for EPF"
+                                                        className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 bg-white outline-none focus:border-blue-300 transition-colors"
+                                                    />
+                                                </div>
+
+                                                {/* Allowance Row */}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setAllowanceToggles(prev => ({ ...prev, [emp.id]: !prev[emp.id] }));
+                                                            }}
+                                                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${allowanceToggles[emp.id] ? 'bg-blue-500' : 'bg-gray-300'}`}
+                                                        >
+                                                            <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${allowanceToggles[emp.id] ? 'translate-x-6' : 'translate-x-1'}`} />
+                                                        </button>
+                                                        <span className="text-sm font-medium text-gray-800">Allowance</span>
                                                     </div>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (allowanceToggles[emp.id]) openManageModal('allowance', emp.id);
+                                                        }}
+                                                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                                                            allowanceToggles[emp.id]
+                                                                ? 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer'
+                                                                : 'border-gray-100 text-gray-300 cursor-not-allowed'
+                                                        }`}
+                                                    >
+                                                        <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                                            <circle cx="7" cy="5" r="1.5" fill="currentColor"/>
+                                                            <circle cx="13" cy="10" r="1.5" fill="currentColor"/>
+                                                            <circle cx="7" cy="15" r="1.5" fill="currentColor"/>
+                                                        </svg>
+                                                        Manage Allowances
+                                                    </button>
+                                                </div>
+
+                                                {/* Deduction Row */}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setDeductionToggles(prev => ({ ...prev, [emp.id]: !prev[emp.id] }));
+                                                            }}
+                                                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${deductionToggles[emp.id] ? 'bg-blue-500' : 'bg-gray-300'}`}
+                                                        >
+                                                            <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${deductionToggles[emp.id] ? 'translate-x-6' : 'translate-x-1'}`} />
+                                                        </button>
+                                                        <span className="text-sm font-medium text-gray-800">Deduction</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (deductionToggles[emp.id]) openManageModal('deduction', emp.id);
+                                                        }}
+                                                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                                                            deductionToggles[emp.id]
+                                                                ? 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer'
+                                                                : 'border-gray-100 text-gray-300 cursor-not-allowed'
+                                                        }`}
+                                                    >
+                                                        <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                                            <circle cx="7" cy="5" r="1.5" fill="currentColor"/>
+                                                            <circle cx="13" cy="10" r="1.5" fill="currentColor"/>
+                                                            <circle cx="7" cy="15" r="1.5" fill="currentColor"/>
+                                                        </svg>
+                                                        Manage Deductions
+                                                    </button>
                                                 </div>
                                             </div>
 
+                                            {/* Generate Pay-slip Button */}
                                             <div className="pt-2 flex justify-end">
                                                 <button
                                                     onClick={(e) => {
@@ -669,9 +766,9 @@ const Salary = () => {
                                                         handleGeneratePayslip(emp);
                                                     }}
                                                     disabled={isSaving || hasAnyError(emp)}
-                                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 ${(isSaving || hasAnyError(emp))
+                                                    className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 shadow-sm flex items-center gap-2 ${(isSaving || hasAnyError(emp))
                                                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                        : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow active:scale-95'
+                                                        : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-95'
                                                         }`}
                                                 >
                                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Generate Pay-slip'}
@@ -845,6 +942,107 @@ const Salary = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Manage Allowances / Deductions Modal */}
+                {manageModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center">
+                        {/* Backdrop */}
+                        <div className="absolute inset-0 bg-black/30" onClick={handleModalCancel} />
+
+                        {/* Modal */}
+                        <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-6 py-4">
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                    {manageModal.type === 'allowance' ? 'Manage Allowances' : 'Manage Deductions'}
+                                </h3>
+                                <button
+                                    onClick={handleModalCancel}
+                                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="px-6 pb-4">
+                                <div className="border-2 border-dashed border-blue-200 rounded-lg p-4 space-y-3">
+                                    {modalEntries.map((entry, idx) => {
+                                        const isLastRow = idx === modalEntries.length - 1;
+                                        return (
+                                            <div key={idx} className="flex items-center gap-3">
+                                                <input
+                                                    type="text"
+                                                    value={entry.type}
+                                                    onChange={(e) => {
+                                                        const updated = [...modalEntries];
+                                                        updated[idx] = { ...updated[idx], type: e.target.value };
+                                                        setModalEntries(updated);
+                                                    }}
+                                                    placeholder={isLastRow ? `Add Extra ${manageModal.type === 'allowance' ? 'Allowance' : 'Deduction'}` : ''}
+                                                    className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:border-blue-400 transition-colors placeholder:text-gray-300"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    value={entry.amount || ''}
+                                                    onChange={(e) => {
+                                                        const updated = [...modalEntries];
+                                                        updated[idx] = { ...updated[idx], amount: parseFloat(e.target.value) || 0 };
+                                                        setModalEntries(updated);
+                                                    }}
+                                                    placeholder="15,000.00"
+                                                    className="w-32 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:border-blue-400 transition-colors placeholder:text-gray-300"
+                                                    min="0"
+                                                    step="0.01"
+                                                />
+                                                {isLastRow ? (
+                                                    /* Plus button for the last row */
+                                                    <button
+                                                        onClick={() => setModalEntries(prev => [...prev, { type: '', amount: 0 }])}
+                                                        className="shrink-0 w-8 h-8 flex items-center justify-center text-blue-500 hover:text-blue-600 transition-colors"
+                                                    >
+                                                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+                                                            <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                                            <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                                        </svg>
+                                                    </button>
+                                                ) : (
+                                                    /* Minus button for existing rows */
+                                                    <button
+                                                        onClick={() => setModalEntries(prev => prev.filter((_, i) => i !== idx))}
+                                                        className="shrink-0 w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-500 transition-colors"
+                                                    >
+                                                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+                                                            <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                                        </svg>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
+                                <button
+                                    onClick={handleModalCancel}
+                                    className="px-5 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleModalSave}
+                                    className="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Toast */}
                 {toast && (
