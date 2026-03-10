@@ -460,9 +460,41 @@ const Employees = () => {
                                                     <p className="text-xs font-medium text-gray-500 uppercase">Basic Salary</p>
                                                     <p className="text-sm font-medium text-gray-900">
                                                         {(selectedEmployee.basicSalary ?? 0).toFixed(2)}
+                                                        <span className="text-xs text-gray-500 ml-1">({selectedEmployee.salaryType || 'DAILY'})</span>
                                                     </p>
                                                 </div>
                                             </div>
+                                        </div>
+
+                                        {/* Recurring Payment Details */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                            {selectedEmployee.recurringAllowances && selectedEmployee.recurringAllowances.length > 0 && (
+                                                <div className="bg-green-50/50 p-4 rounded-xl border border-green-100">
+                                                    <h4 className="text-sm font-semibold text-green-800 mb-3">Recurring Allowances</h4>
+                                                    <div className="space-y-2">
+                                                        {selectedEmployee.recurringAllowances.map((allowance, index) => (
+                                                            <div key={index} className="flex justify-between items-center text-sm">
+                                                                <span className="text-gray-600">{allowance.type}</span>
+                                                                <span className="font-medium text-gray-900">Rs. {allowance.amount.toFixed(2)}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {selectedEmployee.recurringDeductions && selectedEmployee.recurringDeductions.length > 0 && (
+                                                <div className="bg-red-50/50 p-4 rounded-xl border border-red-100">
+                                                    <h4 className="text-sm font-semibold text-red-800 mb-3">Recurring Deductions</h4>
+                                                    <div className="space-y-2">
+                                                        {selectedEmployee.recurringDeductions.map((deduction, index) => (
+                                                            <div key={index} className="flex justify-between items-center text-sm">
+                                                                <span className="text-gray-600">{deduction.type}</span>
+                                                                <span className="font-medium text-gray-900">Rs. {deduction.amount.toFixed(2)}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                     </div>

@@ -53,8 +53,21 @@ const Salary = () => {
     const [manageModal, setManageModal] = useState<{ type: 'allowance' | 'deduction'; empId: string } | null>(null);
     const [modalEntries, setModalEntries] = useState<{ type: string; amount: number }[]>([]);
 
-    const openManageModal = (type: 'allowance' | 'deduction', empId: string) => {
-        const existing = type === 'allowance' ? (salaryAllowances[empId] || []) : (salaryDeductions[empId] || []);
+    const openManageModal = (type: 'allowance' | 'deduction', emp: Employee) => {
+        const empId = emp.id;
+        let existing = type === 'allowance' ? (salaryAllowances[empId] || []) : (salaryDeductions[empId] || []);
+
+        // Populate from DB if not edited locally yet
+        if (existing.length === 0) {
+            if (type === 'allowance' && emp.recurringAllowances && emp.recurringAllowances.length > 0) {
+                existing = emp.recurringAllowances.map(a => ({ type: a.type, amount: a.amount }));
+                setSalaryAllowances(prev => ({ ...prev, [empId]: existing }));
+            } else if (type === 'deduction' && emp.recurringDeductions && emp.recurringDeductions.length > 0) {
+                existing = emp.recurringDeductions.map(d => ({ type: d.type, amount: d.amount }));
+                setSalaryDeductions(prev => ({ ...prev, [empId]: existing }));
+            }
+        }
+
         setModalEntries([...existing, { type: '', amount: 0 }]);
         setManageModal({ type, empId });
     };
@@ -704,19 +717,18 @@ const Salary = () => {
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            if (allowanceToggles[emp.id]) openManageModal('allowance', emp.id);
+                                                            if (allowanceToggles[emp.id]) openManageModal('allowance', emp);
                                                         }}
-                                                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
-                                                            allowanceToggles[emp.id]
+                                                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${allowanceToggles[emp.id]
                                                                 ? 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer'
                                                                 : 'border-gray-100 text-gray-300 cursor-not-allowed'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                                            <circle cx="7" cy="5" r="1.5" fill="currentColor"/>
-                                                            <circle cx="13" cy="10" r="1.5" fill="currentColor"/>
-                                                            <circle cx="7" cy="15" r="1.5" fill="currentColor"/>
+                                                            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                                            <circle cx="7" cy="5" r="1.5" fill="currentColor" />
+                                                            <circle cx="13" cy="10" r="1.5" fill="currentColor" />
+                                                            <circle cx="7" cy="15" r="1.5" fill="currentColor" />
                                                         </svg>
                                                         Manage Allowances
                                                     </button>
@@ -739,19 +751,18 @@ const Salary = () => {
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            if (deductionToggles[emp.id]) openManageModal('deduction', emp.id);
+                                                            if (deductionToggles[emp.id]) openManageModal('deduction', emp);
                                                         }}
-                                                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
-                                                            deductionToggles[emp.id]
+                                                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${deductionToggles[emp.id]
                                                                 ? 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer'
                                                                 : 'border-gray-100 text-gray-300 cursor-not-allowed'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                                            <circle cx="7" cy="5" r="1.5" fill="currentColor"/>
-                                                            <circle cx="13" cy="10" r="1.5" fill="currentColor"/>
-                                                            <circle cx="7" cy="15" r="1.5" fill="currentColor"/>
+                                                            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                                            <circle cx="7" cy="5" r="1.5" fill="currentColor" />
+                                                            <circle cx="13" cy="10" r="1.5" fill="currentColor" />
+                                                            <circle cx="7" cy="15" r="1.5" fill="currentColor" />
                                                         </svg>
                                                         Manage Deductions
                                                     </button>
@@ -1002,9 +1013,9 @@ const Salary = () => {
                                                         className="shrink-0 w-8 h-8 flex items-center justify-center text-blue-500 hover:text-blue-600 transition-colors"
                                                     >
                                                         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
-                                                            <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                                            <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+                                                            <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                                            <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                                                         </svg>
                                                     </button>
                                                 ) : (
@@ -1014,8 +1025,8 @@ const Salary = () => {
                                                         className="shrink-0 w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-500 transition-colors"
                                                     >
                                                         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
-                                                            <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+                                                            <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                                                         </svg>
                                                     </button>
                                                 )}
