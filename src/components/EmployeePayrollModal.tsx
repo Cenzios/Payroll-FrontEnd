@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Loader2, FileText, FileSpreadsheet, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Loader2, FileText, FileSpreadsheet, Download, ChevronDown, ChevronRight } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
 import Toast from './Toast';
 import jsPDF from 'jspdf';
@@ -28,13 +28,15 @@ interface MonthlyData {
     deductions: number;
     employeeEPF: number;
     companyEPFETF: number;
+    allowances?: { type: string, amount: number }[];
+    customDeductions?: { type: string, amount: number }[];
 }
 
 interface EmployeeData {
     employeeName: string;
     employeeCode: string;
     designation: string;
-    dailyRate: number;
+    basicSalary: number;
     joinedDate: string;
     monthlyBreakdown: MonthlyData[];
     annualTotals: {
@@ -55,6 +57,11 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
     const [isLoading, setIsLoading] = useState(false);
     const [employeeData, setEmployeeData] = useState<EmployeeData | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
+
+    const toggleMonth = (month: string) => {
+        setExpandedMonths(prev => ({ ...prev, [month]: !prev[month] }));
+    };
 
     useEffect(() => {
         if (isOpen && employeeId && companyId && month && year) {
@@ -106,7 +113,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
         yPos += 7;
 
         doc.text(`Position: ${employeeData.designation}`, 14, yPos);
-        doc.text(`Daily Rate: RS ${employeeData.dailyRate.toLocaleString()}`, 120, yPos);
+        doc.text(`Basic Salary: RS ${employeeData.basicSalary.toLocaleString()}`, 120, yPos);
         yPos += 7;
 
         doc.text(`Joined Date: ${employeeData.joinedDate}`, 14, yPos);
@@ -169,7 +176,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
             ['PAYROLL SUMMARY REPORT'],
             [],
             ['Employee Name:', employeeData.employeeName, '', 'Employee ID:', employeeData.employeeCode],
-            ['Position:', employeeData.designation, '', 'Daily Rate:', `RS ${employeeData.dailyRate.toLocaleString()}`],
+            ['Position:', employeeData.designation, '', 'Basic Salary:', `RS ${employeeData.basicSalary.toLocaleString()}`],
             ['Joined Date:', employeeData.joinedDate],
             [],
             ['Monthly Breakdown'],
@@ -216,7 +223,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
             ['PAYROLL SUMMARY REPORT'],
             [],
             ['Employee Name:', employeeData.employeeName, '', 'Employee ID:', employeeData.employeeCode],
-            ['Position:', employeeData.designation, '', 'Daily Rate:', `RS ${employeeData.dailyRate.toLocaleString()}`],
+            ['Position:', employeeData.designation, '', 'Basic Salary:', `RS ${employeeData.basicSalary.toLocaleString()}`],
             ['Joined Date:', employeeData.joinedDate],
             [],
             ['Monthly Breakdown'],
@@ -307,9 +314,9 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
                                         </div>
 
                                         <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Daily Rate:</span>
+                                            <span className="text-sm font-semibold text-gray-600">Basic Salary:</span>
                                             <span className="text-base font-medium text-gray-900">
-                                                RS: {employeeData.dailyRate.toLocaleString()}
+                                                RS: {employeeData.basicSalary.toLocaleString()}
                                             </span>
                                         </div>
 
@@ -336,6 +343,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
                                             <table className="w-full text-sm">
                                                 <thead className="bg-gray-800 text-white">
                                                     <tr>
+                                                        <th className="px-4 py-3 text-center w-10"></th>
                                                         <th className="px-4 py-3 text-left font-semibold">Month</th>
                                                         <th className="px-4 py-3 text-center font-semibold">Days</th>
                                                         <th className="px-4 py-3 text-right font-semibold">Basic</th>
@@ -350,24 +358,71 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100">
                                                     {employeeData.monthlyBreakdown.map((row, index) => (
-                                                        <tr key={index} className="hover:bg-gray-50 border-b border-gray-100">
-                                                            <td className="px-4 py-3 font-medium text-gray-900">{row.month}</td>
-                                                            <td className="px-4 py-3 text-center text-gray-700">{row.workedDays}</td>
-                                                            <td className="px-4 py-3 text-right text-gray-900 font-medium">RS: {row.basicPay.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-green-600 font-medium">RS: {row.otAmount.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-gray-900 font-bold">RS: {row.grossPay.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-blue-600 font-bold">RS: {row.netPay.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-red-600">RS: {row.tax.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-red-600">RS: {row.salaryAdvance.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-red-700 font-medium">RS: {row.deductions.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-gray-900">RS: {row.employeeEPF.toLocaleString()}</td>
-                                                        </tr>
+                                                        <React.Fragment key={index}>
+                                                            <tr className="hover:bg-gray-50 border-b border-gray-100 cursor-pointer" onClick={() => toggleMonth(row.month)}>
+                                                                <td className="px-4 py-3 text-center">
+                                                                    {expandedMonths[row.month] ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
+                                                                </td>
+                                                                <td className="px-4 py-3 font-medium text-gray-900">{row.month}</td>
+                                                                <td className="px-4 py-3 text-center text-gray-700">{row.workedDays}</td>
+                                                                <td className="px-4 py-3 text-right text-gray-900 font-medium">RS: {row.basicPay.toLocaleString()}</td>
+                                                                <td className="px-4 py-3 text-right text-green-600 font-medium">RS: {row.otAmount.toLocaleString()}</td>
+                                                                <td className="px-4 py-3 text-right text-gray-900 font-bold">RS: {row.grossPay.toLocaleString()}</td>
+                                                                <td className="px-4 py-3 text-right text-blue-600 font-bold">RS: {row.netPay.toLocaleString()}</td>
+                                                                <td className="px-4 py-3 text-right text-red-600">RS: {row.tax.toLocaleString()}</td>
+                                                                <td className="px-4 py-3 text-right text-red-600">RS: {row.salaryAdvance.toLocaleString()}</td>
+                                                                <td className="px-4 py-3 text-right text-red-700 font-medium">RS: {row.deductions.toLocaleString()}</td>
+                                                                <td className="px-4 py-3 text-right text-gray-900">RS: {row.employeeEPF.toLocaleString()}</td>
+                                                            </tr>
+                                                            {expandedMonths[row.month] && (
+                                                                <tr className="bg-blue-50/30 border-b border-gray-100">
+                                                                    <td colSpan={11} className="px-8 py-4">
+                                                                        <div className="grid grid-cols-2 gap-8">
+                                                                            <div className="bg-white rounded-xl p-4 border border-green-100 shadow-sm">
+                                                                                <h4 className="text-xs font-bold text-green-600 mb-3 uppercase tracking-wide flex items-center gap-2">
+                                                                                    <span className="w-2 h-2 rounded-full bg-green-500"></span> Allowances
+                                                                                </h4>
+                                                                                {row.allowances && row.allowances.length > 0 ? (
+                                                                                    <div className="space-y-2">
+                                                                                        {row.allowances.map((a, i) => (
+                                                                                            <div key={i} className="flex justify-between text-sm py-1 border-b border-gray-50 last:border-0">
+                                                                                                <span className="text-gray-600">{a.type}</span>
+                                                                                                <span className="font-semibold text-gray-900">RS: {a.amount.toLocaleString()}</span>
+                                                                                            </div>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div className="text-sm text-gray-500 italic">No custom allowances</div>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="bg-white rounded-xl p-4 border border-red-100 shadow-sm">
+                                                                                <h4 className="text-xs font-bold text-red-600 mb-3 uppercase tracking-wide flex items-center gap-2">
+                                                                                    <span className="w-2 h-2 rounded-full bg-red-500"></span> Deductions
+                                                                                </h4>
+                                                                                {row.customDeductions && row.customDeductions.length > 0 ? (
+                                                                                    <div className="space-y-2">
+                                                                                        {row.customDeductions.map((d, i) => (
+                                                                                            <div key={i} className="flex justify-between text-sm py-1 border-b border-gray-50 last:border-0">
+                                                                                                <span className="text-gray-600">{d.type}</span>
+                                                                                                <span className="font-semibold text-gray-900">RS: {d.amount.toLocaleString()}</span>
+                                                                                            </div>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div className="text-sm text-gray-500 italic">No custom deductions</div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                        </React.Fragment>
                                                     ))}
                                                 </tbody>
                                                 {/* Annual Totals Footer */}
                                                 <tfoot className="bg-blue-600 text-white font-bold">
                                                     <tr>
-                                                        <td className="px-4 py-3 text-left">SELECTED MONTH TOTALS</td>
+                                                        <td colSpan={2} className="px-4 py-3 text-left">SELECTED MONTH TOTALS</td>
                                                         <td className="px-4 py-3 text-center">{employeeData.annualTotals.workedDays}</td>
                                                         <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.basicPay.toLocaleString()}</td>
                                                         <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.otAmount.toLocaleString()}</td>
