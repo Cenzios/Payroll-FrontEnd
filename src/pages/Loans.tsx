@@ -1,9 +1,27 @@
-import React from 'react';
+import { useState } from 'react';
 import { Plus } from 'lucide-react';
+import { useAppSelector } from '../store/hooks';
 import Sidebar from '../components/Sidebar';
 import PageHeader from '../components/PageHeader';
+import CreateLoanDrawer from '../components/CreateLoanDrawer';
+import LoanHistoryView from '../components/LoanHistoryView';
 
-const DUMMY_LOANS = [
+export interface LoanType {
+  id: string;
+  employee: {
+    name: string;
+    id: string;
+    avatar: string;
+  };
+  title: string;
+  amount: number;
+  interestRate: string;
+  installments: string;
+  monthlyPremium: number;
+  status: string;
+}
+
+const DUMMY_LOANS: LoanType[] = [
   {
     id: '1',
     employee: { name: 'Marcus Johnson', id: 'EMP-0412', avatar: 'M' },
@@ -70,28 +88,39 @@ const getStatusBadge = (status: string) => {
 };
 
 const Loans = () => {
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+  const [selectedLoan, setSelectedLoan] = useState<LoanType | null>(null);
+  const { selectedCompanyId } = useAppSelector((state) => state.auth);
+
   return (
     <div className="flex min-h-screen bg-white">
       <Sidebar />
       <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
-        {/* Header */}
-        <PageHeader 
-          title="Loans" 
-          subtitle="Handle Employees Loans" 
-          actionElement={
-            <button className="flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors">
-              Create Loan
-              <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center ml-1">
-                <Plus className="w-4 h-4" />
-              </div>
-            </button>
-          }
-        />
+        {selectedLoan ? (
+          <LoanHistoryView loan={selectedLoan} onBack={() => setSelectedLoan(null)} />
+        ) : (
+          <>
+            {/* Header */}
+            <PageHeader 
+              title="Loans" 
+              subtitle="Handle Employees Loans" 
+              actionElement={
+                <button 
+                  onClick={() => setIsCreateDrawerOpen(true)}
+                  className="flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                >
+                  Create Loan
+                  <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center ml-1">
+                    <Plus className="w-4 h-4" />
+                  </div>
+                </button>
+              }
+            />
 
-        {/* Main Content - Table */}
-        <div className="flex-1 mt-2">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            {/* Main Content - Table */}
+            <div className="flex-1 mt-2">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="py-4 px-6 text-sm font-medium text-[#989FA7]">Employee</th>
@@ -105,19 +134,23 @@ const Loans = () => {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {DUMMY_LOANS.map(loan => (
-                  <tr key={loan.id} className="hover:bg-gray-50 transition-colors">
+                  <tr 
+                    key={loan.id} 
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => setSelectedLoan(loan)}
+                  >
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-100 border border-transparent flex items-center justify-center text-blue-600 font-bold overflow-hidden shrink-0">
                           {loan.employee.avatar}
                         </div>
                         <div>
-                          <div className="text-[15px] font-bold text-[#353843]">{loan.employee.name}</div>
-                          <div className="text-[13px] text-[#A8B0B9] mt-0.5">{loan.employee.id}</div>
+                          <div className="text-[14px] font-bold text-[#353843]">{loan.employee.name}</div>
+                          <div className="text-[12px] text-[#A8B0B9] mt-0.5">{loan.employee.id}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-[#4F5660] font-medium text-[15px]">{loan.title}</td>
+                    <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.title}</td>
                     <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">Rs: {loan.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                     <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.interestRate}</td>
                     <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.installments}</td>
@@ -131,7 +164,15 @@ const Loans = () => {
             </table>
           </div>
         </div>
+        </>
+      )}
       </div>
+
+      <CreateLoanDrawer 
+        isOpen={isCreateDrawerOpen}
+        onClose={() => setIsCreateDrawerOpen(false)}
+        companyId={selectedCompanyId}
+      />
     </div>
   );
 };
