@@ -1,619 +1,735 @@
-import { useState, useEffect, useRef } from 'react';
-import { Plus, Search, MoreVertical, Phone, Mail, MapPin, Calendar, DollarSign, User, Briefcase, Loader2, Edit, Trash2, Ban } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
-import UniversalDrawer from '../components/UniversalDrawer';
-import SuccessModal from '../components/SuccessModal';
-import ConfirmationModal from '../components/ConfirmationModal'; // Import ConfirmationModal
-import AddonModal from '../components/AddonModal'; // Import AddonModal
-import { useAppSelector } from '../store/hooks';
+import { useState, useEffect } from "react";
 import {
-    useGetEmployeesQuery,
-    useCreateEmployeeMutation,
-    useUpdateEmployeeMutation,
-    useDeleteEmployeeMutation
-} from '../store/apiSlice';
-import { Employee } from '../types/employee.types';
-import Toast from '../components/Toast';
-import TableSkeleton from '../components/skeletons/TableSkeleton';
-import PortalDropdown from '../components/PortalDropdown';
+  Plus,
+  Search,
+  MoreVertical,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  DollarSign,
+  User,
+  Briefcase,
+  Edit,
+  Trash2,
+  Ban,
+  Landmark,
+  Flag,
+  FileText,
+} from "lucide-react";
+import Sidebar from "../components/Sidebar";
+import UniversalDrawer from "../components/UniversalDrawer";
+import SuccessModal from "../components/SuccessModal";
+import ConfirmationModal from "../components/ConfirmationModal"; // Import ConfirmationModal
+import AddonModal from "../components/AddonModal"; // Import AddonModal
+import { useAppSelector } from "../store/hooks";
+import {
+  useGetEmployeesQuery,
+  useCreateEmployeeMutation,
+  useUpdateEmployeeMutation,
+  useDeleteEmployeeMutation,
+} from "../store/apiSlice";
+import { Employee } from "../types/employee.types";
+import Toast from "../components/Toast";
+import TableSkeleton from "../components/skeletons/TableSkeleton";
+import PortalDropdown from "../components/PortalDropdown";
+import HeaderActions from "../components/HeaderActions";
 
 const Employees = () => {
-    const { selectedCompanyId } = useAppSelector((state) => state.auth);
-    const [search, setSearch] = useState('');
+  const { selectedCompanyId } = useAppSelector((state) => state.auth);
+  const [search, setSearch] = useState("");
 
-    // RTK Query
-    const { data, isLoading, isError, error } = useGetEmployeesQuery({
-        companyId: selectedCompanyId || '',
-        page: 1,
-        limit: 100,
-        search
-    }, {
-        skip: !selectedCompanyId
+  // RTK Query
+  const { data, isLoading, isError, error } = useGetEmployeesQuery(
+    {
+      companyId: selectedCompanyId || "",
+      page: 1,
+      limit: 100,
+      search,
+    },
+    {
+      skip: !selectedCompanyId,
+    },
+  );
+
+  const employees = data?.employees || [];
+
+  const [createEmployee] = useCreateEmployeeMutation();
+  const [updateEmployee] = useUpdateEmployeeMutation();
+  const [deleteEmployee] = useDeleteEmployeeMutation();
+
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null,
+  );
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
+
+  // Kebab Menu State
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
+  // Confirmation Modal State
+  const [confirmation, setConfirmation] = useState<{
+    isOpen: boolean;
+    type: "danger" | "warning" | "info";
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    type: "danger",
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+
+  // Edit State
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+
+  // Select first employee default logic
+  useEffect(() => {
+    if (employees.length > 0 && !selectedEmployee) {
+      setSelectedEmployee(employees[0]);
+    }
+  }, [employees, selectedEmployee]);
+
+  // Error handling
+  useEffect(() => {
+    if (isError && error) {
+      const err = error as any;
+      setToast({
+        message: err?.data?.message || "Failed to fetch employees",
+        type: "error",
+      });
+    }
+  }, [isError, error]);
+
+  useEffect(() => {
+    if (employees.length > 0 && !selectedEmployee) {
+      setSelectedEmployee(employees[0]);
+    }
+  }, [employees, selectedEmployee]);
+
+  // Sync menu anchor with activeMenuId
+  useEffect(() => {
+    if (!activeMenuId) {
+      setMenuAnchor(null);
+    }
+  }, [activeMenuId]);
+
+  const handleOpenLimitModal = () => {
+    setConfirmation({
+      isOpen: true,
+      type: "warning",
+      title: "Employee Limit Reached",
+      message:
+        "You’ve reached the maximum number of Employees allowed on your current plan. To add more Employees, please upgrade your plan.",
+      confirmText: "Update Plan", // Reverted to Update Plan as per user request to not change UI
+      onConfirm: () => {
+        setIsAddonModalOpen(true);
+        setConfirmation((prev) => ({ ...prev, isOpen: false }));
+      },
     });
+  };
 
-    const employees = data?.employees || [];
-
-    const [createEmployee] = useCreateEmployeeMutation();
-    const [updateEmployee] = useUpdateEmployeeMutation();
-    const [deleteEmployee] = useDeleteEmployeeMutation();
-
-    const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
-
-    // Kebab Menu State
-    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-
-    // Confirmation Modal State
-    const [confirmation, setConfirmation] = useState<{
-        isOpen: boolean;
-        type: 'danger' | 'warning' | 'info';
-        title: string;
-        message: string;
-        confirmText?: string;
-        onConfirm: () => void;
-    }>({
-        isOpen: false,
-        type: 'danger',
-        title: '',
-        message: '',
-        onConfirm: () => { },
-    });
-
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [modalMessage, setModalMessage] = useState('');
-    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
-    // Edit State
-    const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-
-    // Select first employee default logic
-    useEffect(() => {
-        if (employees.length > 0 && !selectedEmployee) {
-            setSelectedEmployee(employees[0]);
-        }
-    }, [employees, selectedEmployee]);
-
-    // Error handling
-    useEffect(() => {
-        if (isError && error) {
-            const err = error as any;
-            setToast({ message: err?.data?.message || 'Failed to fetch employees', type: 'error' });
-        }
-    }, [isError, error]);
-
-    useEffect(() => {
-        if (employees.length > 0 && !selectedEmployee) {
-            setSelectedEmployee(employees[0]);
-        }
-    }, [employees, selectedEmployee]);
-
-    // Sync menu anchor with activeMenuId
-    useEffect(() => {
-        if (!activeMenuId) {
-            setMenuAnchor(null);
-        }
-    }, [activeMenuId]);
-
-
-    const handleOpenLimitModal = () => {
-        setConfirmation({
-            isOpen: true,
-            type: 'warning',
-            title: 'Employee Limit Reached',
-            message: 'You’ve reached the maximum number of Employees allowed on your current plan. To add more Employees, please upgrade your plan.',
-            confirmText: 'Update Plan', // Reverted to Update Plan as per user request to not change UI
-            onConfirm: () => {
-                setIsAddonModalOpen(true);
-                setConfirmation(prev => ({ ...prev, isOpen: false }));
-            }
+  const handleDrawerSubmit = async (data: any) => {
+    try {
+      if (editingEmployee) {
+        if (!selectedCompanyId) throw new Error("No company selected");
+        await updateEmployee({
+          id: editingEmployee.id,
+          companyId: selectedCompanyId,
+          data,
+        }).unwrap();
+      } else {
+        await createEmployee(data).unwrap();
+      }
+      setIsDrawerOpen(false);
+      setEditingEmployee(null); // Reset edit state
+      setModalMessage(
+        editingEmployee
+          ? "The employee has been successfully updated."
+          : "The employee has been successfully saved.",
+      );
+      setShowSuccessModal(true);
+      // Cache invalidation handles refresh
+    } catch (error: any) {
+      if (error.message && error.message.includes("limit reached")) {
+        handleOpenLimitModal();
+      } else {
+        setToast({
+          message: error.message || "Operation failed",
+          type: "error",
         });
-    };
+      }
+      throw error;
+    }
+  };
 
-    const handleDrawerSubmit = async (data: any) => {
+  const closeMenu = () => {
+    setActiveMenuId(null);
+    setMenuAnchor(null);
+  };
+
+  const handleEdit = (employee: Employee) => {
+    setEditingEmployee(employee);
+    setIsDrawerOpen(true);
+    closeMenu();
+  };
+
+  const handleDeactivate = (employee: Employee) => {
+    closeMenu();
+    setConfirmation({
+      isOpen: true,
+      type: "warning",
+      title: "Deactivate Employee?",
+      message: `Are you sure you want to deactivate ${employee.fullName}? They will not be able to log in.`,
+      onConfirm: async () => {
         try {
-            if (editingEmployee) {
-                if (!selectedCompanyId) throw new Error("No company selected");
-                await updateEmployee({
-                    id: editingEmployee.id,
-                    companyId: selectedCompanyId,
-                    data
-                }).unwrap();
-            } else {
-                await createEmployee(data).unwrap();
-            }
-            setIsDrawerOpen(false);
-            setEditingEmployee(null); // Reset edit state
-            setModalMessage(editingEmployee ? 'The employee has been successfully updated.' : 'The employee has been successfully saved.');
-            setShowSuccessModal(true);
-            // Cache invalidation handles refresh
+          if (!selectedCompanyId) return;
+          await updateEmployee({
+            id: employee.id,
+            companyId: selectedCompanyId,
+            data: { status: "INACTIVE" } as any,
+          }).unwrap();
+          setToast({
+            message: "Employee deactivated successfully",
+            type: "success",
+          });
+          // Cache refresh
         } catch (error: any) {
-            if (error.message && error.message.includes('limit reached')) {
-                handleOpenLimitModal();
-            } else {
-                setToast({ message: error.message || 'Operation failed', type: 'error' });
-            }
-            throw error;
+          setToast({
+            message: error.message || "Failed to deactivate",
+            type: "error",
+          });
+        } finally {
+          setConfirmation((prev) => ({ ...prev, isOpen: false }));
         }
-    };
+      },
+    });
+  };
 
-    const closeMenu = () => {
-        setActiveMenuId(null);
-        setMenuAnchor(null);
-    };
-
-    const handleEdit = (employee: Employee) => {
-        setEditingEmployee(employee);
-        setIsDrawerOpen(true);
-        closeMenu();
-    };
-
-    const handleDeactivate = (employee: Employee) => {
-        closeMenu();
-        setConfirmation({
-            isOpen: true,
-            type: 'warning',
-            title: 'Deactivate Employee?',
-            message: `Are you sure you want to deactivate ${employee.fullName}? They will not be able to log in.`,
-            onConfirm: async () => {
-                try {
-                    if (!selectedCompanyId) return;
-                    await updateEmployee({
-                        id: employee.id,
-                        companyId: selectedCompanyId,
-                        data: { status: 'INACTIVE' } as any
-                    }).unwrap();
-                    setToast({ message: 'Employee deactivated successfully', type: 'success' });
-                    // Cache refresh
-                } catch (error: any) {
-                    setToast({ message: error.message || 'Failed to deactivate', type: 'error' });
-                } finally {
-                    setConfirmation(prev => ({ ...prev, isOpen: false }));
-                }
-            }
-        });
-    };
-
-    const handleRemove = (employee: Employee) => {
-        closeMenu();
-        setConfirmation({
-            isOpen: true,
-            type: 'danger',
-            title: 'Remove Employee?',
-            message: `Are you sure you want to permanently remove ${employee.fullName}? This action cannot be undone.`,
-            onConfirm: async () => {
-                try {
-                    if (!selectedCompanyId) {
-                        setToast({ message: "Company ID is missing", type: "error" });
-                        return;
-                    }
-                    await deleteEmployee({ id: employee.id, companyId: selectedCompanyId }).unwrap();
-                    setToast({ message: 'Employee removed successfully', type: 'success' });
-                    // Provide feedback - maybe navigate away if selected?
-                    if (selectedEmployee?.id === employee.id) setSelectedEmployee(null);
-                    // Cache refresh
-                } catch (error: any) {
-                    setToast({ message: error.message || 'Failed to remove', type: 'error' });
-                } finally {
-                    setConfirmation(prev => ({ ...prev, isOpen: false }));
-                }
-            }
-        });
-    };
-
-    const handleActivate = (employee: Employee) => {
-        closeMenu();
-        setConfirmation({
-            isOpen: true,
-            type: 'info',
-            title: 'Activate Employee?',
-            message: `Are you sure you want to activate ${employee.fullName}? They will be able to log in.`,
-            onConfirm: async () => {
-                try {
-                    if (!selectedCompanyId) return;
-                    await updateEmployee({
-                        id: employee.id,
-                        companyId: selectedCompanyId,
-                        data: { status: 'ACTIVE' } as any
-                    }).unwrap();
-                    setToast({ message: 'Employee activated successfully', type: 'success' });
-                    // Cache refresh
-                } catch (error: any) {
-                    setToast({ message: error.message || 'Failed to activate', type: 'error' });
-                } finally {
-                    setConfirmation(prev => ({ ...prev, isOpen: false }));
-                }
-            }
-        });
-    };
-
-    // Helper for adding new
-    const openAddDrawer = () => {
-        setEditingEmployee(null);
-        setIsDrawerOpen(true);
-    };
-
-    const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>, employeeId: string) => {
-        event.stopPropagation();
-        if (activeMenuId === employeeId) {
-            closeMenu();
-        } else {
-            setMenuAnchor(event.currentTarget);
-            setActiveMenuId(employeeId);
+  const handleRemove = (employee: Employee) => {
+    closeMenu();
+    setConfirmation({
+      isOpen: true,
+      type: "danger",
+      title: "Remove Employee?",
+      message: `Are you sure you want to permanently remove ${employee.fullName}? This action cannot be undone.`,
+      onConfirm: async () => {
+        try {
+          if (!selectedCompanyId) {
+            setToast({ message: "Company ID is missing", type: "error" });
+            return;
+          }
+          await deleteEmployee({
+            id: employee.id,
+            companyId: selectedCompanyId,
+          }).unwrap();
+          setToast({
+            message: "Employee removed successfully",
+            type: "success",
+          });
+          // Provide feedback - maybe navigate away if selected?
+          if (selectedEmployee?.id === employee.id) setSelectedEmployee(null);
+          // Cache refresh
+        } catch (error: any) {
+          setToast({
+            message: error.message || "Failed to remove",
+            type: "error",
+          });
+        } finally {
+          setConfirmation((prev) => ({ ...prev, isOpen: false }));
         }
-    };
+      },
+    });
+  };
 
-    const activeMenuEmployee = employees.find(e => e.id === activeMenuId);
+  const handleActivate = (employee: Employee) => {
+    closeMenu();
+    setConfirmation({
+      isOpen: true,
+      type: "info",
+      title: "Activate Employee?",
+      message: `Are you sure you want to activate ${employee.fullName}? They will be able to log in.`,
+      onConfirm: async () => {
+        try {
+          if (!selectedCompanyId) return;
+          await updateEmployee({
+            id: employee.id,
+            companyId: selectedCompanyId,
+            data: { status: "ACTIVE" } as any,
+          }).unwrap();
+          setToast({
+            message: "Employee activated successfully",
+            type: "success",
+          });
+          // Cache refresh
+        } catch (error: any) {
+          setToast({
+            message: error.message || "Failed to activate",
+            type: "error",
+          });
+        } finally {
+          setConfirmation((prev) => ({ ...prev, isOpen: false }));
+        }
+      },
+    });
+  };
 
-    return (
-        <div className="flex min-h-screen bg-gray-50">
-            <Sidebar />
+  // Helper for adding new
+  const openAddDrawer = () => {
+    setEditingEmployee(null);
+    setIsDrawerOpen(true);
+  };
 
-            <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
-                {/* Header */}
-                <header className="flex items-center justify-between mb-8 shrink-0">
-                    <div>
-                        <h1 className="text-[28px] font-medium text-gray-900 leading-tight">Employees</h1>
-                        <p className="text-[16px] font-normal text-gray-500 mt-1 leading-[1.7]">Here's your Employees overview</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => {
-                                if (!selectedCompanyId) {
-                                    setToast({ message: 'Please select a company from the Dashboard first.', type: 'error' });
-                                    return;
-                                }
-                                openAddDrawer();
-                            }}
-                            className="flex items-center gap-2
+  const handleMenuClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    employeeId: string,
+  ) => {
+    event.stopPropagation();
+    if (activeMenuId === employeeId) {
+      closeMenu();
+    } else {
+      setMenuAnchor(event.currentTarget);
+      setActiveMenuId(employeeId);
+    }
+  };
+
+  const activeMenuEmployee = employees.find((e) => e.id === activeMenuId);
+
+  return (
+    <div className="flex min-h-screen bg-white">
+      <Sidebar />
+
+      <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
+        {/* Header */}
+        <header className="flex items-center justify-between mb-6 shrink-0">
+          <div>
+            <h1 className="text-[32px] font-bold text-gray-900 leading-tight">
+              Employees
+            </h1>
+            <p className="text-[16px] font-normal text-gray-500 mt-1 leading-[1.7]">
+              Here's your Employees overview
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => {
+                if (!selectedCompanyId) {
+                  setToast({
+                    message:
+                      "Please select a company from the Dashboard first.",
+                    type: "error",
+                  });
+                  return;
+                }
+                openAddDrawer();
+              }}
+              className="flex items-center gap-2
           bg-blue-600 hover:bg-blue-700
           text-white
           px-4 py-2
           rounded-xl
           text-sm font-semibold"
-                        >
-                            <span className="hidden sm:inline">Add Employee</span>
-                            <Plus className="w-5 h-5" />
-                        </button>
-                    </div>
-                </header>
+            >
+              <span className="hidden sm:inline">Add Employee</span>
+              <Plus className="w-5 h-5" />
+            </button>
+            <HeaderActions showLogout={false} />
+          </div>
+        </header>
 
-                {/* Main Content */}
-                {!selectedCompanyId ? (
-                    <div className="flex-1 flex items-center justify-center">
-                        <div className="text-center">
-                            <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Company Selected</h3>
-                            <p className="text-gray-500">Please go to the Dashboard and select a company to view employees.</p>
-                        </div>
-                    </div>
+        {/* Main Content */}
+        {!selectedCompanyId ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                No Company Selected
+              </h3>
+              <p className="text-gray-500">
+                Please go to the Dashboard and select a company to view
+                employees.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-6">
+            {/* Left Column - Employee List */}
+            <div className="w-[60%] flex flex-col pr-6">
+              {/* Search */}
+              <div className="pb-6">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search users by name"
+                    className="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#F2F4FF] focus:border-blue-400 outline-none transition-all placeholder-gray-400"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Search className="w-4 h-4 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+
+              {/* List */}
+              <div className="max-h-[calc(100vh-220px)] overflow-y-auto pr-2">
+                {isLoading ? (
+                  <div className="py-4">
+                    <TableSkeleton rows={5} />
+                  </div>
+                ) : employees.length === 0 ? (
+                  <div className="py-8 text-center text-gray-500 text-sm">
+                    No employees found.
+                  </div>
                 ) : (
-                    <div className="flex gap-6">
-                        {/* Left Column - Employee List */}
-                        <div className="w-1/2 bg-white rounded-2xl shadow-lg border border-gray-200 ring-1 ring-black/5 flex flex-col overflow-hidden">
-                            {/* Search */}
-                            <div className="p-4 border-b border-gray-100">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        placeholder="Search users by name"
-                                        className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* List */}
-                            <div className="max-h-[calc(100vh-220px)] overflow-y-auto">
-                                {isLoading ? (
-                                    <div className="p-4">
-                                        <TableSkeleton rows={5} />
-                                    </div>
-                                ) : employees.length === 0 ? (
-                                    <div className="p-8 text-center text-gray-500 text-sm">
-                                        No employees found.
-                                    </div>
-                                ) : (
-                                    <div className="divide-y divide-gray-100 pb-20">
-                                        {employees.map((emp) => (
-                                            <div
-                                                key={emp.id}
-                                                onClick={() => setSelectedEmployee(emp)}
-                                                className={`p-4 flex items-center justify-between cursor-pointer
-                            transition-all duration-200
-                            hover:bg-blue-50/60 hover:shadow-sm hover:scale-[1.01]
-                            ${selectedEmployee?.id === emp.id
-                                                        ? 'bg-blue-50 shadow-md ring-1 ring-blue-300/50 scale-[1.01]'
-                                                        : 'hover:translate-x-1'
-                                                    }
-                        `}
-                                            >
-                                                <div className="flex items-center gap-3 overflow-hidden">
-                                                    {/* Avatar */}
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-200
-                                ${selectedEmployee?.id === emp.id
-                                                            ? 'bg-blue-500 shadow-md shadow-blue-200'
-                                                            : 'bg-blue-100 group-hover:bg-blue-200'
-                                                        }`}>
-                                                        <span className={`font-semibold text-sm transition-colors duration-200
-                                    ${selectedEmployee?.id === emp.id ? 'text-white' : 'text-blue-600'}`}>
-                                                            {emp.fullName.charAt(0).toUpperCase()}
-                                                        </span>
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <h4 className="text-sm font-medium text-gray-900 truncate">{emp.fullName}</h4>
-                                                            {emp.status === 'INACTIVE' && (
-                                                                <span className="px-1.5 py-0.5 bg-red-100 text-red-600 text-[10px] rounded font-medium">Inactive</span>
-                                                            )}
-                                                        </div>
-                                                        <p className="text-xs text-gray-500 truncate">{emp.employeeId || 'No Employee ID'}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-2 shrink-0 relative">
-                                                    <div className="text-xs text-gray-400 flex items-center gap-1 transition-colors duration-200 group-hover:text-blue-400">
-                                                        <Phone className="w-3 h-3" />
-                                                        <span className="hidden sm:inline">{emp.contactNumber}</span>
-                                                    </div>
-                                                    <button
-                                                        onClick={(e) => handleMenuClick(e, emp.id)}
-                                                        className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors duration-150"
-                                                    >
-                                                        <MoreVertical className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                  <div className="space-y-5 pb-20">
+                    {employees.map((emp) => (
+                      <div
+                        key={emp.id}
+                        onClick={() => setSelectedEmployee(emp)}
+                        className={` flex items-center justify-between cursor-pointer transition-all duration-200 rounded-[30px] ${
+                          selectedEmployee?.id === emp.id
+                            ? "bg-[#F1F1FF]"
+                            : "hover:bg-gray-50/80"
+                        }`}
+                      >
+                        {/* Left side: Avatar + Name */}
+                        <div className="flex items-center gap-4 w-[30%] min-w-[150px]">
+                          {/* Avatar */}
+                          <div className="w-12 h-12 rounded-full bg-[#E5E9FF] flex items-center justify-center shrink-0">
+                            <span className="font-semibold text-sm text-[#4E61AD]">
+                              {emp.fullName.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <h4 className="text-[16px] font-regular text-[#3D4760] truncate">
+                            {emp.fullName}
+                          </h4>
                         </div>
 
-                        {/* Right Column - Employee Details */}
-                        <div className="flex-1 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-200">
-                            {selectedEmployee ? (
-                                <div className="p-8">
-                                    {/* Profile Header */}
-                                    <div className="flex items-start gap-6 mb-8">
-                                        <div className="w-20 h-20 rounded-2xl bg-blue-100 flex items-center justify-center text-3xl font-bold text-blue-600">
-                                            {selectedEmployee.fullName.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <h2 className="text-2xl font-bold text-gray-900">{selectedEmployee.fullName}</h2>
-                                            <p className="text-gray-500 text-sm mt-1">{selectedEmployee.employeeId}</p>
-                                            <div className="flex gap-2 mt-4">
-                                                <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-                                                    {selectedEmployee.designation}
-                                                </span>
-                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${selectedEmployee.status === 'INACTIVE' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
-                                                    {selectedEmployee.status || 'Active'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Details Grid */}
-                                    <div className="grid grid-cols-1 gap-[-2px] max-w-2xl">
-                                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
-                                            <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400">
-                                                <User className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-medium text-gray-500 uppercase">Full Name</p>
-                                                <p className="text-sm font-medium text-gray-900">{selectedEmployee.fullName}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* ... (Other details same as before) */}
-                                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
-                                            <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400">
-                                                <Mail className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-medium text-gray-500 uppercase">Email Address</p>
-                                                <p className="text-sm font-medium text-gray-900">{selectedEmployee.email || 'Not provided'}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
-                                            <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400">
-                                                <MapPin className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-medium text-gray-500 uppercase">Address</p>
-                                                <p className="text-sm font-medium text-gray-900">{selectedEmployee.address}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
-                                            <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400">
-                                                <Phone className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-medium text-gray-500 uppercase">Phone Number</p>
-                                                <p className="text-sm font-medium text-gray-900">{selectedEmployee.contactNumber}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
-                                                <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400">
-                                                    <Calendar className="w-5 h-5" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-medium text-gray-500 uppercase">Joining Date</p>
-                                                    <p className="text-sm font-medium text-gray-900">
-                                                        {new Date(selectedEmployee.joinedDate).toLocaleDateString()}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50">
-                                                <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-600 font-semibold">
-                                                    Rs:
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-medium text-gray-500 uppercase">Basic Salary</p>
-                                                    <p className="text-sm font-medium text-gray-900">
-                                                        {(selectedEmployee.basicSalary ?? 0).toFixed(2)}
-                                                        <span className="text-xs text-gray-500 ml-1">({selectedEmployee.salaryType || 'DAILY'})</span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Recurring Payment Details */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                                            {selectedEmployee.recurringAllowances && selectedEmployee.recurringAllowances.length > 0 && (
-                                                <div className="bg-green-50/50 p-4 rounded-xl border border-green-100">
-                                                    <h4 className="text-sm font-semibold text-green-800 mb-3">Recurring Allowances</h4>
-                                                    <div className="space-y-2">
-                                                        {selectedEmployee.recurringAllowances.map((allowance, index) => (
-                                                            <div key={index} className="flex justify-between items-center text-sm">
-                                                                <span className="text-gray-600">{allowance.type}</span>
-                                                                <span className="font-medium text-gray-900">Rs. {allowance.amount.toFixed(2)}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {selectedEmployee.recurringDeductions && selectedEmployee.recurringDeductions.length > 0 && (
-                                                <div className="bg-red-50/50 p-4 rounded-xl border border-red-100">
-                                                    <h4 className="text-sm font-semibold text-red-800 mb-3">Recurring Deductions</h4>
-                                                    <div className="space-y-2">
-                                                        {selectedEmployee.recurringDeductions.map((deduction, index) => (
-                                                            <div key={index} className="flex justify-between items-center text-sm">
-                                                                <span className="text-gray-600">{deduction.type}</span>
-                                                                <span className="font-medium text-gray-900">Rs. {deduction.amount.toFixed(2)}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="h-full flex items-center justify-center text-gray-400">
-                                    <div className="text-center">
-                                        <User className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                                        <p>Select an employee to view details</p>
-                                    </div>
-                                </div>
-                            )}
+                        {/* Middle: Email */}
+                        <div className="flex items-center gap-2 text-[16px] text-gray-500 flex-1 min-w-[180px]">
+                          <Mail className="w-4 h-4 text-gray-400 shrink-0" />
+                          <span className="truncate">
+                            {emp.email || "No email provided"}
+                          </span>
                         </div>
-                    </div>
+
+                        {/* Right: Phone + Menu */}
+                        <div className="flex items-center gap-6 shrink-0">
+                          <div className="flex items-center gap-2 text-[16px] text-gray-500">
+                            <Phone className="w-4 h-4 text-gray-400" />
+                            <span>{emp.contactNumber}</span>
+                          </div>
+                          <button
+                            onClick={(e) => handleMenuClick(e, emp.id)}
+                            className="text-gray-500 hover:text-gray-900 p-1 rounded-full transition-colors"
+                          >
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
+              </div>
             </div>
 
-            {/* Universal Drawer (Add/Edit) */}
-            <UniversalDrawer
-                isOpen={isDrawerOpen}
-                onClose={() => {
-                    setIsDrawerOpen(false);
-                    setEditingEmployee(null);
-                }}
-                onSubmit={handleDrawerSubmit}
-                mode="employee"
-                companyId={selectedCompanyId || undefined}
-                initialData={editingEmployee || undefined}
-            />
+            {/* Right Column - Employee Details */}
+            <div className="flex-1 bg-[#FBFBFF] rounded-2xl shadow-sm border border-[#E4E4E7] p-8 h-fit">
+              {selectedEmployee ? (
+                <div className="max-w-xl">
+                  {/* Profile Header */}
+                  <div className="flex items-start gap-4 border-b border-gray-50 pb-6">
+                    <div className="w-[64px] h-[64px] rounded-2xl bg-[#E5E9FF] flex items-center justify-center shrink-0">
+                      <span className="font-semibold text-3xl text-[#4E61AD]">
+                        {selectedEmployee.fullName.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="pt-2">
+                      <h2 className="text-[16px] font-semibold text-[#3D4760] leading-tight mb-1">
+                        {selectedEmployee.fullName}
+                      </h2>
+                      <p className="text-[14px] text-gray-500 font-medium">
+                        {selectedEmployee.employeeId}
+                      </p>
+                    </div>
+                  </div>
 
-            {/* Success Modal */}
-            <SuccessModal
-                isOpen={showSuccessModal}
-                onClose={() => setShowSuccessModal(false)}
-                title={editingEmployee ? "Employee Updated" : "Employee Added"}
-                message={modalMessage}
-            />
+                  {/* Details List */}
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                        <User className="w-[16px] h-[16px]" />
+                        <span>Name</span>
+                      </div>
+                      <div className="text-[13px] font-medium text-[#3D4760]">
+                        {selectedEmployee.fullName}
+                      </div>
+                    </div>
 
-            {/* Confirmation Modal */}
-            <ConfirmationModal
-                isOpen={confirmation.isOpen}
-                onClose={() => setConfirmation(prev => ({ ...prev, isOpen: false }))}
-                onConfirm={confirmation.onConfirm}
-                title={confirmation.title}
-                message={confirmation.message}
-                type={confirmation.type}
-                confirmText={confirmation.confirmText}
-            />
+                    <div className="flex items-center">
+                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                        <Mail className="w-[16px] h-[16px]" />
+                        <span>Email</span>
+                      </div>
+                      <div className="text-[13px] font-medium text-[#3D4760]">
+                        {selectedEmployee.email || "N/A"}
+                      </div>
+                    </div>
 
-            {/* Addon Modal */}
-            <AddonModal
-                isOpen={isAddonModalOpen}
-                onClose={() => setIsAddonModalOpen(false)}
-                onSuccess={() => {
-                    setToast({ message: 'Slots purchased successfully!', type: 'success' });
-                    // Optionally refresh data - employees not affected directly unless we show limits here? 
-                    // But we can re-fetch just in case.
-                    // fetchEmployees(); // Handled by tags
-                }}
-                onUpgradePlan={() => {
-                    setIsAddonModalOpen(false);
-                    // Navigate to subscription
-                    window.location.href = '/settings?tab=subscription';
-                }}
-            />
+                    <div className="flex items-center">
+                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                        <MapPin className="w-[16px] h-[16px]" />
+                        <span>Address</span>
+                      </div>
+                      <div className="text-[13px] font-medium text-[#3D4760] max-w-[280px] break-words">
+                        {selectedEmployee.address}
+                      </div>
+                    </div>
 
-            {/* Toast */}
-            {toast && (
-                <Toast
-                    message={toast.message}
-                    type={toast.type}
-                    onClose={() => setToast(null)}
-                />
-            )}
+                    <div className="flex items-center">
+                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                        <Briefcase className="w-[16px] h-[16px]" />
+                        <span>Designation</span>
+                      </div>
+                      <div className="text-[13px] font-medium text-blue-500 bg-white border border-blue-200 px-3 py-1 rounded-md">
+                        {selectedEmployee.designation || "None"}
+                      </div>
+                    </div>
 
-            {/* Portal Dropdown Menu */}
-            <PortalDropdown
-                anchorEl={menuAnchor}
-                open={!!activeMenuId && !!menuAnchor}
-                onClose={closeMenu}
+                    <div className="flex items-center">
+                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                        <Flag className="w-[16px] h-[16px]" />
+                        <span>Status</span>
+                      </div>
+                      <div
+                        className={`text-[13px] font-medium px-4 py-1 rounded-md ${selectedEmployee.status === "INACTIVE" ? "bg-red-100 text-red-600" : "bg-[#D1EED8] text-[#429559]"}`}
+                      >
+                        {selectedEmployee.status === "INACTIVE"
+                          ? "Inactive"
+                          : "Active"}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center">
+                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                        <Phone className="w-[16px] h-[16px]" />
+                        <span>Phone Number</span>
+                      </div>
+                      <div className="text-[13px] font-medium text-[#3D4760]">
+                        {selectedEmployee.contactNumber}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center">
+                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                        <Calendar className="w-[16px] h-[16px]" />
+                        <span>Joining Date</span>
+                      </div>
+                      <div className="text-[13px] font-medium text-[#3D4760]">
+                        {selectedEmployee.joinedDate
+                          ? new Date(
+                              selectedEmployee.joinedDate,
+                            ).toLocaleDateString()
+                          : "N/A"}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center">
+                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                        <DollarSign className="w-[16px] h-[16px]" />
+                        <span>Daily Rate</span>
+                      </div>
+                      <div className="text-[13px] font-medium text-[#3D4760]">
+                        {(selectedEmployee.basicSalary ?? 0).toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bank Details */}
+                  <div className="mt-2 border border-gray-100 rounded-xl p-4">
+                    <div className="flex items-center gap-2 text-gray-400 font-medium text-[14px] mb-5">
+                      <Landmark className="w-[16px] h-[16px]" />
+                      <span>Bank Details</span>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center">
+                        <div className="w-[140px] text-[12px] font-medium text-gray-400">
+                          Bank name
+                        </div>
+                        <div className="text-[13px] font-medium text-[#3D4760]">
+                          {selectedEmployee.bankName || "N/A"}
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-[140px] text-[12px] font-medium text-gray-400">
+                          Account number
+                        </div>
+                        <div className="text-[13px] font-medium text-[#3D4760]">
+                          {selectedEmployee.accountNumber || "N/A"}
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="w-[140px] text-[12px] font-medium text-gray-400">
+                          Account name
+                        </div>
+                        <div className="text-[13px] font-medium text-[#3D4760]">
+                          {selectedEmployee.accountHolderName || "N/A"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Files Placeholder */}
+                  <div className="mt-6 border border-gray-100 rounded-xl p-5">
+                    <div className="flex items-center gap-2 text-gray-400 font-medium text-[14px] mb-5">
+                      <FileText className="w-[16px] h-[16px]" />
+                      <span>Files</span>
+                    </div>
+                    <div className="flex gap-4">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="w-[90px] h-[90px] border border-gray-200 rounded-2xl flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+                        >
+                          {/* In a real app we'd map employee.files, for mockup we show placeholders */}
+                          <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-400">
+                            <FileText className="w-5 h-5" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-400">
+                  <div className="text-center">
+                    <User className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p>Select an employee to view details</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Universal Drawer (Add/Edit) */}
+      <UniversalDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => {
+          setIsDrawerOpen(false);
+          setEditingEmployee(null);
+        }}
+        onSubmit={handleDrawerSubmit}
+        mode="employee"
+        companyId={selectedCompanyId || undefined}
+        initialData={editingEmployee || undefined}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title={editingEmployee ? "Employee Updated" : "Employee Added"}
+        message={modalMessage}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmation.isOpen}
+        onClose={() => setConfirmation((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmation.onConfirm}
+        title={confirmation.title}
+        message={confirmation.message}
+        type={confirmation.type}
+        confirmText={confirmation.confirmText}
+      />
+
+      {/* Addon Modal */}
+      <AddonModal
+        isOpen={isAddonModalOpen}
+        onClose={() => setIsAddonModalOpen(false)}
+        onSuccess={() => {
+          setToast({
+            message: "Slots purchased successfully!",
+            type: "success",
+          });
+          // Optionally refresh data - employees not affected directly unless we show limits here?
+          // But we can re-fetch just in case.
+          // fetchEmployees(); // Handled by tags
+        }}
+        onUpgradePlan={() => {
+          setIsAddonModalOpen(false);
+          // Navigate to subscription
+          window.location.href = "/settings?tab=subscription";
+        }}
+      />
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      {/* Portal Dropdown Menu */}
+      <PortalDropdown
+        anchorEl={menuAnchor}
+        open={!!activeMenuId && !!menuAnchor}
+        onClose={closeMenu}
+      >
+        {activeMenuEmployee && (
+          <>
+            <button
+              onClick={() => handleEdit(activeMenuEmployee)}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
             >
-                {activeMenuEmployee && (
-                    <>
-                        <button
-                            onClick={() => handleEdit(activeMenuEmployee)}
-                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                        >
-                            <Edit className="w-4 h-4" />
-                            Edit
-                        </button>
-                        {activeMenuEmployee.status === 'INACTIVE' ? (
-                            <button
-                                onClick={() => handleActivate(activeMenuEmployee)}
-                                className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
-                            >
-                                <User className="w-4 h-4" />
-                                Activate
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => handleDeactivate(activeMenuEmployee)}
-                                className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
-                            >
-                                <Ban className="w-4 h-4" />
-                                Deactivate
-                            </button>
-                        )}
-                        <button
-                            onClick={() => handleRemove(activeMenuEmployee)}
-                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                            Remove
-                        </button>
-                    </>
-                )}
-            </PortalDropdown>
-        </div>
-    );
+              <Edit className="w-4 h-4" />
+              Edit
+            </button>
+            {activeMenuEmployee.status === "INACTIVE" ? (
+              <button
+                onClick={() => handleActivate(activeMenuEmployee)}
+                className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+              >
+                <User className="w-4 h-4" />
+                Activate
+              </button>
+            ) : (
+              <button
+                onClick={() => handleDeactivate(activeMenuEmployee)}
+                className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
+              >
+                <Ban className="w-4 h-4" />
+                Deactivate
+              </button>
+            )}
+            <button
+              onClick={() => handleRemove(activeMenuEmployee)}
+              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Remove
+            </button>
+          </>
+        )}
+      </PortalDropdown>
+    </div>
+  );
 };
 
 export default Employees;
