@@ -52,6 +52,18 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
     }
   }, [amount, interestRate, installmentCount, interestRateType]);
 
+  useEffect(() => {
+    if (startDate && installmentCount) {
+      const start = new Date(startDate);
+      const count = parseInt(installmentCount);
+      if (!isNaN(start.getTime()) && count > 0) {
+        const end = new Date(start);
+        end.setMonth(end.getMonth() + count);
+        setEndDate(end.toISOString().split('T')[0]);
+      }
+    }
+  }, [startDate, installmentCount]);
+
   const handleSubmit = async () => {
     if (!companyId || !employeeId || !loanTitle || !amount || !installmentCount) {
       setToast({ message: 'Please fill in all required fields', type: 'error' });
@@ -252,7 +264,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
               </div>
               <div>
                 <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
-                  Installment Count
+                  Installment Count (Months)
                 </label>
                 <input
                   type="number"
