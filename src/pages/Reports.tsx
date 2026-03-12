@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Loader2, FileText, FileSpreadsheet, Download } from 'lucide-react';
+import { Search, FileText, Download, Loader2, FileSpreadsheet } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import MonthRangePicker from '../components/MonthRangePicker';
 import MonthSection from '../components/MonthSection';
@@ -11,7 +11,7 @@ import AllEmployeesSummaryModal from '../components/AllEmployeesSummaryModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import HeaderActions from '../components/HeaderActions';
+import PageHeader from '../components/PageHeader';
 
 const Reports = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
@@ -328,15 +328,10 @@ const Reports = () => {
         <div className="flex min-h-screen bg-gray-50">
             <Sidebar />
             <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
-                <header className="flex justify-between items-center mb-8 shrink-0">
-                    <div>
-                        <h1 className="text-[28px] font-medium text-gray-900 leading-tight">Payroll Summary Report</h1>
-                        <p className="text-[16px] font-normal text-gray-500 mt-1 leading-[1.7]">Here's your Payroll History.</p>
-                    </div>
-                    <div>
-                        <HeaderActions showLogout={false} />
-                    </div>
-                </header>
+                <PageHeader 
+                    title="Payroll Summary Report" 
+                    subtitle="Here's your Payroll History." 
+                />
 
                 {/* Filter Section */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">

@@ -9,7 +9,8 @@ import {
     Settings,
     ChevronDown,
     ChevronRight,
-    Circle
+    Circle,
+    CreditCard
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -20,6 +21,7 @@ const Sidebar = () => {
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { name: 'Employees', path: '/employees', icon: Users },
         { name: 'Salary', path: '/salary', icon: Wallet },
+        { name: 'Loans', path: '/loans', icon: CreditCard },
     ];
 
     const toggleReports = () => {

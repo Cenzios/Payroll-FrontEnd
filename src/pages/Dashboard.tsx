@@ -40,7 +40,7 @@ import {
 } from '../store/apiSlice';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import CompanySwitcher from '../components/CompanySwitcher';
-import HeaderActions from '../components/HeaderActions';
+import PageHeader from '../components/PageHeader';
 import { salaryApi } from '../api/salaryApi';
 
 const Dashboard = () => {
@@ -201,36 +201,26 @@ const Dashboard = () => {
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 ml-64">
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-          <div className="px-8 py-4 flex items-center justify-between">
-
-            {/* LEFT */}
-            <div>
-              <h1 className="text-[28px] font-medium text-gray-900 leading-tight">
-                {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'}
-              </h1>
-              <p className="text-[16px] font-normal text-gray-500 leading-[1.7]">
-                Here's your dashboard overview
-              </p>
-            </div>
-
-            {/* RIGHT */}
-            <div className="flex items-center gap-3">
-
+      <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
+        <PageHeader 
+          title={`${getGreeting()}, ${user?.fullName?.split(' ')[0] || 'User'}`}
+          subtitle="Here's your dashboard overview"
+          showLogout={true}
+          actionElement={
+            <>
               {/* Company Switcher */}
               <div className="relative">
                 <button
                   onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
                   className="
-            flex items-center gap-2
-            px-4 py-2
-            rounded-xl
-            border border-gray-200
-            bg-white
-            hover:bg-gray-50
-            text-sm font-medium text-gray-700
-          "
+                    flex items-center gap-2
+                    px-4 py-2
+                    rounded-xl
+                    border border-gray-200
+                    bg-white
+                    hover:bg-gray-50
+                    text-sm font-medium text-gray-700
+                  "
                 >
                   <Building2 className="w-4 h-4 text-gray-500" />
                   {selectedCompany ? selectedCompany.name : 'Select Company'}
@@ -252,20 +242,17 @@ const Dashboard = () => {
 
               <button
                 onClick={openAddCompany}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm"
+                className="flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+                title="Add New Company"
               >
                 <Plus className="w-4 h-4" />
-                Add New Company
+                <span className="hidden sm:inline">Add New Company</span>
               </button>
+            </>
+          }
+        />
 
-              <HeaderActions />
-
-            </div>
-          </div>
-        </header>
-
-
-        <main className="p-8">
+        <main className="flex-1">
           {isDashboardLoading ? <DashboardSkeleton /> : (
             <>
               {/* Stats Cards */}

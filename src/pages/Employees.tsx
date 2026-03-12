@@ -29,7 +29,8 @@ import {
   useUpdateEmployeeMutation,
   useDeleteEmployeeMutation,
 } from "../store/apiSlice";
-import { Employee } from "../types/employee.types";
+import { Employee, Department } from '../types/employee.types';
+import PageHeader from '../components/PageHeader';
 import Toast from "../components/Toast";
 import TableSkeleton from "../components/skeletons/TableSkeleton";
 import PortalDropdown from "../components/PortalDropdown";
@@ -312,43 +313,33 @@ const Employees = () => {
 
       <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
         {/* Header */}
-        <header className="flex items-center justify-between mb-6 shrink-0">
-          <div>
-            <h1 className="text-[32px] font-bold text-gray-900 leading-tight">
-              Employees
-            </h1>
-            <p className="text-[16px] font-normal text-gray-500 mt-1 leading-[1.7]">
-              Here's your Employees overview
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => {
-                if (!selectedCompanyId) {
-                  setToast({
-                    message:
-                      "Please select a company from the Dashboard first.",
-                    type: "error",
-                  });
-                  return;
-                }
-                openAddDrawer();
-              }}
-              className="flex items-center gap-2
-          bg-blue-600 hover:bg-blue-700
-          text-white
-          px-4 py-2
-          rounded-xl
-          text-sm font-semibold"
-            >
-              <span className="hidden sm:inline">Add Employee</span>
-              <Plus className="w-5 h-5" />
-            </button>
-            <HeaderActions showLogout={false} />
-          </div>
-        </header>
+        <PageHeader 
+            title="Employees" 
+            subtitle="Here's your Employees overview" 
+            actionElement={
+              <button
+                onClick={() => {
+                  if (!selectedCompanyId) {
+                    setToast({
+                      message: "Please select a company from the Dashboard first.",
+                      type: "error",
+                    });
+                    return;
+                  }
+                  openAddDrawer();
+                }}
+                className="flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
+              >
+                Add Employee
+                <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center ml-1">
+                  <Plus className="w-4 h-4" />
+                </div>
+              </button>
+            }
+          />
 
-        {/* Main Content */}
+          {/* Table Container */}  {/* Main Content */}
         {!selectedCompanyId ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
