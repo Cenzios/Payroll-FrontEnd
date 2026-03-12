@@ -28,6 +28,22 @@ interface UniversalDrawerProps {
   initialData?: any; // For edit mode
 }
 
+const SRI_LANKAN_BANKS = [
+  "Bank of Ceylon (State-owned)",
+  "People’s Bank (State-owned)",
+  "Commercial Bank of Ceylon PLC",
+  "Hatton National Bank PLC (HNB)",
+  "Sampath Bank PLC",
+  "Seylan Bank PLC",
+  "Nations Trust Bank PLC (NTB)",
+  "DFCC Bank PLC",
+  "National Development Bank PLC (NDB)",
+  "Pan Asia Banking Corporation PLC (PABC)",
+  "Union Bank of Colombo PLC",
+  "Amana Bank PLC (Non-interest based/Islamic banking)",
+  "Cargills Bank PLC",
+];
+
 const Toggle = ({
   enabled,
   onToggle,
@@ -372,27 +388,27 @@ const UniversalDrawer = ({
         // Build recurring allowances array
         const recurringAllowances = allowanceEnabled
           ? allowances
-              .filter(
-                (a) =>
-                  a.type.trim() && a.amount.trim() && parseFloat(a.amount) > 0,
-              )
-              .map((a) => ({
-                type: a.type.trim(),
-                amount: parseFloat(a.amount),
-              }))
+            .filter(
+              (a) =>
+                a.type.trim() && a.amount.trim() && parseFloat(a.amount) > 0,
+            )
+            .map((a) => ({
+              type: a.type.trim(),
+              amount: parseFloat(a.amount),
+            }))
           : [];
 
         // Build recurring deductions array
         const recurringDeductions = deductionEnabled
           ? deductions
-              .filter(
-                (d) =>
-                  d.type.trim() && d.amount.trim() && parseFloat(d.amount) > 0,
-              )
-              .map((d) => ({
-                type: d.type.trim(),
-                amount: parseFloat(d.amount),
-              }))
+            .filter(
+              (d) =>
+                d.type.trim() && d.amount.trim() && parseFloat(d.amount) > 0,
+            )
+            .map((d) => ({
+              type: d.type.trim(),
+              amount: parseFloat(d.amount),
+            }))
           : [];
 
         const finalEmployeeData = {
@@ -1233,15 +1249,22 @@ const UniversalDrawer = ({
                               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                 <Landmark className="h-4 w-4 text-gray-400" />
                               </div>
-                              <input
-                                type="text"
+                              <select
                                 value={employeeData.bankName || ""}
                                 onChange={(e) =>
                                   handleEmployeeChange("bankName", e.target.value)
                                 }
-                                placeholder="Enter bank name"
-                                className={`text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.bankName && errors.bankName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              />
+                                onBlur={() => handleBlur("bankName")}
+                                className={`text-[14px] w-full pl-10 pr-10 py-2.5 border rounded-xl focus:ring-2 outline-none transition-all appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_1rem_center] ${touched.bankName && errors.bankName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                              >
+                                <option value="">Select Bank</option>
+                                {SRI_LANKAN_BANKS.map((bank) => (
+                                  <option key={bank} value={bank}>
+                                    {bank}
+                                  </option>
+                                ))}
+
+                              </select>
                             </div>
                             {touched.bankName && errors.bankName && (
                               <p className="text-red-500 text-xs mt-1">
