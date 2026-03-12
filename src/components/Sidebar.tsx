@@ -29,7 +29,7 @@ const Sidebar = () => {
     return (
         <div className="w-64 bg-white h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 overflow-y-auto">
             {/* Logo Section */}
-            <div className="p-6 border-b border-gray-200 flex items-center justify-center">
+            <div className="p-6 flex items-center justify-center">
                 <NavLink to="/dashboard" className="cursor-pointer">
                     <img
                         src={logo}
@@ -46,9 +46,9 @@ const Sidebar = () => {
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                                ? 'bg-blue-50 text-blue-600 font-medium'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[16px] font-semibold ${isActive
+                                ? 'bg-[#F7F8FB] text-blue-600 font-medium'
+                                : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
                             }`
                         }
                     >
@@ -61,9 +61,9 @@ const Sidebar = () => {
                 <div>
                     <button
                         onClick={toggleReports}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${location.pathname.startsWith('/reports')
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 text-[16px] font-semibold ${location.pathname.startsWith('/reports')
                             ? 'bg-blue-50 text-blue-600 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
                             }`}
                     >
                         <div className="flex items-center gap-3">
@@ -78,9 +78,9 @@ const Sidebar = () => {
                             <NavLink
                                 to="/reports"
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isActive
+                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-[16px] transition-all duration-200 ${isActive
                                         ? 'text-blue-600 font-medium'
-                                        : 'text-gray-500 hover:text-gray-900'
+                                        : 'text-[#67696C] hover:text-gray-900'
                                     }`
                                 }
                             >
@@ -99,9 +99,9 @@ const Sidebar = () => {
                 <NavLink
                     to="/settings"
                     className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
+                        `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[16px] ${isActive
                             ? 'bg-blue-50 text-blue-600 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
                         }`
                     }
                 >

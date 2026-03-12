@@ -11,6 +11,7 @@ import AllEmployeesSummaryModal from '../components/AllEmployeesSummaryModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import HeaderActions from '../components/HeaderActions';
 
 const Reports = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
@@ -331,6 +332,9 @@ const Reports = () => {
                     <div>
                         <h1 className="text-[28px] font-medium text-gray-900 leading-tight">Payroll Summary Report</h1>
                         <p className="text-[16px] font-normal text-gray-500 mt-1 leading-[1.7]">Here's your Payroll History.</p>
+                    </div>
+                    <div>
+                        <HeaderActions showLogout={false} />
                     </div>
                 </header>
 

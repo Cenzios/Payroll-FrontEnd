@@ -28,6 +28,10 @@ export interface Employee {
     updatedAt?: string;
     recurringAllowances?: RecurringEntry[];
     recurringDeductions?: RecurringEntry[];
+    bankName?: string;
+    accountNumber?: string;
+    branchName?: string;
+    accountHolderName?: string;
 }
 
 export interface CreateEmployeeRequest {
@@ -51,4 +55,8 @@ export interface CreateEmployeeRequest {
     companyId: string;
     recurringAllowances?: RecurringEntry[];
     recurringDeductions?: RecurringEntry[];
+    bankName?: string;
+    accountNumber?: string;
+    branchName?: string;
+    accountHolderName?: string;
 }
