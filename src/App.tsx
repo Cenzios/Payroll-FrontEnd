@@ -14,6 +14,7 @@ import Dashboard from './pages/Dashboard';
 import Companies from './pages/Companies';
 import Employees from './pages/Employees';
 import Salary from './pages/Salary'; // Import Salary
+import Loans from './pages/Loans';
 import Reports from './pages/Reports';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
@@ -70,6 +71,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Salary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/loans"
+          element={
+            <ProtectedRoute>
+              <Loans />
             </ProtectedRoute>
           }
         />
