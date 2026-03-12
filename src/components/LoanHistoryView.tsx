@@ -1,68 +1,78 @@
-import { ExternalLink, Calendar, CheckCircle2, Clock, CalendarDays, ArrowLeft } from 'lucide-react';
+import { ExternalLink, Calendar, CheckCircle2, Clock, CalendarDays, ArrowLeft, Loader2 } from 'lucide-react';
 import PageHeader from './PageHeader';
-
-interface Loan {
-    id: string;
-    employee: {
-        name: string;
-        id: string;
-        avatar: string;
-    };
-    title: string;
-    amount: number;
-    interestRate: string;
-    installments: string; // e.g., "14 / 24"
-    monthlyPremium: number;
-    status: string;
-}
+import { useGetLoanByIdQuery } from '../store/apiSlice';
+import { useAppSelector } from '../store/hooks';
 
 interface LoanHistoryViewProps {
-    loan: Loan;
+    loan: any;
     onBack: () => void;
 }
-
-// Dummy data for history
-const PAYMENT_HISTORY = [
-    { id: 1, installment: '16 / 24', dueDate: 'Nov 15, 2024', paymentDate: '-', principal: 5000.00, interest: 275.00, total: 5275.00, status: 'Upcoming' },
-    { id: 2, installment: '15 / 24', dueDate: 'Oct 15, 2024', paymentDate: '-', principal: 5000.00, interest: 275.00, total: 5275.00, status: 'Pending' },
-    { id: 3, installment: '14 / 24', dueDate: 'Sep 15, 2024', paymentDate: 'Sep 12, 2024', principal: 5000.00, interest: 275.00, total: 5275.00, status: 'Paid' },
-    { id: 4, installment: '13 / 24', dueDate: 'Aug 15, 2024', paymentDate: 'Aug 14, 2024', principal: 5000.00, interest: 275.00, total: 5275.00, status: 'Paid' },
-    { id: 5, installment: '12 / 24', dueDate: 'Jul 15, 2024', paymentDate: 'Jul 15, 2024', principal: 5000.00, interest: 275.00, total: 5275.00, status: 'Paid' },
-    { id: 6, installment: '11 / 24', dueDate: 'Jun 15, 2024', paymentDate: 'Jun 13, 2024', principal: 5000.00, interest: 275.00, total: 5275.00, status: 'Paid' },
-];
 
 const getHistoryBadge = (status: string) => {
     switch (status) {
         case 'Paid':
+        case 'PAID':
             return <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-500">Paid</span>;
         case 'Pending':
-            return <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-orange-500 text-white shadow-sm">Pending</span>;
+        case 'PENDING':
+            return <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-500">Pending</span>;
         case 'Upcoming':
             return <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-500">Upcoming</span>;
         default:
-            return null;
+            return <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-400">{status}</span>;
     }
 };
 
-const LoanHistoryView = ({ loan, onBack }: LoanHistoryViewProps) => {
+const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) => {
+    const { selectedCompanyId } = useAppSelector((state) => state.auth);
+    const { data: loan, isLoading, isError } = useGetLoanByIdQuery(
+        { loanId: initialLoan.id, companyId: selectedCompanyId || "" },
+        { skip: !selectedCompanyId || !initialLoan.id }
+    );
 
-    // Calculate dummy stats based on loan amount (for UI demonstration purposes)
-    const paidInstallments = parseInt(loan.installments.split(' / ')[0]) || 0;
-    const totalInstallments = parseInt(loan.installments.split(' / ')[1]) || 1;
-    const progressPercent = Math.min(Math.round((paidInstallments / totalInstallments) * 100), 100);
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center py-20">
+                <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
+                <p className="text-gray-500">Loading loan history...</p>
+            </div>
+        );
+    }
 
-    const fullAmountWithInterest = loan.amount + (loan.amount * 0.055); // Dummy 5.5% calc
-    const currentPaidAmount = (fullAmountWithInterest / totalInstallments) * paidInstallments;
+    if (isError || !loan) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center py-20 text-red-500">
+                <p>Failed to load loan details.</p>
+                <button onClick={onBack} className="mt-4 text-blue-500 underline text-sm">Back to Loans</button>
+            </div>
+        );
+    }
+
+    const installments = loan.installments || [];
+    const paidInstallmentsCount = installments.filter((i: any) => i.status === 'PAID').length;
+    const totalInstallmentsCount = loan.installmentCount || installments.length || 1;
+    const progressPercent = Math.min(Math.round((paidInstallmentsCount / totalInstallmentsCount) * 100), 100);
+
+    // Interest calculation based on rate and type
+    const interestRateVal = loan.interestRate || 0;
+    const totalInterest = loan.interestRateType === 'ANNUALLY'
+        ? loan.amount * (interestRateVal / 100) * (totalInstallmentsCount / 12)
+        : loan.amount * (interestRateVal / 100) * totalInstallmentsCount;
+
+    const fullAmountWithInterest = loan.amount + totalInterest;
+    const currentPaidAmount = installments
+        .filter((i: any) => i.status === 'PAID')
+        .reduce((sum: number, i: any) => sum + i.amount, 0);
 
     return (
         <div className="flex-1 flex flex-col pt-0">
             {/* Standard Header */}
             <div className="mb-6 -mt-2">
-                <PageHeader 
+                <PageHeader
                     title="Loans"
                     subtitle="Loan history"
                     actionElement={
-                        <button 
+                        <button
                             onClick={onBack}
                             className="flex items-center gap-2 text-[#4F5660] hover:text-blue-600 font-semibold text-sm transition-colors py-2 px-4 rounded-full border border-gray-200 hover:border-blue-200 bg-white"
                         >
@@ -77,29 +87,28 @@ const LoanHistoryView = ({ loan, onBack }: LoanHistoryViewProps) => {
             <div className="bg-[#407BFF1A] rounded-2xl p-6 flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full bg-blue-200 flex items-center justify-center shrink-0 overflow-hidden">
-                        {/* Dummy image or Avatar letter */}
-                        <img 
-                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(loan.employee.name)}&background=BFDBFE&color=2563EB`} 
-                            alt={loan.employee.name}
+                        <img
+                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(loan.employee?.fullName || 'E')}&background=BFDBFE&color=2563EB`}
+                            alt={loan.employee?.fullName}
                             className="w-full h-full object-cover"
                         />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-[#141B3B] mb-2">{loan.employee.name}</h2>
+                        <h2 className="text-xl font-bold text-[#141B3B] mb-2">{loan.employee?.fullName}</h2>
                         <div className="flex items-center gap-4 text-[13px] font-medium text-gray-500">
                             <div className="flex items-center gap-1.5">
                                 <span className="w-4 h-4 flex items-center justify-center bg-gray-200 rounded text-gray-600 text-[10px]">ID</span>
-                                {loan.employee.id}
+                                {loan.employee?.employeeId}
                             </div>
                             <div className="w-px h-3 bg-gray-300"></div>
                             <div className="flex items-center gap-1.5">
                                 <Calendar className="w-3.5 h-3.5" />
-                                {loan.title}
+                                {loan.loanTitle}
                             </div>
                             <div className="w-px h-3 bg-gray-300"></div>
                             <div className="flex items-center gap-1.5">
                                 <span className="font-bold">%</span>
-                                {loan.interestRate}
+                                {loan.interestRate}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})
                             </div>
                         </div>
                     </div>
@@ -135,7 +144,7 @@ const LoanHistoryView = ({ loan, onBack }: LoanHistoryViewProps) => {
                         <div className="text-[22px] font-bold text-[#141B3B] mb-1">
                             Rs: {fullAmountWithInterest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
-                        <div className="text-[12px] text-gray-400 font-medium">Includes Rs: {(fullAmountWithInterest - loan.amount).toLocaleString('en-US', {minimumFractionDigits: 2})} interest</div>
+                        <div className="text-[12px] text-gray-400 font-medium">Includes Rs: {totalInterest.toLocaleString('en-US', { minimumFractionDigits: 2 })} interest</div>
                     </div>
                 </div>
 
@@ -151,11 +160,11 @@ const LoanHistoryView = ({ loan, onBack }: LoanHistoryViewProps) => {
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="text-[12px] text-gray-400 font-medium whitespace-nowrap">
-                                {loan.installments} Installments
+                                {paidInstallmentsCount} / {totalInstallmentsCount} Installments
                             </div>
                             <div className="flex-1 max-w-[100px] h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div 
-                                    className="h-full bg-blue-500 rounded-full" 
+                                <div
+                                    className="h-full bg-blue-500 rounded-full"
                                     style={{ width: `${progressPercent}%` }}
                                 ></div>
                             </div>
@@ -174,7 +183,7 @@ const LoanHistoryView = ({ loan, onBack }: LoanHistoryViewProps) => {
                         <div className="text-[22px] font-bold text-[#141B3B] mb-1">
                             Rs: {loan.monthlyPremium.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
-                        <div className="text-[12px] text-gray-400 font-medium">Next due: Oct 15, 2024</div>
+                        <div className="text-[12px] text-gray-400 font-medium">Next due: {installments.find((i: any) => i.status === 'PENDING')?.dueDate ? new Date(installments.find((i: any) => i.status === 'PENDING').dueDate).toLocaleDateString() : '-'}</div>
                     </div>
                 </div>
             </div>
@@ -189,21 +198,17 @@ const LoanHistoryView = ({ loan, onBack }: LoanHistoryViewProps) => {
                                 <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Installment</th>
                                 <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Due Date</th>
                                 <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Payment Date</th>
-                                <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Principal Component</th>
-                                <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Interest Component</th>
                                 <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Total Premium</th>
                                 <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {PAYMENT_HISTORY.map((row) => (
+                            {installments.map((row: any) => (
                                 <tr key={row.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="py-4 px-2 text-[13px] font-semibold text-gray-400">{row.installment}</td>
-                                    <td className={`py-4 px-2 text-[13px] font-bold ${row.status === 'Pending' ? 'text-[#141B3B]' : 'text-gray-500'}`}>{row.dueDate}</td>
-                                    <td className="py-4 px-2 text-[13px] font-semibold text-gray-500">{row.paymentDate}</td>
-                                    <td className="py-4 px-2 text-[13px] font-bold text-gray-500">Rs: {row.principal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                                    <td className="py-4 px-2 text-[13px] font-bold text-gray-500">Rs: {row.interest.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                                    <td className="py-4 px-2 text-[13px] font-bold text-gray-500">Rs: {row.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                                    <td className="py-4 px-2 text-[13px] font-semibold text-gray-400">{row.installmentNumber} / {totalInstallmentsCount}</td>
+                                    <td className={`py-4 px-2 text-[13px] font-bold ${row.status === 'PENDING' ? 'text-[#141B3B]' : 'text-gray-500'}`}>{new Date(row.dueDate).toLocaleDateString()}</td>
+                                    <td className="py-4 px-2 text-[13px] font-semibold text-gray-500">{row.status === 'PAID' ? new Date(row.updatedAt).toLocaleDateString() : '-'}</td>
+                                    <td className="py-4 px-2 text-[13px] font-bold text-gray-500">Rs: {row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                                     <td className="py-4 px-2">
                                         {getHistoryBadge(row.status)}
                                     </td>
