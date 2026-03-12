@@ -10,6 +10,7 @@ import SalaryListSkeleton from '../components/skeletons/SalaryListSkeleton';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import HeaderActions from '../components/HeaderActions';
 import {
     setCompanyWorkingDays,
     setEmployeeWorkedDays,
@@ -555,6 +556,9 @@ const Salary = () => {
                     <div>
                         <h1 className="text-[28px] font-medium text-gray-900 leading-tight">Salary</h1>
                         <p className="text-[16px] font-normal text-gray-500 mt-1 leading-[1.7]">View and calculate employee salaries</p>
+                    </div>
+                    <div>
+                        <HeaderActions showLogout={false} />
                     </div>
                 </header>
 
