@@ -31,6 +31,53 @@ interface GetEmployeesResponse {
     totalPages: number;
 }
 
+export interface Loan {
+    id: string;
+    loanId: string;
+    employeeId: string;
+    companyId: string;
+    employeeNameSnapshot: string;
+    loanTitle: string;
+    description?: string;
+    startDate: string;
+    endDate: string;
+    interestRateType: 'MONTHLY' | 'ANNUALLY';
+    amount: number;
+    installmentCount: number;
+    interestRate: number;
+    monthlyPremium: number;
+    supportingDocId?: string;
+    createdAt: string;
+    employee?: {
+        fullName: string;
+        employeeId: string;
+    };
+    installments?: any[];
+}
+
+export interface CreateLoanRequest {
+    companyId: string;
+    employeeId: string;
+    loanId: string;
+    loanTitle: string;
+    description?: string;
+    startDate: string;
+    endDate: string;
+    interestRateType: 'MONTHLY' | 'ANNUALLY';
+    amount: number;
+    installmentCount: number;
+    interestRate: number;
+    monthlyPremium: number;
+}
+
+export interface EmployeeBank {
+    employeeId: string;
+    accountHolderName: string;
+    bankName: string;
+    branchName: string;
+    accountNumber: string;
+}
+
 export const apiSlice = createApi({
     reducerPath: 'api',
     baseQuery: axiosBaseQuery({ baseUrl: '' }), // baseUrl handled by axiosInstance
@@ -184,6 +231,56 @@ export const apiSlice = createApi({
             }),
             providesTags: ['Dashboard'],
         }),
+
+        // --- LOANS ---
+        getLoans: builder.query<Loan[], { companyId: string }>({
+            query: (params) => ({
+                url: '/loans',
+                method: 'GET',
+                params,
+            }),
+            providesTags: (result) =>
+                result
+                    ? [...result.map(({ id }) => ({ type: 'Employee' as const, id })), { type: 'Employee', id: 'LIST' }]
+                    : [{ type: 'Employee', id: 'LIST' }], // Reusing Employee tag for simplicity or add 'Loan'
+        }),
+
+        createLoan: builder.mutation<Loan, CreateLoanRequest>({
+            query: (data) => ({
+                url: '/loans',
+                method: 'POST',
+                data,
+            }),
+            invalidatesTags: ['Employee', 'Dashboard'],
+        }),
+
+        getLoanById: builder.query<Loan, { loanId: string; companyId: string }>({
+            query: ({ loanId, companyId }) => ({
+                url: `/loans/${loanId}`,
+                method: 'GET',
+                params: { companyId },
+            }),
+            providesTags: (result, error, { loanId }) => [{ type: 'Employee', id: loanId }],
+        }),
+
+        // --- BANK DETAILS ---
+        getBankDetails: builder.query<EmployeeBank, { employeeId: string; companyId: string }>({
+            query: ({ employeeId, companyId }) => ({
+                url: `/employee-bank/${employeeId}`,
+                method: 'GET',
+                params: { companyId },
+            }),
+            providesTags: (result, error, { employeeId }) => [{ type: 'Employee', id: employeeId }],
+        }),
+
+        saveBankDetails: builder.mutation<EmployeeBank, { employeeId: string; companyId: string } & EmployeeBank>({
+            query: ({ employeeId, ...data }) => ({
+                url: `/employee-bank/${employeeId}`,
+                method: 'POST',
+                data,
+            }),
+            invalidatesTags: (result, error, { employeeId }) => [{ type: 'Employee', id: employeeId }],
+        }),
     }),
 });
 
@@ -205,5 +302,10 @@ export const {
     useMarkNotificationAsReadMutation,
     useDeleteNotificationMutation,
     useDeleteAllNotificationsMutation,
-    useGetSalaryTrendQuery
+    useGetSalaryTrendQuery,
+    useGetLoansQuery,
+    useGetLoanByIdQuery,
+    useCreateLoanMutation,
+    useGetBankDetailsQuery,
+    useSaveBankDetailsMutation
 } = apiSlice;

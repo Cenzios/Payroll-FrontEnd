@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { X, UploadCloud } from 'lucide-react';
-import { useGetEmployeesQuery } from '../store/apiSlice';
+import { X, UploadCloud, Loader2 } from 'lucide-react';
+import { useGetEmployeesQuery, useCreateLoanMutation } from '../store/apiSlice';
 import { Employee } from '../types/employee.types';
+import Toast from './Toast';
 
 interface CreateLoanDrawerProps {
   isOpen: boolean;
@@ -15,41 +16,92 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
   const [employeeId, setEmployeeId] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [interestRateType, setInterestRateType] = useState<'Annually' | 'Monthly'>('Annually');
+  const [interestRateType, setInterestRateType] = useState<'ANNUALLY' | 'MONTHLY'>('ANNUALLY');
   const [amount, setAmount] = useState('');
   const [installmentCount, setInstallmentCount] = useState('');
   const [interestRate, setInterestRate] = useState('');
   const [monthlyPremium, setMonthlyPremium] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const { data: employeesData } = useGetEmployeesQuery(
     { companyId: companyId || '' },
     { skip: !companyId }
   );
 
+  const [createLoan] = useCreateLoanMutation();
+
   const employees = employeesData?.employees || [];
 
   useEffect(() => {
-    // Simple mock calculation for monthly premium display
     const p = parseFloat(amount) || 0;
     const r = parseFloat(interestRate) || 0;
     const n = parseInt(installmentCount) || 12;
 
     if (p > 0) {
-      // Basic mock formula logic just for UI display purposes based on screenshot
-      const totalInterest = p * (r / 100);
+      // EMI Formula or simple installment (matching user's request for simple check)
+      // Usually, Simple interest: (P + (P * r * (n/12)/100)) / n if annually
+      // For now using the simple one from initial component to stay consistent with UI expectations
+      const totalInterest = interestRateType === 'ANNUALLY'
+        ? p * (r / 100) * (n / 12)
+        : p * (r / 100) * n;
       const total = p + totalInterest;
       setMonthlyPremium(total / n);
     } else {
       setMonthlyPremium(0);
     }
-  }, [amount, interestRate, installmentCount]);
+  }, [amount, interestRate, installmentCount, interestRateType]);
+
+  const handleSubmit = async () => {
+    if (!companyId || !employeeId || !loanTitle || !amount || !installmentCount) {
+      setToast({ message: 'Please fill in all required fields', type: 'error' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const loanIdPrefix = 'LOAN-' + Math.floor(1000 + Math.random() * 9000);
+      await createLoan({
+        companyId,
+        employeeId, // This is the 'id' (UUID) from the select value
+        loanId: loanIdPrefix,
+        loanTitle,
+        description,
+        startDate,
+        endDate,
+        interestRateType,
+        amount: parseFloat(amount),
+        installmentCount: parseInt(installmentCount),
+        interestRate: parseFloat(interestRate),
+        monthlyPremium: monthlyPremium
+      }).unwrap();
+
+      setToast({ message: 'Loan created successfully!', type: 'success' });
+      setTimeout(() => {
+        onClose();
+        // Reset fields
+        setLoanTitle('');
+        setDescription('');
+        setEmployeeId('');
+        setStartDate('');
+        setEndDate('');
+        setAmount('');
+        setInstallmentCount('');
+        setInterestRate('');
+      }, 1500);
+    } catch (error: any) {
+      setToast({ message: error.data?.message || 'Failed to create loan', type: 'error' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Overlay */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/50 transition-opacity"
         onClick={onClose}
       />
@@ -59,7 +111,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h2 className="text-xl font-bold text-[#141B3B]">Create Loan</h2>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
@@ -70,7 +122,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
           <div className="space-y-5">
-            
+
             {/* Loan Title */}
             <div>
               <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
@@ -117,7 +169,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
               >
                 <option value="" disabled>Select Employee</option>
                 {employees.map((emp: Employee) => (
-                  <option key={emp.employeeId} value={emp.employeeId}>
+                  <option key={emp.id} value={emp.id}>
                     {emp.fullName} ({emp.employeeId})
                   </option>
                 ))}
@@ -158,23 +210,21 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
               <div className="flex p-1 bg-gray-100/80 rounded-xl">
                 <button
                   type="button"
-                  onClick={() => setInterestRateType('Annually')}
-                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                    interestRateType === 'Annually' 
-                      ? 'bg-white text-gray-900 shadow-sm border border-gray-200/50' 
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                  onClick={() => setInterestRateType('ANNUALLY')}
+                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${interestRateType === 'ANNUALLY'
+                    ? 'bg-white text-gray-900 shadow-sm border border-gray-200/50'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}
                 >
                   Annually
                 </button>
                 <button
                   type="button"
-                  onClick={() => setInterestRateType('Monthly')}
-                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                    interestRateType === 'Monthly' 
-                      ? 'bg-white text-gray-900 shadow-sm border border-gray-200/50' 
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                  onClick={() => setInterestRateType('MONTHLY')}
+                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${interestRateType === 'MONTHLY'
+                    ? 'bg-white text-gray-900 shadow-sm border border-gray-200/50'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}
                 >
                   Monthly
                 </button>
@@ -266,22 +316,36 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
 
         {/* Footer Actions */}
         <div className="border-t border-gray-100 p-6 bg-white shrink-0 flex items-center gap-3">
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={onClose}
             className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>
-          <button 
-            type="button" 
-            className="flex-1 py-2.5 bg-[#3B82F6] text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition-colors shadow-sm shadow-blue-500/20"
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="flex-1 py-2.5 bg-[#3B82F6] text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition-colors shadow-sm shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            Create Loan
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Creating...
+              </>
+            ) : 'Create Loan'}
           </button>
         </div>
 
       </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };
