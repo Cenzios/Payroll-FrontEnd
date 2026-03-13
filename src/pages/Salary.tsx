@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Loader2, Download, FileText, FileSpreadsheet, Calculator, X } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { useGetEmployeesQuery, useGetCompaniesQuery } from '../store/apiSlice';
+import { useGetEmployeesQuery, useGetCompaniesQuery, useGetAllPendingLoanInstallmentsQuery } from '../store/apiSlice';
 import { salaryApi } from '../api/salaryApi';
 import { Employee } from '../types/employee.types';
 import Toast from '../components/Toast';
@@ -17,6 +17,7 @@ import {
     setEmployeeOtHours,
     setEmployeeSalaryAdvance,
     toggleEpfEtf,
+    toggleLoanEnabled,
     setPreviewPayslip,
     setMonth,
     setYear
@@ -31,6 +32,7 @@ const Salary = () => {
         employeeOtHours,
         employeeSalaryAdvance,
         employeeEpfEtf,
+        employeeLoanEnabled,
         previewPayslip,
         selectedMonth,
         selectedYear
@@ -43,6 +45,24 @@ const Salary = () => {
     const [isSaving, setIsSaving] = useState(false);
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    // Pending Loans Query (for all employees)
+    const { data: allPendingLoans } = useGetAllPendingLoanInstallmentsQuery({
+        companyId: selectedCompanyId || '',
+        month: selectedMonth + 1,
+        year: selectedYear
+    }, {
+        skip: !selectedCompanyId
+    });
+
+    // Create a map of employeeId -> loan installment total
+    const employeeLoanMap = (allPendingLoans || []).reduce((map: Record<string, number>, inst: any) => {
+        const empId = inst.loan?.employeeId;
+        if (empId) {
+            map[empId] = (map[empId] || 0) + (inst.amount - (inst.paidAmount || 0));
+        }
+        return map;
+    }, {});
 
     // Allowance / Deduction local state per employee
     const [allowanceToggles, setAllowanceToggles] = useState<Record<string, boolean>>({});
@@ -123,9 +143,18 @@ const Salary = () => {
     const getEmployeeValues = (empId: string) => {
         const workedDays = employeeWorkedDays[empId] ?? companyWorkingDays;
         const isEpfEnabled = employeeEpfEtf[empId] ?? true;
+        const isLoanEnabled = employeeLoanEnabled[empId] ?? true;
         const otHours = employeeOtHours[empId] ?? 0;
         const salaryAdvance = employeeSalaryAdvance[empId] ?? 0;
-        return { workedDays, isEpfEnabled, otHours, salaryAdvance };
+        const loanDeduction = isLoanEnabled ? (employeeLoanMap[empId] || 0) : 0;
+        return { workedDays, isEpfEnabled, isLoanEnabled, otHours, salaryAdvance, loanDeduction };
+    };
+
+    // Helper for ordinal suffixes (1st, 2nd, etc.)
+    const getOrdinalSuffix = (n: number) => {
+        const s = ["th", "st", "nd", "rd"];
+        const v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
     };
 
     // --- Validation Logic ---
@@ -213,6 +242,11 @@ const Salary = () => {
         dispatch(toggleEpfEtf({ id: empId, value: !currentVal }));
     };
 
+    const handleToggleLoan = (empId: string) => {
+        const currentVal = employeeLoanEnabled[empId] ?? true;
+        dispatch(toggleLoanEnabled({ id: empId, value: !currentVal }));
+    };
+
     const handleEmployeeOtHoursChange = (empId: string, val: number) => {
         dispatch(setEmployeeOtHours({ id: empId, hours: val }));
     };
@@ -225,7 +259,7 @@ const Salary = () => {
     const handleGeneratePayslip = async (emp: Employee) => {
         setSelectedEmployee(emp);
 
-        const { workedDays, isEpfEnabled, otHours, salaryAdvance } = getEmployeeValues(emp.id);
+        const { workedDays, isEpfEnabled, isLoanEnabled, otHours, salaryAdvance, loanDeduction } = getEmployeeValues(emp.id);
         const otAmount = otHours * (emp.otRate || 0);
 
         // FINAL VALIDATION BLOCK - Mark all as touched and check
@@ -265,7 +299,7 @@ const Salary = () => {
         }
 
         const tax = 0; // Tax will be calculated by backend
-        const totalDeductions = epfEmployee + tax + salaryAdvance + deductionAmount;
+        const totalDeductions = epfEmployee + tax + salaryAdvance + deductionAmount + loanDeduction;
         const netSalary = (basicPay + otAmount + allowanceAmount) - totalDeductions;
 
         const details = {
@@ -283,13 +317,18 @@ const Salary = () => {
             otHours,
             otAmount,
             salaryAdvance,
+            loanDeduction,
             epf8: epfEmployee, // For display purposes
             epf12: epfEmployer, // For display purposes
             etf3: etfEmployer, // For display purposes
             deductions: [
                 { name: 'Tax (PAYE)', amount: tax },
                 { name: 'Salary Advance', amount: salaryAdvance },
-                ...(salaryDeductions[emp.id] || []).map(d => ({ name: d.type, amount: d.amount }))
+                ...(salaryDeductions[emp.id] || []).map(d => ({ name: d.type, amount: d.amount })),
+                ...(isLoanEnabled ? (allPendingLoans || []).filter((inst: any) => inst.loan?.employeeId === emp.id) : []).map((inst: any) => ({
+                    name: `Loan Installment: ${inst.loan?.loanTitle} (${getOrdinalSuffix(inst.installmentNumber)} installment)`,
+                    amount: inst.amount - (inst.paidAmount || 0)
+                }))
             ],
             allowances: (salaryAllowances[emp.id] || []).map(a => ({ name: a.type, amount: a.amount }))
         };
@@ -314,7 +353,9 @@ const Salary = () => {
                 employerEPF: epfEmployer,
                 etfAmount: etfEmployer,
                 netSalary: netSalary,
-                isEpfEnabled: isEpfEnabled,
+                loanDeduction: loanDeduction,
+                isLoanEnabled,
+                isEpfEnabled: emp.epfEnabled,
                 companyWorkingDays: companyWorkingDays,
                 allowances: salaryAllowances[emp.id] || [],
                 deductions: salaryDeductions[emp.id] || []
@@ -399,6 +440,8 @@ const Salary = () => {
         }
 
         // Add other deductions (e.g., Tax, Salary Advance, Custom Deductions)
+
+        // Add other deductions (e.g., Tax, Salary Advance, Custom Deductions)
         previewPayslip.deductions.forEach((d: any) => {
             if (d.amount > 0) {
                 doc.text(d.name, 14, currentY);
@@ -480,6 +523,7 @@ const Salary = () => {
             [],
             ['DEDUCTIONS', 'Amount (Rs.)'],
             ...(previewPayslip.isEpfEnabled ? [['EPF Employee (8%)', previewPayslip.epf8]] : []),
+            ...(previewPayslip.loanDeduction > 0 ? [['Loan Installment', previewPayslip.loanDeduction]] : []),
             ...previewPayslip.deductions.filter((d: any) => d.amount > 0).map((d: any) => [d.name, d.amount]),
             ['Total Deductions', previewPayslip.totalDeductions],
             [],
@@ -521,6 +565,7 @@ const Salary = () => {
             [],
             ['DEDUCTIONS', 'Amount (Rs.)'],
             ...(previewPayslip.isEpfEnabled ? [['EPF Employee (8%)', previewPayslip.epf8]] : []),
+            ...(previewPayslip.loanDeduction > 0 ? [['Loan Installment', previewPayslip.loanDeduction]] : []),
             ...previewPayslip.deductions.filter((d: any) => d.amount > 0).map((d: any) => [d.name, d.amount]),
             ['Total Deductions', previewPayslip.totalDeductions],
             [],
@@ -552,9 +597,9 @@ const Salary = () => {
 
             <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
                 {/* Header */}
-                <PageHeader 
-                    title="Salary" 
-                    subtitle="View and calculate employee salaries" 
+                <PageHeader
+                    title="Salary"
+                    subtitle="View and calculate employee salaries"
                 />
 
                 {/* Filters/Search Bar */}
@@ -615,8 +660,8 @@ const Salary = () => {
                         ) : employees.length === 0 ? (
                             <div className="text-center p-12 text-gray-500">No employees found.</div>
                         ) : employees.map(emp => {
-                            const { workedDays, isEpfEnabled, otHours, salaryAdvance } = getEmployeeValues(emp.id);
-                            // otAmount is calculated inline in the UI to avoid unused variable warning here if not needed
+                            const { workedDays, isEpfEnabled, isLoanEnabled, otHours, salaryAdvance, loanDeduction } = getEmployeeValues(emp.id);
+                            const otAmount = otHours * (emp.otRate || 0);
                             const empError = getEmployeeError(emp.id, workedDays);
                             return (
                                 <div
@@ -699,9 +744,35 @@ const Salary = () => {
                                                             type="number"
                                                             value={salaryAdvance}
                                                             onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
-                                                            className="w-full px-3 py-2 border border-gray-100 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none font-semibold text-gray-900"
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none font-semibold text-gray-900"
                                                             min="0"
                                                         />
+                                                    </div>
+                                                    {/* Loan Installment — matches EPF/ETF row layout exactly */}
+                                                    <div className="col-span-2 flex items-center gap-4">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleToggleLoan(emp.id); }}
+                                                            className={`
+            relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0
+            ${isLoanEnabled ? 'bg-red-500' : 'bg-gray-300'}
+        `}
+                                                        >
+                                                            <span
+                                                                className={`
+                inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200
+                ${isLoanEnabled ? 'translate-x-6' : 'translate-x-1'}
+            `}
+                                                            />
+                                                        </button>
+                                                        <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Loan installment</span>
+                                                        <div
+                                                            className={`flex-1 px-4 py-2 border rounded-lg text-sm font-semibold transition-opacity ${isLoanEnabled
+                                                                ? 'bg-red-50 border-red-200 text-red-600'
+                                                                : 'bg-gray-50 border-gray-200 text-gray-400 opacity-40 line-through'
+                                                                }`}
+                                                        >
+                                                            Rs. {loanDeduction.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -891,10 +962,6 @@ const Salary = () => {
                                                     <div className="flex justify-between mt-2 pt-2 border-t border-gray-300 font-bold text-gray-900">
                                                         <span>Gross Earnings</span>
                                                         <span>{(previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0)).toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="flex justify-between mt-2 pt-1 border-t border-gray-100 font-bold">
-                                                        <span>Gross Earnings</span>
-                                                        <span>{(previewPayslip.basicSalary + previewPayslip.otAmount).toLocaleString()}</span>
                                                     </div>
                                                 </div>
 
