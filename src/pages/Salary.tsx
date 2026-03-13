@@ -1,1182 +1,1723 @@
-import { useState, useEffect } from 'react';
-import { Search, Loader2, Download, FileText, FileSpreadsheet, Calculator, X } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
-import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { useGetEmployeesQuery, useGetCompaniesQuery, useGetAllPendingLoanInstallmentsQuery } from '../store/apiSlice';
-import { salaryApi } from '../api/salaryApi';
-import { Employee } from '../types/employee.types';
-import Toast from '../components/Toast';
-import SalaryListSkeleton from '../components/skeletons/SalaryListSkeleton';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
-import PageHeader from '../components/PageHeader';
+import { useState, useEffect } from "react";
 import {
-    setCompanyWorkingDays,
-    setEmployeeWorkedDays,
-    setEmployeeOtHours,
-    setEmployeeSalaryAdvance,
-    toggleEpfEtf,
-    toggleLoanEnabled,
-    setPreviewPayslip,
-    setMonth,
-    setYear
-} from '../store/slices/salarySlice';
+  Search,
+  Loader2,
+  Download,
+  FileText,
+  FileSpreadsheet,
+  Calculator,
+  X,
+} from "lucide-react";
+import Sidebar from "../components/Sidebar";
+import { useAppSelector, useAppDispatch } from "../store/hooks";
+import {
+  useGetEmployeesQuery,
+  useGetCompaniesQuery,
+  useGetAllPendingLoanInstallmentsQuery,
+} from "../store/apiSlice";
+import { salaryApi } from "../api/salaryApi";
+import { Employee } from "../types/employee.types";
+import Toast from "../components/Toast";
+import SalaryListSkeleton from "../components/skeletons/SalaryListSkeleton";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import PageHeader from "../components/PageHeader";
+import {
+  setCompanyWorkingDays,
+  setEmployeeWorkedDays,
+  setEmployeeOtHours,
+  setEmployeeSalaryAdvance,
+  toggleEpfEtf,
+  toggleLoanEnabled,
+  setPreviewPayslip,
+  setMonth,
+  setYear,
+} from "../store/slices/salarySlice";
 
 const Salary = () => {
-    const dispatch = useAppDispatch();
-    const { selectedCompanyId } = useAppSelector((state) => state.auth);
-    const {
-        companyWorkingDays,
-        employeeWorkedDays,
-        employeeOtHours,
-        employeeSalaryAdvance,
-        employeeEpfEtf,
-        employeeLoanEnabled,
-        previewPayslip,
-        selectedMonth,
-        selectedYear
-    } = useAppSelector((state) => state.salary);
+  const dispatch = useAppDispatch();
+  const { selectedCompanyId } = useAppSelector((state) => state.auth);
+  const {
+    companyWorkingDays,
+    employeeWorkedDays,
+    employeeOtHours,
+    employeeSalaryAdvance,
+    employeeEpfEtf,
+    employeeLoanEnabled,
+    previewPayslip,
+    selectedMonth,
+    selectedYear,
+  } = useAppSelector((state) => state.salary);
 
-    const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
 
-    // Selection State
-    const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
+  // Selection State
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null,
+  );
+  const [isSaving, setIsSaving] = useState(false);
 
-    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
-    // Pending Loans Query (for all employees)
-    const { data: allPendingLoans } = useGetAllPendingLoanInstallmentsQuery({
-        companyId: selectedCompanyId || '',
-        month: selectedMonth + 1,
-        year: selectedYear
-    }, {
-        skip: !selectedCompanyId
-    });
+  // Pending Loans Query (for all employees)
+  const { data: allPendingLoans } = useGetAllPendingLoanInstallmentsQuery(
+    {
+      companyId: selectedCompanyId || "",
+      month: selectedMonth + 1,
+      year: selectedYear,
+    },
+    {
+      skip: !selectedCompanyId,
+    },
+  );
 
-    // Create a map of employeeId -> loan installment total
-    const employeeLoanMap = (allPendingLoans || []).reduce((map: Record<string, number>, inst: any) => {
-        const empId = inst.loan?.employeeId;
-        if (empId) {
-            map[empId] = (map[empId] || 0) + (inst.amount - (inst.paidAmount || 0));
-        }
-        return map;
-    }, {});
+  // Create a map of employeeId -> loan installment total
+  const employeeLoanMap = (allPendingLoans || []).reduce(
+    (map: Record<string, number>, inst: any) => {
+      const empId = inst.loan?.employeeId;
+      if (empId) {
+        map[empId] = (map[empId] || 0) + (inst.amount - (inst.paidAmount || 0));
+      }
+      return map;
+    },
+    {},
+  );
 
-    // Allowance / Deduction local state per employee
-    const [allowanceToggles, setAllowanceToggles] = useState<Record<string, boolean>>({});
-    const [deductionToggles, setDeductionToggles] = useState<Record<string, boolean>>({});
-    const [salaryAllowances, setSalaryAllowances] = useState<Record<string, { type: string; amount: number }[]>>({});
-    const [salaryDeductions, setSalaryDeductions] = useState<Record<string, { type: string; amount: number }[]>>({});
+  // Allowance / Deduction local state per employee
+  const [allowanceToggles, setAllowanceToggles] = useState<
+    Record<string, boolean>
+  >({});
+  const [deductionToggles, setDeductionToggles] = useState<
+    Record<string, boolean>
+  >({});
+  const [salaryAllowances, setSalaryAllowances] = useState<
+    Record<string, { type: string; amount: number }[]>
+  >({});
+  const [salaryDeductions, setSalaryDeductions] = useState<
+    Record<string, { type: string; amount: number }[]>
+  >({});
 
-    // Manage modal state
-    const [manageModal, setManageModal] = useState<{ type: 'allowance' | 'deduction'; empId: string } | null>(null);
-    const [modalEntries, setModalEntries] = useState<{ type: string; amount: number }[]>([]);
+  // Manage modal state
+  const [manageModal, setManageModal] = useState<{
+    type: "allowance" | "deduction";
+    empId: string;
+  } | null>(null);
+  const [modalEntries, setModalEntries] = useState<
+    { type: string; amount: number }[]
+  >([]);
 
-    const openManageModal = (type: 'allowance' | 'deduction', emp: Employee) => {
-        const empId = emp.id;
-        let existing = type === 'allowance' ? (salaryAllowances[empId] || []) : (salaryDeductions[empId] || []);
+  const openManageModal = (type: "allowance" | "deduction", emp: Employee) => {
+    const empId = emp.id;
+    let existing =
+      type === "allowance"
+        ? salaryAllowances[empId] || []
+        : salaryDeductions[empId] || [];
 
-        // Populate from DB if not edited locally yet
-        if (existing.length === 0) {
-            if (type === 'allowance' && emp.recurringAllowances && emp.recurringAllowances.length > 0) {
-                existing = emp.recurringAllowances.map(a => ({ type: a.type, amount: a.amount }));
-                setSalaryAllowances(prev => ({ ...prev, [empId]: existing }));
-            } else if (type === 'deduction' && emp.recurringDeductions && emp.recurringDeductions.length > 0) {
-                existing = emp.recurringDeductions.map(d => ({ type: d.type, amount: d.amount }));
-                setSalaryDeductions(prev => ({ ...prev, [empId]: existing }));
-            }
-        }
-
-        setModalEntries([...existing, { type: '', amount: 0 }]);
-        setManageModal({ type, empId });
-    };
-
-    const handleModalSave = () => {
-        if (!manageModal) return;
-        const validEntries = modalEntries.filter(e => e.type.trim() && e.amount > 0);
-        if (manageModal.type === 'allowance') {
-            setSalaryAllowances(prev => ({ ...prev, [manageModal.empId]: validEntries }));
-        } else {
-            setSalaryDeductions(prev => ({ ...prev, [manageModal.empId]: validEntries }));
-        }
-        setManageModal(null);
-        setModalEntries([]);
-    };
-
-    const handleModalCancel = () => {
-        setManageModal(null);
-        setModalEntries([]);
-    };
-
-    // Touch tracking for validation
-    const [touchedFields, setTouchedFields] = useState<{
-        month: boolean;
-        companyDays: boolean;
-        employeeDays: Record<string, boolean>;
-    }>({
-        month: false,
-        companyDays: false,
-        employeeDays: {}
-    });
-
-    // RTK Query for Employees
-    const { data, isLoading } = useGetEmployeesQuery({
-        companyId: selectedCompanyId || '',
-        page: 1,
-        limit: 100,
-        search,
-        status: 'ACTIVE' // Fetch ACTIVE only
-    }, {
-        skip: !selectedCompanyId
-    });
-
-    const employees = data?.employees || [];
-
-    // Fetch Companies to get the name
-    const { data: companies } = useGetCompaniesQuery();
-    const selectedCompany = companies?.find(c => c.id === selectedCompanyId);
-    const companyName = selectedCompany?.name || 'Company Name';
-
-    // Helper functions for Redux State
-    const getEmployeeValues = (empId: string) => {
-        const workedDays = employeeWorkedDays[empId] ?? companyWorkingDays;
-        const isEpfEnabled = employeeEpfEtf[empId] ?? true;
-        const isLoanEnabled = employeeLoanEnabled[empId] ?? true;
-        const otHours = employeeOtHours[empId] ?? 0;
-        const salaryAdvance = employeeSalaryAdvance[empId] ?? 0;
-        const loanDeduction = isLoanEnabled ? (employeeLoanMap[empId] || 0) : 0;
-        return { workedDays, isEpfEnabled, isLoanEnabled, otHours, salaryAdvance, loanDeduction };
-    };
-
-    // Helper for ordinal suffixes (1st, 2nd, etc.)
-    const getOrdinalSuffix = (n: number) => {
-        const s = ["th", "st", "nd", "rd"];
-        const v = n % 100;
-        return n + (s[(v - 20) % 10] || s[v] || s[0]);
-    };
-
-    // --- Validation Logic ---
-    const getMaxAllowedDays = (year: number, month: number) => {
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-
-        // If future month entirely
-        if (year > currentYear || (year === currentYear && month > currentMonth)) {
-            return 0; // Invalid
-        }
-
-        // If current month, return days elapsed so far
-        if (year === currentYear && month === currentMonth) {
-            return now.getDate();
-        }
-
-        // If past month, return total days in that month
-        return new Date(year, month + 1, 0).getDate();
-    };
-
-    const maxAllowedCompanyDays = getMaxAllowedDays(selectedYear, selectedMonth);
-    const isFutureMonth = new Date(selectedYear, selectedMonth) > new Date(new Date().getFullYear(), new Date().getMonth());
-
-    // Derived Errors (only shown if touched)
-    const monthError = (touchedFields.month && isFutureMonth) ? 'Cannot generate for future months' : null;
-
-    const companyDaysError = (touchedFields.companyDays && (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays))
-        ? `Must be between 1 and ${maxAllowedCompanyDays} days`
-        : null;
-
-    const getEmployeeError = (empId: string, workedDays: number) => {
-        if (!touchedFields.employeeDays[empId]) return null;
-        if (workedDays < 0) return 'Cannot be negative';
-        if (workedDays > companyWorkingDays) return `Cannot exceed company days (${companyWorkingDays})`;
-        return null;
-    };
-
-    const isBeforeJoinedDate = (emp: Employee, year: number, month: number) => {
-        const joinedDate = new Date(emp.joinedDate);
-        const joinedYear = joinedDate.getFullYear();
-        const joinedMonth = joinedDate.getMonth();
-
-        if (year < joinedYear) return true;
-        if (year === joinedYear && month < joinedMonth) return true;
-        return false;
-    };
-
-    // Check if ANY validation error exists (for button disable)
-    const hasAnyError = (emp: Employee) => {
-        if (isFutureMonth) return true;
-        if (isBeforeJoinedDate(emp, selectedYear, selectedMonth)) return true;
-        if (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays) return true;
-        const { workedDays } = getEmployeeValues(emp.id);
-        if (workedDays < 0 || workedDays > companyWorkingDays) return true;
-        return false;
-    };
-
-    const handleCompanyWorkingDaysChange = (val: number) => {
-        setTouchedFields(prev => ({ ...prev, companyDays: true }));
-        dispatch(setCompanyWorkingDays(val));
-    };
-
-    const handleEmployeeWorkedDaysChange = (empId: string, val: number) => {
-        setTouchedFields(prev => ({
-            ...prev,
-            employeeDays: { ...prev.employeeDays, [empId]: true }
+    // Populate from DB if not edited locally yet
+    if (existing.length === 0) {
+      if (
+        type === "allowance" &&
+        emp.recurringAllowances &&
+        emp.recurringAllowances.length > 0
+      ) {
+        existing = emp.recurringAllowances.map((a) => ({
+          type: a.type,
+          amount: a.amount,
         }));
-        dispatch(setEmployeeWorkedDays({ id: empId, days: val }));
-    };
-
-    const handleMonthChange = (month: number) => {
-        setTouchedFields(prev => ({ ...prev, month: true }));
-        dispatch(setMonth(month));
-    };
-
-    const handleYearChange = (year: number) => {
-        setTouchedFields(prev => ({ ...prev, month: true }));
-        dispatch(setYear(year));
-    };
-
-    const handleToggleEpfEtf = (empId: string) => {
-        const currentVal = employeeEpfEtf[empId] ?? true;
-        dispatch(toggleEpfEtf({ id: empId, value: !currentVal }));
-    };
-
-    const handleToggleLoan = (empId: string) => {
-        const currentVal = employeeLoanEnabled[empId] ?? true;
-        dispatch(toggleLoanEnabled({ id: empId, value: !currentVal }));
-    };
-
-    const handleEmployeeOtHoursChange = (empId: string, val: number) => {
-        dispatch(setEmployeeOtHours({ id: empId, hours: val }));
-    };
-
-    const handleEmployeeSalaryAdvanceChange = (empId: string, val: number) => {
-        dispatch(setEmployeeSalaryAdvance({ id: empId, advance: val }));
-    };
-
-    // Handle Generate Pay Slip
-    const handleGeneratePayslip = async (emp: Employee) => {
-        setSelectedEmployee(emp);
-
-        const { workedDays, isEpfEnabled, isLoanEnabled, otHours, salaryAdvance, loanDeduction } = getEmployeeValues(emp.id);
-        const otAmount = otHours * (emp.otRate || 0);
-
-        // FINAL VALIDATION BLOCK - Mark all as touched and check
-        setTouchedFields({
-            month: true,
-            companyDays: true,
-            employeeDays: { ...touchedFields.employeeDays, [emp.id]: true }
-        });
-
-        if (isFutureMonth || isBeforeJoinedDate(emp, selectedYear, selectedMonth) || companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays || workedDays < 0 || workedDays > companyWorkingDays) {
-            setToast({ message: 'Please fix validation errors before generating', type: 'error' });
-            return;
-        }
-
-        let basicSalaryForCalc = emp.basicSalary || 0;
-        let basicPay = 0;
-
-        if (emp.salaryType === 'MONTHLY') {
-            basicPay = (basicSalaryForCalc / companyWorkingDays) * workedDays;
-        } else {
-            basicPay = basicSalaryForCalc * workedDays;
-        }
-
-        const allowanceAmount = (salaryAllowances[emp.id] || []).reduce((sum, a) => sum + (a.amount || 0), 0);
-        const deductionAmount = (salaryDeductions[emp.id] || []).reduce((sum, d) => sum + (d.amount || 0), 0);
-
-        // Calculations
-        let epfEmployee = 0;
-        let epfEmployer = basicPay * 0.12;
-        let etfEmployer = basicPay * 0.03;
-
-        if (isEpfEnabled) {
-            epfEmployee = basicPay * 0.08;
-        } else {
-            epfEmployer = 0;
-            etfEmployer = 0;
-        }
-
-        const tax = 0; // Tax will be calculated by backend
-        const totalDeductions = epfEmployee + tax + salaryAdvance + deductionAmount + loanDeduction;
-        const netSalary = (basicPay + otAmount + allowanceAmount) - totalDeductions;
-
-        const details = {
-            basicSalary: emp.basicSalary || 0,
-            salaryType: emp.salaryType || 'DAILY',
-            basicPay,
-            epfEmployee,
-            epfEmployer,
-            etfEmployer,
-            tax,
-            totalDeductions,
-            netSalary,
-            workedDays,
-            isEpfEnabled,
-            otHours,
-            otAmount,
-            salaryAdvance,
-            loanDeduction,
-            epf8: epfEmployee, // For display purposes
-            epf12: epfEmployer, // For display purposes
-            etf3: etfEmployer, // For display purposes
-            deductions: [
-                { name: 'Tax (PAYE)', amount: tax },
-                { name: 'Salary Advance', amount: salaryAdvance },
-                ...(salaryDeductions[emp.id] || []).map(d => ({ name: d.type, amount: d.amount })),
-                ...(isLoanEnabled ? (allPendingLoans || []).filter((inst: any) => inst.loan?.employeeId === emp.id) : []).map((inst: any) => ({
-                    name: `Loan Installment: ${inst.loan?.loanTitle} (${getOrdinalSuffix(inst.installmentNumber)} installment)`,
-                    amount: inst.amount - (inst.paidAmount || 0)
-                }))
-            ],
-            allowances: (salaryAllowances[emp.id] || []).map(a => ({ name: a.type, amount: a.amount }))
-        };
-
-        dispatch(setPreviewPayslip(details));
-
-        // Save to DB
-        if (!selectedCompanyId) return;
-        setIsSaving(true);
-        try {
-            await salaryApi.saveSalary({
-                companyId: selectedCompanyId,
-                employeeId: emp.id,
-                month: selectedMonth + 1,
-                year: selectedYear,
-                workingDays: workedDays,
-                basicPay: basicPay,
-                otHours: otHours,
-                otAmount: otAmount,
-                salaryAdvance: salaryAdvance,
-                employeeEPF: epfEmployee,
-                employerEPF: epfEmployer,
-                etfAmount: etfEmployer,
-                netSalary: netSalary,
-                loanDeduction: loanDeduction,
-                isLoanEnabled,
-                isEpfEnabled: emp.epfEnabled,
-                companyWorkingDays: companyWorkingDays,
-                allowances: salaryAllowances[emp.id] || [],
-                deductions: salaryDeductions[emp.id] || []
-            });
-            setToast({ message: 'Salary saved successfully!', type: 'success' });
-        } catch (error: any) {
-            setToast({ message: error.response?.data?.message || 'Failed to save salary', type: 'error' });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleSelectEmployee = (emp: Employee) => {
-        setSelectedEmployee(emp);
-    };
-
-    // Export Functions
-    const exportPDF = () => {
-        if (!previewPayslip || !selectedEmployee) return;
-
-        const doc = new jsPDF();
-
-        // Header
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        doc.text(companyName.toUpperCase(), 105, 20, { align: 'center' });
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(12);
-        doc.text(`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`, 105, 30, { align: 'center' });
-
-        doc.line(14, 35, 196, 35);
-
-        // Employee Details
-        doc.setFontSize(10);
-        doc.text(`Employee Name : ${selectedEmployee.fullName}`, 14, 45);
-        doc.text(`Employee No   : ${selectedEmployee.employeeId}`, 14, 52);
-        doc.text(`Designation   : ${selectedEmployee.designation}`, 14, 59);
-
-        // Earnings
-        doc.setFontSize(11);
-        doc.text('EARNINGS', 14, 70);
-
-        autoTable(doc, {
-            startY: 75,
-            head: [['Description', 'Amount (Rs.)']],
-            body: [
-                ['Rate Type', previewPayslip.salaryType],
-                ['Basic Rate', previewPayslip.basicSalary.toLocaleString()],
-                ['Working Days', companyWorkingDays.toString()],
-                ['Worked Days', previewPayslip.workedDays.toString()],
-                ['Calculated Basic Pay', previewPayslip.basicPay.toLocaleString()],
-                ...(previewPayslip.otAmount > 0 ? [[`OT Amount (${previewPayslip.otHours} hrs)`, previewPayslip.otAmount.toLocaleString()]] : []),
-                ...(previewPayslip.allowances || []).map((a: any) => [a.name, a.amount.toLocaleString()]),
-                ['Gross Earnings', (previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0)).toLocaleString()]
-            ],
-            theme: 'plain',
-            styles: { fontSize: 10, cellPadding: 2 },
-            headStyles: { halign: 'left' },
-            columnStyles: {
-                1: { halign: 'right' }
-            },
-            didParseCell: (data) => {
-                if (data.section === 'head' && data.column.index === 1) {
-                    data.cell.styles.halign = 'right';
-                }
-            }
-        });
-
-        let currentY = (doc as any).lastAutoTable.finalY + 10;
-
-        // Deductions
-        doc.text('DEDUCTIONS', 14, currentY);
-        currentY += 5;
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-
-        // Add Employee EPF only if enabled
-        if (previewPayslip.isEpfEnabled) {
-            doc.text('EPF Employee (8%)', 14, currentY);
-            doc.text(previewPayslip.epf8.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
-            currentY += 7;
-        }
-
-        // Add other deductions (e.g., Tax, Salary Advance, Custom Deductions)
-
-        // Add other deductions (e.g., Tax, Salary Advance, Custom Deductions)
-        previewPayslip.deductions.forEach((d: any) => {
-            if (d.amount > 0) {
-                doc.text(d.name, 14, currentY);
-                doc.text(d.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
-                currentY += 7;
-            }
-        });
-
-        // Total Deductions
-        doc.setLineWidth(0.2);
-        doc.line(14, currentY, 196, currentY);
-        currentY += 6; // Add space after the line
-        doc.setFont('helvetica', 'bold');
-        doc.text('Total Deductions', 14, currentY);
-        doc.text(previewPayslip.totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), 196, currentY, { align: 'right' });
-        currentY += 10;
-
-        // Net Salary
-        doc.setLineWidth(0.5);
-        doc.line(14, currentY, 196, currentY);
-        doc.setFontSize(12);
-        doc.text('NET SALARY', 14, currentY + 8);
-        doc.text(`Net Salary Payable (Rs.) : ${previewPayslip.netSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 196, currentY + 8, { align: 'right' });
-        doc.line(14, currentY + 12, 196, currentY + 12);
-        doc.line(14, currentY + 14, 196, currentY + 14);
-
-        currentY += 25;
-
-        // Employer Contributions
-        if (previewPayslip.isEpfEnabled) {
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text('EMPLOYER CONTRIBUTIONS (Not included in Net Salary)', 14, currentY);
-            autoTable(doc, {
-                startY: currentY + 5,
-                body: [
-                    ['EPF Employer (12%)', previewPayslip.epf12.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })],
-                    ['ETF Employer (3%)', previewPayslip.etf3.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })]
-                ],
-                theme: 'plain',
-                styles: { fontSize: 9, cellPadding: 1 },
-                columnStyles: { 1: { halign: 'right' } }
-            });
-            currentY = (doc as any).lastAutoTable.finalY + 30;
-        } else {
-            currentY += 10; // Adjust spacing if no employer contributions
-        }
-
-        // Signatures
-        doc.text(`Prepared By : ${new Date().toLocaleDateString()}`, 14, currentY);
-
-        doc.text('Checked By  : ___________________', 14, currentY + 15);
-
-        doc.text('Employee Sign : ___________________', 14, currentY + 30);
-
-        doc.save(`Payslip_${selectedEmployee.employeeId}_${selectedMonth + 1}_${selectedYear}.pdf`);
-    };
-
-    const exportExcel = () => {
-        if (!previewPayslip || !selectedEmployee) return;
-
-        const wsData = [
-            [companyName.toUpperCase()],
-            [`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
-            [],
-            ['Employee Name', selectedEmployee.fullName],
-            ['Employee No', selectedEmployee.employeeId],
-            ['Designation', selectedEmployee.designation],
-            [],
-            ['EARNINGS', 'Amount (Rs.)'],
-            ['Rate Type', previewPayslip.salaryType],
-            ['Basic Rate', previewPayslip.basicSalary],
-            ['Working Days', companyWorkingDays],
-            ['Worked Days', previewPayslip.workedDays],
-            ['Calculated Basic Pay', previewPayslip.basicPay],
-            ...(previewPayslip.otAmount > 0 ? [[`OT Amount (${previewPayslip.otHours} hrs)`, previewPayslip.otAmount]] : []),
-            ...(previewPayslip.allowances || []).map((a: any) => [a.name, a.amount]),
-            ['Gross Earnings', previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0)],
-            [],
-            ['DEDUCTIONS', 'Amount (Rs.)'],
-            ...(previewPayslip.isEpfEnabled ? [['EPF Employee (8%)', previewPayslip.epf8]] : []),
-            ...(previewPayslip.loanDeduction > 0 ? [['Loan Installment', previewPayslip.loanDeduction]] : []),
-            ...previewPayslip.deductions.filter((d: any) => d.amount > 0).map((d: any) => [d.name, d.amount]),
-            ['Total Deductions', previewPayslip.totalDeductions],
-            [],
-            ['NET SALARY PAYABLE', previewPayslip.netSalary],
-            [],
-            ...(previewPayslip.isEpfEnabled ? [
-                ['EMPLOYER CONTRIBUTIONS', 'Amount (Rs.)'],
-                ['EPF Employer (12%)', previewPayslip.epf12],
-                ['ETF Employer (3%)', previewPayslip.etf3]
-            ] : [])
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Payslip");
-        XLSX.writeFile(wb, `Payslip_${selectedEmployee.employeeId}.xlsx`);
-    };
-
-    const exportCSV = () => {
-        if (!previewPayslip || !selectedEmployee) return;
-
-        const wsData = [
-            [companyName.toUpperCase()],
-            [`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
-            [],
-            ['Employee Name', selectedEmployee.fullName],
-            ['Employee No', selectedEmployee.employeeId],
-            ['Designation', selectedEmployee.designation],
-            [],
-            ['EARNINGS', 'Amount (Rs.)'],
-            ['Rate Type', previewPayslip.salaryType],
-            ['Basic Rate', previewPayslip.basicSalary],
-            ['Working Days', companyWorkingDays],
-            ['Worked Days', previewPayslip.workedDays],
-            ['Calculated Basic Pay', previewPayslip.basicPay],
-            ...(previewPayslip.otAmount > 0 ? [[`OT Amount (${previewPayslip.otHours} hrs)`, previewPayslip.otAmount]] : []),
-            ...(previewPayslip.allowances || []).map((a: any) => [a.name, a.amount]),
-            ['Gross Earnings', previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0)],
-            [],
-            ['DEDUCTIONS', 'Amount (Rs.)'],
-            ...(previewPayslip.isEpfEnabled ? [['EPF Employee (8%)', previewPayslip.epf8]] : []),
-            ...(previewPayslip.loanDeduction > 0 ? [['Loan Installment', previewPayslip.loanDeduction]] : []),
-            ...previewPayslip.deductions.filter((d: any) => d.amount > 0).map((d: any) => [d.name, d.amount]),
-            ['Total Deductions', previewPayslip.totalDeductions],
-            [],
-            ['NET SALARY PAYABLE', previewPayslip.netSalary],
-            [],
-            ...(previewPayslip.isEpfEnabled ? [
-                ['EMPLOYER CONTRIBUTIONS', 'Amount (Rs.)'],
-                ['EPF Employer (12%)', previewPayslip.epf12],
-                ['ETF Employer (3%)', previewPayslip.etf3]
-            ] : [])
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const csv = XLSX.utils.sheet_to_csv(ws);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `Payslip_${selectedEmployee.employeeId}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    return (
-        <div className="flex min-h-screen bg-gray-50">
-            <Sidebar />
-
-            <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
-                {/* Header */}
-                <PageHeader
-                    title="Salary"
-                    subtitle="View and calculate employee salaries"
-                />
-
-                {/* Filters/Search Bar */}
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex items-center justify-between">
-                    <div className="w-full max-w-md relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search Employee..."
-                            className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                        />
-                    </div>
-                    {/* Month & Year Pickers */}
-                    <div className="flex items-center gap-4">
-                        <select
-                            value={selectedMonth}
-                            onChange={(e) => handleMonthChange(parseInt(e.target.value))}
-                            className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
-                        >
-                            {Array.from({ length: 12 }, (_, i) => (
-                                <option key={i} value={i}>
-                                    {new Date(0, i).toLocaleString('default', { month: 'long' })}
-                                </option>
-                            ))}
-                        </select>
-                        <select
-                            value={selectedYear}
-                            onChange={(e) => handleYearChange(parseInt(e.target.value))}
-                            className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
-                        >
-                            {Array.from({ length: 6 }, (_, i) => {
-                                const year = new Date().getFullYear() - 5 + i;
-                                return <option key={year} value={year}>{year}</option>;
-                            })}
-                        </select>
-                        {/* Working Days Editable Input within same style container */}
-                        <div className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium flex items-center gap-2">
-                            <span>Working Days:</span>
-                            <input
-                                type="number"
-                                value={companyWorkingDays}
-                                onChange={(e) => handleCompanyWorkingDaysChange(parseInt(e.target.value) || 0)}
-                                onBlur={() => setTouchedFields(prev => ({ ...prev, companyDays: true }))}
-                                className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center font-bold text-gray-800"
-                                min="0" max="31"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex gap-6">
-                    {/* LEFT SIDE: Employee Salary Cards */}
-                    <div className="w-1/2 overflow-y-auto pr-2 space-y-4">
-                        {isLoading ? (
-                            <SalaryListSkeleton />
-                        ) : employees.length === 0 ? (
-                            <div className="text-center p-12 text-gray-500">No employees found.</div>
-                        ) : employees.map(emp => {
-                            const { workedDays, isEpfEnabled, isLoanEnabled, otHours, salaryAdvance, loanDeduction } = getEmployeeValues(emp.id);
-                            const otAmount = otHours * (emp.otRate || 0);
-                            const empError = getEmployeeError(emp.id, workedDays);
-                            return (
-                                <div
-                                    key={emp.id}
-                                    onClick={() => handleSelectEmployee(emp)}
-                                    className={`bg-white rounded-xl border p-6 cursor-pointer transition-all duration-200 ${selectedEmployee?.id === emp.id
-                                        ? 'border-blue-500 shadow-md ring-1 ring-blue-500'
-                                        : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
-                                        }`}
-                                >
-                                    {/* Header */}
-                                    <div className="flex items-center justify-between mb-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                                                {emp.fullName.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-gray-900">{emp.fullName}</h3>
-                                                <p className="text-xs text-gray-500">{emp.designation}</p>
-                                            </div>
-                                        </div>
-                                        <div className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-semibold rounded">
-                                            {emp.employeeId}
-                                        </div>
-                                    </div>
-
-                                    {/* Input Controls - Visible when selected */}
-                                    {selectedEmployee?.id === emp.id && (
-                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                                            {/* Earnings */}
-                                            <div>
-                                                <h4 className="flex items-center gap-2 text-sm font-semibold text-green-600 mb-3">
-                                                    <Calculator className="w-4 h-4" /> Earnings
-                                                </h4>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                                        <label className="text-xs text-gray-500 block mb-1">Rate ({emp.salaryType || 'DAILY'})</label>
-                                                        <div className="font-semibold text-gray-900">Rs. {emp.basicSalary || 0}</div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs text-gray-500 block mb-1">Enter Worked Days</label>
-                                                        <input
-                                                            type="number"
-                                                            value={workedDays}
-                                                            onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
-                                                            onBlur={() => setTouchedFields(prev => ({
-                                                                ...prev,
-                                                                employeeDays: { ...prev.employeeDays, [emp.id]: true }
-                                                            }))}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
-                                                            min="0"
-                                                            max="31"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs text-gray-500 block mb-1">OT Hours</label>
-                                                        <input
-                                                            type="number"
-                                                            value={otHours}
-                                                            onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
-                                                            min="0"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs text-gray-500 block mb-1">OT Rate</label>
-                                                        <div className="bg-gray-50 px-3 py-2 border border-gray-100 rounded-lg font-semibold text-gray-900 h-[42px] flex items-center">
-                                                            Rs. {emp.otRate || 0}
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs text-gray-500 block mb-1">OT Amount</label>
-                                                        <div className="bg-gray-50 px-3 py-2 border border-gray-100 rounded-lg font-bold text-blue-600 h-[42px] flex items-center">
-                                                            Rs. {(otHours * (emp.otRate || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs text-gray-500 block mb-1 text-blue-600">Salary Advance Deductions</label>
-                                                        <input
-                                                            type="number"
-                                                            value={salaryAdvance}
-                                                            onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none font-semibold text-gray-900"
-                                                            min="0"
-                                                        />
-                                                    </div>
-                                                    {/* Loan Installment — matches EPF/ETF row layout exactly */}
-                                                    <div className="col-span-2 flex items-center gap-4">
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); handleToggleLoan(emp.id); }}
-                                                            className={`
-            relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0
-            ${isLoanEnabled ? 'bg-red-500' : 'bg-gray-300'}
-        `}
-                                                        >
-                                                            <span
-                                                                className={`
-                inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200
-                ${isLoanEnabled ? 'translate-x-6' : 'translate-x-1'}
-            `}
-                                                            />
-                                                        </button>
-                                                        <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Loan installment</span>
-                                                        <div
-                                                            className={`flex-1 px-4 py-2 border rounded-lg text-sm font-semibold transition-opacity ${isLoanEnabled
-                                                                ? 'bg-red-50 border-red-200 text-red-600'
-                                                                : 'bg-gray-50 border-gray-200 text-gray-400 opacity-40 line-through'
-                                                                }`}
-                                                        >
-                                                            Rs. {loanDeduction.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Deductions */}
-                                            <div className="space-y-4">
-                                                {/* EPF/ETF Row */}
-                                                <div className="flex items-center gap-4">
-                                                    <button
-                                                        onClick={() => handleToggleEpfEtf(emp.id)}
-                                                        className={`
-                                                            relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0
-                                                            ${isEpfEnabled ? 'bg-blue-500' : 'bg-gray-300'}
-                                                        `}
-                                                    >
-                                                        <span
-                                                            className={`
-                                                                inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200
-                                                                ${isEpfEnabled ? 'translate-x-6' : 'translate-x-1'}
-                                                            `}
-                                                        />
-                                                    </button>
-                                                    <span className="text-sm font-medium text-gray-800 whitespace-nowrap">EPF/ETF</span>
-                                                    <input
-                                                        type="text"
-                                                        value={isEpfEnabled ? (emp.epfEtfAmount || '') : ''}
-                                                        readOnly
-                                                        placeholder="Total for EPF"
-                                                        className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 bg-white outline-none focus:border-blue-300 transition-colors"
-                                                    />
-                                                </div>
-
-                                                {/* Allowance Row */}
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-4">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setAllowanceToggles(prev => ({ ...prev, [emp.id]: !prev[emp.id] }));
-                                                            }}
-                                                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${allowanceToggles[emp.id] ? 'bg-blue-500' : 'bg-gray-300'}`}
-                                                        >
-                                                            <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${allowanceToggles[emp.id] ? 'translate-x-6' : 'translate-x-1'}`} />
-                                                        </button>
-                                                        <span className="text-sm font-medium text-gray-800">Allowance</span>
-                                                    </div>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (allowanceToggles[emp.id]) openManageModal('allowance', emp);
-                                                        }}
-                                                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${allowanceToggles[emp.id]
-                                                            ? 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer'
-                                                            : 'border-gray-100 text-gray-300 cursor-not-allowed'
-                                                            }`}
-                                                    >
-                                                        <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                                            <circle cx="7" cy="5" r="1.5" fill="currentColor" />
-                                                            <circle cx="13" cy="10" r="1.5" fill="currentColor" />
-                                                            <circle cx="7" cy="15" r="1.5" fill="currentColor" />
-                                                        </svg>
-                                                        Manage Allowances
-                                                    </button>
-                                                </div>
-
-                                                {/* Deduction Row */}
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-4">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setDeductionToggles(prev => ({ ...prev, [emp.id]: !prev[emp.id] }));
-                                                            }}
-                                                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${deductionToggles[emp.id] ? 'bg-blue-500' : 'bg-gray-300'}`}
-                                                        >
-                                                            <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${deductionToggles[emp.id] ? 'translate-x-6' : 'translate-x-1'}`} />
-                                                        </button>
-                                                        <span className="text-sm font-medium text-gray-800">Deduction</span>
-                                                    </div>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (deductionToggles[emp.id]) openManageModal('deduction', emp);
-                                                        }}
-                                                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${deductionToggles[emp.id]
-                                                            ? 'border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer'
-                                                            : 'border-gray-100 text-gray-300 cursor-not-allowed'
-                                                            }`}
-                                                    >
-                                                        <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                                            <circle cx="7" cy="5" r="1.5" fill="currentColor" />
-                                                            <circle cx="13" cy="10" r="1.5" fill="currentColor" />
-                                                            <circle cx="7" cy="15" r="1.5" fill="currentColor" />
-                                                        </svg>
-                                                        Manage Deductions
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {/* Generate Pay-slip Button */}
-                                            <div className="pt-2 flex justify-end">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleGeneratePayslip(emp);
-                                                    }}
-                                                    disabled={isSaving || hasAnyError(emp)}
-                                                    className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 shadow-sm flex items-center gap-2 ${(isSaving || hasAnyError(emp))
-                                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                        : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-95'
-                                                        }`}
-                                                >
-                                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Generate Pay-slip'}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {selectedEmployee?.id !== emp.id && (
-                                        <div className="mt-4 text-center text-sm text-gray-400 italic">
-                                            Click to calculate salary
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })
-                        }
-                    </div>
-
-                    {/* RIGHT SIDE: Payslip Preview */}
-                    <div className="w-1/2 flex flex-col">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
-                            {previewPayslip && selectedEmployee ? (
-                                <div className="flex flex-col">
-                                    {/* Preview Container (No scroll) */}
-                                    <div>
-                                        <div className="p-8 font-mono text-sm">
-
-                                            {/* Paper Effect Container */}
-                                            <div className="bg-white p-6 border-2 border-dashed border-gray-300 relative mx-auto max-w-lg shadow-sm">
-
-                                                {/* Header */}
-                                                <div className="text-center mb-6 border-b-2 border-gray-800 pb-4">
-                                                    <h2 className="text-lg font-bold uppercase tracking-wider">{companyName}</h2>
-                                                    <p className="text-xs font-semibold mt-1">Pay Slip - {new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
-                                                </div>
-
-                                                {/* Emp Details */}
-                                                <div className="mb-6 text-xs space-y-1">
-                                                    <div className="flex"><span className="w-24 font-bold">Employee Name</span> <span>: {selectedEmployee.fullName}</span></div>
-                                                    <div className="flex"><span className="w-24 font-bold">Employee No</span> <span>: {selectedEmployee.employeeId}</span></div>
-                                                    <div className="flex"><span className="w-24 font-bold">Designation</span> <span>: {selectedEmployee.designation}</span></div>
-                                                </div>
-
-                                                {/* Earnings */}
-                                                <div className="mb-6">
-                                                    <div className="border-b border-gray-800 font-bold mb-2 pb-1">EARNINGS</div>
-                                                    <div className="flex justify-between mb-1">
-                                                        <span>{previewPayslip.salaryType === 'MONTHLY' ? 'Monthly Rate' : 'Daily Rate'}</span>
-                                                        <span>{previewPayslip.basicSalary.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="flex justify-between mb-1">
-                                                        <span>Working Days</span>
-                                                        <span>{companyWorkingDays}</span>
-                                                    </div>
-                                                    <div className="flex justify-between mb-1">
-                                                        <span>Worked Days</span>
-                                                        <span>{previewPayslip.workedDays}</span>
-                                                    </div>
-                                                    <div className="flex justify-between mb-1 font-semibold text-gray-800">
-                                                        <span>Calculated Basic Pay</span>
-                                                        <span>{previewPayslip.basicPay.toLocaleString()}</span>
-                                                    </div>
-                                                    {previewPayslip.otAmount > 0 && (
-                                                        <div className="flex justify-between mb-1 font-semibold text-gray-800">
-                                                            <span>OT ({previewPayslip.otHours} hrs)</span>
-                                                            <span>{previewPayslip.otAmount.toLocaleString()}</span>
-                                                        </div>
-                                                    )}
-                                                    {previewPayslip.allowances?.map((a: any, i: number) => (
-                                                        <div key={i} className="flex justify-between mb-1 text-green-700 font-medium">
-                                                            <span>+ {a.name}</span>
-                                                            <span>{a.amount.toLocaleString()}</span>
-                                                        </div>
-                                                    ))}
-                                                    <div className="flex justify-between mt-2 pt-2 border-t border-gray-300 font-bold text-gray-900">
-                                                        <span>Gross Earnings</span>
-                                                        <span>{(previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0)).toLocaleString()}</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Deductions */}
-                                                <div className="mb-4">
-                                                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Deductions</h4>
-                                                    <div className="space-y-1">
-                                                        {previewPayslip.isEpfEnabled && (
-                                                            <div className="flex justify-between text-sm">
-                                                                <span className="text-gray-600">EPF (8%)</span>
-                                                                <span className="font-medium text-red-600">-Rs {previewPayslip.epf8.toFixed(2)}</span>
-                                                            </div>
-                                                        )}
-                                                        {previewPayslip.deductions.map((d, i) => (
-                                                            <div key={i} className="flex justify-between text-sm">
-                                                                <span className="text-gray-600">{d.name}</span>
-                                                                <span className="font-medium text-red-600">
-                                                                    -Rs {d.amount.toFixed(2)}
-                                                                </span>
-                                                            </div>
-                                                        ))}
-                                                        <div className="flex justify-between text-sm font-medium pt-1 border-t border-gray-100 mt-1">
-                                                            <span className="text-gray-800">Total Deductions</span>
-                                                            <span className="text-red-600">
-                                                                -Rs {((previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) + previewPayslip.deductions.reduce((sum, d) => sum + d.amount, 0)).toFixed(2)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Net Salary */}
-                                                <div className="bg-gray-50 p-3 rounded-lg mb-4">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-base font-bold text-gray-900">Net Salary</span>
-                                                        <span className="text-xl font-bold text-blue-600">
-                                                            Rs {previewPayslip.netSalary.toFixed(2)}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Employer Contributions */}
-                                                {previewPayslip.isEpfEnabled && (
-                                                    <div className="border-t border-gray-100 pt-4">
-                                                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Employer Contributions</h4>
-                                                        <div className="space-y-1">
-                                                            <div className="flex justify-between text-sm">
-                                                                <span className="text-gray-600">EPF (12%)</span>
-                                                                <span className="font-medium text-gray-900">Rs {previewPayslip.epf12.toFixed(2)}</span>
-                                                            </div>
-                                                            <div className="flex justify-between text-sm">
-                                                                <span className="text-gray-600">ETF (3%)</span>
-                                                                <span className="font-medium text-gray-900">Rs {previewPayslip.etf3.toFixed(2)}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                {/* Signatures */}
-                                                <div className="mt-12 pt-4 border-t border-gray-300 flex justify-between text-[10px] text-gray-500">
-                                                    <div>Prepared By : {new Date().toLocaleDateString()}</div>
-                                                    <div>Checked By : ..............</div>
-                                                </div>
-                                                <div className="mt-4 text-[10px] text-gray-500">
-                                                    Employee Sign : ________________________
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Action Buttons */}
-                                        <div className="p-4 border-t border-gray-200 bg-gray-50 space-y-3 mx-4 mb-4 rounded-lg">
-                                            <button
-                                                onClick={exportPDF}
-                                                className="w-full bg-blue-600 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors font-medium shadow-sm"
-                                            >
-                                                <FileText className="w-4 h-4" /> Download Pay Slip (PDF)
-                                            </button>
-                                            <button
-                                                onClick={exportExcel}
-                                                className="w-full bg-green-600 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors font-medium shadow-sm"
-                                            >
-                                                <FileSpreadsheet className="w-4 h-4" /> Download Pay Slip (Excel)
-                                            </button>
-                                            <button
-                                                onClick={exportCSV}
-                                                className="w-full bg-gray-700 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors font-medium shadow-sm"
-                                            >
-                                                <Download className="w-4 h-4" /> Download Pay Slip (CSV)
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
-                                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                        <FileText className="w-10 h-10 text-gray-300" />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-gray-600">No Payslip Generated</h3>
-                                    <p className="max-w-xs mt-2 text-sm">Select an employee from the left and click "Generate Pay Slip" to preview.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Manage Allowances / Deductions Modal */}
-                {manageModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center">
-                        {/* Backdrop */}
-                        <div className="absolute inset-0 bg-black/30" onClick={handleModalCancel} />
-
-                        {/* Modal */}
-                        <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-                            {/* Header */}
-                            <div className="flex items-center justify-between px-6 py-4">
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                    {manageModal.type === 'allowance' ? 'Manage Allowances' : 'Manage Deductions'}
-                                </h3>
-                                <button
-                                    onClick={handleModalCancel}
-                                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            {/* Content */}
-                            <div className="px-6 pb-4">
-                                <div className="border-2 border-dashed border-blue-200 rounded-lg p-4 space-y-3">
-                                    {modalEntries.map((entry, idx) => {
-                                        const isLastRow = idx === modalEntries.length - 1;
-                                        return (
-                                            <div key={idx} className="flex items-center gap-3">
-                                                <input
-                                                    type="text"
-                                                    value={entry.type}
-                                                    onChange={(e) => {
-                                                        const updated = [...modalEntries];
-                                                        updated[idx] = { ...updated[idx], type: e.target.value };
-                                                        setModalEntries(updated);
-                                                    }}
-                                                    placeholder={isLastRow ? `Add Extra ${manageModal.type === 'allowance' ? 'Allowance' : 'Deduction'}` : ''}
-                                                    className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:border-blue-400 transition-colors placeholder:text-gray-300"
-                                                />
-                                                <input
-                                                    type="number"
-                                                    value={entry.amount || ''}
-                                                    onChange={(e) => {
-                                                        const updated = [...modalEntries];
-                                                        updated[idx] = { ...updated[idx], amount: parseFloat(e.target.value) || 0 };
-                                                        setModalEntries(updated);
-                                                    }}
-                                                    placeholder="15,000.00"
-                                                    className="w-32 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:border-blue-400 transition-colors placeholder:text-gray-300"
-                                                    min="0"
-                                                    step="0.01"
-                                                />
-                                                {isLastRow ? (
-                                                    /* Plus button for the last row */
-                                                    <button
-                                                        onClick={() => setModalEntries(prev => [...prev, { type: '', amount: 0 }])}
-                                                        className="shrink-0 w-8 h-8 flex items-center justify-center text-blue-500 hover:text-blue-600 transition-colors"
-                                                    >
-                                                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
-                                                            <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                                            <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                                        </svg>
-                                                    </button>
-                                                ) : (
-                                                    /* Minus button for existing rows */
-                                                    <button
-                                                        onClick={() => setModalEntries(prev => prev.filter((_, i) => i !== idx))}
-                                                        className="shrink-0 w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-500 transition-colors"
-                                                    >
-                                                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
-                                                            <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                                                        </svg>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Footer */}
-                            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
-                                <button
-                                    onClick={handleModalCancel}
-                                    className="px-5 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleModalSave}
-                                    className="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
-                                >
-                                    Save Changes
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Toast */}
-                {toast && (
-                    <Toast
-                        message={toast.message}
-                        type={toast.type}
-                        onClose={() => setToast(null)}
-                    />
-                )}
-            </div>
-        </div>
+        setSalaryAllowances((prev) => ({ ...prev, [empId]: existing }));
+      } else if (
+        type === "deduction" &&
+        emp.recurringDeductions &&
+        emp.recurringDeductions.length > 0
+      ) {
+        existing = emp.recurringDeductions.map((d) => ({
+          type: d.type,
+          amount: d.amount,
+        }));
+        setSalaryDeductions((prev) => ({ ...prev, [empId]: existing }));
+      }
+    }
+
+    setModalEntries([...existing, { type: "", amount: 0 }]);
+    setManageModal({ type, empId });
+  };
+
+  const handleModalSave = () => {
+    if (!manageModal) return;
+    const validEntries = modalEntries.filter(
+      (e) => e.type.trim() && e.amount > 0,
     );
+    if (manageModal.type === "allowance") {
+      setSalaryAllowances((prev) => ({
+        ...prev,
+        [manageModal.empId]: validEntries,
+      }));
+    } else {
+      setSalaryDeductions((prev) => ({
+        ...prev,
+        [manageModal.empId]: validEntries,
+      }));
+    }
+    setManageModal(null);
+    setModalEntries([]);
+  };
+
+  const handleModalCancel = () => {
+    setManageModal(null);
+    setModalEntries([]);
+  };
+
+  // Touch tracking for validation
+  const [touchedFields, setTouchedFields] = useState<{
+    month: boolean;
+    companyDays: boolean;
+    employeeDays: Record<string, boolean>;
+  }>({
+    month: false,
+    companyDays: false,
+    employeeDays: {},
+  });
+
+  // RTK Query for Employees
+  const { data, isLoading } = useGetEmployeesQuery(
+    {
+      companyId: selectedCompanyId || "",
+      page: 1,
+      limit: 100,
+      search,
+      status: "ACTIVE", // Fetch ACTIVE only
+    },
+    {
+      skip: !selectedCompanyId,
+    },
+  );
+
+  const employees = data?.employees || [];
+
+  // Fetch Companies to get the name
+  const { data: companies } = useGetCompaniesQuery();
+  const selectedCompany = companies?.find((c) => c.id === selectedCompanyId);
+  const companyName = selectedCompany?.name || "Company Name";
+
+  // Helper functions for Redux State
+  const getEmployeeValues = (empId: string) => {
+    const workedDays = employeeWorkedDays[empId] ?? companyWorkingDays;
+    const isEpfEnabled = employeeEpfEtf[empId] ?? true;
+    const isLoanEnabled = employeeLoanEnabled[empId] ?? true;
+    const otHours = employeeOtHours[empId] ?? 0;
+    const salaryAdvance = employeeSalaryAdvance[empId] ?? 0;
+    const loanDeduction = isLoanEnabled ? employeeLoanMap[empId] || 0 : 0;
+    return {
+      workedDays,
+      isEpfEnabled,
+      isLoanEnabled,
+      otHours,
+      salaryAdvance,
+      loanDeduction,
+    };
+  };
+
+  // Helper for ordinal suffixes (1st, 2nd, etc.)
+  const getOrdinalSuffix = (n: number) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
+  // --- Validation Logic ---
+  const getMaxAllowedDays = (year: number, month: number) => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    // If future month entirely
+    if (year > currentYear || (year === currentYear && month > currentMonth)) {
+      return 0; // Invalid
+    }
+
+    // If current month, return days elapsed so far
+    if (year === currentYear && month === currentMonth) {
+      return now.getDate();
+    }
+
+    // If past month, return total days in that month
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const maxAllowedCompanyDays = getMaxAllowedDays(selectedYear, selectedMonth);
+  const isFutureMonth =
+    new Date(selectedYear, selectedMonth) >
+    new Date(new Date().getFullYear(), new Date().getMonth());
+
+  // Derived Errors (only shown if touched)
+  const monthError =
+    touchedFields.month && isFutureMonth
+      ? "Cannot generate for future months"
+      : null;
+
+  const companyDaysError =
+    touchedFields.companyDays &&
+    (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays)
+      ? `Must be between 1 and ${maxAllowedCompanyDays} days`
+      : null;
+
+  const getEmployeeError = (empId: string, workedDays: number) => {
+    if (!touchedFields.employeeDays[empId]) return null;
+    if (workedDays < 0) return "Cannot be negative";
+    if (workedDays > companyWorkingDays)
+      return `Cannot exceed company days (${companyWorkingDays})`;
+    return null;
+  };
+
+  const isBeforeJoinedDate = (emp: Employee, year: number, month: number) => {
+    const joinedDate = new Date(emp.joinedDate);
+    const joinedYear = joinedDate.getFullYear();
+    const joinedMonth = joinedDate.getMonth();
+
+    if (year < joinedYear) return true;
+    if (year === joinedYear && month < joinedMonth) return true;
+    return false;
+  };
+
+  // Check if ANY validation error exists (for button disable)
+  const hasAnyError = (emp: Employee) => {
+    if (isFutureMonth) return true;
+    if (isBeforeJoinedDate(emp, selectedYear, selectedMonth)) return true;
+    if (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays)
+      return true;
+    const { workedDays } = getEmployeeValues(emp.id);
+    if (workedDays < 0 || workedDays > companyWorkingDays) return true;
+    return false;
+  };
+
+  const handleCompanyWorkingDaysChange = (val: number) => {
+    setTouchedFields((prev) => ({ ...prev, companyDays: true }));
+    dispatch(setCompanyWorkingDays(val));
+  };
+
+  const handleEmployeeWorkedDaysChange = (empId: string, val: number) => {
+    setTouchedFields((prev) => ({
+      ...prev,
+      employeeDays: { ...prev.employeeDays, [empId]: true },
+    }));
+    dispatch(setEmployeeWorkedDays({ id: empId, days: val }));
+  };
+
+  const handleMonthChange = (month: number) => {
+    setTouchedFields((prev) => ({ ...prev, month: true }));
+    dispatch(setMonth(month));
+  };
+
+  const handleYearChange = (year: number) => {
+    setTouchedFields((prev) => ({ ...prev, month: true }));
+    dispatch(setYear(year));
+  };
+
+  const handleToggleEpfEtf = (empId: string) => {
+    const currentVal = employeeEpfEtf[empId] ?? true;
+    dispatch(toggleEpfEtf({ id: empId, value: !currentVal }));
+  };
+
+  const handleToggleLoan = (empId: string) => {
+    const currentVal = employeeLoanEnabled[empId] ?? true;
+    dispatch(toggleLoanEnabled({ id: empId, value: !currentVal }));
+  };
+
+  const handleEmployeeOtHoursChange = (empId: string, val: number) => {
+    dispatch(setEmployeeOtHours({ id: empId, hours: val }));
+  };
+
+  const handleEmployeeSalaryAdvanceChange = (empId: string, val: number) => {
+    dispatch(setEmployeeSalaryAdvance({ id: empId, advance: val }));
+  };
+
+  // Handle Generate Pay Slip
+  const handleGeneratePayslip = async (emp: Employee) => {
+    setSelectedEmployee(emp);
+
+    const {
+      workedDays,
+      isEpfEnabled,
+      isLoanEnabled,
+      otHours,
+      salaryAdvance,
+      loanDeduction,
+    } = getEmployeeValues(emp.id);
+    const otAmount = otHours * (emp.otRate || 0);
+
+    // FINAL VALIDATION BLOCK - Mark all as touched and check
+    setTouchedFields({
+      month: true,
+      companyDays: true,
+      employeeDays: { ...touchedFields.employeeDays, [emp.id]: true },
+    });
+
+    if (
+      isFutureMonth ||
+      isBeforeJoinedDate(emp, selectedYear, selectedMonth) ||
+      companyWorkingDays < 1 ||
+      companyWorkingDays > maxAllowedCompanyDays ||
+      workedDays < 0 ||
+      workedDays > companyWorkingDays
+    ) {
+      setToast({
+        message: "Please fix validation errors before generating",
+        type: "error",
+      });
+      return;
+    }
+
+    let basicSalaryForCalc = emp.basicSalary || 0;
+    let basicPay = 0;
+
+    if (emp.salaryType === "MONTHLY") {
+      basicPay = (basicSalaryForCalc / companyWorkingDays) * workedDays;
+    } else {
+      basicPay = basicSalaryForCalc * workedDays;
+    }
+
+    const allowanceAmount = (salaryAllowances[emp.id] || []).reduce(
+      (sum, a) => sum + (a.amount || 0),
+      0,
+    );
+    const deductionAmount = (salaryDeductions[emp.id] || []).reduce(
+      (sum, d) => sum + (d.amount || 0),
+      0,
+    );
+
+    // Calculations
+    let epfEmployee = 0;
+    let epfEmployer = basicPay * 0.12;
+    let etfEmployer = basicPay * 0.03;
+
+    if (isEpfEnabled) {
+      epfEmployee = basicPay * 0.08;
+    } else {
+      epfEmployer = 0;
+      etfEmployer = 0;
+    }
+
+    const tax = 0; // Tax will be calculated by backend
+    const totalDeductions =
+      epfEmployee + tax + salaryAdvance + deductionAmount + loanDeduction;
+    const netSalary = basicPay + otAmount + allowanceAmount - totalDeductions;
+
+    const details = {
+      basicSalary: emp.basicSalary || 0,
+      salaryType: emp.salaryType || "DAILY",
+      basicPay,
+      epfEmployee,
+      epfEmployer,
+      etfEmployer,
+      tax,
+      totalDeductions,
+      netSalary,
+      workedDays,
+      isEpfEnabled,
+      otHours,
+      otAmount,
+      salaryAdvance,
+      loanDeduction,
+      epf8: epfEmployee, // For display purposes
+      epf12: epfEmployer, // For display purposes
+      etf3: etfEmployer, // For display purposes
+      deductions: [
+        { name: "Tax (PAYE)", amount: tax },
+        { name: "Salary Advance", amount: salaryAdvance },
+        ...(salaryDeductions[emp.id] || []).map((d) => ({
+          name: d.type,
+          amount: d.amount,
+        })),
+        ...(isLoanEnabled
+          ? (allPendingLoans || []).filter(
+              (inst: any) => inst.loan?.employeeId === emp.id,
+            )
+          : []
+        ).map((inst: any) => ({
+          name: `Loan Installment: ${inst.loan?.loanTitle} (${getOrdinalSuffix(inst.installmentNumber)} installment)`,
+          amount: inst.amount - (inst.paidAmount || 0),
+        })),
+      ],
+      allowances: (salaryAllowances[emp.id] || []).map((a) => ({
+        name: a.type,
+        amount: a.amount,
+      })),
+    };
+
+    dispatch(setPreviewPayslip(details));
+
+    // Save to DB
+    if (!selectedCompanyId) return;
+    setIsSaving(true);
+    try {
+      await salaryApi.saveSalary({
+        companyId: selectedCompanyId,
+        employeeId: emp.id,
+        month: selectedMonth + 1,
+        year: selectedYear,
+        workingDays: workedDays,
+        basicPay: basicPay,
+        otHours: otHours,
+        otAmount: otAmount,
+        salaryAdvance: salaryAdvance,
+        employeeEPF: epfEmployee,
+        employerEPF: epfEmployer,
+        etfAmount: etfEmployer,
+        netSalary: netSalary,
+        loanDeduction: loanDeduction,
+        isLoanEnabled,
+        isEpfEnabled: emp.epfEnabled,
+        companyWorkingDays: companyWorkingDays,
+        allowances: salaryAllowances[emp.id] || [],
+        deductions: salaryDeductions[emp.id] || [],
+      });
+      setToast({ message: "Salary saved successfully!", type: "success" });
+    } catch (error: any) {
+      setToast({
+        message: error.response?.data?.message || "Failed to save salary",
+        type: "error",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSelectEmployee = (emp: Employee) => {
+    setSelectedEmployee(emp);
+  };
+
+  // Export Functions
+  const exportPDF = () => {
+    if (!previewPayslip || !selectedEmployee) return;
+
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(companyName.toUpperCase(), 105, 20, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.text(
+      `PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" })}`,
+      105,
+      30,
+      { align: "center" },
+    );
+
+    doc.line(14, 35, 196, 35);
+
+    // Employee Details
+    doc.setFontSize(10);
+    doc.text(`Employee Name : ${selectedEmployee.fullName}`, 14, 45);
+    doc.text(`Employee No   : ${selectedEmployee.employeeId}`, 14, 52);
+    doc.text(`Designation   : ${selectedEmployee.designation}`, 14, 59);
+
+    // Earnings
+    doc.setFontSize(11);
+    doc.text("EARNINGS", 14, 70);
+
+    autoTable(doc, {
+      startY: 75,
+      head: [["Description", "Amount (Rs.)"]],
+      body: [
+        ["Rate Type", previewPayslip.salaryType],
+        ["Basic Rate", previewPayslip.basicSalary.toLocaleString()],
+        ["Working Days", companyWorkingDays.toString()],
+        ["Worked Days", previewPayslip.workedDays.toString()],
+        ["Calculated Basic Pay", previewPayslip.basicPay.toLocaleString()],
+        ...(previewPayslip.otAmount > 0
+          ? [
+              [
+                `OT Amount (${previewPayslip.otHours} hrs)`,
+                previewPayslip.otAmount.toLocaleString(),
+              ],
+            ]
+          : []),
+        ...(previewPayslip.allowances || []).map((a: any) => [
+          a.name,
+          a.amount.toLocaleString(),
+        ]),
+        [
+          "Gross Earnings",
+          (
+            previewPayslip.basicPay +
+            previewPayslip.otAmount +
+            (previewPayslip.allowances || []).reduce(
+              (sum: number, a: any) => sum + a.amount,
+              0,
+            )
+          ).toLocaleString(),
+        ],
+      ],
+      theme: "plain",
+      styles: { fontSize: 10, cellPadding: 2 },
+      headStyles: { halign: "left" },
+      columnStyles: {
+        1: { halign: "right" },
+      },
+      didParseCell: (data) => {
+        if (data.section === "head" && data.column.index === 1) {
+          data.cell.styles.halign = "right";
+        }
+      },
+    });
+
+    let currentY = (doc as any).lastAutoTable.finalY + 10;
+
+    // Deductions
+    doc.text("DEDUCTIONS", 14, currentY);
+    currentY += 5;
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+
+    // Add Employee EPF only if enabled
+    if (previewPayslip.isEpfEnabled) {
+      doc.text("EPF Employee (8%)", 14, currentY);
+      doc.text(
+        previewPayslip.epf8.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+        196,
+        currentY,
+        { align: "right" },
+      );
+      currentY += 7;
+    }
+
+    // Add other deductions (e.g., Tax, Salary Advance, Custom Deductions)
+
+    // Add other deductions (e.g., Tax, Salary Advance, Custom Deductions)
+    previewPayslip.deductions.forEach((d: any) => {
+      if (d.amount > 0) {
+        doc.text(d.name, 14, currentY);
+        doc.text(
+          d.amount.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }),
+          196,
+          currentY,
+          { align: "right" },
+        );
+        currentY += 7;
+      }
+    });
+
+    // Total Deductions
+    doc.setLineWidth(0.2);
+    doc.line(14, currentY, 196, currentY);
+    currentY += 6; // Add space after the line
+    doc.setFont("helvetica", "bold");
+    doc.text("Total Deductions", 14, currentY);
+    doc.text(
+      previewPayslip.totalDeductions.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+      196,
+      currentY,
+      { align: "right" },
+    );
+    currentY += 10;
+
+    // Net Salary
+    doc.setLineWidth(0.5);
+    doc.line(14, currentY, 196, currentY);
+    doc.setFontSize(12);
+    doc.text("NET SALARY", 14, currentY + 8);
+    doc.text(
+      `Net Salary Payable (Rs.) : ${previewPayslip.netSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      196,
+      currentY + 8,
+      { align: "right" },
+    );
+    doc.line(14, currentY + 12, 196, currentY + 12);
+    doc.line(14, currentY + 14, 196, currentY + 14);
+
+    currentY += 25;
+
+    // Employer Contributions
+    if (previewPayslip.isEpfEnabled) {
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        "EMPLOYER CONTRIBUTIONS (Not included in Net Salary)",
+        14,
+        currentY,
+      );
+      autoTable(doc, {
+        startY: currentY + 5,
+        body: [
+          [
+            "EPF Employer (12%)",
+            previewPayslip.epf12.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }),
+          ],
+          [
+            "ETF Employer (3%)",
+            previewPayslip.etf3.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }),
+          ],
+        ],
+        theme: "plain",
+        styles: { fontSize: 9, cellPadding: 1 },
+        columnStyles: { 1: { halign: "right" } },
+      });
+      currentY = (doc as any).lastAutoTable.finalY + 30;
+    } else {
+      currentY += 10; // Adjust spacing if no employer contributions
+    }
+
+    // Signatures
+    doc.text(`Prepared By : ${new Date().toLocaleDateString()}`, 14, currentY);
+
+    doc.text("Checked By  : ___________________", 14, currentY + 15);
+
+    doc.text("Employee Sign : ___________________", 14, currentY + 30);
+
+    doc.save(
+      `Payslip_${selectedEmployee.employeeId}_${selectedMonth + 1}_${selectedYear}.pdf`,
+    );
+  };
+
+  const exportExcel = () => {
+    if (!previewPayslip || !selectedEmployee) return;
+
+    const wsData = [
+      [companyName.toUpperCase()],
+      [
+        `PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" })}`,
+      ],
+      [],
+      ["Employee Name", selectedEmployee.fullName],
+      ["Employee No", selectedEmployee.employeeId],
+      ["Designation", selectedEmployee.designation],
+      [],
+      ["EARNINGS", "Amount (Rs.)"],
+      ["Rate Type", previewPayslip.salaryType],
+      ["Basic Rate", previewPayslip.basicSalary],
+      ["Working Days", companyWorkingDays],
+      ["Worked Days", previewPayslip.workedDays],
+      ["Calculated Basic Pay", previewPayslip.basicPay],
+      ...(previewPayslip.otAmount > 0
+        ? [
+            [
+              `OT Amount (${previewPayslip.otHours} hrs)`,
+              previewPayslip.otAmount,
+            ],
+          ]
+        : []),
+      ...(previewPayslip.allowances || []).map((a: any) => [a.name, a.amount]),
+      [
+        "Gross Earnings",
+        previewPayslip.basicPay +
+          previewPayslip.otAmount +
+          (previewPayslip.allowances || []).reduce(
+            (sum: number, a: any) => sum + a.amount,
+            0,
+          ),
+      ],
+      [],
+      ["DEDUCTIONS", "Amount (Rs.)"],
+      ...(previewPayslip.isEpfEnabled
+        ? [["EPF Employee (8%)", previewPayslip.epf8]]
+        : []),
+      ...(previewPayslip.loanDeduction > 0
+        ? [["Loan Installment", previewPayslip.loanDeduction]]
+        : []),
+      ...previewPayslip.deductions
+        .filter((d: any) => d.amount > 0)
+        .map((d: any) => [d.name, d.amount]),
+      ["Total Deductions", previewPayslip.totalDeductions],
+      [],
+      ["NET SALARY PAYABLE", previewPayslip.netSalary],
+      [],
+      ...(previewPayslip.isEpfEnabled
+        ? [
+            ["EMPLOYER CONTRIBUTIONS", "Amount (Rs.)"],
+            ["EPF Employer (12%)", previewPayslip.epf12],
+            ["ETF Employer (3%)", previewPayslip.etf3],
+          ]
+        : []),
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Payslip");
+    XLSX.writeFile(wb, `Payslip_${selectedEmployee.employeeId}.xlsx`);
+  };
+
+  const exportCSV = () => {
+    if (!previewPayslip || !selectedEmployee) return;
+
+    const wsData = [
+      [companyName.toUpperCase()],
+      [
+        `PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" })}`,
+      ],
+      [],
+      ["Employee Name", selectedEmployee.fullName],
+      ["Employee No", selectedEmployee.employeeId],
+      ["Designation", selectedEmployee.designation],
+      [],
+      ["EARNINGS", "Amount (Rs.)"],
+      ["Rate Type", previewPayslip.salaryType],
+      ["Basic Rate", previewPayslip.basicSalary],
+      ["Working Days", companyWorkingDays],
+      ["Worked Days", previewPayslip.workedDays],
+      ["Calculated Basic Pay", previewPayslip.basicPay],
+      ...(previewPayslip.otAmount > 0
+        ? [
+            [
+              `OT Amount (${previewPayslip.otHours} hrs)`,
+              previewPayslip.otAmount,
+            ],
+          ]
+        : []),
+      ...(previewPayslip.allowances || []).map((a: any) => [a.name, a.amount]),
+      [
+        "Gross Earnings",
+        previewPayslip.basicPay +
+          previewPayslip.otAmount +
+          (previewPayslip.allowances || []).reduce(
+            (sum: number, a: any) => sum + a.amount,
+            0,
+          ),
+      ],
+      [],
+      ["DEDUCTIONS", "Amount (Rs.)"],
+      ...(previewPayslip.isEpfEnabled
+        ? [["EPF Employee (8%)", previewPayslip.epf8]]
+        : []),
+      ...(previewPayslip.loanDeduction > 0
+        ? [["Loan Installment", previewPayslip.loanDeduction]]
+        : []),
+      ...previewPayslip.deductions
+        .filter((d: any) => d.amount > 0)
+        .map((d: any) => [d.name, d.amount]),
+      ["Total Deductions", previewPayslip.totalDeductions],
+      [],
+      ["NET SALARY PAYABLE", previewPayslip.netSalary],
+      [],
+      ...(previewPayslip.isEpfEnabled
+        ? [
+            ["EMPLOYER CONTRIBUTIONS", "Amount (Rs.)"],
+            ["EPF Employer (12%)", previewPayslip.epf12],
+            ["ETF Employer (3%)", previewPayslip.etf3],
+          ]
+        : []),
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const csv = XLSX.utils.sheet_to_csv(ws);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Payslip_${selectedEmployee.employeeId}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar />
+
+      <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
+        {/* Header */}
+        <PageHeader
+          title="Salary"
+          subtitle="View and calculate employee salaries"
+        />
+
+        {/* Filters/Search Bar */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex items-center justify-between">
+          <div className="w-full max-w-md relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search Employee..."
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+            />
+          </div>
+          {/* Month & Year Pickers */}
+          <div className="flex items-center gap-4">
+            <select
+              value={selectedMonth}
+              onChange={(e) => handleMonthChange(parseInt(e.target.value))}
+              className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
+            >
+              {Array.from({ length: 12 }, (_, i) => (
+                <option key={i} value={i}>
+                  {new Date(0, i).toLocaleString("default", { month: "long" })}
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedYear}
+              onChange={(e) => handleYearChange(parseInt(e.target.value))}
+              className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
+            >
+              {Array.from({ length: 6 }, (_, i) => {
+                const year = new Date().getFullYear() - 5 + i;
+                return (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                );
+              })}
+            </select>
+            {/* Working Days Editable Input within same style container */}
+            <div className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium flex items-center gap-2">
+              <span>Working Days:</span>
+              <input
+                type="number"
+                value={companyWorkingDays}
+                onChange={(e) =>
+                  handleCompanyWorkingDaysChange(parseInt(e.target.value) || 0)
+                }
+                onBlur={() =>
+                  setTouchedFields((prev) => ({ ...prev, companyDays: true }))
+                }
+                className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center font-bold text-gray-800"
+                min="0"
+                max="31"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-6">
+          {/* LEFT SIDE: Employee Salary Cards */}
+          <div className="w-8/12 overflow-y-auto pr-2 space-y-4">
+            {isLoading ? (
+              <SalaryListSkeleton />
+            ) : employees.length === 0 ? (
+              <div className="text-center p-12 text-gray-500">
+                No employees found.
+              </div>
+            ) : (
+              employees.map((emp) => {
+                const {
+                  workedDays,
+                  isEpfEnabled,
+                  isLoanEnabled,
+                  otHours,
+                  salaryAdvance,
+                  loanDeduction,
+                } = getEmployeeValues(emp.id);
+                const otAmount = otHours * (emp.otRate || 0);
+                const empError = getEmployeeError(emp.id, workedDays);
+                return (
+                  <div
+                    key={emp.id}
+                    onClick={() => handleSelectEmployee(emp)}
+                    className={`bg-white rounded-xl border p-4 cursor-pointer transition-all duration-200 ${
+                      selectedEmployee?.id === emp.id
+                        ? "border-blue-500 shadow-md ring-1 ring-blue-500"
+                        : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
+                    }`}
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                          {emp.fullName.charAt(0)}
+                        </div>
+                        <div>
+                          <h3 className="text-[14px] font-semibold text-gray-900">
+                            {emp.fullName}
+                          </h3>
+                          <p className="text-[12px] font_regular text-gray-500">
+                            {emp.designation}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="px-2 py-1 bg-blue-50 text-blue-600 text-[11px] font-semibold rounded">
+                        {emp.employeeId}
+                      </div>
+                    </div>
+
+                    {/* Input Controls - Visible when selected */}
+                    {selectedEmployee?.id === emp.id && (
+                      <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                        {/* Earnings */}
+                        <div>
+                          <h4 className="flex items-center gap-2 text-[14px] font-semibold mb-3">
+                            <Calculator className="w-4 h-4  text-green-600" />{" "}
+                            Earnings
+                          </h4>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                              <label className="text-[12px] text-gray-500 block mb-1">
+                                Rate ({emp.salaryType || "DAILY"})
+                              </label>
+                              <div className="text-[12px] font-semibold text-gray-900">
+                                Rs. {emp.basicSalary || 0}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-[12px] text-gray-500 block mb-1">
+                                Enter Worked Days
+                              </label>
+                              <input
+                                type="number"
+                                value={workedDays}
+                                onChange={(e) =>
+                                  handleEmployeeWorkedDaysChange(
+                                    emp.id,
+                                    parseFloat(e.target.value) || 0,
+                                  )
+                                }
+                                onBlur={() =>
+                                  setTouchedFields((prev) => ({
+                                    ...prev,
+                                    employeeDays: {
+                                      ...prev.employeeDays,
+                                      [emp.id]: true,
+                                    },
+                                  }))
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-[12px] font-semibold text-gray-900"
+                                min="0"
+                                max="31"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[12px] text-gray-500 block mb-1">
+                                OT Hours
+                              </label>
+                              <input
+                                type="number"
+                                value={otHours}
+                                onChange={(e) =>
+                                  handleEmployeeOtHoursChange(
+                                    emp.id,
+                                    parseFloat(e.target.value) || 0,
+                                  )
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-[12px] font-semibold text-gray-900"
+                                min="0"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[12px] text-gray-500 block mb-1">
+                                OT Rate
+                              </label>
+                              <div className="bg-gray-50 px-3 py-2 border border-gray-100 rounded-lg text-[12px] font-semibold text-gray-900 h-[36px] flex items-center">
+                                Rs. {emp.otRate || 0}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-[12px] text-gray-500 block mb-1">
+                                OT Amount
+                              </label>
+                              <div className="bg-gray-50 px-3 py-2 border border-gray-100 rounded-lg text-[12px] font-bold text-blue-600 h-[36px] flex items-center">
+                                Rs.{" "}
+                                {(otHours * (emp.otRate || 0)).toLocaleString(
+                                  undefined,
+                                  {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  },
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-[12px] text-gray-500 block mb-1 text-blue-600">
+                                Salary Advance Deductions
+                              </label>
+                              <input
+                                type="number"
+                                value={salaryAdvance}
+                                onChange={(e) =>
+                                  handleEmployeeSalaryAdvanceChange(
+                                    emp.id,
+                                    parseFloat(e.target.value) || 0,
+                                  )
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none text-[12px] font-semibold text-gray-900"
+                                min="0"
+                              />
+                            </div>
+                            {/* Loan Installment — matches EPF/ETF row layout exactly */}
+                            <div className="col-span-2 flex items-center gap-4">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleLoan(emp.id);
+                                }}
+                                className={`
+            relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0
+            ${isLoanEnabled ? "bg-red-500" : "bg-gray-300"}
+        `}
+                              >
+                                <span
+                                  className={`
+                inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200
+                ${isLoanEnabled ? "translate-x-6" : "translate-x-1"}
+            `}
+                                />
+                              </button>
+                              <span className="text-[14px] font-medium text-gray-800 whitespace-nowrap">
+                                Loan installment
+                              </span>
+                              <div
+                                className={`flex-1 px-4 py-2 border rounded-lg text-[12px] font-semibold transition-opacity ${
+                                  isLoanEnabled
+                                    ? "bg-red-50 border-red-200 text-red-600"
+                                    : "bg-gray-50 border-gray-200 text-gray-400 opacity-40 line-through"
+                                }`}
+                              >
+                                Rs.{" "}
+                                {loanDeduction.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Deductions */}
+                        <div className="space-y-4">
+                          {/* EPF/ETF Row */}
+                          <div className="flex items-center gap-4">
+                            <button
+                              onClick={() => handleToggleEpfEtf(emp.id)}
+                              className={`
+                                                            relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0
+                                                            ${isEpfEnabled ? "bg-blue-500" : "bg-gray-300"}
+                                                        `}
+                            >
+                              <span
+                                className={`
+                                                                inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200
+                                                                ${isEpfEnabled ? "translate-x-6" : "translate-x-1"}
+                                                            `}
+                              />
+                            </button>
+                            <span className="text-[14px] font-medium text-gray-800 whitespace-nowrap">
+                              EPF/ETF
+                            </span>
+                            <input
+                              type="text"
+                              value={isEpfEnabled ? emp.epfEtfAmount || "" : ""}
+                              readOnly
+                              placeholder="Total for EPF"
+                              className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-[12px] text-gray-600 bg-white outline-none focus:border-blue-300 transition-colors"
+                            />
+                          </div>
+
+                          {/* Allowance Row */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setAllowanceToggles((prev) => ({
+                                    ...prev,
+                                    [emp.id]: !prev[emp.id],
+                                  }));
+                                }}
+                                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${allowanceToggles[emp.id] ? "bg-blue-500" : "bg-gray-300"}`}
+                              >
+                                <span
+                                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${allowanceToggles[emp.id] ? "translate-x-6" : "translate-x-1"}`}
+                                />
+                              </button>
+                              <span className="text-[14px] font-medium text-gray-800">
+                                Allowance
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (allowanceToggles[emp.id])
+                                  openManageModal("allowance", emp);
+                              }}
+                              className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-[13px] font-medium transition-colors ${
+                                allowanceToggles[emp.id]
+                                  ? "border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer"
+                                  : "border-gray-100 text-gray-300 cursor-not-allowed"
+                              }`}
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M3 5h14M3 10h14M3 15h14"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                />
+                                <circle
+                                  cx="7"
+                                  cy="5"
+                                  r="1.5"
+                                  fill="currentColor"
+                                />
+                                <circle
+                                  cx="13"
+                                  cy="10"
+                                  r="1.5"
+                                  fill="currentColor"
+                                />
+                                <circle
+                                  cx="7"
+                                  cy="15"
+                                  r="1.5"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                              Manage Allowances
+                            </button>
+                          </div>
+
+                          {/* Deduction Row */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeductionToggles((prev) => ({
+                                    ...prev,
+                                    [emp.id]: !prev[emp.id],
+                                  }));
+                                }}
+                                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${deductionToggles[emp.id] ? "bg-blue-500" : "bg-gray-300"}`}
+                              >
+                                <span
+                                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${deductionToggles[emp.id] ? "translate-x-6" : "translate-x-1"}`}
+                                />
+                              </button>
+                              <span className="text-[14px] font-medium text-gray-800">
+                                Deduction
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (deductionToggles[emp.id])
+                                  openManageModal("deduction", emp);
+                              }}
+                              className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-[13px] font-medium transition-colors ${
+                                deductionToggles[emp.id]
+                                  ? "border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 cursor-pointer"
+                                  : "border-gray-100 text-gray-300 cursor-not-allowed"
+                              }`}
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M3 5h14M3 10h14M3 15h14"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                />
+                                <circle
+                                  cx="7"
+                                  cy="5"
+                                  r="1.5"
+                                  fill="currentColor"
+                                />
+                                <circle
+                                  cx="13"
+                                  cy="10"
+                                  r="1.5"
+                                  fill="currentColor"
+                                />
+                                <circle
+                                  cx="7"
+                                  cy="15"
+                                  r="1.5"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                              Manage Deductions
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Generate Pay-slip Button */}
+                        <div className="pt-2 flex justify-end">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGeneratePayslip(emp);
+                            }}
+                            disabled={isSaving || hasAnyError(emp)}
+                            className={`px-5 py-2.5 rounded-lg text-[12px] font-semibold transition-all duration-200 shadow-sm flex items-center gap-2 ${
+                              isSaving || hasAnyError(emp)
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-95"
+                            }`}
+                          >
+                            {isSaving ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              "Generate Pay-slip"
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {selectedEmployee?.id !== emp.id && (
+                      <div className="mt-4 text-center text-sm text-gray-400 italic">
+                        Click to calculate salary
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* RIGHT SIDE: Payslip Preview */}
+          <div className="w-5/12 flex flex-col">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
+              {previewPayslip && selectedEmployee ? (
+                <div className="flex flex-col">
+                  {/* Preview Container (No scroll) */}
+                  <div>
+                    <div className="p-8 font-mono text-sm">
+                      {/* Paper Effect Container */}
+                      <div className="bg-white p-6 border-2 border-dashed border-gray-300 relative mx-auto max-w-lg shadow-sm">
+                        {/* Header */}
+                        <div className="text-center mb-6 border-b-2 border-gray-800 pb-4">
+                          <h2 className="text-lg font-bold uppercase tracking-wider">
+                            {companyName}
+                          </h2>
+                          <p className="text-xs font-semibold mt-1">
+                            Pay Slip -{" "}
+                            {new Date(
+                              selectedYear,
+                              selectedMonth,
+                            ).toLocaleString("default", {
+                              month: "long",
+                              year: "numeric",
+                            })}
+                          </p>
+                        </div>
+
+                        {/* Emp Details */}
+                        <div className="mb-6 text-xs space-y-1">
+                          <div className="flex">
+                            <span className="w-24 font-bold">
+                              Employee Name
+                            </span>{" "}
+                            <span>: {selectedEmployee.fullName}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="w-24 font-bold">Employee No</span>{" "}
+                            <span>: {selectedEmployee.employeeId}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="w-24 font-bold">Designation</span>{" "}
+                            <span>: {selectedEmployee.designation}</span>
+                          </div>
+                        </div>
+
+                        {/* Earnings */}
+                        <div className="mb-6">
+                          <div className="border-b border-gray-800 font-bold mb-2 pb-1">
+                            EARNINGS
+                          </div>
+                          <div className="flex justify-between mb-1">
+                            <span>
+                              {previewPayslip.salaryType === "MONTHLY"
+                                ? "Monthly Rate"
+                                : "Daily Rate"}
+                            </span>
+                            <span>
+                              {previewPayslip.basicSalary.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between mb-1">
+                            <span>Working Days</span>
+                            <span>{companyWorkingDays}</span>
+                          </div>
+                          <div className="flex justify-between mb-1">
+                            <span>Worked Days</span>
+                            <span>{previewPayslip.workedDays}</span>
+                          </div>
+                          <div className="flex justify-between mb-1 font-semibold text-gray-800">
+                            <span>Calculated Basic Pay</span>
+                            <span>
+                              {previewPayslip.basicPay.toLocaleString()}
+                            </span>
+                          </div>
+                          {previewPayslip.otAmount > 0 && (
+                            <div className="flex justify-between mb-1 font-semibold text-gray-800">
+                              <span>OT ({previewPayslip.otHours} hrs)</span>
+                              <span>
+                                {previewPayslip.otAmount.toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+                          {previewPayslip.allowances?.map(
+                            (a: any, i: number) => (
+                              <div
+                                key={i}
+                                className="flex justify-between mb-1 text-green-700 font-medium"
+                              >
+                                <span>+ {a.name}</span>
+                                <span>{a.amount.toLocaleString()}</span>
+                              </div>
+                            ),
+                          )}
+                          <div className="flex justify-between mt-2 pt-2 border-t border-gray-300 font-bold text-gray-900">
+                            <span>Gross Earnings</span>
+                            <span>
+                              {(
+                                previewPayslip.basicPay +
+                                previewPayslip.otAmount +
+                                (previewPayslip.allowances || []).reduce(
+                                  (sum: number, a: any) => sum + a.amount,
+                                  0,
+                                )
+                              ).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Deductions */}
+                        <div className="mb-4">
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                            Deductions
+                          </h4>
+                          <div className="space-y-1">
+                            {previewPayslip.isEpfEnabled && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">EPF (8%)</span>
+                                <span className="font-medium text-red-600">
+                                  -Rs {previewPayslip.epf8.toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                            {previewPayslip.deductions.map((d, i) => (
+                              <div
+                                key={i}
+                                className="flex justify-between text-sm"
+                              >
+                                <span className="text-gray-600">{d.name}</span>
+                                <span className="font-medium text-red-600">
+                                  -Rs {d.amount.toFixed(2)}
+                                </span>
+                              </div>
+                            ))}
+                            <div className="flex justify-between text-sm font-medium pt-1 border-t border-gray-100 mt-1">
+                              <span className="text-gray-800">
+                                Total Deductions
+                              </span>
+                              <span className="text-red-600">
+                                -Rs{" "}
+                                {(
+                                  (previewPayslip.isEpfEnabled
+                                    ? previewPayslip.epf8
+                                    : 0) +
+                                  previewPayslip.deductions.reduce(
+                                    (sum, d) => sum + d.amount,
+                                    0,
+                                  )
+                                ).toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Net Salary */}
+                        <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                          <div className="flex justify-between items-center">
+                            <span className="text-base font-bold text-gray-900">
+                              Net Salary
+                            </span>
+                            <span className="text-xl font-bold text-blue-600">
+                              Rs {previewPayslip.netSalary.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Employer Contributions */}
+                        {previewPayslip.isEpfEnabled && (
+                          <div className="border-t border-gray-100 pt-4">
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                              Employer Contributions
+                            </h4>
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">EPF (12%)</span>
+                                <span className="font-medium text-gray-900">
+                                  Rs {previewPayslip.epf12.toFixed(2)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">ETF (3%)</span>
+                                <span className="font-medium text-gray-900">
+                                  Rs {previewPayslip.etf3.toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {/* Signatures */}
+                        <div className="mt-12 pt-4 border-t border-gray-300 flex justify-between text-[10px] text-gray-500">
+                          <div>
+                            Prepared By : {new Date().toLocaleDateString()}
+                          </div>
+                          <div>Checked By : ..............</div>
+                        </div>
+                        <div className="mt-4 text-[10px] text-gray-500">
+                          Employee Sign : ________________________
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="p-4 border-t border-gray-200 bg-gray-50 space-y-3 mx-4 mb-4 rounded-lg">
+                      <button
+                        onClick={exportPDF}
+                        className="w-full bg-blue-600 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors font-medium shadow-sm"
+                      >
+                        <FileText className="w-4 h-4" /> Download Pay Slip (PDF)
+                      </button>
+                      <button
+                        onClick={exportExcel}
+                        className="w-full bg-green-600 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors font-medium shadow-sm"
+                      >
+                        <FileSpreadsheet className="w-4 h-4" /> Download Pay
+                        Slip (Excel)
+                      </button>
+                      <button
+                        onClick={exportCSV}
+                        className="w-full bg-gray-700 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors font-medium shadow-sm"
+                      >
+                        <Download className="w-4 h-4" /> Download Pay Slip (CSV)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <FileText className="w-10 h-10 text-gray-300" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-600">
+                    No Payslip Generated
+                  </h3>
+                  <p className="max-w-xs mt-2 text-sm">
+                    Select an employee from the left and click "Generate Pay
+                    Slip" to preview.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Manage Allowances / Deductions Modal */}
+        {manageModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/30"
+              onClick={handleModalCancel}
+            />
+
+            {/* Modal */}
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {manageModal.type === "allowance"
+                    ? "Manage Allowances"
+                    : "Manage Deductions"}
+                </h3>
+                <button
+                  onClick={handleModalCancel}
+                  className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="px-6 pb-4">
+                <div className="border-2 border-dashed border-blue-200 rounded-lg p-4 space-y-3">
+                  {modalEntries.map((entry, idx) => {
+                    const isLastRow = idx === modalEntries.length - 1;
+                    return (
+                      <div key={idx} className="flex items-center gap-3">
+                        <input
+                          type="text"
+                          value={entry.type}
+                          onChange={(e) => {
+                            const updated = [...modalEntries];
+                            updated[idx] = {
+                              ...updated[idx],
+                              type: e.target.value,
+                            };
+                            setModalEntries(updated);
+                          }}
+                          placeholder={
+                            isLastRow
+                              ? `Add Extra ${manageModal.type === "allowance" ? "Allowance" : "Deduction"}`
+                              : ""
+                          }
+                          className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:border-blue-400 transition-colors placeholder:text-gray-300"
+                        />
+                        <input
+                          type="number"
+                          value={entry.amount || ""}
+                          onChange={(e) => {
+                            const updated = [...modalEntries];
+                            updated[idx] = {
+                              ...updated[idx],
+                              amount: parseFloat(e.target.value) || 0,
+                            };
+                            setModalEntries(updated);
+                          }}
+                          placeholder="15,000.00"
+                          className="w-32 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:border-blue-400 transition-colors placeholder:text-gray-300"
+                          min="0"
+                          step="0.01"
+                        />
+                        {isLastRow ? (
+                          /* Plus button for the last row */
+                          <button
+                            onClick={() =>
+                              setModalEntries((prev) => [
+                                ...prev,
+                                { type: "", amount: 0 },
+                              ])
+                            }
+                            className="shrink-0 w-8 h-8 flex items-center justify-center text-blue-500 hover:text-blue-600 transition-colors"
+                          >
+                            <svg
+                              className="w-6 h-6"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                              />
+                              <line
+                                x1="8"
+                                y1="12"
+                                x2="16"
+                                y2="12"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                              />
+                              <line
+                                x1="12"
+                                y1="8"
+                                x2="12"
+                                y2="16"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+                        ) : (
+                          /* Minus button for existing rows */
+                          <button
+                            onClick={() =>
+                              setModalEntries((prev) =>
+                                prev.filter((_, i) => i !== idx),
+                              )
+                            }
+                            className="shrink-0 w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-500 transition-colors"
+                          >
+                            <svg
+                              className="w-6 h-6"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                              />
+                              <line
+                                x1="8"
+                                y1="12"
+                                x2="16"
+                                y2="12"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
+                <button
+                  onClick={handleModalCancel}
+                  className="px-5 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleModalSave}
+                  className="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toast */}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default Salary;
