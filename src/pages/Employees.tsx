@@ -16,6 +16,8 @@ import {
   Landmark,
   Flag,
   FileText,
+  CreditCard,
+  GitBranch,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import UniversalDrawer from "../components/UniversalDrawer";
@@ -556,24 +558,27 @@ const Employees = () => {
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center">
-                        <div className="w-[140px] text-[12px] font-medium text-gray-400">
-                          Bank name
+                        <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                          <Landmark className="w-[14px] h-[14px]" />
+                          <span>Bank name</span>
                         </div>
                         <div className="text-[13px] font-medium text-[#3D4760]">
                           {selectedEmployee.bankName || "N/A"}
                         </div>
                       </div>
                       <div className="flex items-center">
-                        <div className="w-[140px] text-[12px] font-medium text-gray-400">
-                          Account number
+                        <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                          <CreditCard className="w-[14px] h-[14px]" />
+                          <span>Account number</span>
                         </div>
                         <div className="text-[13px] font-medium text-[#3D4760]">
                           {selectedEmployee.accountNumber || "N/A"}
                         </div>
                       </div>
                       <div className="flex items-center">
-                        <div className="w-[140px] text-[12px] font-medium text-gray-400">
-                          Account name
+                        <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                          <User className="w-[14px] h-[14px]" />
+                          <span>Account name</span>
                         </div>
                         <div className="text-[13px] font-medium text-[#3D4760]">
                           {selectedEmployee.accountHolderName || "N/A"}
