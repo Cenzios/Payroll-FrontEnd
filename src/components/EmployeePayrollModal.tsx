@@ -28,6 +28,7 @@ interface MonthlyData {
     deductions: number;
     employeeEPF: number;
     companyEPFETF: number;
+    loanDeduction?: number;
     allowances?: { type: string, amount: number }[];
     customDeductions?: { type: string, amount: number }[];
 }
@@ -353,6 +354,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
                                                         <th className="px-4 py-3 text-right font-semibold">Tax</th>
                                                         <th className="px-4 py-3 text-right font-semibold">Advance</th>
                                                         <th className="px-4 py-3 text-right font-semibold">Total Ded.</th>
+                                                        <th className="px-4 py-3 text-right font-semibold">Loan Ded.</th>
                                                         <th className="px-4 py-3 text-right font-semibold">EPF 8%</th>
                                                     </tr>
                                                 </thead>
@@ -372,6 +374,7 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
                                                                 <td className="px-4 py-3 text-right text-red-600">RS: {row.tax.toLocaleString()}</td>
                                                                 <td className="px-4 py-3 text-right text-red-600">RS: {row.salaryAdvance.toLocaleString()}</td>
                                                                 <td className="px-4 py-3 text-right text-red-700 font-medium">RS: {row.deductions.toLocaleString()}</td>
+                                                                <td className="px-4 py-3 text-right text-orange-600 font-bold">RS: {row.loanDeduction?.toLocaleString() || '0'}</td>
                                                                 <td className="px-4 py-3 text-right text-gray-900">RS: {row.employeeEPF.toLocaleString()}</td>
                                                             </tr>
                                                             {expandedMonths[row.month] && (

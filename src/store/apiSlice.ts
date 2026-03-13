@@ -260,7 +260,7 @@ export const apiSlice = createApi({
                 method: 'GET',
                 params: { companyId },
             }),
-            providesTags: (result, error, { loanId }) => [{ type: 'Employee', id: loanId }],
+            providesTags: (_result, _error, { loanId }) => [{ type: 'Employee', id: loanId }],
         }),
 
         // --- BANK DETAILS ---
@@ -270,7 +270,7 @@ export const apiSlice = createApi({
                 method: 'GET',
                 params: { companyId },
             }),
-            providesTags: (result, error, { employeeId }) => [{ type: 'Employee', id: employeeId }],
+            providesTags: (_result, _error, { employeeId }) => [{ type: 'Employee', id: employeeId }],
         }),
 
         saveBankDetails: builder.mutation<EmployeeBank, { employeeId: string; companyId: string } & EmployeeBank>({
@@ -280,6 +280,22 @@ export const apiSlice = createApi({
                 data,
             }),
             invalidatesTags: (result, error, { employeeId }) => [{ type: 'Employee', id: employeeId }],
+        }),
+        getPendingLoanInstallments: builder.query<any[], { companyId: string; employeeId: string; month: number; year: number }>({
+            query: (params) => ({
+                url: '/loans/pending',
+                method: 'GET',
+                params,
+            }),
+            providesTags: (_result, _error, { employeeId }) => [{ type: 'Employee' as const, id: employeeId }],
+        }),
+        getAllPendingLoanInstallments: builder.query<any[], { companyId: string; month: number; year: number }>({
+            query: (params) => ({
+                url: '/loans/pending/all',
+                method: 'GET',
+                params,
+            }),
+            providesTags: ['Employee'],
         }),
     }),
 });
@@ -305,7 +321,9 @@ export const {
     useGetSalaryTrendQuery,
     useGetLoansQuery,
     useGetLoanByIdQuery,
+    useGetPendingLoanInstallmentsQuery,
+    useGetAllPendingLoanInstallmentsQuery,
     useCreateLoanMutation,
     useGetBankDetailsQuery,
-    useSaveBankDetailsMutation
+    useSaveBankDetailsMutation,
 } = apiSlice;
