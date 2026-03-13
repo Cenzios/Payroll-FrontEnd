@@ -255,6 +255,20 @@ const UniversalDrawer = ({
           break;
         case "address":
           break;
+        case "bankName":
+          if (!value || !value.trim()) error = "Bank name is required";
+          break;
+        case "accountNumber":
+          if (!value || !value.trim()) error = "Account number is required";
+          else if (!/^\d+$/.test(value.trim())) error = "Account number must contain only digits";
+          break;
+        case "branchName":
+          if (!value || !value.trim()) error = "Branch name is required";
+          break;
+        case "accountHolderName":
+          if (!value || value.trim().length < 2) error = "Account holder name must be at least 2 characters";
+          else if (/\d/.test(value)) error = "Account holder name cannot contain numbers";
+          break;
       }
     }
     return error;
@@ -306,8 +320,13 @@ const UniversalDrawer = ({
         "contactNumber",
         "joinedDate",
       ];
+      const bankFields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
       return (
         requiredFields.every(
+          (field) =>
+            !validateField(field, (employeeData as any)[field], "employee"),
+        ) &&
+        bankFields.every(
           (field) =>
             !validateField(field, (employeeData as any)[field], "employee"),
         ) &&
@@ -345,6 +364,13 @@ const UniversalDrawer = ({
         const err = validateField(f, (employeeData as any)[f], "employee");
         if (err) newErrors[f] = err;
       });
+
+      // Bank detail fields
+      const bankFields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
+      bankFields.forEach((f) => {
+        const err = validateField(f, (employeeData as any)[f], "employee");
+        if (err) newErrors[f] = err;
+      });
     }
 
     setErrors(newErrors);
@@ -364,6 +390,10 @@ const UniversalDrawer = ({
         "joinedDate",
         "address",
         "email",
+        "bankName",
+        "accountNumber",
+        "branchName",
+        "accountHolderName",
       ].forEach((f) => (allTouched[f] = true));
     }
     setTouched(allTouched);
@@ -976,7 +1006,7 @@ const UniversalDrawer = ({
                               <span className="text-[14px] font-medium text-gray-700">
                                 {employeeData.salaryType === "MONTHLY"
                                   ? "Monthly Basic"
-                                  : "Monthly Basic"}
+                                  : "Daily Rate"}
                               </span>
                               <select
                                 value={employeeData.salaryType || "DAILY"}
