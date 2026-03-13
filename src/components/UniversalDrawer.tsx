@@ -103,6 +103,7 @@ const UniversalDrawer = ({
   const [activeTab, setActiveTab] = useState<"employee" | "payment" | "bank">(
     "employee",
   );
+  const [employeeFiles, setEmployeeFiles] = useState<File[]>([]);
 
   // Payment tab state
   const [epfEtf, setEpfEtf] = useState("");
@@ -254,6 +255,20 @@ const UniversalDrawer = ({
           break;
         case "address":
           break;
+        case "bankName":
+          if (!value || !value.trim()) error = "Bank name is required";
+          break;
+        case "accountNumber":
+          if (!value || !value.trim()) error = "Account number is required";
+          else if (!/^\d+$/.test(value.trim())) error = "Account number must contain only digits";
+          break;
+        case "branchName":
+          if (!value || !value.trim()) error = "Branch name is required";
+          break;
+        case "accountHolderName":
+          if (!value || value.trim().length < 2) error = "Account holder name must be at least 2 characters";
+          else if (/\d/.test(value)) error = "Account holder name cannot contain numbers";
+          break;
       }
     }
     return error;
@@ -305,8 +320,13 @@ const UniversalDrawer = ({
         "contactNumber",
         "joinedDate",
       ];
+      const bankFields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
       return (
         requiredFields.every(
+          (field) =>
+            !validateField(field, (employeeData as any)[field], "employee"),
+        ) &&
+        bankFields.every(
           (field) =>
             !validateField(field, (employeeData as any)[field], "employee"),
         ) &&
@@ -344,6 +364,13 @@ const UniversalDrawer = ({
         const err = validateField(f, (employeeData as any)[f], "employee");
         if (err) newErrors[f] = err;
       });
+
+      // Bank detail fields
+      const bankFields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
+      bankFields.forEach((f) => {
+        const err = validateField(f, (employeeData as any)[f], "employee");
+        if (err) newErrors[f] = err;
+      });
     }
 
     setErrors(newErrors);
@@ -363,6 +390,10 @@ const UniversalDrawer = ({
         "joinedDate",
         "address",
         "email",
+        "bankName",
+        "accountNumber",
+        "branchName",
+        "accountHolderName",
       ].forEach((f) => (allTouched[f] = true));
     }
     setTouched(allTouched);
@@ -482,11 +513,11 @@ const UniversalDrawer = ({
 
       {/* Drawer */}
       <div
-        className={`fixed right-0 top-0 h-full w-full max-w-xl bg-gray-50 shadow-2xl z-50 transform transition-all duration-500 ease-in-out sm:duration-700 ${isVisible ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed right-0 top-0 h-full w-full max-w-lg bg-gray-50 shadow-2xl z-50 transform transition-all duration-500 ease-in-out sm:duration-700 ${isVisible ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="px-6 pt-5 pb-0">
+          <div className="px-5 pt-4 pb-0">
             <div className="flex justify-between">
               <h2 className="text-[20px] font-bold text-gray-900 mb-4">
                 {title}
@@ -495,7 +526,7 @@ const UniversalDrawer = ({
                 onClick={handleClose}
                 disabled={isSubmitting}
                 style={{ borderRadius: "50%" }}
-                className={`w-6 h-6 flex items-center justify-center hover:bg-gray-100 border border-gray-300 transition-all duration-300 disabled:opacity-50 mb-3 ${isVisible ? "opacity-100" : "opacity-0"}`}
+                className={`w-6 h-6 flex items-center justify-center hover:bg-gray-100 border border-gray-300 transition-all duration-300 disabled:opacity-50 mb-2 ${isVisible ? "opacity-100" : "opacity-0"}`}
               >
                 <X className="w-3 h-3 text-gray-400" />
               </button>
@@ -506,7 +537,7 @@ const UniversalDrawer = ({
                 <button
                   type="button"
                   onClick={() => setActiveTab("employee")}
-                  className={`pb-2.5 text-[14px] font-medium transition-colors relative ${activeTab === "employee" ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}`}
+                  className={`pb-2 text-[13px] font-medium transition-colors relative ${activeTab === "employee" ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}`}
                 >
                   Employee Information
                   {activeTab === "employee" && (
@@ -516,7 +547,7 @@ const UniversalDrawer = ({
                 <button
                   type="button"
                   onClick={() => setActiveTab("payment")}
-                  className={`pb-2.5 text-[14px] font-medium transition-colors relative ${activeTab === "payment" ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}`}
+                  className={`pb-2 text-[13px] font-medium transition-colors relative ${activeTab === "payment" ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}`}
                 >
                   Payment Information
                   {activeTab === "payment" && (
@@ -526,7 +557,7 @@ const UniversalDrawer = ({
                 <button
                   type="button"
                   onClick={() => setActiveTab("bank")}
-                  className={`pb-2.5 text-[14px] font-medium transition-colors relative ${activeTab === "bank" ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}`}
+                  className={`pb-2 text-[13px] font-medium transition-colors relative ${activeTab === "bank" ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}`}
                 >
                   Bank Details
                   {activeTab === "bank" && (
@@ -538,8 +569,8 @@ const UniversalDrawer = ({
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
-            <div className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4">
+            <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
               {isCompany ? (
                 /* COMPANY FORM */
                 <>
@@ -567,7 +598,7 @@ const UniversalDrawer = ({
                           }
                           onBlur={() => handleBlur("name")}
                           placeholder="Enter company name"
-                          className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.name && errors.name ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                          className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.name && errors.name ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                         />
                         {touched.name && errors.name && (
                           <p className="text-red-500 text-xs mt-1">
@@ -588,7 +619,7 @@ const UniversalDrawer = ({
                           }
                           onBlur={() => handleBlur("address")}
                           placeholder="Enter company address"
-                          className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                          className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                         />
                         {touched.address && errors.address && (
                           <p className="text-red-500 text-xs mt-1">
@@ -610,7 +641,7 @@ const UniversalDrawer = ({
                             }
                             onBlur={() => handleBlur("email")}
                             placeholder="company@example.com"
-                            className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                           />
                           {touched.email && errors.email && (
                             <p className="text-red-500 text-xs mt-1">
@@ -633,7 +664,7 @@ const UniversalDrawer = ({
                             }
                             onBlur={() => handleBlur("contactNumber")}
                             placeholder="+94 77 123 0000"
-                            className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                           />
                           {touched.contactNumber && errors.contactNumber && (
                             <p className="text-red-500 text-xs mt-1">
@@ -649,13 +680,13 @@ const UniversalDrawer = ({
                 /* EMPLOYEE FORM */
                 <>
                   <div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {/* ===== Employee Information Tab ===== */}
                       {activeTab === "employee" && (
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           {/* Employee ID */}
                           <div>
-                            <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               Employee ID
                             </label>
                             <div className="relative">
@@ -673,7 +704,7 @@ const UniversalDrawer = ({
                                 }
                                 onBlur={() => handleBlur("employeeId")}
                                 placeholder="Enter employee ID"
-                                className={`text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeId && errors.employeeId ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeId && errors.employeeId ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                               />
                             </div>
                             {touched.employeeId && errors.employeeId && (
@@ -685,7 +716,7 @@ const UniversalDrawer = ({
 
                           {/* Name */}
                           <div>
-                            <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               Name
                             </label>
                             <div className="relative">
@@ -703,7 +734,7 @@ const UniversalDrawer = ({
                                 }
                                 onBlur={() => handleBlur("fullName")}
                                 placeholder="Enter employee name"
-                                className={`text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.fullName && errors.fullName ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.fullName && errors.fullName ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                               />
                             </div>
                             {touched.fullName && errors.fullName && (
@@ -715,7 +746,7 @@ const UniversalDrawer = ({
 
                           {/* NIC */}
                           <div>
-                            <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               NIC
                             </label>
                             <div className="relative">
@@ -732,14 +763,14 @@ const UniversalDrawer = ({
                                   )
                                 }
                                 placeholder="Enter employee NIC Number"
-                                className="text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all border-gray-300 focus:ring-[#367AFF] focus:border-transparent"
+                                className="text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all border-gray-300 focus:ring-[#367AFF] focus:border-transparent"
                               />
                             </div>
                           </div>
 
                           {/* Address */}
                           <div>
-                            <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               Address
                             </label>
                             <div className="relative">
@@ -757,7 +788,7 @@ const UniversalDrawer = ({
                                 }
                                 onBlur={() => handleBlur("address")}
                                 placeholder="Enter address"
-                                className={`text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                               />
                             </div>
                             {touched.address && errors.address && (
@@ -769,7 +800,7 @@ const UniversalDrawer = ({
 
                           {/* EPF Number */}
                           <div>
-                            <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               EPF Number
                             </label>
                             <div className="relative">
@@ -786,7 +817,7 @@ const UniversalDrawer = ({
                                   )
                                 }
                                 placeholder="Enter EPF Number"
-                                className="text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all border-gray-300 focus:ring-[#367AFF] focus:border-transparent"
+                                className="text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all border-gray-300 focus:ring-[#367AFF] focus:border-transparent"
                               />
                             </div>
                           </div>
@@ -794,7 +825,7 @@ const UniversalDrawer = ({
                           {/* Email & Phone */}
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1">
                                 Email (optional)
                               </label>
                               <div className="relative">
@@ -812,7 +843,7 @@ const UniversalDrawer = ({
                                   }
                                   onBlur={() => handleBlur("email")}
                                   placeholder="employee@example.com"
-                                  className={`text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                  className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                                 />
                               </div>
                               {touched.email && errors.email && (
@@ -822,7 +853,7 @@ const UniversalDrawer = ({
                               )}
                             </div>
                             <div>
-                              <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1">
                                 Phone Number
                               </label>
                               <div className="relative">
@@ -840,7 +871,7 @@ const UniversalDrawer = ({
                                   }
                                   onBlur={() => handleBlur("contactNumber")}
                                   placeholder="0771234567"
-                                  className={`text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                  className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                                 />
                               </div>
                               {touched.contactNumber &&
@@ -854,7 +885,7 @@ const UniversalDrawer = ({
 
                           {/* Designation */}
                           <div>
-                            <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               Designation
                             </label>
                             <div className="relative">
@@ -876,7 +907,7 @@ const UniversalDrawer = ({
                                 }}
                                 onBlur={() => handleBlur("designation")}
                                 placeholder="Enter employee designation"
-                                className={`text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.designation && errors.designation ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.designation && errors.designation ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                               />
                             </div>
                             {touched.designation && errors.designation && (
@@ -888,7 +919,7 @@ const UniversalDrawer = ({
 
                           {/* Joined Date */}
                           <div>
-                            <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               Joined Date
                             </label>
                             <div className="relative">
@@ -905,7 +936,7 @@ const UniversalDrawer = ({
                                   )
                                 }
                                 onBlur={() => handleBlur("joinedDate")}
-                                className={`text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.joinedDate && errors.joinedDate ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.joinedDate && errors.joinedDate ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                               />
                             </div>
                             {touched.joinedDate && errors.joinedDate && (
@@ -914,19 +945,68 @@ const UniversalDrawer = ({
                               </p>
                             )}
                           </div>
+
+                          {/* Add Files */}
+                          <div>
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
+                              Add Files
+                            </label>
+                            <label
+                              className="flex items-center gap-2 w-full px-3 py-1.5 border border-gray-300 rounded-lg cursor-pointer hover:border-[#367AFF] transition-colors text-[13px] text-gray-500"
+                            >
+                              <ListFilter className="h-4 w-4 text-gray-400" />
+                              <span>Add Employee Files</span>
+                              <PlusCircle className="h-4 w-4 text-gray-400 ml-auto" />
+                              <input
+                                type="file"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (e.target.files) {
+                                    setEmployeeFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                                  }
+                                }}
+                              />
+                            </label>
+                            {employeeFiles.length > 0 && (
+                              <div className="mt-1.5 space-y-1">
+                                {employeeFiles.map((file, idx) => (
+                                  <div key={idx} className="flex items-center justify-between bg-gray-50 px-3 py-1 rounded-lg text-[12px] text-gray-600">
+                                    <span className="truncate max-w-[80%]">{file.name}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEmployeeFiles(prev => prev.filter((_, i) => i !== idx))}
+                                      className="text-gray-400 hover:text-red-500 transition-colors"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Next Button */}
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab("payment")}
+                            className="w-full text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] mt-2"
+                          >
+                            Next
+                          </button>
                         </div>
                       )}
 
                       {/* ===== Payment Information Tab ===== */}
                       {activeTab === "payment" && (
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           {/* ── Monthly Basic Section ── */}
                           <div>
-                            <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center justify-between mb-2">
                               <span className="text-[14px] font-medium text-gray-700">
                                 {employeeData.salaryType === "MONTHLY"
                                   ? "Monthly Basic"
-                                  : "Monthly Basic"}
+                                  : "Daily Basic"}
                               </span>
                               <select
                                 value={employeeData.salaryType || "DAILY"}
@@ -960,9 +1040,9 @@ const UniversalDrawer = ({
                                 placeholder={
                                   employeeData.salaryType === "MONTHLY"
                                     ? "Enter employee Monthly Basic"
-                                    : "Enter daily rate"
+                                    : "Enter employee Daily Basic"
                                 }
-                                className={`text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.basicSalary && errors.basicSalary ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.basicSalary && errors.basicSalary ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                               />
                             </div>
                             {touched.basicSalary && errors.basicSalary && (
@@ -991,7 +1071,7 @@ const UniversalDrawer = ({
                                   value={epfEtf}
                                   onChange={(e) => setEpfEtf(e.target.value)}
                                   placeholder="Enter EPF/ETF Amount"
-                                  className="text-[14px] w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  className="text-[13px] w-full px-4 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                               </div>
                             )}
@@ -999,7 +1079,7 @@ const UniversalDrawer = ({
 
                           {/* ── OT Rate ── */}
                           <div>
-                            <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               OT Rate (Rs/hr)
                             </label>
                             <input
@@ -1014,7 +1094,7 @@ const UniversalDrawer = ({
                               }
                               onBlur={() => handleBlur("otRate")}
                               placeholder="Enter OT Rate (Rs)"
-                              className={`text-[14px] w-full px-4 py-2.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                              className={`text-[13px] w-full px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                             />
                             {touched.otRate && errors.otRate && (
                               <p className="text-red-500 text-xs mt-1">
@@ -1025,7 +1105,7 @@ const UniversalDrawer = ({
 
                           {/* ── Allowances Section ── */}
                           <div>
-                            <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center gap-3 mb-2">
                               <Toggle
                                 enabled={allowanceEnabled}
                                 onToggle={() =>
@@ -1065,7 +1145,7 @@ const UniversalDrawer = ({
                                         setAllowances(updated);
                                       }}
                                       placeholder="Travelling"
-                                      className="text-[14px] w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all"
+                                      className="text-[13px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all"
                                     />
                                     <input
                                       type="number"
@@ -1077,7 +1157,7 @@ const UniversalDrawer = ({
                                         setAllowances(updated);
                                       }}
                                       placeholder="15,000.00"
-                                      className="text-[14px] w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      className="text-[13px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
                                     <button
                                       type="button"
@@ -1110,13 +1190,13 @@ const UniversalDrawer = ({
                                   }
                                   className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center cursor-pointer group"
                                 >
-                                  <div className="flex items-center gap-2 px-3 py-2.5 border border-dashed border-gray-200 rounded-xl group-hover:border-blue-300 transition-colors">
+                                  <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-gray-200 rounded-xl group-hover:border-blue-300 transition-colors">
                                     <ListFilter className="w-4 h-4 text-gray-300 group-hover:text-blue-400 transition-colors" />
                                     <span className="text-sm text-gray-400 group-hover:text-blue-500 transition-colors">
                                       Add Extra Allowances
                                     </span>
                                   </div>
-                                  <div className="px-3 py-2.5 border border-dashed border-gray-200 rounded-xl group-hover:border-blue-300 transition-colors">
+                                  <div className="px-3 py-1.5 border border-dashed border-gray-200 rounded-xl group-hover:border-blue-300 transition-colors">
                                     <span className="text-sm text-gray-400">
                                       Enter Amount
                                     </span>
@@ -1131,7 +1211,7 @@ const UniversalDrawer = ({
 
                           {/* ── Deductions Section ── */}
                           <div>
-                            <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center gap-3 mb-2">
                               <Toggle
                                 enabled={deductionEnabled}
                                 onToggle={() =>
@@ -1171,7 +1251,7 @@ const UniversalDrawer = ({
                                         setDeductions(updated);
                                       }}
                                       placeholder="Loan"
-                                      className="text-[14px] w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all"
+                                      className="text-[13px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all"
                                     />
                                     <input
                                       type="number"
@@ -1183,7 +1263,7 @@ const UniversalDrawer = ({
                                         setDeductions(updated);
                                       }}
                                       placeholder="Amount"
-                                      className="text-[14px] w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      className="text-[13px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
                                     <button
                                       type="button"
@@ -1216,13 +1296,13 @@ const UniversalDrawer = ({
                                   }
                                   className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center cursor-pointer group"
                                 >
-                                  <div className="flex items-center gap-2 px-3 py-2.5 border border-dashed border-red-200 rounded-xl group-hover:border-red-400 transition-colors">
+                                  <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-red-200 rounded-xl group-hover:border-red-400 transition-colors">
                                     <ListFilter className="w-4 h-4 text-red-300 group-hover:text-red-500 transition-colors" />
                                     <span className="text-sm text-gray-400 group-hover:text-red-500 transition-colors">
                                       Add Deduction
                                     </span>
                                   </div>
-                                  <div className="px-3 py-2.5 border border-dashed border-red-200 rounded-xl group-hover:border-red-400 transition-colors">
+                                  <div className="px-3 py-1.5 border border-dashed border-red-200 rounded-xl group-hover:border-red-400 transition-colors">
                                     <span className="text-sm text-gray-400">
                                       Enter Amount
                                     </span>
@@ -1239,10 +1319,10 @@ const UniversalDrawer = ({
 
                       {/* ===== Bank Details Tab ===== */}
                       {activeTab === "bank" && (
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           {/* ── Bank name ── */}
                           <div>
-                            <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               Bank name
                             </label>
                             <div className="relative">
@@ -1255,7 +1335,7 @@ const UniversalDrawer = ({
                                   handleEmployeeChange("bankName", e.target.value)
                                 }
                                 onBlur={() => handleBlur("bankName")}
-                                className={`text-[14px] w-full pl-10 pr-10 py-2.5 border rounded-xl focus:ring-2 outline-none transition-all appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_1rem_center] ${touched.bankName && errors.bankName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                className={`text-[13px] w-full pl-10 pr-10 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_1rem_center] ${touched.bankName && errors.bankName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                               >
                                 <option value="">Select Bank</option>
                                 {SRI_LANKAN_BANKS.map((bank) => (
@@ -1275,7 +1355,7 @@ const UniversalDrawer = ({
 
                           {/* ── Account number ── */}
                           <div>
-                            <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               Account number
                             </label>
                             <div className="relative">
@@ -1289,7 +1369,7 @@ const UniversalDrawer = ({
                                   handleEmployeeChange("accountNumber", e.target.value)
                                 }
                                 placeholder="Enter your account number"
-                                className={`text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountNumber && errors.accountNumber ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountNumber && errors.accountNumber ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                               />
                             </div>
                             {touched.accountNumber && errors.accountNumber && (
@@ -1301,7 +1381,7 @@ const UniversalDrawer = ({
 
                           {/* ── Branch ── */}
                           <div>
-                            <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               Branch
                             </label>
                             <div className="relative">
@@ -1315,7 +1395,7 @@ const UniversalDrawer = ({
                                   handleEmployeeChange("branchName", e.target.value)
                                 }
                                 placeholder="Branch name"
-                                className={`text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.branchName && errors.branchName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.branchName && errors.branchName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                               />
                             </div>
                             {touched.branchName && errors.branchName && (
@@ -1327,7 +1407,7 @@ const UniversalDrawer = ({
 
                           {/* ── Account holder name ── */}
                           <div>
-                            <label className="block text-[14px] font-medium text-gray-700 mb-2">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               Account holder name
                             </label>
                             <div className="relative">
@@ -1341,7 +1421,7 @@ const UniversalDrawer = ({
                                   handleEmployeeChange("accountHolderName", e.target.value)
                                 }
                                 placeholder="Enter your account holder name"
-                                className={`text-[14px] w-full pl-10 pr-4 py-2.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountHolderName && errors.accountHolderName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountHolderName && errors.accountHolderName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                               />
                             </div>
                             {touched.accountHolderName && errors.accountHolderName && (
@@ -1353,6 +1433,29 @@ const UniversalDrawer = ({
                         </div>
                       )}
 
+                      {/* Inline Payment Tab Next Button */}
+                      {activeTab === "payment" && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("bank")}
+                          className="w-full text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] mt-2"
+                        >
+                          Next
+                        </button>
+                      )}
+
+                      {/* Inline Bank Tab Finish Button */}
+                      {activeTab === "bank" && (
+                        <button
+                          type="submit"
+                          onClick={handleSubmit}
+                          disabled={isSubmitting || !isFormValid()}
+                          className="w-full text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
+                        </button>
+                      )}
+
                       {/* Hidden Fields */}
                       <input type="hidden" value={employeeData.department} />
                     </div>
@@ -1362,44 +1465,19 @@ const UniversalDrawer = ({
             </div>
           </form>
 
-          {/* Footer */}
-          <div className="p-6 border-t border-gray-200 flex justify-center">
-            {isCompany ? (
+          {/* Footer - Only for Company mode */}
+          {isCompany && (
+            <div className="p-4 border-t border-gray-200 flex justify-center">
               <button
                 type="submit"
                 onClick={handleSubmit}
                 disabled={isSubmitting || !isFormValid()}
-                className="w-2/3 max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-2/3 max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
               </button>
-            ) : activeTab === "employee" ? (
-              <button
-                type="button"
-                onClick={() => setActiveTab("payment")}
-                className="w-2/3 max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-3 rounded-lg font-semibold transition-colors"
-              >
-                Next
-              </button>
-            ) : activeTab === "payment" ? (
-              <button
-                type="button"
-                onClick={() => setActiveTab("bank")}
-                className="w-2/3 max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-3 rounded-lg font-semibold transition-colors"
-              >
-                Next
-              </button>
-            ) : (
-              <button
-                type="submit"
-                onClick={handleSubmit}
-                disabled={isSubmitting || !isFormValid()}
-                className="w-2/3 max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
-              </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </>

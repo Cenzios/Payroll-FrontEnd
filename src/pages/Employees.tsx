@@ -16,6 +16,8 @@ import {
   Landmark,
   Flag,
   FileText,
+  CreditCard,
+  GitBranch,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import UniversalDrawer from "../components/UniversalDrawer";
@@ -308,10 +310,10 @@ const Employees = () => {
   const activeMenuEmployee = employees.find((e) => e.id === activeMenuId);
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex h-screen bg-white overflow-hidden">
       <Sidebar />
 
-      <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
+      <div className="flex-1 ml-64 p-8 h-screen flex flex-col overflow-hidden">
         {/* Header */}
         <PageHeader 
             title="Employees" 
@@ -354,11 +356,11 @@ const Employees = () => {
             </div>
           </div>
         ) : (
-          <div className="flex gap-6">
+          <div className="flex gap-6 flex-1 overflow-hidden pb-4">
             {/* Left Column - Employee List */}
-            <div className="w-[60%] flex flex-col pr-6">
+            <div className="w-[60%] flex flex-col pr-6 h-full">
               {/* Search */}
-              <div className="pb-6">
+              <div className="pb-6 shrink-0">
                 <div className="relative">
                   <input
                     type="text"
@@ -374,7 +376,7 @@ const Employees = () => {
               </div>
 
               {/* List */}
-              <div className="max-h-[calc(100vh-220px)] overflow-y-auto pr-2">
+              <div className="flex-1 overflow-y-auto pr-2">
                 {isLoading ? (
                   <div className="py-4">
                     <TableSkeleton rows={5} />
@@ -403,13 +405,13 @@ const Employees = () => {
                               {emp.fullName.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <h4 className="text-[16px] font-regular text-[#3D4760] truncate">
+                          <h4 className="text-[14px] font-regular text-[#3D4760] truncate">
                             {emp.fullName}
                           </h4>
                         </div>
 
                         {/* Middle: Email */}
-                        <div className="flex items-center gap-2 text-[16px] text-gray-500 flex-1 min-w-[180px]">
+                        <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[180px]">
                           <Mail className="w-4 h-4 text-gray-400 shrink-0" />
                           <span className="truncate">
                             {emp.email || "No email provided"}
@@ -418,7 +420,7 @@ const Employees = () => {
 
                         {/* Right: Phone + Menu */}
                         <div className="flex items-center gap-6 shrink-0">
-                          <div className="flex items-center gap-2 text-[16px] text-gray-500">
+                          <div className="flex items-center gap-2 text-[14px] text-gray-500">
                             <Phone className="w-4 h-4 text-gray-400" />
                             <span>{emp.contactNumber}</span>
                           </div>
@@ -437,7 +439,7 @@ const Employees = () => {
             </div>
 
             {/* Right Column - Employee Details */}
-            <div className="flex-1 bg-[#FBFBFF] rounded-2xl shadow-sm border border-[#E4E4E7] p-8 h-fit">
+            <div className="flex-1 bg-[#FBFBFF] rounded-2xl shadow-sm border border-[#E4E4E7] p-8 h-full overflow-y-auto">
               {selectedEmployee ? (
                 <div className="max-w-xl">
                   {/* Profile Header */}
@@ -556,24 +558,27 @@ const Employees = () => {
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center">
-                        <div className="w-[140px] text-[12px] font-medium text-gray-400">
-                          Bank name
+                        <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                          <Landmark className="w-[14px] h-[14px]" />
+                          <span>Bank name</span>
                         </div>
                         <div className="text-[13px] font-medium text-[#3D4760]">
                           {selectedEmployee.bankName || "N/A"}
                         </div>
                       </div>
                       <div className="flex items-center">
-                        <div className="w-[140px] text-[12px] font-medium text-gray-400">
-                          Account number
+                        <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                          <CreditCard className="w-[14px] h-[14px]" />
+                          <span>Account number</span>
                         </div>
                         <div className="text-[13px] font-medium text-[#3D4760]">
                           {selectedEmployee.accountNumber || "N/A"}
                         </div>
                       </div>
                       <div className="flex items-center">
-                        <div className="w-[140px] text-[12px] font-medium text-gray-400">
-                          Account name
+                        <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
+                          <User className="w-[14px] h-[14px]" />
+                          <span>Account name</span>
                         </div>
                         <div className="text-[13px] font-medium text-[#3D4760]">
                           {selectedEmployee.accountHolderName || "N/A"}
