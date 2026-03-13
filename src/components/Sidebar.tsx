@@ -48,7 +48,7 @@ const Sidebar = () => {
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[16px] font-semibold ${isActive
+                            `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${isActive
                                 ? 'bg-[#F7F8FB] text-blue-600 font-medium'
                                 : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
                             }`
@@ -63,7 +63,7 @@ const Sidebar = () => {
                 <div>
                     <button
                         onClick={toggleReports}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 text-[16px] font-semibold ${location.pathname.startsWith('/reports')
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${location.pathname.startsWith('/reports')
                             ? 'bg-blue-50 text-blue-600 font-medium'
                             : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
                             }`}
@@ -80,7 +80,7 @@ const Sidebar = () => {
                             <NavLink
                                 to="/reports"
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-[16px] transition-all duration-200 ${isActive
+                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
                                         ? 'text-blue-600 font-medium'
                                         : 'text-[#67696C] hover:text-gray-900'
                                     }`
@@ -101,7 +101,7 @@ const Sidebar = () => {
                 <NavLink
                     to="/settings"
                     className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[16px] ${isActive
+                        `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] ${isActive
                             ? 'bg-blue-50 text-blue-600 font-medium'
                             : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
                         }`
