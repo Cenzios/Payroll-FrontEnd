@@ -71,12 +71,12 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
     return (
         <div className="bg-white rounded-2xl shadow-sm p-8 h-full border border-gray-100">
             <div className="flex items-center justify-between mb-8">
-                <h2 className="text-[20px] font-bold text-gray-900">Salary Paid Summary</h2>
+                <h2 className="text-[16px] font-semibold text-[#0F172A]">Salary Paid Summary</h2>
 
                 <div className="relative">
                     <button
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-[13px] font-regular text-gray-600 hover:bg-gray-50 transition-colors"
                     >
                         {timeRange} View
                         <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />

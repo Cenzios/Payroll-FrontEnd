@@ -10,7 +10,7 @@ interface PageHeaderProps {
 
 const PageHeader = ({ title, subtitle, showLogout = false, actionElement }: PageHeaderProps) => {
   return (
-    <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 shrink-0 gap-4">
+    <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 shrink-0 gap-4">
       <div>
         <h1 className="text-[32px] font-bold text-[#141B3B] leading-tight">
           {title}

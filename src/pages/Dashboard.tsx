@@ -1,10 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout, setAuthFromToken, setSelectedCompanyId } from '../store/slices/authSlice';
 import {
-  LogOut,
   Users,
   DollarSign,
   FileText,
@@ -12,10 +11,9 @@ import {
   BarChart3,
   CreditCard,
   Plus,
+  PieChart,
   ChevronDown,
-  Building2,
-  Bell,
-  PieChart
+  Building2
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
@@ -31,12 +29,7 @@ import {
   useGetDashboardSummaryQuery,
   useGetCompaniesQuery,
   useCreateCompanyMutation,
-  useCreateEmployeeMutation,
-  useGetNotificationsQuery,
-  useMarkNotificationAsReadMutation,
-  useDeleteNotificationMutation,
-  useDeleteAllNotificationsMutation,
-  apiSlice
+  useCreateEmployeeMutation
 } from '../store/apiSlice';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import CompanySwitcher from '../components/CompanySwitcher';
@@ -51,10 +44,10 @@ const Dashboard = () => {
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<'company' | 'employee'>('company');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
-  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
 
   const urlToken = searchParams.get('token');
   const isTokenPending = !!urlToken && urlToken !== token;
@@ -197,11 +190,11 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 font-sans">
+    <div className="flex h-screen overflow-hidden bg-gray-50 font-sans">
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
+      <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
         <PageHeader 
           title={`${getGreeting()}, ${user?.fullName?.split(' ')[0] || 'User'}`}
           subtitle="Here's your dashboard overview"
@@ -242,11 +235,14 @@ const Dashboard = () => {
 
               <button
                 onClick={openAddCompany}
-                className="flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+                className="flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
                 title="Add New Company"
               >
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Add New Company</span>
+                <span className="hidden sm:inline whitespace-nowrap">Add New Company</span>
+                <span className="sm:hidden whitespace-nowrap">Add</span>
+                <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                  <Plus className="w-4 h-4" />
+                </div>
               </button>
             </>
           }
@@ -256,50 +252,52 @@ const Dashboard = () => {
           {isDashboardLoading ? <DashboardSkeleton /> : (
             <>
               {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <StatCard
                   icon={Users}
                   title="Total Employees"
                   value={dashboardData?.totalEmployees?.toString() || '0'}
+                  colorTheme="blue"
                 />
                 <StatCard
                   icon={DollarSign}
-                  title="Last Month Salary Paid"
+                  title="Total Salary Paid"
                   value={`Rs ${lastMonthSalary.toLocaleString()}`}
-                  showLastMonth={true}
+                  colorTheme="green"
                 />
                 <StatCard
                   icon={Plus}
                   title="Company EPF/ETF Amount"
                   value={`Rs ${((dashboardData?.totalCompanyEPF || 0) + (dashboardData?.totalCompanyETF || 0)).toLocaleString()}`}
+                  colorTheme="purple"
                 />
                 <StatCard
                   icon={PieChart}
                   title="Total Employee EPF"
                   value={`Rs ${dashboardData?.totalEmployeeEPF?.toLocaleString() || '0'}`}
+                  colorTheme="orange"
                 />
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start flex-1 overflow-hidden">
                 {/* Left (2/3) – Salary Paid Summary Chart */}
-                <div className="">
+                <div className="lg:col-span-2 h-full flex flex-col">
                   <SalaryPaidSummary companyId={selectedCompanyId || ''} />
                 </div>
 
                 {/* Right (1/3) – Quick Actions */}
-                <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-                  <h2 className="text-[20px] font-bold text-gray-900 mb-6">
+                <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col h-full">
+                  <h2 className="text-[16px] font-bold text-gray-900 mb-4">
                     Quick Actions
                   </h2>
 
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-4">
                     <QuickAction
                       icon={FileText}
                       title="Generate Payslips"
                       description="Create monthly payslips"
-                      bgColor="bg-[#4182F9]"
+                      bgColor="text-[#4182F9]"
                       lightBgColor="bg-[#EBF2FF]"
-                      actionText="Generate Pay-slip"
                       onClick={() => navigate('/salary')}
                     />
 
@@ -307,9 +305,8 @@ const Dashboard = () => {
                       icon={UserPlus}
                       title="Add Employee"
                       description="Register new staff member"
-                      bgColor="bg-[#00C292]"
-                      lightBgColor="bg-[#E6FAF5]"
-                      actionText="Add Employee"
+                      bgColor="text-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
                       onClick={openAddEmployee}
                     />
 
@@ -317,9 +314,8 @@ const Dashboard = () => {
                       icon={BarChart3}
                       title="View Reports"
                       description="Access detailed analytics"
-                      bgColor="bg-[#FFB13A]"
-                      lightBgColor="bg-[#FFF5E9]"
-                      actionText="View Reports"
+                      bgColor="text-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
                       onClick={() => navigate('/reports')}
                     />
 
@@ -327,9 +323,8 @@ const Dashboard = () => {
                       icon={CreditCard}
                       title="Change Plan"
                       description="Change subscription plan"
-                      bgColor="bg-[#9B8AFB]"
-                      lightBgColor="bg-[#F1EFFF]"
-                      actionText="Change Plan"
+                      bgColor="text-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
                       onClick={() => setIsAddonModalOpen(true)}
                     />
                   </div>
