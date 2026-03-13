@@ -1006,7 +1006,7 @@ const UniversalDrawer = ({
                               <span className="text-[14px] font-medium text-gray-700">
                                 {employeeData.salaryType === "MONTHLY"
                                   ? "Monthly Basic"
-                                  : "Daily Rate"}
+                                  : "Daily Basic"}
                               </span>
                               <select
                                 value={employeeData.salaryType || "DAILY"}
@@ -1040,7 +1040,7 @@ const UniversalDrawer = ({
                                 placeholder={
                                   employeeData.salaryType === "MONTHLY"
                                     ? "Enter employee Monthly Basic"
-                                    : "Enter daily rate"
+                                    : "Enter employee Daily Basic"
                                 }
                                 className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.basicSalary && errors.basicSalary ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                               />
