@@ -34,14 +34,15 @@ const Loans = () => {
   );
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex h-screen overflow-hidden bg-white">
       <Sidebar />
-      <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
+      <div className="flex-1 ml-64 p-8 h-screen overflow-hidden flex flex-col">
         {selectedLoan ? (
           <LoanHistoryView loan={selectedLoan} onBack={() => setSelectedLoan(null)} />
         ) : (
           <>
             {/* Header */}
+            <div className="shrink-0">
             <PageHeader
               title="Loans"
               subtitle="Handle Employees Loans"
@@ -57,9 +58,10 @@ const Loans = () => {
                 </button>
               }
             />
+            </div>
 
             {/* Main Content - Table */}
-            <div className="flex-1 mt-2">
+            <div className="flex-1 mt-2 overflow-y-auto">
               <div className="overflow-x-auto">
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center py-20">

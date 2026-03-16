@@ -315,6 +315,7 @@ const Employees = () => {
 
       <div className="flex-1 ml-64 p-8 h-screen flex flex-col overflow-hidden">
         {/* Header */}
+        <div className="shrink-0">
         <PageHeader 
             title="Employees" 
             subtitle="Here's your Employees overview" 
@@ -340,6 +341,7 @@ const Employees = () => {
               </button>
             }
           />
+        </div>
 
           {/* Table Container */}  {/* Main Content */}
         {!selectedCompanyId ? (

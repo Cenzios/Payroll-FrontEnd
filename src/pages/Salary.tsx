@@ -832,11 +832,12 @@ const Salary = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50">
       <Sidebar />
 
-      <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
-        {/* Header */}
+      <div className="flex-1 ml-64 p-8 h-screen overflow-hidden flex flex-col">
+        {/* Header + Filters - Sticky */}
+        <div className="shrink-0">
         <PageHeader
           title="Salary"
           subtitle="View and calculate employee salaries"
@@ -900,8 +901,9 @@ const Salary = () => {
             </div>
           </div>
         </div>
+        </div>
 
-        <div className="flex gap-6">
+        <div className="flex gap-6 flex-1 overflow-y-auto">
           {/* LEFT SIDE: Employee Salary Cards */}
           <div className="w-8/12 overflow-y-auto pr-2 space-y-4">
             {isLoading ? (
