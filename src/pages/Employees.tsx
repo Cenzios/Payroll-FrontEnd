@@ -313,7 +313,7 @@ const Employees = () => {
     <div className="flex h-screen bg-white overflow-hidden">
       <Sidebar />
 
-      <div className="flex-1 ml-64 p-8 h-screen flex flex-col overflow-hidden">
+      <div className="flex-1 ml-64 p-6 h-screen flex flex-col overflow-hidden">
         {/* Header */}
         <div className="shrink-0">
         <PageHeader 
@@ -331,7 +331,7 @@ const Employees = () => {
                   }
                   openAddDrawer();
                 }}
-                className="flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
                 title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
               >
                 Add Employee
@@ -407,7 +407,7 @@ const Employees = () => {
                               {emp.fullName.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <h4 className="text-[14px] font-regular text-[#3D4760] truncate">
+                          <h4 className="text-[14px] font-normal text-gray-800 truncate">
                             {emp.fullName}
                           </h4>
                         </div>
@@ -452,7 +452,7 @@ const Employees = () => {
                       </span>
                     </div>
                     <div className="pt-2">
-                      <h2 className="text-[16px] font-semibold text-[#3D4760] leading-tight mb-1">
+                      <h2 className="text-[16px] font-semibold text-gray-800 leading-tight mb-1">
                         {selectedEmployee.fullName}
                       </h2>
                       <p className="text-[14px] text-gray-500 font-medium">
@@ -468,7 +468,7 @@ const Employees = () => {
                         <User className="w-[16px] h-[16px]" />
                         <span>Name</span>
                       </div>
-                      <div className="text-[13px] font-medium text-[#3D4760]">
+                      <div className="text-[13px] font-medium text-gray-800">
                         {selectedEmployee.fullName}
                       </div>
                     </div>
@@ -478,7 +478,7 @@ const Employees = () => {
                         <Mail className="w-[16px] h-[16px]" />
                         <span>Email</span>
                       </div>
-                      <div className="text-[13px] font-medium text-[#3D4760]">
+                      <div className="text-[13px] font-medium text-gray-800">
                         {selectedEmployee.email || "N/A"}
                       </div>
                     </div>
@@ -488,7 +488,7 @@ const Employees = () => {
                         <MapPin className="w-[16px] h-[16px]" />
                         <span>Address</span>
                       </div>
-                      <div className="text-[13px] font-medium text-[#3D4760] max-w-[280px] break-words">
+                      <div className="text-[13px] font-medium text-gray-800 max-w-[280px] break-words">
                         {selectedEmployee.address}
                       </div>
                     </div>
@@ -522,7 +522,7 @@ const Employees = () => {
                         <Phone className="w-[16px] h-[16px]" />
                         <span>Phone Number</span>
                       </div>
-                      <div className="text-[13px] font-medium text-[#3D4760]">
+                      <div className="text-[13px] font-medium text-gray-800">
                         {selectedEmployee.contactNumber}
                       </div>
                     </div>
@@ -532,7 +532,7 @@ const Employees = () => {
                         <Calendar className="w-[16px] h-[16px]" />
                         <span>Joining Date</span>
                       </div>
-                      <div className="text-[13px] font-medium text-[#3D4760]">
+                      <div className="text-[13px] font-medium text-gray-800">
                         {selectedEmployee.joinedDate
                           ? new Date(
                               selectedEmployee.joinedDate,
@@ -546,7 +546,7 @@ const Employees = () => {
                         <DollarSign className="w-[16px] h-[16px]" />
                         <span>Daily Rate</span>
                       </div>
-                      <div className="text-[13px] font-medium text-[#3D4760]">
+                      <div className="text-[13px] font-medium text-gray-800">
                         {(selectedEmployee.basicSalary ?? 0).toFixed(2)}
                       </div>
                     </div>
@@ -564,7 +564,7 @@ const Employees = () => {
                           <Landmark className="w-[14px] h-[14px]" />
                           <span>Bank name</span>
                         </div>
-                        <div className="text-[13px] font-medium text-[#3D4760]">
+                        <div className="text-[13px] font-medium text-gray-800">
                           {selectedEmployee.bankName || "N/A"}
                         </div>
                       </div>
@@ -573,7 +573,7 @@ const Employees = () => {
                           <CreditCard className="w-[14px] h-[14px]" />
                           <span>Account number</span>
                         </div>
-                        <div className="text-[13px] font-medium text-[#3D4760]">
+                        <div className="text-[13px] font-medium text-gray-800">
                           {selectedEmployee.accountNumber || "N/A"}
                         </div>
                       </div>
@@ -582,7 +582,7 @@ const Employees = () => {
                           <User className="w-[14px] h-[14px]" />
                           <span>Account name</span>
                         </div>
-                        <div className="text-[13px] font-medium text-[#3D4760]">
+                        <div className="text-[13px] font-medium text-gray-800">
                           {selectedEmployee.accountHolderName || "N/A"}
                         </div>
                       </div>

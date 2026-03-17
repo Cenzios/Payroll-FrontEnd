@@ -327,7 +327,7 @@ const Reports = () => {
     return (
         <div className="flex h-screen overflow-hidden bg-gray-50">
             <Sidebar />
-            <div className="flex-1 ml-64 p-8 h-screen overflow-hidden flex flex-col">
+            <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
                 <div className="shrink-0">
                 <PageHeader 
                     title="Payroll Summary Report" 

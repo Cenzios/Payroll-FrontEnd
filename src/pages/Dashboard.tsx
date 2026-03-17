@@ -235,7 +235,7 @@ const Dashboard = () => {
 
               <button
                 onClick={openAddCompany}
-                className="flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
                 title="Add New Company"
               >
                 <span className="hidden sm:inline whitespace-nowrap">Add New Company</span>
@@ -287,7 +287,7 @@ const Dashboard = () => {
 
                 {/* Right (1/3) – Quick Actions */}
                 <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col h-full">
-                  <h2 className="text-[16px] font-bold text-gray-900 mb-4">
+                  <h2 className="text-[15px] font-semibold text-gray-900 mb-4">
                     Quick Actions
                   </h2>
 

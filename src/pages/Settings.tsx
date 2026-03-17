@@ -9,8 +9,8 @@ const Settings = () => {
             <div className="flex-1 ml-64 flex flex-col">
                 <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
                     <div className="px-8 py-4">
-                        <h1 className="text-[28px] font-medium text-gray-900 leading-tight">Settings</h1>
-                        <p className="text-[16px] font-normal text-gray-500 mt-1 leading-[1.7]">Manage your account and subscription</p>
+                        <h1 className="text-[28px] font-semibold text-gray-900 leading-tight">Settings</h1>
+                        <p className="text-[15px] font-normal text-gray-500 mt-1 leading-[1.7]">Manage your account and subscription</p>
                     </div>
                 </header>
                 <main className="p-8">

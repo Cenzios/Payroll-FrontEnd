@@ -835,7 +835,7 @@ const Salary = () => {
     <div className="flex h-screen overflow-hidden bg-gray-50">
       <Sidebar />
 
-      <div className="flex-1 ml-64 p-8 h-screen overflow-hidden flex flex-col">
+      <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
         {/* Header + Filters - Sticky */}
         <div className="shrink-0">
         <PageHeader
@@ -905,7 +905,7 @@ const Salary = () => {
 
         <div className="flex gap-6 flex-1 overflow-y-auto">
           {/* LEFT SIDE: Employee Salary Cards */}
-          <div className="w-8/12 overflow-y-auto pr-2 space-y-4">
+          <div className="w-8/12 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {isLoading ? (
               <SalaryListSkeleton />
             ) : employees.length === 0 ? (
@@ -928,28 +928,28 @@ const Salary = () => {
                   <div
                     key={emp.id}
                     onClick={() => handleSelectEmployee(emp)}
-                    className={`bg-white rounded-xl border p-4 cursor-pointer transition-all duration-200 ${
+                    className={`bg-white rounded-xl border px-3 py-2 cursor-pointer transition-all duration-200 ${
                       selectedEmployee?.id === emp.id
                         ? "border-blue-500 shadow-md ring-1 ring-blue-500"
                         : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
                     }`}
                   >
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
                           {emp.fullName.charAt(0)}
                         </div>
                         <div>
-                          <h3 className="text-[14px] font-semibold text-gray-900">
+                          <h3 className="text-[13px] font-semibold text-gray-900 leading-tight">
                             {emp.fullName}
                           </h3>
-                          <p className="text-[12px] font_regular text-gray-500">
+                          <p className="text-[11px] font-normal text-gray-500 leading-tight mt-0.5">
                             {emp.designation}
                           </p>
                         </div>
                       </div>
-                      <div className="px-2 py-1 bg-blue-50 text-blue-600 text-[11px] font-semibold rounded">
+                      <div className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-semibold rounded">
                         {emp.employeeId}
                       </div>
                     </div>

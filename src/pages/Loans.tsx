@@ -36,7 +36,7 @@ const Loans = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       <Sidebar />
-      <div className="flex-1 ml-64 p-8 h-screen overflow-hidden flex flex-col">
+      <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
         {selectedLoan ? (
           <LoanHistoryView loan={selectedLoan} onBack={() => setSelectedLoan(null)} />
         ) : (
@@ -49,7 +49,7 @@ const Loans = () => {
               actionElement={
                 <button
                   onClick={() => setIsCreateDrawerOpen(true)}
-                  className="flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
                 >
                   Create Loan
                   <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center ml-1">
