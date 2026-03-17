@@ -487,7 +487,11 @@ const Salary = () => {
   };
 
   const handleSelectEmployee = (emp: Employee) => {
-    setSelectedEmployee(emp);
+    if (selectedEmployee?.id === emp.id) {
+      setSelectedEmployee(null);
+    } else {
+      setSelectedEmployee(emp);
+    }
   };
 
   // Export Functions
@@ -1065,7 +1069,7 @@ const Salary = () => {
                                 }}
                                 className={`
             relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0
-            ${isLoanEnabled ? "bg-red-500" : "bg-gray-300"}
+            ${isLoanEnabled ? "bg-blue-500" : "bg-gray-300"}
         `}
                               >
                                 <span
@@ -1081,7 +1085,7 @@ const Salary = () => {
                               <div
                                 className={`flex-1 px-4 py-2 border rounded-lg text-[12px] font-semibold transition-opacity ${
                                   isLoanEnabled
-                                    ? "bg-red-50 border-red-200 text-red-600"
+                                    ? "bg-blue-50 border-blue-200 text-blue-600"
                                     : "bg-gray-50 border-gray-200 text-gray-400 opacity-40 line-through"
                                 }`}
                               >
