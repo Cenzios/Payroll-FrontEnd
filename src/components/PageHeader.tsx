@@ -12,10 +12,10 @@ const PageHeader = ({ title, subtitle, showLogout = false, actionElement }: Page
   return (
     <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 shrink-0 gap-4">
       <div>
-        <h1 className="text-[32px] font-bold text-[#141B3B] leading-tight">
+        <h1 className="text-[28px] font-semibold text-gray-900 leading-tight">
           {title}
         </h1>
-        <p className="text-[16px] font-medium text-gray-500 mt-1">
+        <p className="text-[15px] font-normal text-gray-500 mt-1">
           {subtitle}
         </p>
       </div>

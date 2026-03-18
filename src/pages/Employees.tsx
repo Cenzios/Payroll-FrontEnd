@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import {
   Plus,
+  PlusCircle,
+  MinusCircle,
+  Home,
+  ListOrdered,
+  Users,
   Search,
   MoreVertical,
   Phone,
@@ -17,7 +22,6 @@ import {
   Flag,
   FileText,
   CreditCard,
-  GitBranch,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import UniversalDrawer from "../components/UniversalDrawer";
@@ -31,16 +35,16 @@ import {
   useUpdateEmployeeMutation,
   useDeleteEmployeeMutation,
 } from "../store/apiSlice";
-import { Employee, Department } from '../types/employee.types';
+import { Employee } from '../types/employee.types';
 import PageHeader from '../components/PageHeader';
 import Toast from "../components/Toast";
 import TableSkeleton from "../components/skeletons/TableSkeleton";
 import PortalDropdown from "../components/PortalDropdown";
-import HeaderActions from "../components/HeaderActions";
 
 const Employees = () => {
   const { selectedCompanyId } = useAppSelector((state) => state.auth);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("Personal Information");
 
   // RTK Query
   const { data, isLoading, isError, error } = useGetEmployeesQuery(
@@ -313,8 +317,9 @@ const Employees = () => {
     <div className="flex h-screen bg-white overflow-hidden">
       <Sidebar />
 
-      <div className="flex-1 ml-64 p-8 h-screen flex flex-col overflow-hidden">
+      <div className="flex-1 ml-64 p-6 h-screen flex flex-col overflow-hidden">
         {/* Header */}
+        <div className="shrink-0">
         <PageHeader 
             title="Employees" 
             subtitle="Here's your Employees overview" 
@@ -330,7 +335,7 @@ const Employees = () => {
                   }
                   openAddDrawer();
                 }}
-                className="flex items-center gap-2 bg-[#3B82F6] hover:bg-blue-600 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
                 title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
               >
                 Add Employee
@@ -340,6 +345,7 @@ const Employees = () => {
               </button>
             }
           />
+        </div>
 
           {/* Table Container */}  {/* Main Content */}
         {!selectedCompanyId ? (
@@ -405,7 +411,7 @@ const Employees = () => {
                               {emp.fullName.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <h4 className="text-[14px] font-regular text-[#3D4760] truncate">
+                          <h4 className="text-[14px] font-normal text-gray-800 truncate">
                             {emp.fullName}
                           </h4>
                         </div>
@@ -439,173 +445,280 @@ const Employees = () => {
             </div>
 
             {/* Right Column - Employee Details */}
-            <div className="flex-1 bg-[#FBFBFF] rounded-2xl shadow-sm border border-[#E4E4E7] p-8 h-full overflow-y-auto">
+            <div className="flex-1 bg-[#FBFBFF] rounded-2xl shadow-sm border border-[#E4E4E7] p-6 h-full overflow-hidden">
               {selectedEmployee ? (
-                <div className="max-w-xl">
+                <div className="max-w-2xl h-full flex flex-col">
                   {/* Profile Header */}
-                  <div className="flex items-start gap-4 border-b border-gray-50 pb-6">
-                    <div className="w-[64px] h-[64px] rounded-2xl bg-[#E5E9FF] flex items-center justify-center shrink-0">
-                      <span className="font-semibold text-3xl text-[#4E61AD]">
-                        {selectedEmployee.fullName.charAt(0).toUpperCase()}
-                      </span>
+                  <div className="flex items-center gap-4 mb-4 shrink-0">
+                    <div className="w-[60px] h-[60px] rounded-[16px] bg-[#F1F6FA] flex flex-col overflow-hidden relative items-center justify-end shrink-0">
+                      {/* Placeholder for real image, using the avatar shown in mockup if we had one. 
+                          For now, we'll place the first letter in a similar colored box if no image, 
+                          but user image in mockup is a Memoji. Let's use a stylish placeholder. */}
+                      {selectedEmployee?.avatar ? (
+                        <img src={selectedEmployee.avatar} alt="avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-[#F1F6FA] text-2xl font-semibold text-[#324564]">
+                           {selectedEmployee.fullName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                     </div>
-                    <div className="pt-2">
-                      <h2 className="text-[16px] font-semibold text-[#3D4760] leading-tight mb-1">
+                    <div className="flex flex-col justify-center">
+                      <h2 className="text-[15px] font-medium text-gray-800 leading-tight mb-0.5">
                         {selectedEmployee.fullName}
                       </h2>
-                      <p className="text-[14px] text-gray-500 font-medium">
+                      <p className="text-[12px] text-gray-500 font-medium tracking-wide">
                         {selectedEmployee.employeeId}
                       </p>
                     </div>
                   </div>
 
-                  {/* Details List */}
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
-                        <User className="w-[16px] h-[16px]" />
-                        <span>Name</span>
-                      </div>
-                      <div className="text-[13px] font-medium text-[#3D4760]">
-                        {selectedEmployee.fullName}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
-                        <Mail className="w-[16px] h-[16px]" />
-                        <span>Email</span>
-                      </div>
-                      <div className="text-[13px] font-medium text-[#3D4760]">
-                        {selectedEmployee.email || "N/A"}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
-                        <MapPin className="w-[16px] h-[16px]" />
-                        <span>Address</span>
-                      </div>
-                      <div className="text-[13px] font-medium text-[#3D4760] max-w-[280px] break-words">
-                        {selectedEmployee.address}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
-                        <Briefcase className="w-[16px] h-[16px]" />
-                        <span>Designation</span>
-                      </div>
-                      <div className="text-[13px] font-medium text-blue-500 bg-white border border-blue-200 px-3 py-1 rounded-md">
-                        {selectedEmployee.designation || "None"}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
-                        <Flag className="w-[16px] h-[16px]" />
-                        <span>Status</span>
-                      </div>
-                      <div
-                        className={`text-[13px] font-medium px-4 py-1 rounded-md ${selectedEmployee.status === "INACTIVE" ? "bg-red-100 text-red-600" : "bg-[#D1EED8] text-[#429559]"}`}
+                  {/* Tabs */}
+                  <div className="flex items-center gap-6 border-b-[2px] border-gray-100 mb-3 mt-1 shrink-0">
+                    {["Personal Information", "Earnings & Deductions", "Bank Details"].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`pb-2 text-[12px] font-semibold transition-colors relative -mb-[2px] ${
+                          activeTab === tab
+                            ? "text-[#4A7DFF]"
+                            : "text-[#8392A5] hover:text-gray-600"
+                        }`}
                       >
-                        {selectedEmployee.status === "INACTIVE"
-                          ? "Inactive"
-                          : "Active"}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
-                        <Phone className="w-[16px] h-[16px]" />
-                        <span>Phone Number</span>
-                      </div>
-                      <div className="text-[13px] font-medium text-[#3D4760]">
-                        {selectedEmployee.contactNumber}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
-                        <Calendar className="w-[16px] h-[16px]" />
-                        <span>Joining Date</span>
-                      </div>
-                      <div className="text-[13px] font-medium text-[#3D4760]">
-                        {selectedEmployee.joinedDate
-                          ? new Date(
-                              selectedEmployee.joinedDate,
-                            ).toLocaleDateString()
-                          : "N/A"}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center">
-                      <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
-                        <DollarSign className="w-[16px] h-[16px]" />
-                        <span>Daily Rate</span>
-                      </div>
-                      <div className="text-[13px] font-medium text-[#3D4760]">
-                        {(selectedEmployee.basicSalary ?? 0).toFixed(2)}
-                      </div>
-                    </div>
+                        {tab}
+                        {activeTab === tab && (
+                          <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#4A7DFF]" />
+                        )}
+                      </button>
+                    ))}
                   </div>
 
-                  {/* Bank Details */}
-                  <div className="mt-2 border border-gray-100 rounded-xl p-4">
-                    <div className="flex items-center gap-2 text-gray-400 font-medium text-[14px] mb-5">
-                      <Landmark className="w-[16px] h-[16px]" />
-                      <span>Bank Details</span>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center">
-                        <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
-                          <Landmark className="w-[14px] h-[14px]" />
-                          <span>Bank name</span>
-                        </div>
-                        <div className="text-[13px] font-medium text-[#3D4760]">
-                          {selectedEmployee.bankName || "N/A"}
-                        </div>
-                      </div>
-                      <div className="flex items-center">
-                        <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
-                          <CreditCard className="w-[14px] h-[14px]" />
-                          <span>Account number</span>
-                        </div>
-                        <div className="text-[13px] font-medium text-[#3D4760]">
-                          {selectedEmployee.accountNumber || "N/A"}
-                        </div>
-                      </div>
-                      <div className="flex items-center">
-                        <div className="w-[160px] flex items-center gap-2 text-[12px] font-medium text-gray-400">
-                          <User className="w-[14px] h-[14px]" />
-                          <span>Account name</span>
-                        </div>
-                        <div className="text-[13px] font-medium text-[#3D4760]">
-                          {selectedEmployee.accountHolderName || "N/A"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Files Placeholder */}
-                  <div className="mt-6 border border-gray-100 rounded-xl p-5">
-                    <div className="flex items-center gap-2 text-gray-400 font-medium text-[14px] mb-5">
-                      <FileText className="w-[16px] h-[16px]" />
-                      <span>Files</span>
-                    </div>
-                    <div className="flex gap-4">
-                      {[1, 2, 3].map((i) => (
-                        <div
-                          key={i}
-                          className="w-[90px] h-[90px] border border-gray-200 rounded-2xl flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
-                        >
-                          {/* In a real app we'd map employee.files, for mockup we show placeholders */}
-                          <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-400">
-                            <FileText className="w-5 h-5" />
+                  {/* Tab Content */}
+                  <div className="flex-1 overflow-y-auto pr-1 pb-1">
+                    {activeTab === "Personal Information" && (
+                      <div className="space-y-2">
+                        {/* Name */}
+                        <div className="flex items-center">
+                          <div className="w-[140px] flex items-center gap-2 text-[11px] font-medium text-[#AAAEBF]">
+                            <User className="w-[14px] h-[14px]" />
+                            <span>Name</span>
+                          </div>
+                          <div className="text-[12px] font-medium text-gray-700">
+                            {selectedEmployee.fullName}
                           </div>
                         </div>
-                      ))}
-                    </div>
+
+                        {/* Email */}
+                        <div className="flex items-center">
+                          <div className="w-[140px] flex items-center gap-2 text-[11px] font-medium text-[#AAAEBF]">
+                            <Mail className="w-[14px] h-[14px]" />
+                            <span>Email</span>
+                          </div>
+                          <div className="text-[12px] font-medium text-gray-700">
+                            {selectedEmployee.email || "N/A"}
+                          </div>
+                        </div>
+
+                        {/* Address */}
+                        <div className="flex items-center">
+                          <div className="w-[140px] flex items-center gap-2 text-[11px] font-medium text-[#AAAEBF]">
+                            <MapPin className="w-[14px] h-[14px]" />
+                            <span>Address</span>
+                          </div>
+                          <div className="text-[12px] font-medium text-gray-700 max-w-[280px] break-words">
+                            {selectedEmployee.address || "N/A"}
+                          </div>
+                        </div>
+
+                        {/* Designation */}
+                        <div className="flex items-center pt-0.5">
+                          <div className="w-[140px] flex items-center gap-2 text-[11px] font-medium text-[#AAAEBF]">
+                            <Briefcase className="w-[14px] h-[14px]" />
+                            <span>Designation</span>
+                          </div>
+                          <div className="text-[11px] font-medium text-[#4A7DFF] bg-transparent border border-[#9CBDFF] px-[10px] py-[2px] rounded-[4px]">
+                            {selectedEmployee.designation || "None"}
+                          </div>
+                        </div>
+
+                        {/* Status */}
+                        <div className="flex items-center pt-0.5">
+                          <div className="w-[140px] flex items-center gap-2 text-[11px] font-medium text-[#AAAEBF]">
+                            <Flag className="w-[14px] h-[14px]" />
+                            <span>Status</span>
+                          </div>
+                          <div
+                            className={`text-[11px] font-semibold px-[12px] py-[2px] rounded-[4px] ${selectedEmployee.status === "INACTIVE" ? "bg-red-100/50 text-red-600" : "bg-[#D9EEDA] text-[#55AC73]"}`}
+                          >
+                            {selectedEmployee.status === "INACTIVE"
+                              ? "Inactive"
+                              : "Active"}
+                          </div>
+                        </div>
+
+                        {/* Phone Number */}
+                        <div className="flex items-center pt-0.5">
+                          <div className="w-[140px] flex items-center gap-2 text-[11px] font-medium text-[#AAAEBF]">
+                            <Phone className="w-[14px] h-[14px]" />
+                            <span>Phone Number</span>
+                          </div>
+                          <div className="text-[12px] font-medium text-gray-700">
+                            {selectedEmployee.contactNumber || "N/A"}
+                          </div>
+                        </div>
+
+                        {/* Address 2 (As per mockup, duplicate) */}
+                        <div className="flex items-center pt-0.5">
+                          <div className="w-[140px] flex items-center gap-2 text-[11px] font-medium text-[#AAAEBF]">
+                            <MapPin className="w-[14px] h-[14px]" />
+                            <span>Address</span>
+                          </div>
+                          <div className="text-[12px] font-medium text-gray-700 max-w-[280px] break-words">
+                            {selectedEmployee.address || "N/A"}
+                          </div>
+                        </div>
+
+                        {/* Joining Date */}
+                        <div className="flex items-center pt-0.5">
+                          <div className="w-[140px] flex items-center gap-2 text-[11px] font-medium text-[#AAAEBF]">
+                            <Calendar className="w-[14px] h-[14px]" />
+                            <span>Joining Date</span>
+                          </div>
+                          <div className="text-[12px] font-medium text-gray-700 uppercase">
+                            {selectedEmployee.joinedDate
+                              ? new Date(
+                                  selectedEmployee.joinedDate,
+                                ).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).replace(',', '')
+                              : "N/A"}
+                          </div>
+                        </div>
+
+                        {/* Daily Rate */}
+                        <div className="flex items-center pt-0.5">
+                          <div className="w-[140px] flex items-center gap-2 text-[11px] font-medium text-[#AAAEBF]">
+                            <DollarSign className="w-[14px] h-[14px]" />
+                            <span>Daily Rate</span>
+                          </div>
+                          <div className="text-[12px] font-medium text-gray-700">
+                            {(selectedEmployee.basicSalary ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
+                        </div>
+
+                        {/* Files Placeholder */}
+                        <div className="mt-4 pt-2 border-t border-gray-50">
+                          <div className="flex items-center gap-2 text-[#AAAEBF] font-medium text-[11px] mb-3">
+                            <FileText className="w-[14px] h-[14px]" />
+                            <span>Files</span>
+                          </div>
+                          <div className="flex gap-3 flex-wrap">
+                            {[1, 2, 3].map((i) => (
+                              <div
+                                key={i}
+                                className="w-[74px] h-[74px] border-[1.5px] border-[#E8ECEF] rounded-[10px] flex items-center justify-center bg-white hover:bg-gray-50 cursor-pointer transition-colors overflow-hidden"
+                              >
+                                <div className="w-[85%] h-[85%] relative flex items-center justify-center">
+                                  {/* Back dark green card */}
+                                  <div className="absolute w-[80%] h-[55%] bg-[#0B5C60] transform -rotate-[20deg] translate-y-[4px] rounded-sm shadow-sm" />
+                                  {/* Front pink card */}
+                                  <div className="relative w-[85%] h-[55%] bg-[#F5DFDA] border-[1.5px] border-[#311C20] rounded-sm flex overflow-hidden shadow-sm">
+                                    {/* Left section for photo */}
+                                    <div className="w-[20px] h-full border-r-[1.5px] border-[#311C20] flex flex-col items-center justify-center gap-[2px] p-[1px] bg-[#F5DFDA]">
+                                      <div className="w-[14px] h-[16px] rounded-sm bg-[#EC7360] flex items-end justify-center overflow-hidden border border-[#EC7360]">
+                                         <div className="w-[6px] h-[6px] bg-[#F5DFDA] rounded-full mb-[1px]"></div>
+                                         <div className="w-[10px] h-[6px] bg-[#F5DFDA] rounded-t-full absolute bottom-[2px]"></div>
+                                      </div>
+                                      <div className="w-[14px] h-[1.5px] bg-[#D1ACA4] mt-0.5" />
+                                    </div>
+                                    {/* Right section for text lines */}
+                                    <div className="flex-1 px-[4px] py-[2px] flex flex-col justify-center gap-[3px] bg-[#F5DFDA]">
+                                      <div className="w-[90%] h-[2px] bg-[#DFBBBA] rounded-[1px]" />
+                                      <div className="w-[100%] h-[2px] bg-[#DFBBBA] rounded-[1px]" />
+                                      <div className="w-[70%] h-[2px] bg-[#DFBBBA] rounded-[1px]" />
+                                      <div className="w-[50%] h-[2px] bg-[#DFBBBA] rounded-[1px]" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab === "Earnings & Deductions" && (
+                       <div className="space-y-5 pt-2 pb-2">
+                         {/* Allowances Section */}
+                         <div>
+                           <div className="flex items-center justify-between mb-2">
+                             <div className="flex items-center gap-2">
+                               <PlusCircle className="w-[16px] h-[16px] text-[#8B98A8]" />
+                               <span className="text-[12px] font-semibold text-[#8B98A8]">Allowances</span>
+                             </div>
+                             <span className="text-[12px] font-semibold text-[#8B98A8] mr-2">Rs</span>
+                           </div>
+                           <div className="space-y-2">
+                              {/* Hardcoded data for visual as per mockup, normally map employee earnings */}
+                              <div className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
+                                <span>Travelling</span>
+                                <span>5,000.00</span>
+                              </div>
+                              <div className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
+                                <span>Accommodation</span>
+                                <span>5,000.00</span>
+                              </div>
+                           </div>
+                         </div>
+
+                         {/* Deductions Section */}
+                         <div>
+                           <div className="flex items-center justify-between mb-2">
+                             <div className="flex items-center gap-2">
+                               <MinusCircle className="w-[16px] h-[16px] text-[#8B98A8]" />
+                               <span className="text-[12px] font-semibold text-[#8B98A8]">Deductions</span>
+                             </div>
+                             <span className="text-[12px] font-semibold text-[#8B98A8] mr-2">Rs</span>
+                           </div>
+                           <div className="space-y-2">
+                              {/* Hardcoded data for visual as per mockup, normally map employee deductions */}
+                              <div className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
+                                <span>Food</span>
+                                <span>5,000.00</span>
+                              </div>
+                           </div>
+                         </div>
+                       </div>
+                    )}
+
+                    {activeTab === "Bank Details" && (
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center">
+                          <div className="w-[140px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                            <Home className="w-[16px] h-[16px]" />
+                            <span>Bank name</span>
+                          </div>
+                          <div className="text-[13px] font-medium text-gray-800">
+                            {selectedEmployee.bankName || "Bank of ceylon"}
+                          </div>
+                        </div>
+                        <div className="flex items-center pt-1">
+                          <div className="w-[140px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                            <ListOrdered className="w-[16px] h-[16px]" />
+                            <span>Account number</span>
+                          </div>
+                          <div className="text-[13px] font-medium text-gray-800">
+                            {selectedEmployee.accountNumber || "5585154"}
+                          </div>
+                        </div>
+                        <div className="flex items-center pt-1">
+                          <div className="w-[140px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                            <Users className="w-[16px] h-[16px]" />
+                            <span>Account name</span>
+                          </div>
+                          <div className="text-[13px] font-medium text-gray-800">
+                            {selectedEmployee.accountHolderName || selectedEmployee.fullName}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (

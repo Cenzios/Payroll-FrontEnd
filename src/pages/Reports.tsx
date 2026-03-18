@@ -325,9 +325,10 @@ const Reports = () => {
     };
 
     return (
-        <div className="flex min-h-screen bg-gray-50">
+        <div className="flex h-screen overflow-hidden bg-gray-50">
             <Sidebar />
-            <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
+            <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
+                <div className="shrink-0">
                 <PageHeader 
                     title="Payroll Summary Report" 
                     subtitle="Here's your Payroll History." 
@@ -384,7 +385,9 @@ const Reports = () => {
                         </div>
                     </div>
                 </div>
+                </div>
 
+                <div className="flex-1 overflow-y-auto">
                 {/* Toolbar */}
                 <div className="bg-white rounded-t-xl shadow-sm border border-gray-200 border-b-0 p-4 flex justify-between items-center">
                     <h2 className="font-bold text-gray-800">Payroll Summary</h2>
@@ -476,6 +479,7 @@ const Reports = () => {
                 )}
 
                 {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+                </div>
             </div>
 
             {/* Employee Payroll Modal */}
