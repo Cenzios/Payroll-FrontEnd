@@ -22,7 +22,7 @@ import { CreateEmployeeRequest } from "../types/employee.types";
 interface UniversalDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: any, files?: File[]) => Promise<void>;
   mode: "company" | "employee";
   companyId?: string;
   initialData?: any; // For edit mode
@@ -168,6 +168,7 @@ const UniversalDrawer = ({
           setDeductionEnabled(false);
           setAllowances([{ type: "", amount: "" }]);
           setDeductions([{ type: "", amount: "" }]);
+          setEmployeeFiles([]); // reset files
         }
       }
     }
@@ -460,7 +461,7 @@ const UniversalDrawer = ({
           recurringDeductions,
         } as CreateEmployeeRequest;
 
-        await onSubmit(finalEmployeeData);
+        await onSubmit(finalEmployeeData, employeeFiles);
       }
     } catch (error) {
       console.error(error);

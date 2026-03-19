@@ -21,6 +21,7 @@ import {
   Landmark,
   Flag,
   FileText,
+  FileImage,
   CreditCard,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
@@ -34,6 +35,7 @@ import {
   useCreateEmployeeMutation,
   useUpdateEmployeeMutation,
   useDeleteEmployeeMutation,
+  useUploadEmployeeDocumentMutation,
 } from "../store/apiSlice";
 import { Employee } from '../types/employee.types';
 import PageHeader from '../components/PageHeader';
@@ -64,6 +66,7 @@ const Employees = () => {
   const [createEmployee] = useCreateEmployeeMutation();
   const [updateEmployee] = useUpdateEmployeeMutation();
   const [deleteEmployee] = useDeleteEmployeeMutation();
+  const [uploadEmployeeDocument] = useUploadEmployeeDocumentMutation();
 
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null,
@@ -88,7 +91,7 @@ const Employees = () => {
     type: "danger",
     title: "",
     message: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -147,18 +150,30 @@ const Employees = () => {
     });
   };
 
-  const handleDrawerSubmit = async (data: any) => {
+  const handleDrawerSubmit = async (data: any, files?: File[]) => {
     try {
+      let savedEmployee;
       if (editingEmployee) {
         if (!selectedCompanyId) throw new Error("No company selected");
-        await updateEmployee({
+        savedEmployee = await updateEmployee({
           id: editingEmployee.id,
           companyId: selectedCompanyId,
           data,
         }).unwrap();
       } else {
-        await createEmployee(data).unwrap();
+        savedEmployee = await createEmployee(data).unwrap();
       }
+
+      if (files && files.length > 0 && selectedCompanyId) {
+        setToast({ message: "Uploading documents...", type: "success" });
+        for (const file of files) {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("employeeId", savedEmployee.id);
+          await uploadEmployeeDocument(formData).unwrap();
+        }
+      }
+
       setIsDrawerOpen(false);
       setEditingEmployee(null); // Reset edit state
       setModalMessage(
@@ -320,9 +335,9 @@ const Employees = () => {
       <div className="flex-1 ml-64 p-6 h-screen flex flex-col overflow-hidden">
         {/* Header */}
         <div className="shrink-0">
-        <PageHeader 
-            title="Employees" 
-            subtitle="Here's your Employees overview" 
+          <PageHeader
+            title="Employees"
+            subtitle="Here's your Employees overview"
             actionElement={
               <button
                 onClick={() => {
@@ -347,7 +362,7 @@ const Employees = () => {
           />
         </div>
 
-          {/* Table Container */}  {/* Main Content */}
+        {/* Table Container */}  {/* Main Content */}
         {!selectedCompanyId ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
@@ -397,11 +412,10 @@ const Employees = () => {
                       <div
                         key={emp.id}
                         onClick={() => setSelectedEmployee(emp)}
-                        className={` flex items-center justify-between cursor-pointer transition-all duration-200 rounded-[30px] ${
-                          selectedEmployee?.id === emp.id
-                            ? "bg-[#F1F1FF]"
-                            : "hover:bg-gray-50/80"
-                        }`}
+                        className={` flex items-center justify-between cursor-pointer transition-all duration-200 rounded-[30px] ${selectedEmployee?.id === emp.id
+                          ? "bg-[#F1F1FF]"
+                          : "hover:bg-gray-50/80"
+                          }`}
                       >
                         {/* Left side: Avatar + Name */}
                         <div className="flex items-center gap-4 w-[30%] min-w-[150px]">
@@ -458,7 +472,7 @@ const Employees = () => {
                         <img src={selectedEmployee.avatar} alt="avatar" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-[#F1F6FA] text-2xl font-semibold text-[#324564]">
-                           {selectedEmployee.fullName.charAt(0).toUpperCase()}
+                          {selectedEmployee.fullName.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
@@ -478,11 +492,10 @@ const Employees = () => {
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`pb-2 text-[12px] font-semibold transition-colors relative -mb-[2px] ${
-                          activeTab === tab
-                            ? "text-[#4A7DFF]"
-                            : "text-[#8392A5] hover:text-gray-600"
-                        }`}
+                        className={`pb-2 text-[12px] font-semibold transition-colors relative -mb-[2px] ${activeTab === tab
+                          ? "text-[#4A7DFF]"
+                          : "text-[#8392A5] hover:text-gray-600"
+                          }`}
                       >
                         {tab}
                         {activeTab === tab && (
@@ -586,8 +599,8 @@ const Employees = () => {
                           <div className="text-[12px] font-medium text-gray-700 uppercase">
                             {selectedEmployee.joinedDate
                               ? new Date(
-                                  selectedEmployee.joinedDate,
-                                ).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).replace(',', '')
+                                selectedEmployee.joinedDate,
+                              ).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).replace(',', '')
                               : "N/A"}
                           </div>
                         </div>
@@ -611,33 +624,13 @@ const Employees = () => {
                           </div>
                           <div className="flex gap-3 flex-wrap">
                             {[1, 2, 3].map((i) => (
-                              <div
+                              <button
                                 key={i}
-                                className="w-[74px] h-[74px] border-[1.5px] border-[#E8ECEF] rounded-[10px] flex items-center justify-center bg-white hover:bg-gray-50 cursor-pointer transition-colors overflow-hidden"
+                                onClick={() => {/* handle file click, e.g. open preview */ }}
+                                className="w-[74px] h-[74px] border-[1.5px] border-[#E8ECEF] rounded-[10px] flex items-center justify-center bg-white hover:bg-[#F1F6FF] hover:border-[#9CBDFF] cursor-pointer transition-colors group"
                               >
-                                <div className="w-[85%] h-[85%] relative flex items-center justify-center">
-                                  {/* Back dark green card */}
-                                  <div className="absolute w-[80%] h-[55%] bg-[#0B5C60] transform -rotate-[20deg] translate-y-[4px] rounded-sm shadow-sm" />
-                                  {/* Front pink card */}
-                                  <div className="relative w-[85%] h-[55%] bg-[#F5DFDA] border-[1.5px] border-[#311C20] rounded-sm flex overflow-hidden shadow-sm">
-                                    {/* Left section for photo */}
-                                    <div className="w-[20px] h-full border-r-[1.5px] border-[#311C20] flex flex-col items-center justify-center gap-[2px] p-[1px] bg-[#F5DFDA]">
-                                      <div className="w-[14px] h-[16px] rounded-sm bg-[#EC7360] flex items-end justify-center overflow-hidden border border-[#EC7360]">
-                                         <div className="w-[6px] h-[6px] bg-[#F5DFDA] rounded-full mb-[1px]"></div>
-                                         <div className="w-[10px] h-[6px] bg-[#F5DFDA] rounded-t-full absolute bottom-[2px]"></div>
-                                      </div>
-                                      <div className="w-[14px] h-[1.5px] bg-[#D1ACA4] mt-0.5" />
-                                    </div>
-                                    {/* Right section for text lines */}
-                                    <div className="flex-1 px-[4px] py-[2px] flex flex-col justify-center gap-[3px] bg-[#F5DFDA]">
-                                      <div className="w-[90%] h-[2px] bg-[#DFBBBA] rounded-[1px]" />
-                                      <div className="w-[100%] h-[2px] bg-[#DFBBBA] rounded-[1px]" />
-                                      <div className="w-[70%] h-[2px] bg-[#DFBBBA] rounded-[1px]" />
-                                      <div className="w-[50%] h-[2px] bg-[#DFBBBA] rounded-[1px]" />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
+                                <FileImage className="w-[32px] h-[32px] text-[#AAAEBF] group-hover:text-[#4A7DFF] transition-colors" />
+                              </button>
                             ))}
                           </div>
                         </div>
@@ -645,47 +638,47 @@ const Employees = () => {
                     )}
 
                     {activeTab === "Earnings & Deductions" && (
-                       <div className="space-y-5 pt-2 pb-2">
-                         {/* Allowances Section */}
-                         <div>
-                           <div className="flex items-center justify-between mb-2">
-                             <div className="flex items-center gap-2">
-                               <PlusCircle className="w-[16px] h-[16px] text-[#8B98A8]" />
-                               <span className="text-[12px] font-semibold text-[#8B98A8]">Allowances</span>
-                             </div>
-                             <span className="text-[12px] font-semibold text-[#8B98A8] mr-2">Rs</span>
-                           </div>
-                           <div className="space-y-2">
-                              {/* Hardcoded data for visual as per mockup, normally map employee earnings */}
-                              <div className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
-                                <span>Travelling</span>
-                                <span>5,000.00</span>
-                              </div>
-                              <div className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
-                                <span>Accommodation</span>
-                                <span>5,000.00</span>
-                              </div>
-                           </div>
-                         </div>
+                      <div className="space-y-5 pt-2 pb-2">
+                        {/* Allowances Section */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <PlusCircle className="w-[16px] h-[16px] text-[#8B98A8]" />
+                              <span className="text-[12px] font-semibold text-[#8B98A8]">Allowances</span>
+                            </div>
+                            <span className="text-[12px] font-semibold text-[#8B98A8] mr-2">Rs</span>
+                          </div>
+                          <div className="space-y-2">
+                            {/* Hardcoded data for visual as per mockup, normally map employee earnings */}
+                            <div className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
+                              <span>Travelling</span>
+                              <span>5,000.00</span>
+                            </div>
+                            <div className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
+                              <span>Accommodation</span>
+                              <span>5,000.00</span>
+                            </div>
+                          </div>
+                        </div>
 
-                         {/* Deductions Section */}
-                         <div>
-                           <div className="flex items-center justify-between mb-2">
-                             <div className="flex items-center gap-2">
-                               <MinusCircle className="w-[16px] h-[16px] text-[#8B98A8]" />
-                               <span className="text-[12px] font-semibold text-[#8B98A8]">Deductions</span>
-                             </div>
-                             <span className="text-[12px] font-semibold text-[#8B98A8] mr-2">Rs</span>
-                           </div>
-                           <div className="space-y-2">
-                              {/* Hardcoded data for visual as per mockup, normally map employee deductions */}
-                              <div className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
-                                <span>Food</span>
-                                <span>5,000.00</span>
-                              </div>
-                           </div>
-                         </div>
-                       </div>
+                        {/* Deductions Section */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <MinusCircle className="w-[16px] h-[16px] text-[#8B98A8]" />
+                              <span className="text-[12px] font-semibold text-[#8B98A8]">Deductions</span>
+                            </div>
+                            <span className="text-[12px] font-semibold text-[#8B98A8] mr-2">Rs</span>
+                          </div>
+                          <div className="space-y-2">
+                            {/* Hardcoded data for visual as per mockup, normally map employee deductions */}
+                            <div className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
+                              <span>Food</span>
+                              <span>5,000.00</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     )}
 
                     {activeTab === "Bank Details" && (

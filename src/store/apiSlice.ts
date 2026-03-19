@@ -68,6 +68,7 @@ export interface CreateLoanRequest {
     installmentCount: number;
     interestRate: number;
     monthlyPremium: number;
+    supportingDocId?: string;
 }
 
 export interface EmployeeBank {
@@ -146,6 +147,18 @@ export const apiSlice = createApi({
                 params: { companyId },
             }),
             invalidatesTags: ['Employee', 'Dashboard'],
+        }),
+
+        uploadEmployeeDocument: builder.mutation<any, FormData>({
+            query: (data) => ({
+                url: '/documents/upload',
+                method: 'POST',
+                data,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            }),
+            invalidatesTags: ['Employee'],
         }),
 
         // --- SUBSCRIPTION ---
@@ -326,4 +339,5 @@ export const {
     useCreateLoanMutation,
     useGetBankDetailsQuery,
     useSaveBankDetailsMutation,
+    useUploadEmployeeDocumentMutation,
 } = apiSlice;
