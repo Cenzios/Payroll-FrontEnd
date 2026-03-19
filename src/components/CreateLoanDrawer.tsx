@@ -337,10 +337,20 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                 <div className="text-[12px] text-gray-400">Add 1 document (PDF, JPG, PNG)</div>
                 <input
                   type="file"
+                  accept=".png,.jpg,.jpeg,.pdf"
                   className="hidden"
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
-                      setSupportingDocs([e.target.files[0]]);
+                      const file = e.target.files[0];
+                      if (file.size > 5 * 1024 * 1024) {
+                        setToast({ message: 'File exceeds 5MB limit', type: 'error' });
+                        return;
+                      }
+                      if (!['image/png', 'image/jpeg', 'application/pdf'].includes(file.type)) {
+                        setToast({ message: 'Invalid format. Use PNG, JPG, or PDF', type: 'error' });
+                        return;
+                      }
+                      setSupportingDocs([file]);
                     }
                   }}
                 />

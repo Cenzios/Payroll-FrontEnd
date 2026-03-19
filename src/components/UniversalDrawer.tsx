@@ -960,11 +960,24 @@ const UniversalDrawer = ({
                               <PlusCircle className="h-4 w-4 text-gray-400 ml-auto" />
                               <input
                                 type="file"
+                                accept=".png,.jpg,.jpeg,.pdf"
                                 multiple
                                 className="hidden"
                                 onChange={(e) => {
                                   if (e.target.files) {
-                                    setEmployeeFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                                    const files = Array.from(e.target.files);
+                                    const validFiles = files.filter(file => {
+                                      if (file.size > 5 * 1024 * 1024) {
+                                        window.alert(`File ${file.name} exceeds 5MB limit`);
+                                        return false;
+                                      }
+                                      if (!['image/png', 'image/jpeg', 'application/pdf'].includes(file.type)) {
+                                        window.alert(`File ${file.name} is not a supported format (PNG, JPG, PDF)`);
+                                        return false;
+                                      }
+                                      return true;
+                                    });
+                                    setEmployeeFiles(prev => [...prev, ...validFiles]);
                                   }
                                 }}
                               />

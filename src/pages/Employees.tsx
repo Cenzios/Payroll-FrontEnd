@@ -628,7 +628,26 @@ const Employees = () => {
                               selectedEmployee.documents.map((doc) => (
                                 <button
                                   key={doc.id}
-                                  onClick={() => setPreviewImage(doc.fileUrl)}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    if (doc.fileType === 'application/pdf') {
+                                      // Force Cloudinary to serve the file as an attachment to trigger the browser's download prompt
+                                      let downloadUrl = doc.fileUrl;
+                                      if (downloadUrl.includes('/upload/') && !downloadUrl.includes('fl_attachment')) {
+                                        downloadUrl = downloadUrl.replace('/upload/', '/upload/fl_attachment/');
+                                      }
+
+                                      const link = document.createElement('a');
+                                      link.href = downloadUrl;
+                                      link.download = doc.fileName;
+                                      link.target = '_blank';
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                    } else {
+                                      setPreviewImage(doc.fileUrl);
+                                    }
+                                  }}
                                   title={doc.fileName}
                                   className="w-[74px] h-[74px] overflow-hidden border-[1.5px] border-[#E8ECEF] rounded-[10px] flex items-center justify-center bg-white hover:bg-[#F1F6FF] hover:border-[#9CBDFF] cursor-pointer transition-colors group relative"
                                 >
