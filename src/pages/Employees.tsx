@@ -103,6 +103,7 @@ const Employees = () => {
 
   // Edit State
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Select first employee default logic
   useEffect(() => {
@@ -623,15 +624,24 @@ const Employees = () => {
                             <span>Files</span>
                           </div>
                           <div className="flex gap-3 flex-wrap">
-                            {[1, 2, 3].map((i) => (
-                              <button
-                                key={i}
-                                onClick={() => {/* handle file click, e.g. open preview */ }}
-                                className="w-[74px] h-[74px] border-[1.5px] border-[#E8ECEF] rounded-[10px] flex items-center justify-center bg-white hover:bg-[#F1F6FF] hover:border-[#9CBDFF] cursor-pointer transition-colors group"
-                              >
-                                <FileImage className="w-[32px] h-[32px] text-[#AAAEBF] group-hover:text-[#4A7DFF] transition-colors" />
-                              </button>
-                            ))}
+                            {selectedEmployee.documents && selectedEmployee.documents.length > 0 ? (
+                              selectedEmployee.documents.map((doc) => (
+                                <button
+                                  key={doc.id}
+                                  onClick={() => setPreviewImage(doc.fileUrl)}
+                                  title={doc.fileName}
+                                  className="w-[74px] h-[74px] overflow-hidden border-[1.5px] border-[#E8ECEF] rounded-[10px] flex items-center justify-center bg-white hover:bg-[#F1F6FF] hover:border-[#9CBDFF] cursor-pointer transition-colors group relative"
+                                >
+                                  {doc.fileType.startsWith('image/') ? (
+                                    <img src={doc.fileUrl} alt={doc.fileName} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <FileText className="w-[32px] h-[32px] text-[#AAAEBF] group-hover:text-[#4A7DFF] transition-colors" />
+                                  )}
+                                </button>
+                              ))
+                            ) : (
+                              <div className="text-[12px] text-gray-400">No documents found</div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -649,15 +659,16 @@ const Employees = () => {
                             <span className="text-[12px] font-semibold text-[#8B98A8] mr-2">Rs</span>
                           </div>
                           <div className="space-y-2">
-                            {/* Hardcoded data for visual as per mockup, normally map employee earnings */}
-                            <div className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
-                              <span>Travelling</span>
-                              <span>5,000.00</span>
-                            </div>
-                            <div className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
-                              <span>Accommodation</span>
-                              <span>5,000.00</span>
-                            </div>
+                            {selectedEmployee.recurringAllowances && selectedEmployee.recurringAllowances.length > 0 ? (
+                              selectedEmployee.recurringAllowances.map((allowance, index) => (
+                                <div key={index} className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
+                                  <span>{allowance.type}</span>
+                                  <span>{allowance.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="pl-[28px] text-[12px] text-gray-400">No allowances found</div>
+                            )}
                           </div>
                         </div>
 
@@ -671,11 +682,16 @@ const Employees = () => {
                             <span className="text-[12px] font-semibold text-[#8B98A8] mr-2">Rs</span>
                           </div>
                           <div className="space-y-2">
-                            {/* Hardcoded data for visual as per mockup, normally map employee deductions */}
-                            <div className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
-                              <span>Food</span>
-                              <span>5,000.00</span>
-                            </div>
+                            {selectedEmployee.recurringDeductions && selectedEmployee.recurringDeductions.length > 0 ? (
+                              selectedEmployee.recurringDeductions.map((deduction, index) => (
+                                <div key={index} className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
+                                  <span>{deduction.type}</span>
+                                  <span>{deduction.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="pl-[28px] text-[12px] text-gray-400">No deductions found</div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -830,6 +846,22 @@ const Employees = () => {
           </>
         )}
       </PortalDropdown>
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setPreviewImage(null)}>
+          <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300"
+            >
+              <Trash2 className="hidden" /> {/* just to import safely, use X ideally but don't want to mess up imports */}
+              <span className="text-xl font-bold">× Close</span>
+            </button>
+            <img src={previewImage} alt="Document Preview" className="max-w-full max-h-[85vh] rounded-lg shadow-2xl" />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
