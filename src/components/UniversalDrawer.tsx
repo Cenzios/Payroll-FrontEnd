@@ -22,7 +22,7 @@ import { CreateEmployeeRequest } from "../types/employee.types";
 interface UniversalDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: any, files?: File[]) => Promise<void>;
   mode: "company" | "employee";
   companyId?: string;
   initialData?: any; // For edit mode
@@ -168,6 +168,7 @@ const UniversalDrawer = ({
           setDeductionEnabled(false);
           setAllowances([{ type: "", amount: "" }]);
           setDeductions([{ type: "", amount: "" }]);
+          setEmployeeFiles([]); // reset files
         }
       }
     }
@@ -460,7 +461,7 @@ const UniversalDrawer = ({
           recurringDeductions,
         } as CreateEmployeeRequest;
 
-        await onSubmit(finalEmployeeData);
+        await onSubmit(finalEmployeeData, employeeFiles);
       }
     } catch (error) {
       console.error(error);
@@ -959,11 +960,24 @@ const UniversalDrawer = ({
                               <PlusCircle className="h-4 w-4 text-gray-400 ml-auto" />
                               <input
                                 type="file"
+                                accept=".png,.jpg,.jpeg,.pdf"
                                 multiple
                                 className="hidden"
                                 onChange={(e) => {
                                   if (e.target.files) {
-                                    setEmployeeFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                                    const files = Array.from(e.target.files);
+                                    const validFiles = files.filter(file => {
+                                      if (file.size > 5 * 1024 * 1024) {
+                                        window.alert(`File ${file.name} exceeds 5MB limit`);
+                                        return false;
+                                      }
+                                      if (!['image/png', 'image/jpeg', 'application/pdf'].includes(file.type)) {
+                                        window.alert(`File ${file.name} is not a supported format (PNG, JPG, PDF)`);
+                                        return false;
+                                      }
+                                      return true;
+                                    });
+                                    setEmployeeFiles(prev => [...prev, ...validFiles]);
                                   }
                                 }}
                               />

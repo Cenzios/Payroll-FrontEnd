@@ -3,6 +3,16 @@ export interface RecurringEntry {
     amount: number;
 }
 
+export interface EmployeeDocument {
+    id: string;
+    fileName: string;
+    fileUrl: string;
+    fileType: string;
+    publicId: string;
+    createdAt: string;
+    documentType?: 'EMPLOYEE' | 'LOAN';
+}
+
 export interface Employee {
     id: string;
     fullName: string;
@@ -32,6 +42,7 @@ export interface Employee {
     accountNumber?: string;
     branchName?: string;
     accountHolderName?: string;
+    documents?: EmployeeDocument[];
 }
 
 export interface CreateEmployeeRequest {

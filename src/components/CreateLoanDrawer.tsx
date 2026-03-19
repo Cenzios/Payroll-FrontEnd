@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, UploadCloud, Loader2 } from 'lucide-react';
-import { useGetEmployeesQuery, useCreateLoanMutation } from '../store/apiSlice';
+import { useGetEmployeesQuery, useCreateLoanMutation, useUploadEmployeeDocumentMutation } from '../store/apiSlice';
 import { Employee } from '../types/employee.types';
 import Toast from './Toast';
 
@@ -23,6 +23,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
   const [monthlyPremium, setMonthlyPremium] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [supportingDocs, setSupportingDocs] = useState<File[]>([]);
 
   const { data: employeesData } = useGetEmployeesQuery(
     { companyId: companyId || '' },
@@ -30,6 +31,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
   );
 
   const [createLoan] = useCreateLoanMutation();
+  const [uploadEmployeeDocument] = useUploadEmployeeDocumentMutation();
 
   const employees = employeesData?.employees || [];
 
@@ -72,6 +74,18 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
 
     setIsSubmitting(true);
     try {
+      let documentId = undefined;
+
+      if (supportingDocs.length > 0) {
+        setToast({ message: "Uploading document...", type: "success" });
+        const formData = new FormData();
+        formData.append("file", supportingDocs[0]);
+        formData.append("employeeId", employeeId);
+        formData.append("documentType", "LOAN");
+        const uploadResult = await uploadEmployeeDocument(formData).unwrap();
+        documentId = uploadResult?.data?.id;
+      }
+
       const loanIdPrefix = 'LOAN-' + Math.floor(1000 + Math.random() * 9000);
       await createLoan({
         companyId,
@@ -85,7 +99,8 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
         amount: parseFloat(amount),
         installmentCount: parseInt(installmentCount),
         interestRate: parseFloat(interestRate),
-        monthlyPremium: monthlyPremium
+        monthlyPremium: monthlyPremium,
+        supportingDocId: documentId
       }).unwrap();
 
       setToast({ message: 'Loan created successfully!', type: 'success' });
@@ -100,6 +115,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
         setAmount('');
         setInstallmentCount('');
         setInterestRate('');
+        setSupportingDocs([]);
       }, 1500);
     } catch (error: any) {
       setToast({ message: error.data?.message || 'Failed to create loan', type: 'error' });
@@ -314,13 +330,37 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
               <label className="block text-[13px] font-semibold text-gray-700 mb-1.5 mt-2">
                 Supporting Documents
               </label>
-              <div className="border border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center bg-gray-50/50 cursor-pointer hover:bg-gray-50 transition-colors">
+              <label className="border border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center bg-gray-50/50 cursor-pointer hover:bg-gray-50 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center mb-3 text-[#3B82F6]">
                   <UploadCloud className="w-5 h-5" />
                 </div>
                 <div className="text-[13px] font-semibold text-[#141B3B] mb-1">Click to upload or drag and drop</div>
-                <div className="text-[12px] text-gray-400">Add 1 to 3 documents (PDF, JPG, PNG)</div>
-              </div>
+                <div className="text-[12px] text-gray-400">Add 1 document (PDF, JPG, PNG)</div>
+                <input
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      const file = e.target.files[0];
+                      if (file.size > 5 * 1024 * 1024) {
+                        setToast({ message: 'File exceeds 5MB limit', type: 'error' });
+                        return;
+                      }
+                      if (!['image/png', 'image/jpeg', 'application/pdf'].includes(file.type)) {
+                        setToast({ message: 'Invalid format. Use PNG, JPG, or PDF', type: 'error' });
+                        return;
+                      }
+                      setSupportingDocs([file]);
+                    }
+                  }}
+                />
+              </label>
+              {supportingDocs.length > 0 && (
+                <div className="mt-2 text-sm text-gray-600 font-medium">
+                  Selected: {supportingDocs[0].name}
+                </div>
+              )}
             </div>
 
           </div>

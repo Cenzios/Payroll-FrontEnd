@@ -1,7 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { axiosBaseQuery } from '../api/baseQuery';
 import { Company, CreateCompanyRequest } from '../types/company.types';
-import { Employee, CreateEmployeeRequest } from '../types/employee.types';
+import { Employee, CreateEmployeeRequest, EmployeeDocument } from '../types/employee.types';
 import { Notification } from '../types/notification.types';
 
 // Define types locally if not exported from files, or reuse existing types
@@ -47,6 +47,7 @@ export interface Loan {
     interestRate: number;
     monthlyPremium: number;
     supportingDocId?: string;
+    supportingDoc?: EmployeeDocument;
     createdAt: string;
     employee?: {
         fullName: string;
@@ -68,6 +69,7 @@ export interface CreateLoanRequest {
     installmentCount: number;
     interestRate: number;
     monthlyPremium: number;
+    supportingDocId?: string;
 }
 
 export interface EmployeeBank {
@@ -146,6 +148,18 @@ export const apiSlice = createApi({
                 params: { companyId },
             }),
             invalidatesTags: ['Employee', 'Dashboard'],
+        }),
+
+        uploadEmployeeDocument: builder.mutation<any, FormData>({
+            query: (data) => ({
+                url: '/documents/upload',
+                method: 'POST',
+                data,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            }),
+            invalidatesTags: ['Employee'],
         }),
 
         // --- SUBSCRIPTION ---
@@ -326,4 +340,5 @@ export const {
     useCreateLoanMutation,
     useGetBankDetailsQuery,
     useSaveBankDetailsMutation,
+    useUploadEmployeeDocumentMutation,
 } = apiSlice;
