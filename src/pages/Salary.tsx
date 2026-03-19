@@ -960,7 +960,10 @@ const Salary = () => {
 
                     {/* Input Controls - Visible when selected */}
                     {selectedEmployee?.id === emp.id && (
-                      <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div 
+                        onClick={(e) => e.stopPropagation()}
+                        className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200"
+                      >
                         {/* Earnings */}
                         <div>
                           <h4 className="flex items-center gap-2 text-[14px] font-semibold mb-3">
