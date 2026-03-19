@@ -177,6 +177,7 @@ const Employees = () => {
 
       setIsDrawerOpen(false);
       setEditingEmployee(null); // Reset edit state
+      setSelectedEmployee(savedEmployee); // Update profile card instantly
       setModalMessage(
         editingEmployee
           ? "The employee has been successfully updated."
