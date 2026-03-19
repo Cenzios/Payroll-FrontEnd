@@ -269,6 +269,14 @@ const UniversalDrawer = ({
           if (!value || value.trim().length < 2) error = "Account holder name must be at least 2 characters";
           else if (/\d/.test(value)) error = "Account holder name cannot contain numbers";
           break;
+        case "employeeNIC":
+          if (value && value.trim()) {
+            const nic = value.trim();
+            if (nic.length !== 10 && nic.length !== 12) {
+              error = "NIC must be either 10 or 12 characters long";
+            }
+          }
+          break;
       }
     }
     return error;
@@ -753,20 +761,26 @@ const UniversalDrawer = ({
                               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <CreditCard className="h-4 w-4 text-gray-400" />
                               </div>
-                              <input
-                                type="text"
-                                value={employeeData.employeeNIC || ""}
-                                onChange={(e) =>
-                                  handleEmployeeChange(
-                                    "employeeNIC",
-                                    e.target.value,
-                                  )
-                                }
-                                placeholder="Enter employee NIC Number"
-                                className="text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all border-gray-300 focus:ring-[#367AFF] focus:border-transparent"
-                              />
+                                <input
+                                  type="text"
+                                  value={employeeData.employeeNIC || ""}
+                                  onChange={(e) =>
+                                    handleEmployeeChange(
+                                      "employeeNIC",
+                                      e.target.value,
+                                    )
+                                  }
+                                  onBlur={() => handleBlur("employeeNIC")}
+                                  placeholder="Enter employee NIC Number"
+                                  className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeNIC && errors.employeeNIC ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                />
+                              </div>
+                              {touched.employeeNIC && errors.employeeNIC && (
+                                <p className="text-red-500 text-xs mt-1">
+                                  {errors.employeeNIC}
+                                </p>
+                              )}
                             </div>
-                          </div>
 
                           {/* Address */}
                           <div>
