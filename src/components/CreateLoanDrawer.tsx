@@ -81,6 +81,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
         const formData = new FormData();
         formData.append("file", supportingDocs[0]);
         formData.append("employeeId", employeeId);
+        formData.append("documentType", "LOAN");
         const uploadResult = await uploadEmployeeDocument(formData).unwrap();
         documentId = uploadResult?.data?.id;
       }

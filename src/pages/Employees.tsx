@@ -624,26 +624,14 @@ const Employees = () => {
                             <span>Files</span>
                           </div>
                           <div className="flex gap-3 flex-wrap">
-                            {selectedEmployee.documents && selectedEmployee.documents.length > 0 ? (
-                              selectedEmployee.documents.map((doc) => (
+                            {selectedEmployee.documents && selectedEmployee.documents.filter(doc => !doc.documentType || doc.documentType === 'EMPLOYEE').length > 0 ? (
+                              selectedEmployee.documents.filter(doc => !doc.documentType || doc.documentType === 'EMPLOYEE').map((doc) => (
                                 <button
                                   key={doc.id}
                                   onClick={(e) => {
                                     e.preventDefault();
                                     if (doc.fileType === 'application/pdf') {
-                                      // Force Cloudinary to serve the file as an attachment to trigger the browser's download prompt
-                                      let downloadUrl = doc.fileUrl;
-                                      if (downloadUrl.includes('/upload/') && !downloadUrl.includes('fl_attachment')) {
-                                        downloadUrl = downloadUrl.replace('/upload/', '/upload/fl_attachment/');
-                                      }
-
-                                      const link = document.createElement('a');
-                                      link.href = downloadUrl;
-                                      link.download = doc.fileName;
-                                      link.target = '_blank';
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      document.body.removeChild(link);
+                                      window.open(doc.fileUrl, '_blank', 'noopener,noreferrer');
                                     } else {
                                       setPreviewImage(doc.fileUrl);
                                     }

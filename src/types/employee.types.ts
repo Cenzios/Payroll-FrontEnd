@@ -10,6 +10,7 @@ export interface EmployeeDocument {
     fileType: string;
     publicId: string;
     createdAt: string;
+    documentType?: 'EMPLOYEE' | 'LOAN';
 }
 
 export interface Employee {
