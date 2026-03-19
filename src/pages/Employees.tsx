@@ -606,11 +606,11 @@ const Employees = () => {
                           </div>
                         </div>
 
-                        {/* Daily Rate */}
+                        {/* Salary Rate */}
                         <div className="flex items-center pt-0.5">
                           <div className="w-[140px] flex items-center gap-2 text-[11px] font-medium text-[#AAAEBF]">
                             <DollarSign className="w-[14px] h-[14px]" />
-                            <span>Daily Rate</span>
+                            <span>{selectedEmployee.salaryType === "MONTHLY" ? "Monthly Rate" : "Daily Rate"}</span>
                           </div>
                           <div className="text-[12px] font-medium text-gray-700">
                             {(selectedEmployee.basicSalary ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
