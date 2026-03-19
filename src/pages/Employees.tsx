@@ -177,6 +177,7 @@ const Employees = () => {
 
       setIsDrawerOpen(false);
       setEditingEmployee(null); // Reset edit state
+      setSelectedEmployee(savedEmployee); // Update profile card instantly
       setModalMessage(
         editingEmployee
           ? "The employee has been successfully updated."
@@ -218,7 +219,7 @@ const Employees = () => {
       onConfirm: async () => {
         try {
           if (!selectedCompanyId) return;
-          await updateEmployee({
+          const updated = await updateEmployee({
             id: employee.id,
             companyId: selectedCompanyId,
             data: { status: "INACTIVE" } as any,
@@ -227,6 +228,9 @@ const Employees = () => {
             message: "Employee deactivated successfully",
             type: "success",
           });
+          if (selectedEmployee?.id === employee.id) {
+            setSelectedEmployee(updated);
+          }
           // Cache refresh
         } catch (error: any) {
           setToast({
@@ -286,7 +290,7 @@ const Employees = () => {
       onConfirm: async () => {
         try {
           if (!selectedCompanyId) return;
-          await updateEmployee({
+          const updated = await updateEmployee({
             id: employee.id,
             companyId: selectedCompanyId,
             data: { status: "ACTIVE" } as any,
@@ -295,6 +299,9 @@ const Employees = () => {
             message: "Employee activated successfully",
             type: "success",
           });
+          if (selectedEmployee?.id === employee.id) {
+            setSelectedEmployee(updated);
+          }
           // Cache refresh
         } catch (error: any) {
           setToast({
@@ -606,11 +613,11 @@ const Employees = () => {
                           </div>
                         </div>
 
-                        {/* Daily Rate */}
+                        {/* Salary Rate */}
                         <div className="flex items-center pt-0.5">
                           <div className="w-[140px] flex items-center gap-2 text-[11px] font-medium text-[#AAAEBF]">
                             <DollarSign className="w-[14px] h-[14px]" />
-                            <span>Daily Rate</span>
+                            <span>{selectedEmployee.salaryType === "MONTHLY" ? "Monthly Rate" : "Daily Rate"}</span>
                           </div>
                           <div className="text-[12px] font-medium text-gray-700">
                             {(selectedEmployee.basicSalary ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

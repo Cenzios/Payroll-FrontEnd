@@ -683,11 +683,11 @@ const Salary = () => {
     }
 
     // Signatures
-    doc.text(`Prepared By : ${new Date().toLocaleDateString()}`, 14, currentY);
+    doc.text("Prepared By : ___________________", 14, currentY);
+    doc.text("Checked By  : ___________________", 120, currentY);
 
-    doc.text("Checked By  : ___________________", 14, currentY + 15);
-
-    doc.text("Employee Sign : ___________________", 14, currentY + 30);
+    doc.text("Employee Sign : ___________________", 14, currentY + 15);
+    doc.text(`Date : ${new Date().toLocaleDateString()}`, 120, currentY + 15);
 
     doc.save(
       `Payslip_${selectedEmployee.employeeId}_${selectedMonth + 1}_${selectedYear}.pdf`,
@@ -1490,12 +1490,17 @@ const Salary = () => {
                         {/* Signatures */}
                         <div className="mt-12 pt-4 border-t border-gray-300 flex justify-between text-[10px] text-gray-500">
                           <div>
-                            Prepared By : {new Date().toLocaleDateString()}
+                            Prepared By : __________________
                           </div>
-                          <div>Checked By : ..............</div>
+                          <div>Checked By : _______________</div>
                         </div>
-                        <div className="mt-4 text-[10px] text-gray-500">
-                          Employee Sign : ________________________
+                        <div className="mt-4 flex justify-between text-[10px] text-gray-500">
+                          <div>
+                            Employee Sign : ________________
+                          </div>
+                          {/* <div>
+                            Date : {new Date().toLocaleDateString()}
+                          </div> */}
                         </div>
                       </div>
                     </div>
