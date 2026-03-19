@@ -219,7 +219,7 @@ const Employees = () => {
       onConfirm: async () => {
         try {
           if (!selectedCompanyId) return;
-          await updateEmployee({
+          const updated = await updateEmployee({
             id: employee.id,
             companyId: selectedCompanyId,
             data: { status: "INACTIVE" } as any,
@@ -228,6 +228,9 @@ const Employees = () => {
             message: "Employee deactivated successfully",
             type: "success",
           });
+          if (selectedEmployee?.id === employee.id) {
+            setSelectedEmployee(updated);
+          }
           // Cache refresh
         } catch (error: any) {
           setToast({
@@ -287,7 +290,7 @@ const Employees = () => {
       onConfirm: async () => {
         try {
           if (!selectedCompanyId) return;
-          await updateEmployee({
+          const updated = await updateEmployee({
             id: employee.id,
             companyId: selectedCompanyId,
             data: { status: "ACTIVE" } as any,
@@ -296,6 +299,9 @@ const Employees = () => {
             message: "Employee activated successfully",
             type: "success",
           });
+          if (selectedEmployee?.id === employee.id) {
+            setSelectedEmployee(updated);
+          }
           // Cache refresh
         } catch (error: any) {
           setToast({
