@@ -16,6 +16,7 @@ import Employees from './pages/Employees';
 import Salary from './pages/Salary'; // Import Salary
 import Loans from './pages/Loans';
 import Reports from './pages/Reports';
+import CFormReport from './pages/CFormReport';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
@@ -87,6 +88,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Reports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/c-form"
+          element={
+            <ProtectedRoute>
+              <CFormReport />
             </ProtectedRoute>
           }
         />

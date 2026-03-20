@@ -13,7 +13,7 @@ export const salaryApi = {
 
     getSalaryReport: async (companyId: string, startMonth: number, startYear: number, endMonth: number, endYear: number) => {
         const token = localStorage.getItem('token');
-        
+
         // ✅ DETAILED DEBUG LOGGING
         console.group('🔍 Salary Report API Call');
         console.log('Environment:', import.meta.env.MODE);
@@ -28,13 +28,13 @@ export const salaryApi = {
         });
         console.log('Token exists:', !!token);
         console.groupEnd();
-        
+
         try {
             const response = await axios.get(`${API_URL}/reports/company-payroll-summary`, {
                 params: { companyId, startMonth, startYear, endMonth, endYear },
                 headers: { Authorization: `Bearer ${token}` }
             });
-            
+
             console.log('✅ API Response Success:', response.data);
             return response.data;
         } catch (error: any) {
@@ -47,5 +47,14 @@ export const salaryApi = {
             console.groupEnd();
             throw error;
         }
+    },
+
+    getCFormReport: async (companyId: string, month: number, year: number) => {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_URL}/reports/c-form`, {
+            params: { companyId, month, year },
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
     }
 };
