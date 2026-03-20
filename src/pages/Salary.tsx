@@ -530,32 +530,32 @@ const Salary = () => {
       head: [["Description", "Amount (Rs.)"]],
       body: [
         ["Rate Type", previewPayslip.salaryType],
-        ["Basic Rate", previewPayslip.basicSalary.toLocaleString()],
+        ["Basic Rate", `Rs. ${previewPayslip.basicSalary.toLocaleString()}`],
         ["Working Days", companyWorkingDays.toString()],
         ["Worked Days", previewPayslip.workedDays.toString()],
-        ["Calculated Basic Pay", previewPayslip.basicPay.toLocaleString()],
+        ["Calculated Basic Pay", `Rs. ${previewPayslip.basicPay.toLocaleString()}`],
         ...(previewPayslip.otAmount > 0
           ? [
               [
                 `OT Amount (${previewPayslip.otHours} hrs)`,
-                previewPayslip.otAmount.toLocaleString(),
+                `Rs. ${previewPayslip.otAmount.toLocaleString()}`,
               ],
             ]
           : []),
         ...(previewPayslip.allowances || []).map((a: any) => [
           a.name,
-          a.amount.toLocaleString(),
+          `Rs. ${a.amount.toLocaleString()}`,
         ]),
         [
           "Gross Earnings",
-          (
+          `Rs. ${(
             previewPayslip.basicPay +
             previewPayslip.otAmount +
             (previewPayslip.allowances || []).reduce(
               (sum: number, a: any) => sum + a.amount,
               0,
             )
-          ).toLocaleString(),
+          ).toLocaleString()}`,
         ],
       ],
       theme: "plain",
@@ -583,10 +583,10 @@ const Salary = () => {
     if (previewPayslip.isEpfEnabled) {
       doc.text("EPF Employee (8%)", 14, currentY);
       doc.text(
-        previewPayslip.epf8.toLocaleString(undefined, {
+        `Rs. ${previewPayslip.epf8.toLocaleString(undefined, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        }),
+        })}`,
         196,
         currentY,
         { align: "right" },
@@ -601,10 +601,10 @@ const Salary = () => {
       if (d.amount > 0) {
         doc.text(d.name, 14, currentY);
         doc.text(
-          d.amount.toLocaleString(undefined, {
+          `Rs. ${d.amount.toLocaleString(undefined, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-          }),
+          })}`,
           196,
           currentY,
           { align: "right" },
@@ -620,10 +620,10 @@ const Salary = () => {
     doc.setFont("helvetica", "bold");
     doc.text("Total Deductions", 14, currentY);
     doc.text(
-      previewPayslip.totalDeductions.toLocaleString(undefined, {
+      `Rs. ${previewPayslip.totalDeductions.toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      }),
+      })}`,
       196,
       currentY,
       { align: "right" },
@@ -636,7 +636,7 @@ const Salary = () => {
     doc.setFontSize(12);
     doc.text("NET SALARY", 14, currentY + 8);
     doc.text(
-      `Net Salary Payable (Rs.) : ${previewPayslip.netSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      `Net Salary Payable : Rs. ${previewPayslip.netSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       196,
       currentY + 8,
       { align: "right" },
@@ -660,17 +660,17 @@ const Salary = () => {
         body: [
           [
             "EPF Employer (12%)",
-            previewPayslip.epf12.toLocaleString(undefined, {
+            `Rs. ${previewPayslip.epf12.toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
-            }),
+            })}`,
           ],
           [
             "ETF Employer (3%)",
-            previewPayslip.etf3.toLocaleString(undefined, {
+            `Rs. ${previewPayslip.etf3.toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
-            }),
+            })}`,
           ],
         ],
         theme: "plain",
@@ -1360,7 +1360,7 @@ const Salary = () => {
                                 : "Daily Rate"}
                             </span>
                             <span>
-                              {previewPayslip.basicSalary.toLocaleString()}
+                              Rs. {previewPayslip.basicSalary.toLocaleString()}
                             </span>
                           </div>
                           <div className="flex justify-between mb-1">
@@ -1374,14 +1374,14 @@ const Salary = () => {
                           <div className="flex justify-between mb-1 font-semibold text-gray-800">
                             <span>Calculated Basic Pay</span>
                             <span>
-                              {previewPayslip.basicPay.toLocaleString()}
+                              Rs. {previewPayslip.basicPay.toLocaleString()}
                             </span>
                           </div>
                           {previewPayslip.otAmount > 0 && (
                             <div className="flex justify-between mb-1 font-semibold text-gray-800">
                               <span>OT ({previewPayslip.otHours} hrs)</span>
                               <span>
-                                {previewPayslip.otAmount.toLocaleString()}
+                                Rs. {previewPayslip.otAmount.toLocaleString()}
                               </span>
                             </div>
                           )}
@@ -1392,14 +1392,14 @@ const Salary = () => {
                                 className="flex justify-between mb-1 text-green-700 font-medium"
                               >
                                 <span>+ {a.name}</span>
-                                <span>{a.amount.toLocaleString()}</span>
+                                <span>Rs. {a.amount.toLocaleString()}</span>
                               </div>
                             ),
                           )}
                           <div className="flex justify-between mt-2 pt-2 border-t border-gray-300 font-bold text-gray-900">
                             <span>Gross Earnings</span>
                             <span>
-                              {(
+                              Rs. {(
                                 previewPayslip.basicPay +
                                 previewPayslip.otAmount +
                                 (previewPayslip.allowances || []).reduce(
