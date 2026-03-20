@@ -15,7 +15,9 @@ import {
 
 const Sidebar = () => {
     const location = useLocation();
-    const [isReportsOpen, setIsReportsOpen] = useState(location.pathname.startsWith('/reports'));
+    const [isReportsOpen, setIsReportsOpen] = useState(
+        location.pathname.startsWith('/reports') || location.pathname === '/c-form'
+    );
 
     const navItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -63,7 +65,7 @@ const Sidebar = () => {
                 <div>
                     <button
                         onClick={toggleReports}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${location.pathname.startsWith('/reports')
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${(location.pathname.startsWith('/reports') || location.pathname === '/c-form')
                             ? 'bg-blue-50 text-blue-600 font-medium'
                             : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
                             }`}
@@ -79,6 +81,7 @@ const Sidebar = () => {
                         <div className="mt-1 ml-4 space-y-1 pl-4 border-l-2 border-gray-100">
                             <NavLink
                                 to="/reports"
+                                end
                                 className={({ isActive }) =>
                                     `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
                                         ? 'text-blue-600 font-medium'
@@ -88,6 +91,18 @@ const Sidebar = () => {
                             >
                                 <Circle className="w-2 h-2" />
                                 <span>Salary Report</span>
+                            </NavLink>
+                            <NavLink
+                                to="/c-form"
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
+                                        ? 'text-blue-600 font-medium'
+                                        : 'text-[#67696C] hover:text-gray-900'
+                                    }`
+                                }
+                            >
+                                <Circle className="w-2 h-2" />
+                                <span>C-Form</span>
                             </NavLink>
                             {/* Future reports can go here */}
                         </div>
