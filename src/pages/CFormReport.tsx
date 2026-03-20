@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, FileSpreadsheet, Download, Loader2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import PageHeader from '../components/PageHeader';
@@ -55,6 +55,13 @@ const CFormReport = () => {
         setReportData(null);
         setHasApplied(false);
     };
+
+    // Auto-fetch current month on initial load
+    useEffect(() => {
+        if (selectedCompanyId) {
+            handleApply();
+        }
+    }, [selectedCompanyId]);
 
     const rows: any[] = reportData?.rows || [];
     const totals = reportData?.totals;
