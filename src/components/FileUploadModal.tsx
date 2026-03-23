@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { UploadCloud, FileText, FileImage, File, Edit2, Trash2, X, Check } from "lucide-react";
 
 interface FileUploadModalProps {
@@ -93,8 +94,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4" onClick={onClose}>
             <div
                 className="bg-white w-full max-w-lg rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300"
                 onClick={(e) => e.stopPropagation()}
@@ -200,7 +201,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
