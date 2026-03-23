@@ -5,9 +5,8 @@ import PageHeader from '../components/PageHeader';
 import { useAppSelector } from '../store/hooks';
 import { salaryApi } from '../api/salaryApi';
 import Toast from '../components/Toast';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import { fillEPFFormC } from '../utils/fillEPFFormC';
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -67,54 +66,34 @@ const CFormReport = () => {
     const totals = reportData?.totals;
     const periodLabel = `${MONTHS[selectedMonth - 1]} ${selectedYear}`;
 
-    // ── Export PDF ────────────────────────────────────────────────
-    const exportPDF = () => {
-        const doc = new jsPDF();
-        doc.setFontSize(14);
-        doc.text('C-Form Summary Report', 14, 15);
-        doc.setFontSize(10);
-        doc.text(`Period: ${periodLabel}`, 14, 22);
-        if (reportData?.companyName) doc.text(`Company: ${reportData.companyName}`, 14, 29);
-
-        const body = rows.map((r: any) => [
-            r.employeeName,
-            r.nationalId,
-            r.memberNo,
-            fmt(r.basicPay),
-            fmt(r.employerEpf),
-            fmt(r.employeeEpf),
-            fmt(r.totalEarnings),
-        ]);
-
-        if (totals) {
-            body.push([
-                'Total', '', '',
-                fmt(totals.basicPay),
-                fmt(totals.employerEpf),
-                fmt(totals.employeeEpf),
-                fmt(totals.totalEarnings),
-            ]);
+    // ── Export PDF (fills official EPF Form C template) ───────────
+    const exportPDF = async () => {
+        if (!reportData || rows.length === 0) return;
+        try {
+            await fillEPFFormC({
+                employees: rows.map((r: any) => ({
+                    employeeName: r.employeeName,
+                    nationalId: r.nationalId,
+                    memberNo: r.memberNo,
+                    basicPay: r.basicPay,
+                    employerEpf: r.employerEpf,
+                    employeeEpf: r.employeeEpf,
+                    totalEarnings: r.totalEarnings,
+                })),
+                totals: {
+                    basicPay: totals?.basicPay ?? 0,
+                    employerEpf: totals?.employerEpf ?? 0,
+                    employeeEpf: totals?.employeeEpf ?? 0,
+                    totalEarnings: totals?.totalEarnings ?? 0,
+                },
+                month: selectedMonth,
+                year: selectedYear,
+                companyName: reportData?.companyName,
+                epfRegistrationNo: reportData?.epfRegistrationNo ?? '',
+            });
+        } catch (err: any) {
+            setToast({ message: err.message || 'Failed to generate PDF', type: 'error' });
         }
-
-        autoTable(doc, {
-            startY: 35,
-            head: [[
-                "Employee's Name", 'National ID No.', 'Member No.',
-                'Total (Rs.)', 'Employer (Rs.)', 'Employee (Rs.)', 'Total Earnings (Rs.)'
-            ]],
-            body,
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [66, 133, 244] },
-            foot: [],
-            didParseCell: (data) => {
-                if (data.row.index === body.length - 1 && totals) {
-                    data.cell.styles.fontStyle = 'bold';
-                    data.cell.styles.fillColor = [240, 245, 255];
-                }
-            }
-        });
-
-        doc.save(`C-Form_${MONTHS[selectedMonth - 1]}_${selectedYear}.pdf`);
     };
 
     // ── Export Excel ──────────────────────────────────────────────
