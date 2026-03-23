@@ -762,26 +762,26 @@ const UniversalDrawer = ({
                               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <CreditCard className="h-4 w-4 text-gray-400" />
                               </div>
-                                <input
-                                  type="text"
-                                  value={employeeData.employeeNIC || ""}
-                                  onChange={(e) =>
-                                    handleEmployeeChange(
-                                      "employeeNIC",
-                                      e.target.value,
-                                    )
-                                  }
-                                  onBlur={() => handleBlur("employeeNIC")}
-                                  placeholder="Enter employee NIC Number"
-                                  className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeNIC && errors.employeeNIC ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
-                                />
-                              </div>
-                              {touched.employeeNIC && errors.employeeNIC && (
-                                <p className="text-red-500 text-xs mt-1">
-                                  {errors.employeeNIC}
-                                </p>
-                              )}
+                              <input
+                                type="text"
+                                value={employeeData.employeeNIC || ""}
+                                onChange={(e) =>
+                                  handleEmployeeChange(
+                                    "employeeNIC",
+                                    e.target.value,
+                                  )
+                                }
+                                onBlur={() => handleBlur("employeeNIC")}
+                                placeholder="Enter employee NIC Number"
+                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeNIC && errors.employeeNIC ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                              />
                             </div>
+                            {touched.employeeNIC && errors.employeeNIC && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors.employeeNIC}
+                              </p>
+                            )}
+                          </div>
 
                           {/* Address */}
                           <div>
@@ -1014,14 +1014,6 @@ const UniversalDrawer = ({
                             )}
                           </div>
 
-                          {/* Next Button */}
-                          <button
-                            type="button"
-                            onClick={() => setActiveTab("payment")}
-                            className="w-full text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] mt-2"
-                          >
-                            Next
-                          </button>
                         </div>
                       )}
 
@@ -1461,29 +1453,6 @@ const UniversalDrawer = ({
                         </div>
                       )}
 
-                      {/* Inline Payment Tab Next Button */}
-                      {activeTab === "payment" && (
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab("bank")}
-                          className="w-full text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] mt-2"
-                        >
-                          Next
-                        </button>
-                      )}
-
-                      {/* Inline Bank Tab Finish Button */}
-                      {activeTab === "bank" && (
-                        <button
-                          type="submit"
-                          onClick={handleSubmit}
-                          disabled={isSubmitting || !isFormValid()}
-                          className="w-full text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
-                        </button>
-                      )}
-
                       {/* Hidden Fields */}
                       <input type="hidden" value={employeeData.department} />
                     </div>
@@ -1493,19 +1462,52 @@ const UniversalDrawer = ({
             </div>
           </form>
 
-          {/* Footer - Only for Company mode */}
-          {isCompany && (
-            <div className="p-4 border-t border-gray-200 flex justify-center">
-              <button
-                type="submit"
-                onClick={handleSubmit}
-                disabled={isSubmitting || !isFormValid()}
-                className="w-2/3 max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
-              </button>
-            </div>
-          )}
+          {/* Footer */}
+          <div className="p-4 border-t border-gray-200 shrink-0 bg-white">
+            {isCompany ? (
+              <div className="flex justify-center">
+                <button
+                  type="submit"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || !isFormValid()}
+                  className="w-2/3 max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                {activeTab === "employee" && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("payment")}
+                    className="w-full text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px]"
+                  >
+                    Next
+                  </button>
+                )}
+                {activeTab === "payment" && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("bank")}
+                    className="w-full text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px]"
+                  >
+                    Next
+                  </button>
+                )}
+                {activeTab === "bank" && (
+                  <button
+                    type="submit"
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || !isFormValid()}
+                    className="w-full text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>
