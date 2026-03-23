@@ -15,7 +15,9 @@ import {
   Globe,
   ListFilter,
   Landmark,
+  UploadCloud,
 } from "lucide-react";
+import FileUploadModal from "./FileUploadModal";
 import { CreateCompanyRequest } from "../types/company.types";
 import { CreateEmployeeRequest } from "../types/employee.types";
 
@@ -103,6 +105,7 @@ const UniversalDrawer = ({
   const [activeTab, setActiveTab] = useState<"employee" | "payment" | "bank">(
     "employee",
   );
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [employeeFiles, setEmployeeFiles] = useState<File[]>([]);
 
   // Payment tab state
@@ -839,26 +842,26 @@ const UniversalDrawer = ({
                               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <CreditCard className="h-4 w-4 text-gray-400" />
                               </div>
-                                <input
-                                  type="text"
-                                  value={employeeData.employeeNIC || ""}
-                                  onChange={(e) =>
-                                    handleEmployeeChange(
-                                      "employeeNIC",
-                                      e.target.value,
-                                    )
-                                  }
-                                  onBlur={() => handleBlur("employeeNIC")}
-                                  placeholder="Enter employee NIC Number"
-                                  className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeNIC && errors.employeeNIC ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
-                                />
-                              </div>
-                              {touched.employeeNIC && errors.employeeNIC && (
-                                <p className="text-red-500 text-xs mt-1">
-                                  {errors.employeeNIC}
-                                </p>
-                              )}
+                              <input
+                                type="text"
+                                value={employeeData.employeeNIC || ""}
+                                onChange={(e) =>
+                                  handleEmployeeChange(
+                                    "employeeNIC",
+                                    e.target.value,
+                                  )
+                                }
+                                onBlur={() => handleBlur("employeeNIC")}
+                                placeholder="Enter employee NIC Number"
+                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeNIC && errors.employeeNIC ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                              />
                             </div>
+                            {touched.employeeNIC && errors.employeeNIC && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors.employeeNIC}
+                              </p>
+                            )}
+                          </div>
 
                           {/* Address */}
                           <div>
@@ -1043,47 +1046,31 @@ const UniversalDrawer = ({
                             <label className="block text-[13px] font-medium text-gray-700 mb-1">
                               Add Files
                             </label>
-                            <label
-                              className="flex items-center gap-2 w-full px-3 py-1.5 border border-gray-300 rounded-lg cursor-pointer hover:border-[#367AFF] transition-colors text-[13px] text-gray-500"
+                            <button
+                              type="button"
+                              onClick={() => setIsUploadModalOpen(true)}
+                              className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all text-[13px] text-gray-500 font-medium group"
                             >
-                              <ListFilter className="h-4 w-4 text-gray-400" />
+                              <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                                <UploadCloud className="h-4 w-4 text-gray-400 group-hover:text-blue-500" />
+                              </div>
                               <span>Add Employee Files</span>
-                              <PlusCircle className="h-4 w-4 text-gray-400 ml-auto" />
-                              <input
-                                type="file"
-                                accept=".png,.jpg,.jpeg,.pdf"
-                                multiple
-                                className="hidden"
-                                onChange={(e) => {
-                                  if (e.target.files) {
-                                    const files = Array.from(e.target.files);
-                                    const validFiles = files.filter(file => {
-                                      if (file.size > 5 * 1024 * 1024) {
-                                        window.alert(`File ${file.name} exceeds 5MB limit`);
-                                        return false;
-                                      }
-                                      if (!['image/png', 'image/jpeg', 'application/pdf'].includes(file.type)) {
-                                        window.alert(`File ${file.name} is not a supported format (PNG, JPG, PDF)`);
-                                        return false;
-                                      }
-                                      return true;
-                                    });
-                                    setEmployeeFiles(prev => [...prev, ...validFiles]);
-                                  }
-                                }}
-                              />
-                            </label>
+                              <div className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-gray-50 group-hover:bg-blue-100 transition-colors">
+                                <PlusCircle className="h-3.5 w-3.5 text-gray-400 group-hover:text-blue-600" />
+                              </div>
+                            </button>
+
                             {employeeFiles.length > 0 && (
-                              <div className="mt-1.5 space-y-1">
+                              <div className="mt-3 space-y-2">
                                 {employeeFiles.map((file, idx) => (
-                                  <div key={idx} className="flex items-center justify-between bg-gray-50 px-3 py-1 rounded-lg text-[12px] text-gray-600">
-                                    <span className="truncate max-w-[80%]">{file.name}</span>
+                                  <div key={idx} className="flex items-center justify-between bg-blue-50/50 border border-blue-100 px-4 py-2 rounded-xl text-[12px] text-gray-700 font-medium">
+                                    <span className="truncate max-w-[85%]">{file.name}</span>
                                     <button
                                       type="button"
                                       onClick={() => setEmployeeFiles(prev => prev.filter((_, i) => i !== idx))}
-                                      className="text-gray-400 hover:text-red-500 transition-colors"
+                                      className="text-gray-400 hover:text-red-500 transition-colors p-1"
                                     >
-                                      <X className="w-3 h-3" />
+                                      <X className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
                                 ))}
