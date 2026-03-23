@@ -12,7 +12,10 @@ import {
     Landmark,
     Plus,
     Loader2,
+    UploadCloud,
+    PlusCircle,
 } from "lucide-react";
+import FileUploadModal from "./FileUploadModal";
 import { CreateEmployeeRequest } from "../types/employee.types";
 import Toast from "./Toast";
 
@@ -68,6 +71,7 @@ const AddEmployeeDrawer = ({
     const [activeTab, setActiveTab] = useState<"employee" | "payment" | "bank">(
         "employee",
     );
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [employeeFiles, setEmployeeFiles] = useState<File[]>([]);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -532,6 +536,48 @@ const AddEmployeeDrawer = ({
                                         />
                                     </div>
                                 </div>
+
+                                {/* Add Files */}
+                                <div>
+                                    <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Add Files</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsUploadModalOpen(true)}
+                                        className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all text-[13px] text-gray-500 font-medium group"
+                                    >
+                                        <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                                            <UploadCloud className="h-4 w-4 text-gray-400 group-hover:text-blue-500" />
+                                        </div>
+                                        <span>Add Employee Files</span>
+                                        <div className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-gray-50 group-hover:bg-blue-100 transition-colors">
+                                            <PlusCircle className="h-3.5 w-3.5 text-gray-400 group-hover:text-blue-600" />
+                                        </div>
+                                    </button>
+
+                                    {employeeFiles.length > 0 && (
+                                        <div className="mt-3 space-y-2">
+                                            {employeeFiles.map((file, idx) => (
+                                                <div key={idx} className="flex items-center justify-between bg-blue-50/50 border border-blue-100 px-4 py-2 rounded-xl text-[12px] text-gray-700 font-medium font-sans">
+                                                    <span className="truncate max-w-[85%]">{file.name}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEmployeeFiles(prev => prev.filter((_, i) => i !== idx))}
+                                                        className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                                                    >
+                                                        <X className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <FileUploadModal
+                                    isOpen={isUploadModalOpen}
+                                    onClose={() => setIsUploadModalOpen(false)}
+                                    files={employeeFiles}
+                                    onFilesChange={setEmployeeFiles}
+                                />
                             </div>
                         )}
 
