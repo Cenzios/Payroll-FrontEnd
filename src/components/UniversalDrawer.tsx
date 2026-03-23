@@ -209,12 +209,12 @@ const UniversalDrawer = ({
         allowances,
         deductions,
       };
-      
+
       // Check if it's actually "dirty" before saving (avoid saving mostly empty objects if we can)
-      const isDirty = 
-        employeeData.fullName || 
-        employeeData.employeeId || 
-        employeeData.contactNumber || 
+      const isDirty =
+        employeeData.fullName ||
+        employeeData.employeeId ||
+        employeeData.contactNumber ||
         employeeData.email ||
         (allowances.length > 1 || (allowances[0].type || allowances[0].amount)) ||
         (deductions.length > 1 || (deductions[0].type || deductions[0].amount));
@@ -1078,7 +1078,12 @@ const UniversalDrawer = ({
                             )}
                           </div>
 
-
+                          <FileUploadModal
+                            isOpen={isUploadModalOpen}
+                            onClose={() => setIsUploadModalOpen(false)}
+                            files={employeeFiles}
+                            onFilesChange={setEmployeeFiles}
+                          />
                         </div>
                       )}
 
