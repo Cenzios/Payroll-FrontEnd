@@ -149,33 +149,94 @@ const UniversalDrawer = ({
           setAllowanceEnabled(initialData.allowanceEnabled ?? false);
           setDeductionEnabled(initialData.deductionEnabled ?? false);
         } else {
-          setEmployeeData({
-            fullName: "",
-            address: "",
-            employeeId: "",
-            contactNumber: "",
-            joinedDate: new Date().toISOString().split("T")[0],
-            designation: "",
-            department: "General",
-            email: "",
-            basicSalary: 0,
-            salaryType: "DAILY",
-            otRate: 0,
-            epfEnabled: true,
-            allowanceEnabled: false,
-            deductionEnabled: false,
-          });
-          setEpfEnabled(true);
-          setEpfEtf("");
-          setAllowanceEnabled(false);
-          setDeductionEnabled(false);
-          setAllowances([{ type: "", amount: "" }]);
-          setDeductions([{ type: "", amount: "" }]);
+          // Check for draft in localStorage
+          const draftKey = `employee_add_draft_${companyId}`;
+          const savedDraft = localStorage.getItem(draftKey);
+
+          if (savedDraft) {
+            try {
+              const draft = JSON.parse(savedDraft);
+              setEmployeeData(draft.employeeData || {});
+              setEpfEnabled(draft.epfEnabled ?? true);
+              setEpfEtf(draft.epfEtf || "");
+              setAllowanceEnabled(draft.allowanceEnabled ?? false);
+              setDeductionEnabled(draft.deductionEnabled ?? false);
+              setAllowances(draft.allowances || [{ type: "", amount: "" }]);
+              setDeductions(draft.deductions || [{ type: "", amount: "" }]);
+            } catch (e) {
+              console.error("Failed to parse draft", e);
+            }
+          } else {
+            setEmployeeData({
+              fullName: "",
+              address: "",
+              employeeId: "",
+              contactNumber: "",
+              joinedDate: new Date().toISOString().split("T")[0],
+              designation: "",
+              department: "General",
+              email: "",
+              basicSalary: 0,
+              salaryType: "DAILY",
+              otRate: 0,
+              epfEnabled: true,
+              allowanceEnabled: false,
+              deductionEnabled: false,
+            });
+            setEpfEnabled(true);
+            setEpfEtf("");
+            setAllowanceEnabled(false);
+            setDeductionEnabled(false);
+            setAllowances([{ type: "", amount: "" }]);
+            setDeductions([{ type: "", amount: "" }]);
+          }
           setEmployeeFiles([]); // reset files
         }
       }
     }
-  }, [isOpen, mode, initialData]);
+  }, [isOpen, mode, initialData, companyId]);
+
+  // Save draft effect
+  useEffect(() => {
+    if (mode === "employee" && !initialData && companyId) {
+      const draftKey = `employee_add_draft_${companyId}`;
+      const draftValues = {
+        employeeData,
+        epfEtf,
+        epfEnabled,
+        allowanceEnabled,
+        deductionEnabled,
+        allowances,
+        deductions,
+      };
+      
+      // Check if it's actually "dirty" before saving (avoid saving mostly empty objects if we can)
+      const isDirty = 
+        employeeData.fullName || 
+        employeeData.employeeId || 
+        employeeData.contactNumber || 
+        employeeData.email ||
+        (allowances.length > 1 || (allowances[0].type || allowances[0].amount)) ||
+        (deductions.length > 1 || (deductions[0].type || deductions[0].amount));
+
+      if (isDirty) {
+        localStorage.setItem(draftKey, JSON.stringify(draftValues));
+      } else {
+        localStorage.removeItem(draftKey);
+      }
+    }
+  }, [
+    employeeData,
+    epfEtf,
+    epfEnabled,
+    allowanceEnabled,
+    deductionEnabled,
+    allowances,
+    deductions,
+    mode,
+    initialData,
+    companyId,
+  ]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -214,7 +275,8 @@ const UniversalDrawer = ({
         case "fullName":
           if (!value || value.trim().length < 2)
             error = "Full name must be at least 2 characters";
-          else if (/\d/.test(value)) error = "Full name cannot contain numbers";
+          else if (/[^a-zA-Z\s.-]/.test(value))
+            error = "Full name can only contain letters, spaces, dots, and hyphens";
           break;
         case "employeeId":
           if (!value || !value.trim()) error = "Employee ID is required";
@@ -229,8 +291,8 @@ const UniversalDrawer = ({
             error = "Must be +94XXXXXXXXX or 0XXXXXXXXX (10 digits)";
           break;
         case "designation":
-          if (value && /\d/.test(value))
-            error = "Designation cannot contain numbers";
+          if (value && /[^a-zA-Z\s.-]/.test(value))
+            error = "Designation can only contain letters, spaces, dots, and hyphens";
           break;
         case "basicSalary":
           if (
@@ -264,20 +326,30 @@ const UniversalDrawer = ({
           break;
         case "accountNumber":
           if (!value || !value.trim()) error = "Account number is required";
-          else if (!/^\d+$/.test(value.trim())) error = "Account number must contain only digits";
+          else if (!/^\d+$/.test(value.trim()))
+            error = "Account number must contain only digits";
+          else if (value.trim().length < 6)
+            error = "Account number must be at least 6 digits";
           break;
         case "branchName":
           if (!value || !value.trim()) error = "Branch name is required";
           break;
         case "accountHolderName":
-          if (!value || value.trim().length < 2) error = "Account holder name must be at least 2 characters";
-          else if (/\d/.test(value)) error = "Account holder name cannot contain numbers";
+          if (!value || value.trim().length < 2)
+            error = "Account holder name must be at least 2 characters";
+          else if (/[^a-zA-Z\s.-]/.test(value))
+            error = "Account holder name can only contain letters, spaces, dots, and hyphens";
           break;
         case "employeeNIC":
           if (value && value.trim()) {
             const nic = value.trim();
-            if (nic.length !== 10 && nic.length !== 12) {
-              error = "NIC must be either 10 or 12 characters long";
+            // Old NIC: 9 digits + V/X
+            const oldNicRegex = /^\d{9}[vVxX]$/;
+            // New NIC: 12 digits
+            const newNicRegex = /^\d{12}$/;
+
+            if (!oldNicRegex.test(nic) && !newNicRegex.test(nic)) {
+              error = "Invalid NIC format (Old: 9 digits + V/X, New: 12 digits)";
             }
           }
           break;
@@ -473,6 +545,11 @@ const UniversalDrawer = ({
         } as CreateEmployeeRequest;
 
         await onSubmit(finalEmployeeData, employeeFiles);
+
+        // Clear draft on success
+        if (companyId) {
+          localStorage.removeItem(`employee_add_draft_${companyId}`);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -1001,12 +1078,6 @@ const UniversalDrawer = ({
                             )}
                           </div>
 
-                          <FileUploadModal
-                            isOpen={isUploadModalOpen}
-                            onClose={() => setIsUploadModalOpen(false)}
-                            files={employeeFiles}
-                            onFilesChange={setEmployeeFiles}
-                          />
 
                         </div>
                       )}
@@ -1447,6 +1518,10 @@ const UniversalDrawer = ({
                         </div>
                       )}
 
+
+
+
+
                       {/* Hidden Fields */}
                       <input type="hidden" value={employeeData.department} />
                     </div>
@@ -1456,50 +1531,28 @@ const UniversalDrawer = ({
             </div>
           </form>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-200 shrink-0 bg-white">
-            {isCompany ? (
-              <div className="flex justify-center">
-                <button
-                  type="submit"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting || !isFormValid()}
-                  className="w-2/3 max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
-                </button>
-              </div>
+          {/* Footer Section */}
+          <div className="p-4 border-t border-gray-200 flex justify-center">
+            {isCompany || activeTab === "bank" ? (
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                disabled={isSubmitting || !isFormValid()}
+                className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
+              </button>
             ) : (
-              <div className="flex gap-3">
-                {activeTab === "employee" && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("payment")}
-                    className="w-full text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px]"
-                  >
-                    Next
-                  </button>
-                )}
-                {activeTab === "payment" && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("bank")}
-                    className="w-full text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px]"
-                  >
-                    Next
-                  </button>
-                )}
-                {activeTab === "bank" && (
-                  <button
-                    type="submit"
-                    onClick={handleSubmit}
-                    disabled={isSubmitting || !isFormValid()}
-                    className="w-full text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
-                  </button>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (activeTab === "employee") setActiveTab("payment");
+                  else if (activeTab === "payment") setActiveTab("bank");
+                }}
+                className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px]"
+              >
+                Next
+              </button>
             )}
           </div>
         </div>

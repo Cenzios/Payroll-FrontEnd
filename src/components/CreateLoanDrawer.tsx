@@ -72,6 +72,21 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
       return;
     }
 
+    if (parseFloat(amount) <= 0) {
+      setToast({ message: 'Amount must be greater than 0', type: 'error' });
+      return;
+    }
+
+    if (parseInt(installmentCount) <= 0) {
+      setToast({ message: 'Installment count must be at least 1', type: 'error' });
+      return;
+    }
+
+    if (parseFloat(interestRate) < 0) {
+      setToast({ message: 'Interest rate cannot be negative', type: 'error' });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       let documentId = undefined;
@@ -274,6 +289,8 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="120000"
+                    min="0.01"
+                    step="0.01"
                     className="w-full pl-10 pr-4 py-2.5 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                   />
                 </div>
@@ -287,6 +304,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                   value={installmentCount}
                   onChange={(e) => setInstallmentCount(e.target.value)}
                   placeholder="12"
+                  min="1"
                   className="w-full px-4 py-2.5 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                 />
               </div>
@@ -304,6 +322,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                   value={interestRate}
                   onChange={(e) => setInterestRate(e.target.value)}
                   placeholder="5.0"
+                  min="0"
                   className="w-full px-4 pr-10 py-2.5 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                 />
                 <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
