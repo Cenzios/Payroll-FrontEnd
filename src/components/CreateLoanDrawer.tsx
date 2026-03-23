@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, UploadCloud, Loader2, Calendar, Percent, Info, Calculator, FileText, CheckCircle2, PlusCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, UploadCloud, Loader2, Calendar, Percent, Info, Calculator, FileText, CheckCircle2, PlusCircle, Search, User, ChevronDown } from 'lucide-react';
 import { useGetEmployeesQuery, useCreateLoanMutation, useUploadEmployeeDocumentMutation } from '../store/apiSlice';
 import { Employee } from '../types/employee.types';
 import Toast from './Toast';
@@ -15,6 +15,11 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
   const [loanTitle, setLoanTitle] = useState('');
   const [description, setDescription] = useState('');
   const [employeeId, setEmployeeId] = useState('');
+  const [selectedEmployeeName, setSelectedEmployeeName] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [interestRateType, setInterestRateType] = useState<'ANNUALLY' | 'MONTHLY'>('ANNUALLY');
@@ -36,6 +41,23 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
   const [uploadEmployeeDocument] = useUploadEmployeeDocumentMutation();
 
   const employees = employeesData?.employees || [];
+
+  // Filter employees based on search term
+  const filteredEmployees = employees.filter((emp: Employee) =>
+    emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Calculate Monthly Premium
   useEffect(() => {
@@ -119,12 +141,31 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
     setLoanTitle('');
     setDescription('');
     setEmployeeId('');
+    setSelectedEmployeeName('');
+    setSearchTerm('');
     setStartDate('');
     setEndDate('');
     setAmount('');
     setInstallmentCount('');
     setInterestRate('');
     setSupportingDocs([]);
+  };
+
+  const handleInstallmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      setInstallmentCount('');
+      return;
+    }
+    const num = parseInt(value);
+    if (!isNaN(num)) {
+      if (num > 15) {
+        setInstallmentCount('15');
+        setToast({ message: 'Maximum installment count is 15', type: 'error' });
+      } else {
+        setInstallmentCount(num.toString());
+      }
+    }
   };
 
   if (!isOpen) return null;
@@ -141,7 +182,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
         {/* Drawer */}
         <div className="relative w-full max-w-[480px] bg-white h-full shadow-2xl flex flex-col animate-slide-in-right">
           {/* Header */}
-          <div className="flex items-center justify-between px-8 py-6 border-b border-gray-50">
+          <div className="flex items-center justify-between px-8 py-3 border-b border-gray-50">
             <h2 className="text-[20px] font-bold text-[#141B3B]">Create Loan</h2>
             <button
               onClick={onClose}
@@ -179,28 +220,67 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                 />
               </div>
 
-              {/* 3. Employee */}
-              <div>
+              {/* 3. Employee (Searchable Dropdown) */}
+              <div className="relative" ref={dropdownRef}>
                 <label className="block text-[13px] font-semibold text-gray-700 mb-2">Employee</label>
-                <div className="relative">
-                  <select
-                    value={employeeId}
-                    onChange={(e) => setEmployeeId(e.target.value)}
-                    className="w-full px-4 py-3 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 appearance-none cursor-pointer"
-                  >
-                    <option value="" disabled>Select Employee</option>
-                    {employees.map((emp: Employee) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.fullName} ({emp.employeeId})
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
+                <div
+                  className={`relative flex items-center bg-white border rounded-xl focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all ${isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200'}`}
+                >
+                  <div className="pl-4 pointer-events-none">
+                    <Search className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={isDropdownOpen ? searchTerm : (selectedEmployeeName || '')}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      if (!isDropdownOpen) setIsDropdownOpen(true);
+                    }}
+                    onFocus={() => setIsDropdownOpen(true)}
+                    placeholder="Search employee by name or ID..."
+                    className="w-full px-3 py-3 text-[14px] bg-transparent outline-none text-gray-900 placeholder:text-gray-300"
+                  />
+                  <div className="pr-4 pointer-events-none">
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
+
+                {/* Dropdown List */}
+                {isDropdownOpen && (
+                  <div className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl shadow-gray-200/50 max-h-[280px] overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200">
+                    {filteredEmployees.length > 0 ? (
+                      filteredEmployees.map((emp: Employee) => (
+                        <div
+                          key={emp.id}
+                          onClick={() => {
+                            setEmployeeId(emp.id);
+                            setSelectedEmployeeName(`${emp.fullName} (${emp.employeeId})`);
+                            setIsDropdownOpen(false);
+                            setSearchTerm('');
+                          }}
+                          className="px-4 py-3 hover:bg-blue-50/50 cursor-pointer flex items-center justify-between group transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-500 transition-colors">
+                              <User className="w-4 h-4" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[14px] font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{emp.fullName}</span>
+                              <span className="text-[12px] text-gray-400">{emp.employeeId}</span>
+                            </div>
+                          </div>
+                          {employeeId === emp.id && (
+                            <CheckCircle2 className="w-4 h-4 text-blue-500" />
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-8 text-center text-gray-400 text-[13px] italic">
+                        No employees found matching "{searchTerm}"
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* 4. Start & End Dates */}
@@ -231,23 +311,24 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[13px] font-semibold text-gray-700 mb-2">Interest Rate Type</label>
-                  <div className="p-1 bg-gray-100/80 rounded-xl flex h-[46px]">
+                  <div className="flex items-center bg-gray-100 rounded-full p-[3px] h-[44px]">
                     <button
                       type="button"
                       onClick={() => setInterestRateType('ANNUALLY')}
-                      className={`flex-1 flex items-center justify-center text-[13px] font-bold rounded-lg transition-all ${interestRateType === 'ANNUALLY'
-                        ? 'bg-white text-[#3B82F6] shadow-sm border border-gray-200/50'
-                        : 'text-gray-500 hover:text-gray-700'
+                      className={`flex-1 h-full rounded-full text-[13px] font-semibold transition-all duration-200 ${interestRateType === 'ANNUALLY'
+                        ? 'bg-white text-blue-600 shadow-[0_1px_2px_rgba(0,0,0,0.08)]'
+                        : 'text-gray-500'
                         }`}
                     >
                       Annually
                     </button>
+
                     <button
                       type="button"
                       onClick={() => setInterestRateType('MONTHLY')}
-                      className={`flex-1 flex items-center justify-center text-[13px] font-bold rounded-lg transition-all ${interestRateType === 'MONTHLY'
-                        ? 'bg-white text-[#3B82F6] shadow-sm border border-gray-200/50'
-                        : 'text-gray-500 hover:text-gray-700'
+                      className={`flex-1 h-full rounded-full text-[13px] font-semibold transition-all duration-200 ${interestRateType === 'MONTHLY'
+                        ? 'bg-white text-blue-600 shadow-[0_1px_2px_rgba(0,0,0,0.08)]'
+                        : 'text-gray-500'
                         }`}
                     >
                       Monthly
@@ -294,10 +375,11 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                   <input
                     type="number"
                     value={installmentCount}
-                    onChange={(e) => setInstallmentCount(e.target.value)}
+                    onChange={handleInstallmentChange}
                     placeholder="12"
                     className="no-spinner w-full px-4 py-3 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                   />
+                  <p className="text-[11px] text-gray-400 mt-1">Maximum 15 installments</p>
                 </div>
               </div>
 
