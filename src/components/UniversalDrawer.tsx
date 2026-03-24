@@ -299,7 +299,8 @@ const UniversalDrawer = ({
             value === undefined ||
             value === null ||
             value === "" ||
-            isNaN(Number(value))
+            isNaN(Number(value)) ||
+            Number(value) === 0
           )
             error = "Basic salary is required";
           else if (Number(value) < 0) error = "Basic salary cannot be negative";
@@ -341,7 +342,9 @@ const UniversalDrawer = ({
             error = "Account holder name can only contain letters, spaces, dots, and hyphens";
           break;
         case "employeeNIC":
-          if (value && value.trim()) {
+          if (!value || !value.trim()) {
+            error = "NIC is required";
+          } else {
             const nic = value.trim();
             // Old NIC: 9 digits + V/X
             const oldNicRegex = /^\d{9}[vVxX]$/;
@@ -350,6 +353,18 @@ const UniversalDrawer = ({
 
             if (!oldNicRegex.test(nic) && !newNicRegex.test(nic)) {
               error = "Invalid NIC format (Old: 9 digits + V/X, New: 12 digits)";
+            }
+          }
+          break;
+        case "epfNumber":
+          if (!value || !value.trim()) {
+            error = "EPF Number is required";
+          } else {
+            const epf = value.trim();
+            if (epf.length > 10) {
+              error = "EPF Number cannot exceed 10 characters";
+            } else if (/[^a-zA-Z0-9-]/.test(epf)) {
+              error = "EPF Number can only contain letters, numbers, and dashes";
             }
           }
           break;
@@ -384,6 +399,40 @@ const UniversalDrawer = ({
     setEmployeeData((prev) => ({ ...prev, [field]: value }));
     const error = validateField(field, value, "employee");
     setErrors((prev) => ({ ...prev, [field]: error }));
+
+    // Real-time validation: Mark as touched once the user starts typing
+    if (value && String(value).trim() !== "") {
+      setTouched((prev) => ({ ...prev, [field]: true }));
+    }
+  };
+
+  const isTabValid = (tab: typeof activeTab) => {
+    if (mode === "company") return true; // Company is single tab
+    if (tab === "employee") {
+      const fields: (keyof CreateEmployeeRequest)[] = [
+        "fullName",
+        "employeeId",
+        "contactNumber",
+        "joinedDate",
+        "employeeNIC",
+        "epfNumber",
+      ];
+      return fields.every(
+        (field) =>
+          !validateField(field, (employeeData as any)[field], "employee"),
+      );
+    }
+    if (tab === "payment") {
+      return !validateField("basicSalary", employeeData.basicSalary, "employee");
+    }
+    if (tab === "bank") {
+      const fields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
+      return fields.every(
+        (field) =>
+          !validateField(field, (employeeData as any)[field], "employee"),
+      );
+    }
+    return true;
   };
 
   const isFormValid = () => {
@@ -403,6 +452,8 @@ const UniversalDrawer = ({
         "employeeId",
         "contactNumber",
         "joinedDate",
+        "employeeNIC",
+        "epfNumber",
       ];
       const bankFields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
       return (
@@ -443,6 +494,8 @@ const UniversalDrawer = ({
         "joinedDate",
         "address",
         "email",
+        "employeeNIC",
+        "epfNumber",
       ];
       fields.forEach((f) => {
         const err = validateField(f, (employeeData as any)[f], "employee");
@@ -474,6 +527,8 @@ const UniversalDrawer = ({
         "joinedDate",
         "address",
         "email",
+        "employeeNIC",
+        "epfNumber",
         "bankName",
         "accountNumber",
         "branchName",
@@ -776,7 +831,7 @@ const UniversalDrawer = ({
                           {/* Employee ID */}
                           <div>
                             <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Employee ID
+                              Employee ID *
                             </label>
                             <div className="relative">
                               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -806,7 +861,7 @@ const UniversalDrawer = ({
                           {/* Name */}
                           <div>
                             <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Name
+                              Name *
                             </label>
                             <div className="relative">
                               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -836,7 +891,7 @@ const UniversalDrawer = ({
                           {/* NIC */}
                           <div>
                             <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              NIC
+                              NIC *
                             </label>
                             <div className="relative">
                               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -896,7 +951,7 @@ const UniversalDrawer = ({
                           {/* EPF Number */}
                           <div>
                             <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              EPF Number
+                              EPF Number *
                             </label>
                             <div className="relative">
                               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -911,10 +966,16 @@ const UniversalDrawer = ({
                                     e.target.value,
                                   )
                                 }
+                                onBlur={() => handleBlur("epfNumber")}
                                 placeholder="Enter EPF Number"
-                                className="text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all border-gray-300 focus:ring-[#367AFF] focus:border-transparent"
+                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.epfNumber && errors.epfNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                               />
                             </div>
+                            {touched.epfNumber && errors.epfNumber && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors.epfNumber}
+                              </p>
+                            )}
                           </div>
 
                           {/* Email & Phone */}
@@ -949,7 +1010,7 @@ const UniversalDrawer = ({
                             </div>
                             <div>
                               <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                                Phone Number
+                                Phone Number *
                               </label>
                               <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1015,7 +1076,7 @@ const UniversalDrawer = ({
                           {/* Joined Date */}
                           <div>
                             <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Joined Date
+                              Joined Date *
                             </label>
                             <div className="relative">
                               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1095,8 +1156,8 @@ const UniversalDrawer = ({
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-[14px] font-medium text-gray-700">
                                 {employeeData.salaryType === "MONTHLY"
-                                  ? "Monthly Basic"
-                                  : "Daily Basic"}
+                                  ? "Monthly Basic *"
+                                  : "Daily Basic *"}
                               </span>
                               <select
                                 value={employeeData.salaryType || "DAILY"}
@@ -1554,7 +1615,8 @@ const UniversalDrawer = ({
                   if (activeTab === "employee") setActiveTab("payment");
                   else if (activeTab === "payment") setActiveTab("bank");
                 }}
-                className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px]"
+                disabled={!isTabValid(activeTab)}
+                className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
