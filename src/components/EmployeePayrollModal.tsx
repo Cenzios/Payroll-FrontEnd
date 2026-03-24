@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2, FileText, FileSpreadsheet, Download, ChevronDown, ChevronRight } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
 import Toast from './Toast';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import { exportEmployeeMonthlySummary } from '../utils/exportService';
 
 interface EmployeePayrollModalProps {
     isOpen: boolean;
@@ -96,178 +94,19 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
 
     const exportPDF = () => {
         if (!employeeData) return;
-
-        const doc = new jsPDF();
-
-        // Title
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text('PAYROLL SUMMARY REPORT', 14, 15);
-
-        // Employee Information
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        let yPos = 30;
-
-        doc.text(`Employee Name: ${employeeData.employeeName}`, 14, yPos);
-        doc.text(`Employee ID: ${employeeData.employeeCode}`, 120, yPos);
-        yPos += 7;
-
-        doc.text(`Position: ${employeeData.designation}`, 14, yPos);
-        doc.text(`Basic Salary: RS ${employeeData.basicSalary.toLocaleString()}`, 120, yPos);
-        yPos += 7;
-
-        doc.text(`Joined Date: ${employeeData.joinedDate}`, 14, yPos);
-        yPos += 10;
-
-        // Monthly Breakdown Table
-        const tableData = employeeData.monthlyBreakdown.map(row => [
-            row.month,
-            row.workedDays.toString(),
-            `RS ${row.basicPay.toLocaleString()}`,
-            `RS ${row.otAmount.toLocaleString()} (${row.otHours}h)`,
-            `RS ${row.grossPay.toLocaleString()}`,
-            `RS ${row.netPay.toLocaleString()}`,
-            `RS ${row.tax.toLocaleString()}`,
-            `RS ${row.salaryAdvance.toLocaleString()}`,
-            `RS ${row.deductions.toLocaleString()}`,
-            `RS ${row.employeeEPF.toLocaleString()}`,
-            `RS ${row.companyEPFETF.toLocaleString()}`
-        ]);
-
-        // Add totals row
-        tableData.push([
-            'SELECTED MONTH TOTALS',
-            employeeData.annualTotals.workedDays.toString(),
-            `RS ${employeeData.annualTotals.basicPay.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.otAmount.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.grossPay.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.netPay.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.tax.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.salaryAdvance.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.deductions.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.employeeEPF.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.companyEPFETF.toLocaleString()}`
-        ]);
-
-        autoTable(doc, {
-            startY: yPos,
-            head: [['Month', 'Days', 'Basic', 'OT', 'Gross', 'Net', 'Tax', 'Advance', 'Total Ded.', 'EPF 8%', 'EPF/ETF Comp']],
-            body: tableData,
-            styles: { fontSize: 7 },
-            headStyles: { fillColor: [37, 99, 235], fontStyle: 'bold' },
-            footStyles: { fillColor: [59, 130, 246], fontStyle: 'bold' },
-            didParseCell: (data) => {
-                if (data.row.index === tableData.length - 1) {
-                    data.cell.styles.fillColor = [59, 130, 246];
-                    data.cell.styles.textColor = [255, 255, 255];
-                    data.cell.styles.fontStyle = 'bold';
-                }
-            }
-        });
-
-        doc.save(`${employeeData.employeeCode}_Payroll_Summary.pdf`);
+        exportEmployeeMonthlySummary('pdf', employeeData);
         setToast({ message: 'PDF exported successfully', type: 'success' });
     };
 
     const exportExcel = () => {
         if (!employeeData) return;
-
-        const wsData: any[][] = [
-            ['PAYROLL SUMMARY REPORT'],
-            [],
-            ['Employee Name:', employeeData.employeeName, '', 'Employee ID:', employeeData.employeeCode],
-            ['Position:', employeeData.designation, '', 'Basic Salary:', `RS ${employeeData.basicSalary.toLocaleString()}`],
-            ['Joined Date:', employeeData.joinedDate],
-            [],
-            ['Monthly Breakdown'],
-            ['Month', 'Days', 'Basic', 'OT', 'Gross', 'Net', 'Tax', 'Advance', 'Total Ded.', 'EPF 8%', 'EPF/ETF Comp'],
-            ...employeeData.monthlyBreakdown.map(row => [
-                row.month,
-                row.workedDays,
-                row.basicPay,
-                row.otAmount,
-                row.grossPay,
-                row.netPay,
-                row.tax,
-                row.salaryAdvance,
-                row.deductions,
-                row.employeeEPF,
-                row.companyEPFETF
-            ]),
-            [
-                'TOTALS',
-                employeeData.annualTotals.workedDays,
-                employeeData.annualTotals.basicPay,
-                employeeData.annualTotals.otAmount,
-                employeeData.annualTotals.grossPay,
-                employeeData.annualTotals.netPay,
-                employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF, // Tax approx
-                '',
-                employeeData.annualTotals.deductions,
-                employeeData.annualTotals.employeeEPF,
-                employeeData.annualTotals.companyEPFETF
-            ]
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Payroll Summary");
-        XLSX.writeFile(wb, `${employeeData.employeeCode}_Payroll_Summary.xlsx`);
+        exportEmployeeMonthlySummary('excel', employeeData);
         setToast({ message: 'Excel exported successfully', type: 'success' });
     };
 
     const exportCSV = () => {
         if (!employeeData) return;
-
-        const wsData: any[][] = [
-            ['PAYROLL SUMMARY REPORT'],
-            [],
-            ['Employee Name:', employeeData.employeeName, '', 'Employee ID:', employeeData.employeeCode],
-            ['Position:', employeeData.designation, '', 'Basic Salary:', `RS ${employeeData.basicSalary.toLocaleString()}`],
-            ['Joined Date:', employeeData.joinedDate],
-            [],
-            ['Monthly Breakdown'],
-            ['Month', 'Days', 'Basic', 'OT', 'Gross', 'Net', 'Tax', 'Advance', 'Total Ded.', 'EPF 8%', 'EPF/ETF Comp'],
-            ...employeeData.monthlyBreakdown.map(row => [
-                row.month,
-                row.workedDays,
-                row.basicPay,
-                row.otAmount,
-                row.grossPay,
-                row.netPay,
-                row.tax,
-                row.salaryAdvance,
-                row.deductions,
-                row.employeeEPF,
-                row.companyEPFETF
-            ]),
-            [
-                'TOTALS',
-                employeeData.annualTotals.workedDays,
-                '',
-                '',
-                employeeData.annualTotals.grossPay,
-                employeeData.annualTotals.netPay,
-                employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF, // Tax approx
-                '',
-                employeeData.annualTotals.deductions,
-                employeeData.annualTotals.employeeEPF,
-                employeeData.annualTotals.companyEPFETF
-            ]
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const csv = XLSX.utils.sheet_to_csv(ws);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `${employeeData.employeeCode}_Payroll_Summary.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        exportEmployeeMonthlySummary('csv', employeeData);
         setToast({ message: 'CSV exported successfully', type: 'success' });
     };
 

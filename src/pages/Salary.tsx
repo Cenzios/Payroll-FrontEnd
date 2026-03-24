@@ -15,10 +15,8 @@ import { salaryApi } from "../api/salaryApi";
 import { Employee } from "../types/employee.types";
 import Toast from "../components/Toast";
 import SalaryListSkeleton from "../components/skeletons/SalaryListSkeleton";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
 import PageHeader from "../components/PageHeader";
+import { exportPayslip } from "../utils/exportService";
 import {
   setCompanyWorkingDays,
   setEmployeeWorkedDays,
@@ -496,342 +494,38 @@ const Salary = () => {
   // Export Functions
   const exportPDF = () => {
     if (!previewPayslip || !selectedEmployee) return;
-
-    const doc = new jsPDF();
-
-    // Header
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text(companyName.toUpperCase(), 105, 20, { align: "center" });
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(12);
-    doc.text(
-      `PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" })}`,
-      105,
-      30,
-      { align: "center" },
-    );
-
-    doc.line(14, 35, 196, 35);
-
-    // Employee Details
-    doc.setFontSize(10);
-    doc.text(`Employee Name : ${selectedEmployee.fullName}`, 14, 45);
-    doc.text(`Employee No   : ${selectedEmployee.employeeId}`, 14, 52);
-    doc.text(`Designation   : ${selectedEmployee.designation}`, 14, 59);
-
-    // Earnings
-    doc.setFontSize(11);
-    doc.text("EARNINGS", 14, 70);
-
-    autoTable(doc, {
-      startY: 75,
-      head: [["Description", "Amount (Rs.)"]],
-      body: [
-        ["Rate Type", previewPayslip.salaryType],
-        ["Basic Rate", `Rs. ${previewPayslip.basicSalary.toLocaleString()}`],
-        ["Working Days", companyWorkingDays.toString()],
-        ["Worked Days", previewPayslip.workedDays.toString()],
-        ["Calculated Basic Pay", `Rs. ${previewPayslip.basicPay.toLocaleString()}`],
-        ...(previewPayslip.otAmount > 0
-          ? [
-            [
-              `OT Amount (${previewPayslip.otHours} hrs)`,
-              `Rs. ${previewPayslip.otAmount.toLocaleString()}`,
-            ],
-          ]
-          : []),
-        ...(previewPayslip.allowances || []).map((a: any) => [
-          a.name,
-          `Rs. ${a.amount.toLocaleString()}`,
-        ]),
-        [
-          "Gross Earnings",
-          `Rs. ${(
-            previewPayslip.basicPay +
-            previewPayslip.otAmount +
-            (previewPayslip.allowances || []).reduce(
-              (sum: number, a: any) => sum + a.amount,
-              0,
-            )
-          ).toLocaleString()}`,
-        ],
-      ],
-      theme: "plain",
-      styles: { fontSize: 10, cellPadding: 2 },
-      headStyles: { halign: "left" },
-      columnStyles: {
-        1: { halign: "right" },
-      },
-      didParseCell: (data) => {
-        if (data.section === "head" && data.column.index === 1) {
-          data.cell.styles.halign = "right";
-        }
-      },
+    exportPayslip("pdf", {
+      previewPayslip,
+      selectedEmployee,
+      companyName,
+      selectedMonth,
+      selectedYear,
+      companyWorkingDays,
     });
-
-    let currentY = (doc as any).lastAutoTable.finalY + 10;
-
-    // Deductions
-    doc.text("DEDUCTIONS", 14, currentY);
-    currentY += 5;
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-
-    // Add Employee EPF only if enabled
-    if (previewPayslip.isEpfEnabled) {
-      doc.text("EPF Employee (8%)", 14, currentY);
-      doc.text(
-        `Rs. ${previewPayslip.epf8.toLocaleString(undefined, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}`,
-        196,
-        currentY,
-        { align: "right" },
-      );
-      currentY += 7;
-    }
-
-    // Add other deductions (e.g., Tax, Salary Advance, Custom Deductions)
-
-    // Add other deductions (e.g., Tax, Salary Advance, Custom Deductions)
-    previewPayslip.deductions.forEach((d: any) => {
-      if (d.amount > 0) {
-        doc.text(d.name, 14, currentY);
-        doc.text(
-          `Rs. ${d.amount.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`,
-          196,
-          currentY,
-          { align: "right" },
-        );
-        currentY += 7;
-      }
-    });
-
-    // Total Deductions
-    doc.setLineWidth(0.2);
-    doc.line(14, currentY, 196, currentY);
-    currentY += 6; // Add space after the line
-    doc.setFont("helvetica", "bold");
-    doc.text("Total Deductions", 14, currentY);
-    doc.text(
-      `Rs. ${previewPayslip.totalDeductions.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
-      196,
-      currentY,
-      { align: "right" },
-    );
-    currentY += 10;
-
-    // Net Salary
-    doc.setLineWidth(0.5);
-    doc.line(14, currentY, 196, currentY);
-    doc.setFontSize(12);
-    doc.text("NET SALARY", 14, currentY + 8);
-    doc.text(
-      `Net Salary Payable : Rs. ${previewPayslip.netSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      196,
-      currentY + 8,
-      { align: "right" },
-    );
-    doc.line(14, currentY + 12, 196, currentY + 12);
-    doc.line(14, currentY + 14, 196, currentY + 14);
-
-    currentY += 25;
-
-    // Employer Contributions
-    if (previewPayslip.isEpfEnabled) {
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        "EMPLOYER CONTRIBUTIONS (Not included in Net Salary)",
-        14,
-        currentY,
-      );
-      autoTable(doc, {
-        startY: currentY + 5,
-        body: [
-          [
-            "EPF Employer (12%)",
-            `Rs. ${previewPayslip.epf12.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}`,
-          ],
-          [
-            "ETF Employer (3%)",
-            `Rs. ${previewPayslip.etf3.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}`,
-          ],
-        ],
-        theme: "plain",
-        styles: { fontSize: 9, cellPadding: 1 },
-        columnStyles: { 1: { halign: "right" } },
-      });
-      currentY = (doc as any).lastAutoTable.finalY + 30;
-    } else {
-      currentY += 10; // Adjust spacing if no employer contributions
-    }
-
-    // Signatures
-    doc.text("Prepared By : ___________________", 14, currentY);
-    doc.text("Checked By  : ___________________", 120, currentY);
-
-    doc.text("Employee Sign : ___________________", 14, currentY + 15);
-    doc.text(`Date : ${new Date().toLocaleDateString()}`, 120, currentY + 15);
-
-    doc.save(
-      `Payslip_${selectedEmployee.employeeId}_${selectedMonth + 1}_${selectedYear}.pdf`,
-    );
   };
 
   const exportExcel = () => {
     if (!previewPayslip || !selectedEmployee) return;
-
-    const wsData = [
-      [companyName.toUpperCase()],
-      [
-        `PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" })}`,
-      ],
-      [],
-      ["Employee Name", selectedEmployee.fullName],
-      ["Employee No", selectedEmployee.employeeId],
-      ["Designation", selectedEmployee.designation],
-      [],
-      ["EARNINGS", "Amount (Rs.)"],
-      ["Rate Type", previewPayslip.salaryType],
-      ["Basic Rate", previewPayslip.basicSalary],
-      ["Working Days", companyWorkingDays],
-      ["Worked Days", previewPayslip.workedDays],
-      ["Calculated Basic Pay", previewPayslip.basicPay],
-      ...(previewPayslip.otAmount > 0
-        ? [
-          [
-            `OT Amount (${previewPayslip.otHours} hrs)`,
-            previewPayslip.otAmount,
-          ],
-        ]
-        : []),
-      ...(previewPayslip.allowances || []).map((a: any) => [a.name, a.amount]),
-      [
-        "Gross Earnings",
-        previewPayslip.basicPay +
-        previewPayslip.otAmount +
-        (previewPayslip.allowances || []).reduce(
-          (sum: number, a: any) => sum + a.amount,
-          0,
-        ),
-      ],
-      [],
-      ["DEDUCTIONS", "Amount (Rs.)"],
-      ...(previewPayslip.isEpfEnabled
-        ? [["EPF Employee (8%)", previewPayslip.epf8]]
-        : []),
-      ...(previewPayslip.loanDeduction > 0
-        ? [["Loan Installment", previewPayslip.loanDeduction]]
-        : []),
-      ...previewPayslip.deductions
-        .filter((d: any) => d.amount > 0)
-        .map((d: any) => [d.name, d.amount]),
-      ["Total Deductions", previewPayslip.totalDeductions],
-      [],
-      ["NET SALARY PAYABLE", previewPayslip.netSalary],
-      [],
-      ...(previewPayslip.isEpfEnabled
-        ? [
-          ["EMPLOYER CONTRIBUTIONS", "Amount (Rs.)"],
-          ["EPF Employer (12%)", previewPayslip.epf12],
-          ["ETF Employer (3%)", previewPayslip.etf3],
-        ]
-        : []),
-    ];
-
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Payslip");
-    XLSX.writeFile(wb, `Payslip_${selectedEmployee.employeeId}.xlsx`);
+    exportPayslip("excel", {
+      previewPayslip,
+      selectedEmployee,
+      companyName,
+      selectedMonth,
+      selectedYear,
+      companyWorkingDays,
+    });
   };
 
   const exportCSV = () => {
     if (!previewPayslip || !selectedEmployee) return;
-
-    const wsData = [
-      [companyName.toUpperCase()],
-      [
-        `PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" })}`,
-      ],
-      [],
-      ["Employee Name", selectedEmployee.fullName],
-      ["Employee No", selectedEmployee.employeeId],
-      ["Designation", selectedEmployee.designation],
-      [],
-      ["EARNINGS", "Amount (Rs.)"],
-      ["Rate Type", previewPayslip.salaryType],
-      ["Basic Rate", previewPayslip.basicSalary],
-      ["Working Days", companyWorkingDays],
-      ["Worked Days", previewPayslip.workedDays],
-      ["Calculated Basic Pay", previewPayslip.basicPay],
-      ...(previewPayslip.otAmount > 0
-        ? [
-          [
-            `OT Amount (${previewPayslip.otHours} hrs)`,
-            previewPayslip.otAmount,
-          ],
-        ]
-        : []),
-      ...(previewPayslip.allowances || []).map((a: any) => [a.name, a.amount]),
-      [
-        "Gross Earnings",
-        previewPayslip.basicPay +
-        previewPayslip.otAmount +
-        (previewPayslip.allowances || []).reduce(
-          (sum: number, a: any) => sum + a.amount,
-          0,
-        ),
-      ],
-      [],
-      ["DEDUCTIONS", "Amount (Rs.)"],
-      ...(previewPayslip.isEpfEnabled
-        ? [["EPF Employee (8%)", previewPayslip.epf8]]
-        : []),
-      ...(previewPayslip.loanDeduction > 0
-        ? [["Loan Installment", previewPayslip.loanDeduction]]
-        : []),
-      ...previewPayslip.deductions
-        .filter((d: any) => d.amount > 0)
-        .map((d: any) => [d.name, d.amount]),
-      ["Total Deductions", previewPayslip.totalDeductions],
-      [],
-      ["NET SALARY PAYABLE", previewPayslip.netSalary],
-      [],
-      ...(previewPayslip.isEpfEnabled
-        ? [
-          ["EMPLOYER CONTRIBUTIONS", "Amount (Rs.)"],
-          ["EPF Employer (12%)", previewPayslip.epf12],
-          ["ETF Employer (3%)", previewPayslip.etf3],
-        ]
-        : []),
-    ];
-
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    const csv = XLSX.utils.sheet_to_csv(ws);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Payslip_${selectedEmployee.employeeId}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    exportPayslip("csv", {
+      previewPayslip,
+      selectedEmployee,
+      companyName,
+      selectedMonth,
+      selectedYear,
+      companyWorkingDays,
+    });
   };
 
   return (
