@@ -349,7 +349,7 @@ const AddEmployeeDrawer = ({
                     <div className="flex gap-6">
                         {[
                             { id: "employee", label: "Employee Information" },
-                            { id: "payment", label: "Payment Information" },
+                            { id: "payment", label: "Salary Information" },
                             { id: "bank", label: "Bank Details" },
                         ].map((tab) => (
                             <button
