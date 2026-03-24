@@ -159,7 +159,13 @@ const Dashboard = () => {
       }
       setIsDrawerOpen(false);
     } catch (error: any) {
-      const errorMsg = error?.data?.message || 'Operation failed';
+      let errorMsg = error?.data?.message || 'Operation failed';
+
+      // Specifically handle duplicate NIC error for shorter message
+      if (errorMsg === "Employee with this NIC already exists in this company") {
+        errorMsg = "NIC already exists in this company";
+      }
+
       if (errorMsg.includes('limit reached')) {
         openLimitModal(drawerMode);
       } else {
@@ -195,7 +201,7 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
-        <PageHeader 
+        <PageHeader
           title={`${getGreeting()}, ${user?.fullName?.split(' ')[0] || 'User'}`}
           subtitle="Here's your dashboard overview"
           showLogout={true}

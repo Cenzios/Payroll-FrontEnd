@@ -95,6 +95,7 @@ const Employees = () => {
   });
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   const [toast, setToast] = useState<{
     message: string;
@@ -175,11 +176,14 @@ const Employees = () => {
         }
       }
 
+      const isEdit = !!editingEmployee;
       setIsDrawerOpen(false);
       setEditingEmployee(null); // Reset edit state
       setSelectedEmployee(savedEmployee); // Update profile card instantly
+
+      setModalTitle(isEdit ? "Employee Updated" : "Employee Added");
       setModalMessage(
-        editingEmployee
+        isEdit
           ? "The employee has been successfully updated."
           : "The employee has been successfully saved.",
       );
@@ -189,8 +193,22 @@ const Employees = () => {
       if (error.message && error.message.includes("limit reached")) {
         handleOpenLimitModal();
       } else {
+        // Extract meaningful error message from backend
+        let errorMessage = "Operation failed";
+
+        if (error.data && error.data.message) {
+          errorMessage = error.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        // Specifically handle duplicate NIC error for shorter message as requested
+        if (errorMessage === "Employee with this NIC already exists in this company") {
+          errorMessage = "NIC already exists in this company";
+        }
+
         setToast({
-          message: error.message || "Operation failed",
+          message: errorMessage,
           type: "error",
         });
       }
@@ -774,7 +792,7 @@ const Employees = () => {
       <SuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
-        title={editingEmployee ? "Employee Updated" : "Employee Added"}
+        title={modalTitle}
         message={modalMessage}
       />
 

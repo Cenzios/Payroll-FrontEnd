@@ -693,7 +693,7 @@ const UniversalDrawer = ({
                   onClick={() => setActiveTab("payment")}
                   className={`pb-2 text-[13px] font-medium transition-colors relative ${activeTab === "payment" ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}`}
                 >
-                  Payment Information
+                  Salary Information
                   {activeTab === "payment" && (
                     <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#367AFF] rounded-t-full" />
                   )}
@@ -1148,7 +1148,7 @@ const UniversalDrawer = ({
                         </div>
                       )}
 
-                      {/* ===== Payment Information Tab ===== */}
+                      {/* ===== Salary Information Tab ===== */}
                       {activeTab === "payment" && (
                         <div className="space-y-1.5">
                           {/* ── Monthly Basic Section ── */}
