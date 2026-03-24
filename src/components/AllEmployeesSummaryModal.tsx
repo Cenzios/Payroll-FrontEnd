@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Loader2, FileSpreadsheet, Download } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
 import Toast from './Toast';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import { exportAllEmployeesSummary } from '../utils/exportService';
 
 interface AllEmployeesSummaryModalProps {
     isOpen: boolean;
@@ -93,163 +91,19 @@ const AllEmployeesSummaryModal = ({
 
     const exportPDF = () => {
         if (!summaryData) return;
-
-        const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
-
-        // Title
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text('ALL EMPLOYEES – PAYROLL SUMMARY REPORT', 14, 15);
-
-        // Metadata
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        let yPos = 30;
-
-        doc.text(`Employee Count: ${summaryData.metadata.employeeCount}`, 14, yPos);
-        doc.text(`Date Period: ${summaryData.metadata.datePeriod}`, 100, yPos);
-        yPos += 7;
-        doc.text(`Department: ${summaryData.metadata.department}`, 14, yPos);
-        doc.text(`Report Type: ${summaryData.metadata.reportType}`, 100, yPos);
-        yPos += 7;
-        doc.text(`Total Gross Pay: RS ${summaryData.metadata.totalGrossPay.toLocaleString()}`, 14, yPos);
-        yPos += 15;
-
-        // Table
-        const tableData = summaryData.employees.map(emp => [
-            emp.employeeCode,
-            emp.employeeName,
-            emp.workingDays.toString(),
-            `RS ${emp.basicPay.toLocaleString()}`,
-            `RS ${emp.otAmount.toLocaleString()} (${emp.otHours}h)`,
-            `RS ${emp.grossPay.toLocaleString()}`,
-            `RS ${emp.salaryAdvance.toLocaleString()}`,
-            `RS ${emp.deductions.toLocaleString()}`,
-            `RS ${emp.netPay.toLocaleString()}`
-        ]);
-
-        // Totals Row
-        tableData.push([
-            'TOTAL AMOUNTS',
-            '',
-            '',
-            `RS ${summaryData.totals.basicPay.toLocaleString()}`,
-            `RS ${summaryData.totals.otAmount.toLocaleString()}`,
-            `RS ${summaryData.totals.grossPay.toLocaleString()}`,
-            `RS ${summaryData.totals.salaryAdvance.toLocaleString()}`,
-            `RS ${summaryData.totals.deductions.toLocaleString()}`,
-            `RS ${summaryData.totals.netPay.toLocaleString()}`
-        ]);
-
-        autoTable(doc, {
-            startY: yPos,
-            head: [['Emp ID', 'Name', 'Days', 'Basic', 'OT', 'Gross', 'Advance', 'Total Ded.', 'Net Pay']],
-            body: tableData,
-            styles: { fontSize: 7 },
-            headStyles: { fillColor: [31, 41, 55], fontStyle: 'bold' }, // Dark Gray
-            didParseCell: (data) => {
-                if (data.row.index === tableData.length - 1) {
-                    data.cell.styles.fillColor = [37, 99, 235]; // Blue
-                    data.cell.styles.textColor = [255, 255, 255];
-                    data.cell.styles.fontStyle = 'bold';
-                }
-            }
-        });
-
-        doc.save(`Selected_Employees_Payroll_Summary_${summaryData.metadata.datePeriod.replace(' ', '_')}.pdf`);
+        exportAllEmployeesSummary('pdf', summaryData);
         setToast({ message: 'PDF exported successfully', type: 'success' });
     };
 
     const exportExcel = () => {
         if (!summaryData) return;
-
-        const wsData: any[][] = [
-            ['ALL EMPLOYEES – PAYROLL SUMMARY REPORT'],
-            [],
-            ['Employee Count:', summaryData.metadata.employeeCount, '', 'Date Period:', summaryData.metadata.datePeriod],
-            ['Department:', summaryData.metadata.department, '', 'Report Type:', summaryData.metadata.reportType],
-            ['Total Gross Pay:', `RS ${summaryData.metadata.totalGrossPay.toLocaleString()}`],
-            [],
-            ['Breakdown Table'],
-            ['Emp ID', 'Name', 'Days', 'Basic', 'OT', 'Gross', 'Advance', 'Total Ded.', 'Net Pay'],
-            ...summaryData.employees.map(emp => [
-                emp.employeeCode,
-                emp.employeeName,
-                emp.workingDays,
-                emp.basicPay,
-                emp.otAmount,
-                emp.grossPay,
-                emp.salaryAdvance,
-                emp.deductions,
-                emp.netPay
-            ]),
-            [
-                'TOTAL AMOUNTS',
-                '',
-                '',
-                summaryData.totals.basicPay,
-                summaryData.totals.otAmount,
-                summaryData.totals.grossPay,
-                summaryData.totals.salaryAdvance,
-                summaryData.totals.deductions,
-                summaryData.totals.netPay
-            ]
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Payroll Summary");
-        XLSX.writeFile(wb, `Selected_Employees_Summary_${summaryData.metadata.datePeriod.replace(' ', '_')}.xlsx`);
+        exportAllEmployeesSummary('excel', summaryData);
         setToast({ message: 'Excel exported successfully', type: 'success' });
     };
 
     const exportCSV = () => {
         if (!summaryData) return;
-
-        const wsData: any[][] = [
-            ['ALL EMPLOYEES – PAYROLL SUMMARY REPORT'],
-            [],
-            ['Employee Count:', summaryData.metadata.employeeCount, '', 'Date Period:', summaryData.metadata.datePeriod],
-            ['Department:', summaryData.metadata.department, '', 'Report Type:', summaryData.metadata.reportType],
-            ['Total Gross Pay:', `RS ${summaryData.metadata.totalGrossPay.toLocaleString()}`],
-            [],
-            ['Breakdown Table'],
-            ['Emp ID', 'Name', 'Days', 'Basic', 'OT', 'Gross', 'Advance', 'Total Ded.', 'Net Pay'],
-            ...summaryData.employees.map(emp => [
-                emp.employeeCode,
-                emp.employeeName,
-                emp.workingDays,
-                emp.basicPay,
-                emp.otAmount,
-                emp.grossPay,
-                emp.salaryAdvance,
-                emp.deductions,
-                emp.netPay
-            ]),
-            [
-                'TOTAL AMOUNTS',
-                '',
-                '',
-                summaryData.totals.basicPay,
-                summaryData.totals.otAmount,
-                summaryData.totals.grossPay,
-                summaryData.totals.salaryAdvance,
-                summaryData.totals.deductions,
-                summaryData.totals.netPay
-            ]
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const csv = XLSX.utils.sheet_to_csv(ws);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `Selected_Employees_Summary_${summaryData.metadata.datePeriod.replace(' ', '_')}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        exportAllEmployeesSummary('csv', summaryData);
         setToast({ message: 'CSV exported successfully', type: 'success' });
     };
 
