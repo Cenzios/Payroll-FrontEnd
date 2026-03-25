@@ -168,7 +168,7 @@ const EmployeeSalaryCard = ({
                 <div onClick={(e) => e.stopPropagation()} className="animate-in fade-in slide-in-from-top-1 duration-200">
 
                     {/* TWO COLUMN: Earnings | Deductions */}
-                    <div className="grid grid-cols-2 divide-x divide-gray-200">
+                    <div className="grid grid-cols-2 divide-x divide-gray-200 relative">
 
                         {/* ── LEFT: EARNINGS ── */}
                         <div className="px-5 py-4">
@@ -294,6 +294,17 @@ const EmployeeSalaryCard = ({
                                 </div>
                             </div>
                         </div>
+
+                        {/* Lock Overlay */}
+                        {isLocked && (
+                            <div className="absolute inset-0 z-10 bg-white/50 backdrop-blur-[1.5px] flex flex-col items-center justify-center pointer-events-none">
+                                <div className="bg-red-50 px-8 py-2.5 rounded-full shadow-sm border border-red-100 flex items-center justify-center gap-2 mb-3">
+                                    <Lock className="w-5 h-5 text-red-400" />
+                                    <span className="text-[14px] font-bold text-red-400 uppercase tracking-[0.2em] mt-0.5">Locked</span>
+                                </div>
+                                <span className="text-[13px] text-gray-500 font-medium">This pay record is finalized and cannot be edited.</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* ── TOTALS BAR ── */}
