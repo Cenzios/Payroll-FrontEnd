@@ -1,4 +1,5 @@
-import { Loader2, SlidersHorizontal, Wallet, MinusCircle } from "lucide-react";
+import React, { useState } from "react";
+import { Loader2, SlidersHorizontal, Wallet, MinusCircle, Lock } from "lucide-react";
 import { Employee } from "../types/employee.types";
 
 interface EmployeeSalaryCardProps {
@@ -56,6 +57,7 @@ const EmployeeSalaryCard = ({
     setTouchedFields,
 }: EmployeeSalaryCardProps) => {
     const isSelected = selectedEmployee?.id === emp.id;
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
     // Derived calculations
     const basicSalary = emp.basicSalary || 0;
@@ -170,7 +172,7 @@ const EmployeeSalaryCard = ({
                                         value={workedDays}
                                         onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
                                         onBlur={() => setTouchedFields((prev: any) => ({ ...prev, employeeDays: { ...prev.employeeDays, [emp.id]: true } }))}
-                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px]  text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px]  text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner"
                                         min="0" max="31"
                                     />
                                 </div>
@@ -183,7 +185,7 @@ const EmployeeSalaryCard = ({
                                         step="0.5"
                                         value={otHours}
                                         onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
-                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px]  text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px]  text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner"
                                         min="0"
                                     />
                                 </div>
@@ -214,39 +216,58 @@ const EmployeeSalaryCard = ({
                                         type="number"
                                         value={salaryAdvance}
                                         onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
-                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px]  text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px]  text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner"
                                         min="0"
                                     />
                                 </div>
 
                                 {/* EPF Contribution */}
                                 <div className="flex items-center justify-between gap-3">
-                                    <div className="flex items-center gap-2">
+
+                                    {/* LEFT SIDE: Label + Toggle */}
+                                    <div className="flex items-center justify-between w-full max-w-[220px]">
+                                        <label className="text-[13px] text-gray-600">
+                                            EPF Contribution
+                                        </label>
+
                                         <button
                                             onClick={() => handleToggleEpfEtf(emp.id)}
                                             className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${isEpfEnabled ? "bg-blue-500" : "bg-gray-300"}`}
                                         >
-                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isEpfEnabled ? "translate-x-5" : "translate-x-1"}`} />
+                                            <span
+                                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isEpfEnabled ? "translate-x-5" : "translate-x-1"}`}
+                                            />
                                         </button>
-                                        <label className="text-[13px] text-gray-600 whitespace-nowrap">EPF Contribution</label>
                                     </div>
-                                    <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px]  text-right transition-opacity ${isEpfEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50"}`}>
+
+                                    {/* RIGHT SIDE: Amount (UNCHANGED) */}
+                                    <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right transition-opacity ${isEpfEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50"}`}>
                                         {fmt(isEpfEnabled ? epfAmount : 0)}
                                     </div>
                                 </div>
 
+
                                 {/* Loan */}
                                 <div className="flex items-center justify-between gap-3">
-                                    <div className="flex items-center gap-2">
+
+                                    {/* LEFT SIDE: Label + Toggle */}
+                                    <div className="flex items-center justify-between w-full max-w-[220px]">
+                                        <label className="text-[13px] text-gray-600">
+                                            Loan
+                                        </label>
+
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleToggleLoan(emp.id); }}
                                             className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${isLoanEnabled ? "bg-blue-500" : "bg-gray-300"}`}
                                         >
-                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isLoanEnabled ? "translate-x-5" : "translate-x-1"}`} />
+                                            <span
+                                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isLoanEnabled ? "translate-x-5" : "translate-x-1"}`}
+                                            />
                                         </button>
-                                        <label className="text-[13px] text-gray-600 whitespace-nowrap">Loan</label>
                                     </div>
-                                    <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px]  text-right transition-opacity ${isLoanEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50 line-through"}`}>
+
+                                    {/* RIGHT SIDE: Amount (UNCHANGED) */}
+                                    <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right transition-opacity ${isLoanEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50 line-through"}`}>
                                         {fmt(isLoanEnabled ? loanDeduction : 0)}
                                     </div>
                                 </div>
@@ -288,7 +309,7 @@ const EmployeeSalaryCard = ({
 
                             {/* Confirm Pay-slip */}
                             <button
-                                onClick={(e) => { e.stopPropagation(); /* TODO: implement confirm */ }}
+                                onClick={(e) => { e.stopPropagation(); setIsConfirmModalOpen(true); }}
                                 disabled={isSaving || hasAnyError(emp)}
                                 className={`px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 ${isSaving || hasAnyError(emp)
                                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
@@ -306,6 +327,72 @@ const EmployeeSalaryCard = ({
             {!isSelected && (
                 <div className="px-5 pb-3 text-[12px] text-gray-400 italic">
                     Click to calculate salary
+                </div>
+            )}
+
+            {/* Confirm Modal Overlay */}
+            {isConfirmModalOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="bg-white rounded-[24px] p-6 w-full max-w-[480px] shadow-2xl animate-in zoom-in duration-200">
+                        {/* Header */}
+                        <div className="flex items-start gap-3.5 mb-5">
+                            <div className="w-11 h-11 rounded-xl bg-[#e6f5ea] border border-[#d3ecd8] flex items-center justify-center shrink-0">
+                                <Lock className="w-5 h-5 text-[#2ca653]" strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h3 className="text-[17px] font-bold text-gray-900 leading-tight">Confirm & Lock Payslip</h3>
+                                <p className="text-[13px] text-gray-500 mt-1">Once locked, the pay-slip cannot be edited.</p>
+                            </div>
+                        </div>
+
+                        {/* Info Card */}
+                        <div className="bg-[#f4f7fe] border border-[#d6e2fa] rounded-2xl p-4 mb-5 space-y-3">
+                            <div className="flex justify-between items-center text-[13px]">
+                                <span className="text-gray-700">Employee</span>
+                                <span className="text-gray-900">{emp.fullName} ({emp.employeeId})</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[13px]">
+                                <span className="text-gray-700">Period</span>
+                                <span className="text-gray-900">
+                                    {emp.salaryType === "MONTHLY" ? "Monthly" : "Daily"} &ndash; {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center text-[13px]">
+                                <span className="text-gray-700">Total Earnings</span>
+                                <span className="text-[#2ca653] font-medium">{fmt(totalEarnings)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[13px]">
+                                <span className="text-gray-700">Total Deductions</span>
+                                <span className="text-[#ef4444] font-medium">{fmt(totalDeductions)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[14px] pt-1.5 border-t border-[#d6e2fa]">
+                                <span className="text-gray-800">Net Salary</span>
+                                <span className="font-bold text-gray-900">{fmt(netSalary)}</span>
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsConfirmModalOpen(false)}
+                                className="flex-[0.4] py-3 px-4 rounded-[14px] text-[14px] font-bold text-gray-900 bg-[#dbeafe] hover:bg-[#bfdbfe] transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    /* TODO: implement confirm */
+                                    setIsConfirmModalOpen(false);
+                                }}
+                                className="flex-[0.6] py-3 px-4 rounded-[14px] text-[14px] font-bold text-white bg-[#3b82f6] hover:bg-[#2563eb] transition-colors shadow-sm"
+                            >
+                                Yes Confirm & Lock
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
