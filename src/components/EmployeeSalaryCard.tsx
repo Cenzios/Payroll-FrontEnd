@@ -4,6 +4,7 @@ import { Employee } from "../types/employee.types";
 
 interface EmployeeSalaryCardProps {
     emp: Employee;
+    generatedSalary?: any;
     selectedEmployee: Employee | null;
     handleSelectEmployee: (emp: Employee) => void;
     workedDays: number;
@@ -18,6 +19,7 @@ interface EmployeeSalaryCardProps {
     handleToggleLoan: (empId: string) => void;
     handleToggleEpfEtf: (empId: string) => void;
     handleGeneratePayslip: (emp: Employee) => void;
+    handleConfirmPayslip: (emp: Employee) => void;
     openManageModal: (type: "allowance" | "deduction", emp: Employee) => void;
     allowanceToggles: Record<string, boolean>;
     deductionToggles: Record<string, boolean>;
@@ -33,6 +35,7 @@ const fmt = (val: number) =>
 
 const EmployeeSalaryCard = ({
     emp,
+    generatedSalary,
     selectedEmployee,
     handleSelectEmployee,
     workedDays,
@@ -47,6 +50,7 @@ const EmployeeSalaryCard = ({
     handleToggleLoan,
     handleToggleEpfEtf,
     handleGeneratePayslip,
+    handleConfirmPayslip,
     openManageModal,
     allowanceToggles,
     deductionToggles,
@@ -57,26 +61,36 @@ const EmployeeSalaryCard = ({
     setTouchedFields,
 }: EmployeeSalaryCardProps) => {
     const isSelected = selectedEmployee?.id === emp.id;
+    const isLocked = !!generatedSalary;
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
     // Derived calculations
+    const displayWorkedDays = isLocked ? generatedSalary.workingDays : workedDays;
+    const displayOtHours = isLocked ? generatedSalary.otHours : otHours;
+    const displaySalaryAdvance = isLocked ? generatedSalary.salaryAdvance : salaryAdvance;
+
     const basicSalary = emp.basicSalary || 0;
     const otRate = emp.otRate || 0;
-    const otAmount = otHours * otRate;
+    const otAmount = isLocked ? generatedSalary.otAmount : (displayOtHours * otRate);
 
     // Calculate actual allowance/deduction totals from employee data
-    const totalAllowances = (emp.recurringAllowances || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    const totalDeductions_custom = (emp.recurringDeductions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const totalAllowances = isLocked
+        ? generatedSalary.allowanceTotal
+        : (emp.recurringAllowances || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
-    const basicPay = emp.salaryType === "MONTHLY"
-        ? basicSalary // shown as monthly pay
-        : basicSalary * workedDays;
+    const totalDeductions_custom = isLocked
+        ? generatedSalary.deductionTotal - (generatedSalary.loanDeduction || 0)
+        : (emp.recurringDeductions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
-    const epfAmount = isEpfEnabled ? basicPay * 0.08 : 0;
+    const basicPay = isLocked
+        ? generatedSalary.basicPay
+        : (emp.salaryType === "MONTHLY" ? basicSalary : basicSalary * displayWorkedDays);
 
-    const totalEarnings = basicPay + otAmount + totalAllowances;
-    const totalDeductions = salaryAdvance + epfAmount + (isLoanEnabled ? loanDeduction : 0) + totalDeductions_custom;
-    const netSalary = totalEarnings - totalDeductions;
+    const epfAmount = isLocked ? generatedSalary.employeeEPF : (isEpfEnabled ? basicPay * 0.08 : 0);
+
+    const totalEarnings = isLocked ? generatedSalary.grossSalary : (basicPay + otAmount + totalAllowances);
+    const totalDeductions = isLocked ? generatedSalary.totalDeduction : (displaySalaryAdvance + epfAmount + (isLoanEnabled ? loanDeduction : 0) + totalDeductions_custom);
+    const netSalary = isLocked ? generatedSalary.netSalary : (totalEarnings - totalDeductions);
 
     return (
         <div
@@ -125,7 +139,8 @@ const EmployeeSalaryCard = ({
                         </div>
                         <button
                             onClick={(e) => { e.stopPropagation(); openManageModal("allowance", emp); }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px]  text-blue-500 border border-blue-200/60 bg-blue-50/40 backdrop-blur-sm hover:bg-blue-100/60 hover:border-blue-300 transition-all shadow-sm"
+                            disabled={isLocked}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] transition-all shadow-sm ${isLocked ? "text-gray-400 border border-gray-200 bg-gray-50 cursor-not-allowed" : "text-blue-500 border border-blue-200/60 bg-blue-50/40 backdrop-blur-sm hover:bg-blue-100/60 hover:border-blue-300"}`}
                         >
                             <SlidersHorizontal className="w-3.5 h-3.5" />
                             Manage
@@ -138,7 +153,8 @@ const EmployeeSalaryCard = ({
                         </div>
                         <button
                             onClick={(e) => { e.stopPropagation(); openManageModal("deduction", emp); }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px]  text-blue-500 border border-blue-200/60 bg-blue-50/40 backdrop-blur-sm hover:bg-blue-100/60 hover:border-blue-300 transition-all shadow-sm"
+                            disabled={isLocked}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] transition-all shadow-sm ${isLocked ? "text-gray-400 border border-gray-200 bg-gray-50 cursor-not-allowed" : "text-blue-500 border border-blue-200/60 bg-blue-50/40 backdrop-blur-sm hover:bg-blue-100/60 hover:border-blue-300"}`}
                         >
                             <SlidersHorizontal className="w-3.5 h-3.5" />
                             Manage
@@ -169,11 +185,12 @@ const EmployeeSalaryCard = ({
                                     <input
                                         type="number"
                                         step="0.5"
-                                        value={workedDays}
+                                        value={displayWorkedDays}
                                         onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
                                         onBlur={() => setTouchedFields((prev: any) => ({ ...prev, employeeDays: { ...prev.employeeDays, [emp.id]: true } }))}
-                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px]  text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner"
+                                        className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner ${isLocked ? "bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed" : "border-gray-200 text-gray-800"}`}
                                         min="0" max="31"
+                                        disabled={isLocked}
                                     />
                                 </div>
 
@@ -183,10 +200,11 @@ const EmployeeSalaryCard = ({
                                     <input
                                         type="number"
                                         step="0.5"
-                                        value={otHours}
+                                        value={displayOtHours}
                                         onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
-                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px]  text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner"
+                                        className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner ${isLocked ? "bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed" : "border-gray-200 text-gray-800"}`}
                                         min="0"
+                                        disabled={isLocked}
                                     />
                                 </div>
 
@@ -214,10 +232,11 @@ const EmployeeSalaryCard = ({
                                     <label className="text-[13px] text-gray-600 whitespace-nowrap">Advance</label>
                                     <input
                                         type="number"
-                                        value={salaryAdvance}
+                                        value={displaySalaryAdvance}
                                         onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
-                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px]  text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner"
+                                        className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner ${isLocked ? "bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed" : "border-gray-200 text-gray-800"}`}
                                         min="0"
+                                        disabled={isLocked}
                                     />
                                 </div>
 
@@ -232,7 +251,8 @@ const EmployeeSalaryCard = ({
 
                                         <button
                                             onClick={() => handleToggleEpfEtf(emp.id)}
-                                            className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${isEpfEnabled ? "bg-blue-500" : "bg-gray-300"}`}
+                                            disabled={isLocked}
+                                            className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${isEpfEnabled ? (isLocked ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500") : "bg-gray-300"} ${isLocked && !isEpfEnabled ? "opacity-50 cursor-not-allowed" : ""}`}
                                         >
                                             <span
                                                 className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isEpfEnabled ? "translate-x-5" : "translate-x-1"}`}
@@ -258,7 +278,8 @@ const EmployeeSalaryCard = ({
 
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleToggleLoan(emp.id); }}
-                                            className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${isLoanEnabled ? "bg-blue-500" : "bg-gray-300"}`}
+                                            disabled={isLocked}
+                                            className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${isLoanEnabled ? (isLocked ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500") : "bg-gray-300"} ${isLocked && !isLoanEnabled ? "opacity-50 cursor-not-allowed" : ""}`}
                                         >
                                             <span
                                                 className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isLoanEnabled ? "translate-x-5" : "translate-x-1"}`}
@@ -307,17 +328,19 @@ const EmployeeSalaryCard = ({
                                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Generate Pay-slip"}
                             </button>
 
-                            {/* Confirm Pay-slip */}
-                            <button
-                                onClick={(e) => { e.stopPropagation(); setIsConfirmModalOpen(true); }}
-                                disabled={isSaving || hasAnyError(emp)}
-                                className={`px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 ${isSaving || hasAnyError(emp)
-                                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                    : "bg-[#28aa58] text-white hover:bg-[#23964e] shadow-sm hover:shadow-md active:scale-95"
-                                    }`}
-                            >
-                                Confirm Pay-slip
-                            </button>
+                            {/* Confirm Pay-slip - ONLY show if not locked */}
+                            {!isLocked && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setIsConfirmModalOpen(true); }}
+                                    disabled={isSaving || hasAnyError(emp)}
+                                    className={`px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 ${isSaving || hasAnyError(emp)
+                                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                        : "bg-[#28aa58] text-white hover:bg-[#23964e] shadow-sm hover:shadow-md active:scale-95"
+                                        }`}
+                                >
+                                    Confirm Pay-slip
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -384,7 +407,7 @@ const EmployeeSalaryCard = ({
                             </button>
                             <button
                                 onClick={() => {
-                                    /* TODO: implement confirm */
+                                    handleConfirmPayslip(emp);
                                     setIsConfirmModalOpen(false);
                                 }}
                                 className="flex-[0.6] py-3 px-4 rounded-[14px] text-[14px] font-bold text-white bg-[#3b82f6] hover:bg-[#2563eb] transition-colors shadow-sm"

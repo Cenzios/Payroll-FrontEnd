@@ -10,6 +10,7 @@ import {
   useGetEmployeesQuery,
   useGetCompaniesQuery,
   useGetAllPendingLoanInstallmentsQuery,
+  useGetSalaryHistoryQuery,
 } from "../store/apiSlice";
 import { salaryApi } from "../api/salaryApi";
 import { Employee } from "../types/employee.types";
@@ -83,6 +84,24 @@ const Salary = () => {
     },
     {},
   );
+
+  // Fetch Salary History for the current month
+  const { data: salaryHistory, isFetching: isFetchingHistory } = useGetSalaryHistoryQuery(
+    {
+      companyId: selectedCompanyId || "",
+      month: selectedMonth + 1,
+      year: selectedYear,
+    },
+    {
+      skip: !selectedCompanyId,
+    },
+  );
+
+  // Map generated salaries by employee ID
+  const generatedSalaries = (salaryHistory || []).reduce((acc: any, record: any) => {
+    acc[record.employeeId] = record;
+    return acc;
+  }, {});
 
   // Allowance / Deduction local state per employee
   const [allowanceToggles, setAllowanceToggles] = useState<
@@ -280,6 +299,8 @@ const Salary = () => {
     return false;
   };
 
+  const validEmployees = employees.filter(emp => !isBeforeJoinedDate(emp, selectedYear, selectedMonth));
+
   // Check if ANY validation error exists (for button disable)
   const hasAnyError = (emp: Employee) => {
     if (isFutureMonth) return true;
@@ -332,8 +353,8 @@ const Salary = () => {
     dispatch(setEmployeeSalaryAdvance({ id: empId, advance: val }));
   };
 
-  // Handle Generate Pay Slip
-  const handleGeneratePayslip = async (emp: Employee) => {
+  // Handle Generate process (Preview or Save)
+  const processPayslip = async (emp: Employee, saveToDb: boolean = false) => {
     setSelectedEmployee(emp);
 
     const {
@@ -422,6 +443,7 @@ const Salary = () => {
       epf8: epfEmployee, // For display purposes
       epf12: epfEmployer, // For display purposes
       etf3: etfEmployer, // For display purposes
+      dailyRate: emp.salaryType === "MONTHLY" ? ((emp.basicSalary || 0) / companyWorkingDays) : (emp.basicSalary || 0),
       deductions: [
         { name: "Tax (PAYE)", amount: tax },
         { name: "Salary Advance", amount: salaryAdvance },
@@ -448,39 +470,79 @@ const Salary = () => {
     dispatch(setPreviewPayslip(details));
 
     // Save to DB
-    if (!selectedCompanyId) return;
-    setIsSaving(true);
-    try {
-      await salaryApi.saveSalary({
-        companyId: selectedCompanyId,
-        employeeId: emp.id,
-        month: selectedMonth + 1,
-        year: selectedYear,
-        workingDays: workedDays,
-        basicPay: basicPay,
-        otHours: otHours,
-        otAmount: otAmount,
-        salaryAdvance: salaryAdvance,
-        employeeEPF: epfEmployee,
-        employerEPF: epfEmployer,
-        etfAmount: etfEmployer,
-        netSalary: netSalary,
-        loanDeduction: loanDeduction,
-        isLoanEnabled,
-        isEpfEnabled: emp.epfEnabled,
-        companyWorkingDays: companyWorkingDays,
-        allowances: salaryAllowances[emp.id] || [],
-        deductions: salaryDeductions[emp.id] || [],
-      });
-      setToast({ message: "Salary saved successfully!", type: "success" });
-    } catch (error: any) {
-      setToast({
-        message: error.response?.data?.message || "Failed to save salary",
-        type: "error",
-      });
-    } finally {
-      setIsSaving(false);
+    if (saveToDb) {
+      if (!selectedCompanyId) return;
+      setIsSaving(true);
+      try {
+        await salaryApi.saveSalary({
+          companyId: selectedCompanyId,
+          employeeId: emp.id,
+          month: selectedMonth + 1,
+          year: selectedYear,
+          workingDays: workedDays,
+          basicPay: basicPay,
+          otHours: otHours,
+          otAmount: otAmount,
+          salaryAdvance: salaryAdvance,
+          employeeEPF: epfEmployee,
+          employerEPF: epfEmployer,
+          etfAmount: etfEmployer,
+          netSalary: netSalary,
+          loanDeduction: loanDeduction,
+          isLoanEnabled,
+          isEpfEnabled: emp.epfEnabled,
+          companyWorkingDays: companyWorkingDays,
+          allowances: salaryAllowances[emp.id] || [],
+          deductions: salaryDeductions[emp.id] || [],
+        });
+        setToast({ message: "Salary saved successfully!", type: "success" });
+      } catch (error: any) {
+        setToast({
+          message: error.response?.data?.message || "Failed to save salary",
+          type: "error",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    } // end saveToDb
+  };
+
+  const handleGeneratePayslip = async (emp: Employee) => {
+    const savedRecord = generatedSalaries[emp.id];
+    if (savedRecord) {
+      setSelectedEmployee(emp);
+      const details = {
+        basicSalary: savedRecord.basicSalary || 0,
+        salaryType: savedRecord.salaryType || "DAILY",
+        basicPay: savedRecord.basicPay,
+        epfEmployee: savedRecord.employeeEPF,
+        epfEmployer: savedRecord.employerEPF,
+        etfEmployer: savedRecord.etfAmount,
+        tax: savedRecord.employeeTaxAmount,
+        totalDeductions: savedRecord.totalDeduction,
+        netSalary: savedRecord.netSalary,
+        workedDays: savedRecord.workingDays,
+        isEpfEnabled: savedRecord.employeeEPF > 0 || savedRecord.employerEPF > 0,
+        otHours: savedRecord.otHours,
+        otAmount: savedRecord.otAmount,
+        salaryAdvance: savedRecord.salaryAdvance,
+        loanDeduction: savedRecord.loanDeduction,
+        epf8: savedRecord.employeeEPF,
+        epf12: savedRecord.employerEPF,
+        etf3: savedRecord.etfAmount,
+        dailyRate: savedRecord.salaryType === "MONTHLY" ? ((savedRecord.basicSalary || 0) / companyWorkingDays) : (savedRecord.basicSalary || 0),
+        deductions: (savedRecord.deductions || []).map((d: any) => ({ name: d.type, amount: d.amount })),
+        allowances: (savedRecord.allowances || []).map((a: any) => ({ name: a.type, amount: a.amount })),
+      };
+      dispatch(setPreviewPayslip(details));
+      return;
     }
+
+    await processPayslip(emp, false);
+  };
+
+  const handleConfirmPayslip = async (emp: Employee) => {
+    await processPayslip(emp, true);
   };
 
   const handleSelectEmployee = (emp: Employee) => {
@@ -605,12 +667,12 @@ const Salary = () => {
           <div className="w-8/12 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {isLoading ? (
               <SalaryListSkeleton />
-            ) : employees.length === 0 ? (
+            ) : validEmployees.length === 0 ? (
               <div className="text-center p-12 text-gray-500">
                 No employees found.
               </div>
             ) : (
-              employees.map((emp) => {
+              validEmployees.map((emp) => {
                 const {
                   workedDays,
                   isEpfEnabled,
@@ -623,6 +685,7 @@ const Salary = () => {
                   <EmployeeSalaryCard
                     key={emp.id}
                     emp={emp}
+                    generatedSalary={generatedSalaries[emp.id]}
                     selectedEmployee={selectedEmployee}
                     handleSelectEmployee={handleSelectEmployee}
                     workedDays={workedDays}
@@ -637,6 +700,7 @@ const Salary = () => {
                     handleToggleLoan={handleToggleLoan}
                     handleToggleEpfEtf={handleToggleEpfEtf}
                     handleGeneratePayslip={handleGeneratePayslip}
+                    handleConfirmPayslip={handleConfirmPayslip}
                     openManageModal={openManageModal}
                     allowanceToggles={allowanceToggles}
                     deductionToggles={deductionToggles}

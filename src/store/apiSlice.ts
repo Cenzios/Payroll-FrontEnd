@@ -311,6 +311,14 @@ export const apiSlice = createApi({
             }),
             providesTags: ['Employee'],
         }),
+        getSalaryHistory: builder.query<any[], { companyId: string; employeeId?: string; month?: number; year?: number }>({
+            query: (params) => ({
+                url: '/salary/history',
+                method: 'GET',
+                params,
+            }),
+            providesTags: ['Employee'],
+        }),
     }),
 });
 
@@ -341,4 +349,5 @@ export const {
     useGetBankDetailsQuery,
     useSaveBankDetailsMutation,
     useUploadEmployeeDocumentMutation,
+    useGetSalaryHistoryQuery,
 } = apiSlice;
