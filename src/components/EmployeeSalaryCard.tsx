@@ -1,4 +1,4 @@
-import { Loader2, SlidersHorizontal } from "lucide-react";
+import { Loader2, SlidersHorizontal, Wallet, MinusCircle } from "lucide-react";
 import { Employee } from "../types/employee.types";
 
 interface EmployeeSalaryCardProps {
@@ -62,9 +62,9 @@ const EmployeeSalaryCard = ({
     const otRate = emp.otRate || 0;
     const otAmount = otHours * otRate;
 
-    // Dummy allowance/deduction totals (replace with real values later)
-    const totalAllowances = 5000; // TODO: replace with real sum
-    const totalDeductions_custom = 5000; // TODO: replace with real sum
+    // Calculate actual allowance/deduction totals from employee data
+    const totalAllowances = (emp.recurringAllowances || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const totalDeductions_custom = (emp.recurringDeductions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
     const basicPay = emp.salaryType === "MONTHLY"
         ? basicSalary // shown as monthly pay
@@ -85,7 +85,7 @@ const EmployeeSalaryCard = ({
                 }`}
         >
             {/* ── TOP HEADER ── */}
-            <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100">
+            <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200">
                 {/* Employee Info */}
                 <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-base shrink-0">
@@ -99,18 +99,18 @@ const EmployeeSalaryCard = ({
                 </div>
 
                 {/* Middle Info */}
-                <div className="hidden sm:flex flex-col gap-1 border-l border-gray-100 pl-5 ml-2">
+                <div className="hidden sm:flex flex-col gap-1 border-l border-gray-200 pl-5 ml-2">
                     <div className="flex items-center gap-2">
                         <span className="text-[11px] text-gray-400 w-24">Salary Mode:</span>
-                        <span className="text-[12px] font-bold text-gray-800">{emp.salaryType === "MONTHLY" ? "Monthly" : "Daily"}</span>
+                        <span className="text-[12px]  text-gray-800">{emp.salaryType === "MONTHLY" ? "Monthly" : "Daily"}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="text-[11px] text-gray-400 w-24">{emp.salaryType === "MONTHLY" ? "Monthly pay" : "Daily Rate"}</span>
-                        <span className="text-[12px] font-bold text-gray-800">{fmt(basicSalary)}</span>
+                        <span className="text-[12px]  text-gray-800">{fmt(basicSalary)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="text-[11px] text-gray-400 w-24">OT Rate</span>
-                        <span className="text-[12px] font-bold text-gray-800">{fmt(otRate)}</span>
+                        <span className="text-[12px]  text-gray-800">{fmt(otRate)}</span>
                     </div>
                 </div>
 
@@ -119,11 +119,11 @@ const EmployeeSalaryCard = ({
                     <div className="flex items-center justify-between gap-6">
                         <div>
                             <span className="text-[11px] text-gray-400 block">Total Allowances</span>
-                            <span className="text-[13px] font-bold text-gray-800">{fmt(totalAllowances)}</span>
+                            <span className="text-[13px]  text-gray-800">{fmt(totalAllowances)}</span>
                         </div>
                         <button
                             onClick={(e) => { e.stopPropagation(); openManageModal("allowance", emp); }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-blue-500 border border-blue-200/60 bg-blue-50/40 backdrop-blur-sm hover:bg-blue-100/60 hover:border-blue-300 transition-all shadow-sm"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px]  text-blue-500 border border-blue-200/60 bg-blue-50/40 backdrop-blur-sm hover:bg-blue-100/60 hover:border-blue-300 transition-all shadow-sm"
                         >
                             <SlidersHorizontal className="w-3.5 h-3.5" />
                             Manage
@@ -132,11 +132,11 @@ const EmployeeSalaryCard = ({
                     <div className="flex items-center justify-between gap-6">
                         <div>
                             <span className="text-[11px] text-gray-400 block">Total Deduction</span>
-                            <span className="text-[13px] font-bold text-gray-800">{fmt(totalDeductions_custom)}</span>
+                            <span className="text-[13px]  text-gray-800">{fmt(totalDeductions_custom)}</span>
                         </div>
                         <button
                             onClick={(e) => { e.stopPropagation(); openManageModal("deduction", emp); }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-blue-500 border border-blue-200/60 bg-blue-50/40 backdrop-blur-sm hover:bg-blue-100/60 hover:border-blue-300 transition-all shadow-sm"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px]  text-blue-500 border border-blue-200/60 bg-blue-50/40 backdrop-blur-sm hover:bg-blue-100/60 hover:border-blue-300 transition-all shadow-sm"
                         >
                             <SlidersHorizontal className="w-3.5 h-3.5" />
                             Manage
@@ -150,11 +150,16 @@ const EmployeeSalaryCard = ({
                 <div onClick={(e) => e.stopPropagation()} className="animate-in fade-in slide-in-from-top-1 duration-200">
 
                     {/* TWO COLUMN: Earnings | Deductions */}
-                    <div className="grid grid-cols-2 divide-x divide-gray-100">
+                    <div className="grid grid-cols-2 divide-x divide-gray-200">
 
                         {/* ── LEFT: EARNINGS ── */}
                         <div className="px-5 py-4">
-                            <h4 className="text-[11px] font-extrabold tracking-widest text-green-600 uppercase mb-4">Earnings</h4>
+                            <div className="flex items-center gap-2 mb-4">
+                                <Wallet className="w-4 h-4 text-green-600" />
+                                <h4 className="text-[11px] font-extrabold tracking-widest text-green-600 uppercase">
+                                    Earnings
+                                </h4>
+                            </div>
                             <div className="space-y-3">
                                 {/* Worked Days */}
                                 <div className="flex items-center justify-between gap-3">
@@ -165,7 +170,7 @@ const EmployeeSalaryCard = ({
                                         value={workedDays}
                                         onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
                                         onBlur={() => setTouchedFields((prev: any) => ({ ...prev, employeeDays: { ...prev.employeeDays, [emp.id]: true } }))}
-                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px] font-semibold text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px]  text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
                                         min="0" max="31"
                                     />
                                 </div>
@@ -178,7 +183,7 @@ const EmployeeSalaryCard = ({
                                         step="0.5"
                                         value={otHours}
                                         onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
-                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px] font-semibold text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px]  text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
                                         min="0"
                                     />
                                 </div>
@@ -195,7 +200,12 @@ const EmployeeSalaryCard = ({
 
                         {/* ── RIGHT: DEDUCTIONS ── */}
                         <div className="px-5 py-4">
-                            <h4 className="text-[11px] font-extrabold tracking-widest text-red-500 uppercase mb-4">Deductions</h4>
+                            <div className="flex items-center gap-2 mb-4">
+                                <MinusCircle className="w-4 h-4 text-red-500" />
+                                <h4 className="text-[11px] font-extrabold tracking-widest text-red-500 uppercase">
+                                    Deductions
+                                </h4>
+                            </div>
                             <div className="space-y-3">
                                 {/* Advance */}
                                 <div className="flex items-center justify-between gap-3">
@@ -204,7 +214,7 @@ const EmployeeSalaryCard = ({
                                         type="number"
                                         value={salaryAdvance}
                                         onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
-                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px] font-semibold text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+                                        className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-[13px]  text-gray-800 text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
                                         min="0"
                                     />
                                 </div>
@@ -220,7 +230,7 @@ const EmployeeSalaryCard = ({
                                         </button>
                                         <label className="text-[13px] text-gray-600 whitespace-nowrap">EPF Contribution</label>
                                     </div>
-                                    <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] font-semibold text-right transition-opacity ${isEpfEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50"}`}>
+                                    <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px]  text-right transition-opacity ${isEpfEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50"}`}>
                                         {fmt(isEpfEnabled ? epfAmount : 0)}
                                     </div>
                                 </div>
@@ -236,7 +246,7 @@ const EmployeeSalaryCard = ({
                                         </button>
                                         <label className="text-[13px] text-gray-600 whitespace-nowrap">Loan</label>
                                     </div>
-                                    <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] font-semibold text-right transition-opacity ${isLoanEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50 line-through"}`}>
+                                    <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px]  text-right transition-opacity ${isLoanEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50 line-through"}`}>
                                         {fmt(isLoanEnabled ? loanDeduction : 0)}
                                     </div>
                                 </div>
@@ -270,19 +280,19 @@ const EmployeeSalaryCard = ({
                                 disabled={isSaving || hasAnyError(emp)}
                                 className={`px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 flex items-center gap-2 ${isSaving || hasAnyError(emp)
                                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                    : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md active:scale-95"
+                                    : "bg-[#4584ff] text-white hover:bg-[#3b73e6] shadow-sm hover:shadow-md active:scale-95"
                                     }`}
                             >
                                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Generate Pay-slip"}
                             </button>
 
-                            {/* Confirm Pay-slip (dummy — wire up later) */}
+                            {/* Confirm Pay-slip */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); /* TODO: implement confirm */ }}
                                 disabled={isSaving || hasAnyError(emp)}
                                 className={`px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 ${isSaving || hasAnyError(emp)
                                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                    : "bg-green-500 text-white hover:bg-green-600 shadow-sm hover:shadow-md active:scale-95"
+                                    : "bg-[#28aa58] text-white hover:bg-[#23964e] shadow-sm hover:shadow-md active:scale-95"
                                     }`}
                             >
                                 Confirm Pay-slip
