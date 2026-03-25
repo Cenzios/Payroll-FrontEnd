@@ -264,24 +264,28 @@ const Dashboard = () => {
                   title="Total Employees"
                   value={dashboardData?.totalEmployees?.toString() || '0'}
                   colorTheme="blue"
+                  showLastMonth={true}
                 />
                 <StatCard
                   icon={DollarSign}
                   title="Total Salary Paid"
                   value={`Rs ${lastMonthSalary.toLocaleString()}`}
                   colorTheme="green"
+                  showLastMonth={true}
                 />
                 <StatCard
                   icon={Plus}
                   title="Company EPF/ETF Amount"
                   value={`Rs ${((dashboardData?.totalCompanyEPF || 0) + (dashboardData?.totalCompanyETF || 0)).toLocaleString()}`}
                   colorTheme="purple"
+                  showLastMonth={false}
                 />
                 <StatCard
                   icon={PieChart}
                   title="Total Employee EPF"
                   value={`Rs ${dashboardData?.totalEmployeeEPF?.toLocaleString() || '0'}`}
                   colorTheme="orange"
+                  showLastMonth={false}
                 />
               </div>
 
