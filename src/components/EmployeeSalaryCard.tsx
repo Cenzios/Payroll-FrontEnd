@@ -330,13 +330,13 @@ const EmployeeSalaryCard = ({
                             {/* Generate Pay-slip */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleGeneratePayslip(emp); }}
-                                disabled={isSaving || hasAnyError(emp)}
-                                className={`px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 flex items-center gap-2 ${isSaving || hasAnyError(emp)
+                                disabled={isSaving || (!isLocked && hasAnyError(emp))}
+                                className={`px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 flex items-center gap-2 ${isSaving || (!isLocked && hasAnyError(emp))
                                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                                     : "bg-[#4584ff] text-white hover:bg-[#3b73e6] shadow-sm hover:shadow-md active:scale-95"
                                     }`}
                             >
-                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Generate Pay-slip"}
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : (isLocked ? "View Pay-slip" : "Generate Pay-slip")}
                             </button>
 
                             {/* Confirm Pay-slip - ONLY show if not locked */}
