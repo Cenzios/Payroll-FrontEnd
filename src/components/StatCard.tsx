@@ -10,11 +10,11 @@ interface StatCardProps {
   colorTheme?: StatColorTheme;
 }
 
-const themeStyles: Record<StatColorTheme, { bg: string; text: string }> = {
-  blue: { bg: 'bg-blue-50', text: 'text-blue-500' },
-  green: { bg: 'bg-green-50', text: 'text-green-500' },
-  purple: { bg: 'bg-purple-50', text: 'text-purple-500' },
-  orange: { bg: 'bg-orange-50', text: 'text-orange-500' },
+const themeStyles: Record<StatColorTheme, { bg: string; text: string; dot: string }> = {
+  blue: { bg: 'bg-blue-50', text: 'text-blue-500', dot: 'bg-blue-500' },
+  green: { bg: 'bg-green-50', text: 'text-green-500', dot: 'bg-green-500' },
+  purple: { bg: 'bg-purple-50', text: 'text-purple-500', dot: 'bg-purple-500' },
+  orange: { bg: 'bg-orange-50', text: 'text-orange-500', dot: 'bg-orange-500' },
 };
 
 const StatCard = ({
@@ -29,10 +29,8 @@ const StatCard = ({
   let monthIndex = now.getMonth();
   let year = now.getFullYear();
 
-  // If this card should show last month
   if (showLastMonth) {
     if (monthIndex === 0) {
-      // If January → go to December previous year
       monthIndex = 11;
       year = year - 1;
     } else {
@@ -42,44 +40,27 @@ const StatCard = ({
 
   const displayDate = new Date(year, monthIndex);
 
-  const monthLabel = displayDate.toLocaleString("default", {
-    month: "short",
-  });
+  const monthLabel = displayDate.toLocaleString("default", { month: "short" });
+  const yearLabel = displayDate.getFullYear();
 
   const themeStyle = themeStyles[colorTheme];
 
   return (
-    <div
-      className="
-      relative
-      rounded-lg
-      p-6
-      bg-white
-      border border-gray-100
-      shadow-sm
-      hover:shadow-md
-      transition-all
-      group
-      flex items-center justify-between
-    "
-    >
-      {/* Month Label (Hidden globally if not explicitly desired, but standardizing to the corner if needed. 
-          The mockup doesn't explicitly show month labels for all, but let's keep it if showLastMonth is true or remove? 
-          Actually, the mockup doesn't show month labels on the cards, but we'll leave it out of the way or keep it as subtle text.) */}
-      {showLastMonth && (
-         <div className="absolute top-4 right-4 text-[11px] font-semibold text-gray-400">
-           {monthLabel}
-         </div>
-      )}
+    <div className="relative rounded-lg p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all group flex items-center justify-between">
+
+      {/* Date Badge — top-right corner, matching the screenshot style */}
+      <div className="absolute top-3 right-3 flex items-center gap-1">
+        <span className={`w-[7px] h-[7px] rounded-full ${themeStyle.dot} shrink-0`} />
+        <span className="text-[11px] font-medium text-gray-400">
+          {monthLabel} {yearLabel}
+        </span>
+      </div>
 
       {/* Left Content */}
       <div>
-        {/* Title */}
         <div className="text-[11px] text-gray-500 mb-1 font-regular">
           {title}
         </div>
-        
-        {/* Value */}
         <div className="text-[20px] font-bold text-gray-900 leading-none">
           {value}
         </div>
