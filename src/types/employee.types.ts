@@ -43,6 +43,7 @@ export interface Employee {
     branchName?: string;
     accountHolderName?: string;
     documents?: EmployeeDocument[];
+    avatar?: string;
 }
 
 export interface CreateEmployeeRequest {
