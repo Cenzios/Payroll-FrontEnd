@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Loader2, SlidersHorizontal, Wallet, MinusCircle, Lock } from "lucide-react";
+import { Loader2, SlidersHorizontal, Wallet, MinusCircle, Lock, Eye } from "lucide-react";
 import { Employee } from "../types/employee.types";
 
 interface EmployeeSalaryCardProps {
@@ -73,7 +73,6 @@ const EmployeeSalaryCard = ({
     const otRate = emp.otRate || 0;
     const otAmount = isLocked ? generatedSalary.otAmount : (displayOtHours * otRate);
 
-    // Calculate actual allowance/deduction totals from employee data
     const totalAllowances = isLocked
         ? generatedSalary.allowanceTotal
         : (emp.recurringAllowances || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
@@ -93,13 +92,23 @@ const EmployeeSalaryCard = ({
     const netSalary = isLocked ? generatedSalary.netSalary : (totalEarnings - totalDeductions);
 
     return (
+        // ✅ CHANGED: added "relative" here so the full-card overlay works
         <div
             onClick={() => handleSelectEmployee(emp)}
-            className={`bg-white rounded-2xl border cursor-pointer transition-all duration-200 overflow-hidden ${isSelected
+            className={`relative bg-white rounded-2xl border cursor-pointer transition-all duration-200 overflow-hidden ${isSelected
                 ? "border-blue-400 shadow-lg ring-1 ring-blue-300"
                 : "border-gray-200 hover:border-blue-200 hover:shadow-md"
                 }`}
         >
+            {/* ✅ CHANGED: Full-card lock overlay moved here, covers entire card */}
+            {isLocked && (
+                <div className="absolute inset-0 z-20 bg-gray-900/60 flex flex-col items-center justify-center pointer-events-none rounded-2xl">
+                    <span className="text-[15px] font-bold text-white text-center px-6 drop-shadow-md">
+                        Pay-slip already generated and locked – cannot be edited.
+                    </span>
+                </div>
+            )}
+
             {/* ── TOP HEADER ── */}
             <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200">
                 {/* Employee Info */}
@@ -118,24 +127,24 @@ const EmployeeSalaryCard = ({
                 <div className="hidden sm:flex flex-col gap-1 border-l border-gray-200 pl-5 ml-2">
                     <div className="flex items-center gap-2">
                         <span className="text-[11px] text-gray-400 w-24">Salary Mode:</span>
-                        <span className="text-[12px]  text-gray-800">{emp.salaryType === "MONTHLY" ? "Monthly" : "Daily"}</span>
+                        <span className="text-[12px] text-gray-800">{emp.salaryType === "MONTHLY" ? "Monthly" : "Daily"}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="text-[11px] text-gray-400 w-24">{emp.salaryType === "MONTHLY" ? "Monthly pay" : "Daily Rate"}</span>
-                        <span className="text-[12px]  text-gray-800">{fmt(basicSalary)}</span>
+                        <span className="text-[12px] text-gray-800">{fmt(basicSalary)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="text-[11px] text-gray-400 w-24">OT Rate</span>
-                        <span className="text-[12px]  text-gray-800">{fmt(otRate)}</span>
+                        <span className="text-[12px] text-gray-800">{fmt(otRate)}</span>
                     </div>
                 </div>
 
                 {/* Right: Allowance & Deduction Summary */}
                 <div className="hidden lg:flex flex-col gap-2 border-l border-gray-100 pl-5 ml-2">
                     <div className="flex items-center justify-between gap-6">
-                        <div>
-                            <span className="text-[11px] text-gray-400 block">Total Allowances</span>
-                            <span className="text-[13px]  text-gray-800">{fmt(totalAllowances)}</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-gray-400">Total Allowances:</span>
+                            <span className="text-[13px] text-gray-800">{fmt(totalAllowances)}</span>
                         </div>
                         <button
                             onClick={(e) => { e.stopPropagation(); openManageModal("allowance", emp); }}
@@ -147,9 +156,9 @@ const EmployeeSalaryCard = ({
                         </button>
                     </div>
                     <div className="flex items-center justify-between gap-6">
-                        <div>
-                            <span className="text-[11px] text-gray-400 block">Total Deduction</span>
-                            <span className="text-[13px]  text-gray-800">{fmt(totalDeductions_custom)}</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-gray-400">Total Deduction:</span>
+                            <span className="text-[13px] text-gray-800">{fmt(totalDeductions_custom)}</span>
                         </div>
                         <button
                             onClick={(e) => { e.stopPropagation(); openManageModal("deduction", emp); }}
@@ -168,7 +177,8 @@ const EmployeeSalaryCard = ({
                 <div onClick={(e) => e.stopPropagation()} className="animate-in fade-in slide-in-from-top-1 duration-200">
 
                     {/* TWO COLUMN: Earnings | Deductions */}
-                    <div className="grid grid-cols-2 divide-x divide-gray-200 relative">
+                    {/* ✅ CHANGED: removed "relative" from here since overlay is now on the outer card */}
+                    <div className="grid grid-cols-2 divide-x divide-gray-200">
 
                         {/* ── LEFT: EARNINGS ── */}
                         <div className="px-5 py-4">
@@ -242,52 +252,33 @@ const EmployeeSalaryCard = ({
 
                                 {/* EPF Contribution */}
                                 <div className="flex items-center justify-between gap-3">
-
-                                    {/* LEFT SIDE: Label + Toggle */}
                                     <div className="flex items-center justify-between w-full max-w-[220px]">
-                                        <label className="text-[13px] text-gray-600">
-                                            EPF Contribution
-                                        </label>
-
+                                        <label className="text-[13px] text-gray-600">EPF Contribution</label>
                                         <button
                                             onClick={() => handleToggleEpfEtf(emp.id)}
                                             disabled={isLocked}
                                             className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${isEpfEnabled ? (isLocked ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500") : "bg-gray-300"} ${isLocked && !isEpfEnabled ? "opacity-50 cursor-not-allowed" : ""}`}
                                         >
-                                            <span
-                                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isEpfEnabled ? "translate-x-5" : "translate-x-1"}`}
-                                            />
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isEpfEnabled ? "translate-x-5" : "translate-x-1"}`} />
                                         </button>
                                     </div>
-
-                                    {/* RIGHT SIDE: Amount (UNCHANGED) */}
                                     <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right transition-opacity ${isEpfEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50"}`}>
                                         {fmt(isEpfEnabled ? epfAmount : 0)}
                                     </div>
                                 </div>
 
-
                                 {/* Loan */}
                                 <div className="flex items-center justify-between gap-3">
-
-                                    {/* LEFT SIDE: Label + Toggle */}
                                     <div className="flex items-center justify-between w-full max-w-[220px]">
-                                        <label className="text-[13px] text-gray-600">
-                                            Loan
-                                        </label>
-
+                                        <label className="text-[13px] text-gray-600">Loan</label>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleToggleLoan(emp.id); }}
                                             disabled={isLocked}
                                             className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${isLoanEnabled ? (isLocked ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500") : "bg-gray-300"} ${isLocked && !isLoanEnabled ? "opacity-50 cursor-not-allowed" : ""}`}
                                         >
-                                            <span
-                                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isLoanEnabled ? "translate-x-5" : "translate-x-1"}`}
-                                            />
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isLoanEnabled ? "translate-x-5" : "translate-x-1"}`} />
                                         </button>
                                     </div>
-
-                                    {/* RIGHT SIDE: Amount (UNCHANGED) */}
                                     <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right transition-opacity ${isLoanEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50 line-through"}`}>
                                         {fmt(isLoanEnabled ? loanDeduction : 0)}
                                     </div>
@@ -295,16 +286,7 @@ const EmployeeSalaryCard = ({
                             </div>
                         </div>
 
-                        {/* Lock Overlay */}
-                        {isLocked && (
-                            <div className="absolute inset-0 z-10 bg-white/50 backdrop-blur-[1.5px] flex flex-col items-center justify-center pointer-events-none">
-                                <div className="bg-red-50 px-8 py-2.5 rounded-full shadow-sm border border-red-100 flex items-center justify-center gap-2 mb-3">
-                                    <Lock className="w-5 h-5 text-red-400" />
-                                    <span className="text-[14px] font-bold text-red-400 uppercase tracking-[0.2em] mt-0.5">Locked</span>
-                                </div>
-                                <span className="text-[13px] text-gray-500 font-medium">This pay record is finalized and cannot be edited.</span>
-                            </div>
-                        )}
+                        {/* ✅ REMOVED: Old lock overlay was here — now it's on the outer card div */}
                     </div>
 
                     {/* ── TOTALS BAR ── */}
@@ -327,7 +309,7 @@ const EmployeeSalaryCard = ({
                         </div>
 
                         <div className="flex items-center gap-3">
-                            {/* Generate Pay-slip */}
+                            {/* ✅ CHANGED: Added Eye icon for locked "View Pay-Slip" button */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleGeneratePayslip(emp); }}
                                 disabled={isSaving || (!isLocked && hasAnyError(emp))}
@@ -336,7 +318,12 @@ const EmployeeSalaryCard = ({
                                     : "bg-[#4584ff] text-white hover:bg-[#3b73e6] shadow-sm hover:shadow-md active:scale-95"
                                     }`}
                             >
-                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : (isLocked ? "View Pay-slip" : "Generate Pay-slip")}
+                                {isSaving
+                                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                                    : isLocked
+                                        ? <><Eye className="w-4 h-4" /> View Pay-Slip</>
+                                        : "Generate Pay-slip"
+                                }
                             </button>
 
                             {/* Confirm Pay-slip - ONLY show if not locked */}
