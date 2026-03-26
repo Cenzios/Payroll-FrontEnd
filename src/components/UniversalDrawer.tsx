@@ -744,6 +744,7 @@ const UniversalDrawer = ({
                           placeholder="Enter company name"
                           className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.name && errors.name ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                         />
+
                         {touched.name && errors.name && (
                           <p className="text-red-500 text-xs mt-1">
                             {errors.name}
@@ -765,6 +766,7 @@ const UniversalDrawer = ({
                           placeholder="Enter company address"
                           className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                         />
+
                         {touched.address && errors.address && (
                           <p className="text-red-500 text-xs mt-1">
                             {errors.address}
@@ -787,6 +789,7 @@ const UniversalDrawer = ({
                             placeholder="company@example.com"
                             className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                           />
+
                           {touched.email && errors.email && (
                             <p className="text-red-500 text-xs mt-1">
                               {errors.email}
@@ -810,6 +813,7 @@ const UniversalDrawer = ({
                             placeholder="+94 77 123 0000"
                             className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                           />
+
                           {touched.contactNumber && errors.contactNumber && (
                             <p className="text-red-500 text-xs mt-1">
                               {errors.contactNumber}
@@ -830,27 +834,29 @@ const UniversalDrawer = ({
                         <div className="space-y-1.5">
                           {/* Employee ID */}
                           <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Employee ID *
-                            </label>
                             <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <UserRound className="h-4 w-4 text-gray-400" />
+                              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                <UserRound className="h-4 w-4 text-blue-500" />
                               </div>
-                              <input
-                                type="text"
-                                value={employeeData.employeeId}
-                                onChange={(e) =>
-                                  handleEmployeeChange(
-                                    "employeeId",
-                                    e.target.value,
-                                  )
-                                }
-                                onBlur={() => handleBlur("employeeId")}
-                                placeholder="Enter employee ID"
-                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeId && errors.employeeId ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              />
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                Employee ID *
+                              </label>
                             </div>
+
+                            <input
+                              type="text"
+                              value={employeeData.employeeId}
+                              onChange={(e) =>
+                                handleEmployeeChange(
+                                  "employeeId",
+                                  e.target.value,
+                                )
+                              }
+                              onBlur={() => handleBlur("employeeId")}
+                              placeholder="Enter employee ID"
+                              className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeId && errors.employeeId ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            />
+
                             {touched.employeeId && errors.employeeId && (
                               <p className="text-red-500 text-xs mt-1">
                                 {errors.employeeId}
@@ -860,27 +866,29 @@ const UniversalDrawer = ({
 
                           {/* Name */}
                           <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Name *
-                            </label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <UserRound className="h-4 w-4 text-gray-400" />
+                            <div className="relative mt-4">
+                              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                <UserRound className="h-4 w-4 text-blue-500" />
                               </div>
-                              <input
-                                type="text"
-                                value={employeeData.fullName}
-                                onChange={(e) =>
-                                  handleEmployeeChange(
-                                    "fullName",
-                                    e.target.value,
-                                  )
-                                }
-                                onBlur={() => handleBlur("fullName")}
-                                placeholder="Enter employee name"
-                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.fullName && errors.fullName ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              />
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                Name *
+                              </label>
                             </div>
+
+                            <input
+                              type="text"
+                              value={employeeData.fullName}
+                              onChange={(e) =>
+                                handleEmployeeChange(
+                                  "fullName",
+                                  e.target.value,
+                                )
+                              }
+                              onBlur={() => handleBlur("fullName")}
+                              placeholder="Enter employee name"
+                              className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.fullName && errors.fullName ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            />
+
                             {touched.fullName && errors.fullName && (
                               <p className="text-red-500 text-xs mt-1">
                                 {errors.fullName}
@@ -890,27 +898,28 @@ const UniversalDrawer = ({
 
                           {/* NIC */}
                           <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              NIC *
-                            </label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <CreditCard className="h-4 w-4 text-gray-400" />
+                            <div className="relative mt-4">
+                              <div className="absolute inset-y-0 left-0  flex items-center pointer-events-none">
+                                <CreditCard className="h-4 w-4 text-blue-500" />
                               </div>
-                              <input
-                                type="text"
-                                value={employeeData.employeeNIC || ""}
-                                onChange={(e) =>
-                                  handleEmployeeChange(
-                                    "employeeNIC",
-                                    e.target.value,
-                                  )
-                                }
-                                onBlur={() => handleBlur("employeeNIC")}
-                                placeholder="Enter employee NIC Number"
-                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeNIC && errors.employeeNIC ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              />
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                NIC *
+                              </label>
                             </div>
+                            <input
+                              type="text"
+                              value={employeeData.employeeNIC || ""}
+                              onChange={(e) =>
+                                handleEmployeeChange(
+                                  "employeeNIC",
+                                  e.target.value,
+                                )
+                              }
+                              onBlur={() => handleBlur("employeeNIC")}
+                              placeholder="Enter employee NIC Number"
+                              className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeNIC && errors.employeeNIC ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            />
+
                             {touched.employeeNIC && errors.employeeNIC && (
                               <p className="text-red-500 text-xs mt-1">
                                 {errors.employeeNIC}
@@ -920,27 +929,29 @@ const UniversalDrawer = ({
 
                           {/* Address */}
                           <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Address
-                            </label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <MapPin className="h-4 w-4 text-gray-400" />
+                            <div className="relative mt-4">
+                              <div className="absolute inset-y-0 left-0  flex items-center pointer-events-none">
+                                <MapPin className="h-4 w-4 text-blue-500" />
                               </div>
-                              <input
-                                type="text"
-                                value={employeeData.address}
-                                onChange={(e) =>
-                                  handleEmployeeChange(
-                                    "address",
-                                    e.target.value,
-                                  )
-                                }
-                                onBlur={() => handleBlur("address")}
-                                placeholder="Enter address"
-                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              />
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                Address
+                              </label>
                             </div>
+
+                            <input
+                              type="text"
+                              value={employeeData.address}
+                              onChange={(e) =>
+                                handleEmployeeChange(
+                                  "address",
+                                  e.target.value,
+                                )
+                              }
+                              onBlur={() => handleBlur("address")}
+                              placeholder="Enter address"
+                              className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            />
+
                             {touched.address && errors.address && (
                               <p className="text-red-500 text-xs mt-1">
                                 {errors.address}
@@ -950,27 +961,29 @@ const UniversalDrawer = ({
 
                           {/* EPF Number */}
                           <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              EPF Number *
-                            </label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Activity className="h-4 w-4 text-gray-400" />
+                            <div className="relative mt-4">
+                              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                <Activity className="h-4 w-4 text-blue-500" />
                               </div>
-                              <input
-                                type="text"
-                                value={employeeData.epfNumber || ""}
-                                onChange={(e) =>
-                                  handleEmployeeChange(
-                                    "epfNumber",
-                                    e.target.value,
-                                  )
-                                }
-                                onBlur={() => handleBlur("epfNumber")}
-                                placeholder="Enter EPF Number"
-                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.epfNumber && errors.epfNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              />
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                EPF Number *
+                              </label>
                             </div>
+
+                            <input
+                              type="text"
+                              value={employeeData.epfNumber || ""}
+                              onChange={(e) =>
+                                handleEmployeeChange(
+                                  "epfNumber",
+                                  e.target.value,
+                                )
+                              }
+                              onBlur={() => handleBlur("epfNumber")}
+                              placeholder="Enter EPF Number"
+                              className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.epfNumber && errors.epfNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            />
+
                             {touched.epfNumber && errors.epfNumber && (
                               <p className="text-red-500 text-xs mt-1">
                                 {errors.epfNumber}
@@ -981,27 +994,29 @@ const UniversalDrawer = ({
                           {/* Email & Phone */}
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                                Email (optional)
-                              </label>
-                              <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                  <Mail className="h-4 w-4 text-gray-400" />
+                              <div className="relative mt-4">
+                                <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                  <Mail className="h-4 w-4 text-blue-500" />
                                 </div>
-                                <input
-                                  type="email"
-                                  value={employeeData.email}
-                                  onChange={(e) =>
-                                    handleEmployeeChange(
-                                      "email",
-                                      e.target.value,
-                                    )
-                                  }
-                                  onBlur={() => handleBlur("email")}
-                                  placeholder="employee@example.com"
-                                  className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
-                                />
+                                <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                  Email (optional)
+                                </label>
                               </div>
+
+                              <input
+                                type="email"
+                                value={employeeData.email}
+                                onChange={(e) =>
+                                  handleEmployeeChange(
+                                    "email",
+                                    e.target.value,
+                                  )
+                                }
+                                onBlur={() => handleBlur("email")}
+                                placeholder="employee@example.com"
+                                className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                              />
+
                               {touched.email && errors.email && (
                                 <p className="text-red-500 text-xs mt-1">
                                   {errors.email}
@@ -1009,27 +1024,29 @@ const UniversalDrawer = ({
                               )}
                             </div>
                             <div>
-                              <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                                Phone Number *
-                              </label>
-                              <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                  <Phone className="h-4 w-4 text-gray-400" />
+                              <div className="relative mt-4">
+                                <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                  <Phone className="h-4 w-4 text-blue-500" />
                                 </div>
-                                <input
-                                  type="tel"
-                                  value={employeeData.contactNumber}
-                                  onChange={(e) =>
-                                    handleEmployeeChange(
-                                      "contactNumber",
-                                      e.target.value,
-                                    )
-                                  }
-                                  onBlur={() => handleBlur("contactNumber")}
-                                  placeholder="0771234567"
-                                  className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
-                                />
+                                <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                  Phone Number *
+                                </label>
                               </div>
+
+                              <input
+                                type="tel"
+                                value={employeeData.contactNumber}
+                                onChange={(e) =>
+                                  handleEmployeeChange(
+                                    "contactNumber",
+                                    e.target.value,
+                                  )
+                                }
+                                onBlur={() => handleBlur("contactNumber")}
+                                placeholder="0771234567"
+                                className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                              />
+
                               {touched.contactNumber &&
                                 errors.contactNumber && (
                                   <p className="text-red-500 text-xs mt-1">
@@ -1041,31 +1058,33 @@ const UniversalDrawer = ({
 
                           {/* Designation */}
                           <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Designation
-                            </label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Award className="h-4 w-4 text-gray-400" />
+                            <div className="relative mt-4">
+                              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                <Award className="h-4 w-4 text-blue-500" />
                               </div>
-                              <input
-                                type="text"
-                                value={employeeData.designation}
-                                onChange={(e) => {
-                                  const filteredValue = e.target.value.replace(
-                                    /[0-9]/g,
-                                    "",
-                                  );
-                                  handleEmployeeChange(
-                                    "designation",
-                                    filteredValue,
-                                  );
-                                }}
-                                onBlur={() => handleBlur("designation")}
-                                placeholder="Enter employee designation"
-                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.designation && errors.designation ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              />
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                Designation
+                              </label>
                             </div>
+
+                            <input
+                              type="text"
+                              value={employeeData.designation}
+                              onChange={(e) => {
+                                const filteredValue = e.target.value.replace(
+                                  /[0-9]/g,
+                                  "",
+                                );
+                                handleEmployeeChange(
+                                  "designation",
+                                  filteredValue,
+                                );
+                              }}
+                              onBlur={() => handleBlur("designation")}
+                              placeholder="Enter employee designation"
+                              className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.designation && errors.designation ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            />
+
                             {touched.designation && errors.designation && (
                               <p className="text-red-500 text-xs mt-1">
                                 {errors.designation}
@@ -1075,26 +1094,28 @@ const UniversalDrawer = ({
 
                           {/* Joined Date */}
                           <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Joined Date *
-                            </label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Calendar className="h-4 w-4 text-gray-400" />
+                            <div className="relative mt-4">
+                              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                <Calendar className="h-4 w-4 text-blue-500" />
                               </div>
-                              <input
-                                type="date"
-                                value={employeeData.joinedDate}
-                                onChange={(e) =>
-                                  handleEmployeeChange(
-                                    "joinedDate",
-                                    e.target.value,
-                                  )
-                                }
-                                onBlur={() => handleBlur("joinedDate")}
-                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.joinedDate && errors.joinedDate ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              />
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                Joined Date *
+                              </label>
                             </div>
+
+                            <input
+                              type="date"
+                              value={employeeData.joinedDate}
+                              onChange={(e) =>
+                                handleEmployeeChange(
+                                  "joinedDate",
+                                  e.target.value,
+                                )
+                              }
+                              onBlur={() => handleBlur("joinedDate")}
+                              className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.joinedDate && errors.joinedDate ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            />
+
                             {touched.joinedDate && errors.joinedDate && (
                               <p className="text-red-500 text-xs mt-1">
                                 {errors.joinedDate}
@@ -1104,18 +1125,23 @@ const UniversalDrawer = ({
 
                           {/* Add Files */}
                           <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Add Files
-                            </label>
+                            <div className="relative mt-4">
+                              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                <UploadCloud className="h-4 w-4 text-blue-500" />
+                              </div>
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                Add Files
+                              </label>
+                            </div>
+
+
                             <button
                               type="button"
                               onClick={() => setIsUploadModalOpen(true)}
                               className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all text-[13px] text-gray-500 font-medium group"
                             >
-                              <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                                <UploadCloud className="h-4 w-4 text-gray-400 group-hover:text-blue-500" />
-                              </div>
-                              <span>Add Employee Files</span>
+
+                              <span className="text-gray-400 text-[13px] font-light">Upload Employee Documents</span>
                               <div className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-gray-50 group-hover:bg-blue-100 transition-colors">
                                 <PlusCircle className="h-3.5 w-3.5 text-gray-400 group-hover:text-blue-600" />
                               </div>
@@ -1622,8 +1648,8 @@ const UniversalDrawer = ({
               </button>
             )}
           </div>
-        </div>
-      </div>
+        </div >
+      </div >
     </>
   );
 };

@@ -19,7 +19,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 ENV NGINX_PORT=6080
 ENV API_URL=https://payrollserver.cenzios.com/api/
 
-# Expose correct port
-EXPOSE 80
+EXPOSE 6080
+EXPOSE 5090
 
 CMD ["/bin/sh","-c","envsubst '$NGINX_PORT $API_URL' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
