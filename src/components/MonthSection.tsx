@@ -6,9 +6,13 @@ interface EmployeePayrollData {
     employeeCode: string;
     employeeName: string;
     workingDays: number;
+    basicPay: number;
+    otHours: number;
+    otAmount: number;
     grossPay: number;
     netPay: number;
     employeeEPF: number;
+    salaryAdvance: number;
     companyEPFETF: number;
 }
 
@@ -30,7 +34,7 @@ interface MonthSectionProps {
     isExpanded: boolean;
     onToggle: () => void;
     selectedEmployeeIds: string[];
-    onSelectEmployee: (id: string) => void;
+    onSelectEmployee: (id: string, month: number, year: number) => void;
     onViewEmployee: (id: string, companyId: string) => void;
     companyId: string;
     searchQuery?: string;
@@ -39,6 +43,7 @@ interface MonthSectionProps {
 const MonthSection: React.FC<MonthSectionProps> = ({
     year,
     month,
+    monthNumber,
     status,
     employees,
     totals,
@@ -83,8 +88,8 @@ const MonthSection: React.FC<MonthSectionProps> = ({
 
                         {/* Status Badge */}
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${status === 'Completed'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-yellow-100 text-yellow-700'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-yellow-100 text-yellow-700'
                             }`}>
                             {status}
                         </span>
@@ -120,18 +125,18 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                             <th className="px-4 py-3 border-b border-gray-200">
                                                 <input
                                                     type="checkbox"
-                                                    checked={filteredEmployees.length > 0 && filteredEmployees.every(emp => selectedEmployeeIds.includes(emp.employeeId))}
+                                                    checked={filteredEmployees.length > 0 && filteredEmployees.every(emp => selectedEmployeeIds.includes(`${emp.employeeId}-${year}-${monthNumber}`))}
                                                     onChange={(e) => {
                                                         if (e.target.checked) {
                                                             filteredEmployees.forEach(emp => {
-                                                                if (!selectedEmployeeIds.includes(emp.employeeId)) {
-                                                                    onSelectEmployee(emp.employeeId);
+                                                                if (!selectedEmployeeIds.includes(`${emp.employeeId}-${year}-${monthNumber}`)) {
+                                                                    onSelectEmployee(emp.employeeId, monthNumber, year);
                                                                 }
                                                             });
                                                         } else {
                                                             filteredEmployees.forEach(emp => {
-                                                                if (selectedEmployeeIds.includes(emp.employeeId)) {
-                                                                    onSelectEmployee(emp.employeeId);
+                                                                if (selectedEmployeeIds.includes(`${emp.employeeId}-${year}-${monthNumber}`)) {
+                                                                    onSelectEmployee(emp.employeeId, monthNumber, year);
                                                                 }
                                                             });
                                                         }
@@ -139,12 +144,15 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                 />
                                             </th>
-                                            <th className="px-6 py-3 border-b border-gray-200">Employee ID</th>
-                                            <th className="px-6 py-3 border-b border-gray-200">Employee Name</th>
-                                            <th className="px-6 py-3 border-b border-gray-200">Working Days</th>
+                                            <th className="px-6 py-3 border-b border-gray-200">Emp ID</th>
+                                            <th className="px-6 py-3 border-b border-gray-200 whitespace-nowrap">Name</th>
+                                            <th className="px-6 py-3 border-b border-gray-200">Days</th>
+                                            <th className="px-6 py-3 border-b border-gray-200">Basic</th>
+                                            <th className="px-6 py-3 border-b border-gray-200">OT</th>
+                                            <th className="px-6 py-3 border-b border-gray-200">Gross</th>
+                                            <th className="px-6 py-3 border-b border-gray-200">EPF (8%)</th>
+                                            <th className="px-6 py-3 border-b border-gray-200">Advance</th>
                                             <th className="px-6 py-3 border-b border-gray-200">Net Pay</th>
-                                            <th className="px-6 py-3 border-b border-gray-200">Employee EPF</th>
-                                            <th className="px-6 py-3 border-b border-gray-200">Company ETF/EPF</th>
                                             <th className="px-6 py-3 border-b border-gray-200 text-right">Action</th>
                                         </tr>
                                     </thead>
@@ -154,17 +162,23 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                 <td className="px-4 py-3">
                                                     <input
                                                         type="checkbox"
-                                                        checked={selectedEmployeeIds.includes(employee.employeeId)}
-                                                        onChange={() => onSelectEmployee(employee.employeeId)}
+                                                        checked={selectedEmployeeIds.includes(`${employee.employeeId}-${year}-${monthNumber}`)}
+                                                        onChange={() => onSelectEmployee(employee.employeeId, monthNumber, year)}
                                                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                     />
                                                 </td>
                                                 <td className="px-6 py-3 font-semibold text-gray-900">{employee.employeeCode || '-'}</td>
-                                                <td className="px-6 py-3 text-gray-700">{employee.employeeName || '-'}</td>
-                                                <td className="px-6 py-3 text-gray-600">{employee.workingDays}</td>
-                                                <td className="px-6 py-3 font-medium text-gray-900">Rs {Number(employee.netPay).toLocaleString()}</td>
-                                                <td className="px-6 py-3 text-gray-600">Rs: {Number(employee.employeeEPF).toLocaleString()}</td>
-                                                <td className="px-6 py-3 text-gray-600">Rs: {Number(employee.companyEPFETF).toLocaleString()}</td>
+                                                <td className="px-6 py-3 text-gray-700 whitespace-nowrap">{employee.employeeName || '-'}</td>
+                                                <td className="px-6 py-3 text-gray-600 text-center">{employee.workingDays}</td>
+                                                <td className="px-6 py-3 text-gray-600 font-medium">Rs {employee.basicPay?.toLocaleString()}</td>
+                                                <td className="px-6 py-3 text-gray-600">
+                                                    <div className="font-medium text-green-600">Rs {employee.otAmount?.toLocaleString()}</div>
+                                                    <div className="text-[10px] text-gray-400">({employee.otHours} hrs)</div>
+                                                </td>
+                                                <td className="px-6 py-3 font-semibold text-gray-900 whitespace-nowrap">Rs {employee.grossPay?.toLocaleString()}</td>
+                                                <td className="px-6 py-3 text-red-600 font-medium whitespace-nowrap">Rs {employee.employeeEPF?.toLocaleString()}</td>
+                                                <td className="px-6 py-3 text-red-600 font-medium whitespace-nowrap">Rs {employee.salaryAdvance?.toLocaleString()}</td>
+                                                <td className="px-6 py-3 font-bold text-blue-600 whitespace-nowrap underline decoration-blue-200 underline-offset-4">Rs {employee.netPay?.toLocaleString()}</td>
                                                 <td className="px-6 py-3 text-right">
                                                     <button
                                                         onClick={() => onViewEmployee(employee.employeeId, companyId)}

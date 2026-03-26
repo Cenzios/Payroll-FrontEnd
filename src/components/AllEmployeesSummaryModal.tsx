@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Loader2, FileSpreadsheet, Download } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
 import Toast from './Toast';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import { exportAllEmployeesSummary } from '../utils/exportService';
 
 interface AllEmployeesSummaryModalProps {
     isOpen: boolean;
@@ -19,9 +17,14 @@ interface EmployeeRow {
     employeeId: string;
     employeeCode: string;
     employeeName: string;
-    workedDays: number;
+    workingDays: number;
+    basicPay: number;
+    otHours: number;
+    otAmount: number;
     grossPay: number;
     netPay: number;
+    tax: number;
+    salaryAdvance: number;
     deductions: number;
     employeeEPF: number;
     companyEPFETF: number;
@@ -37,9 +40,12 @@ interface SummaryData {
     };
     employees: EmployeeRow[];
     totals: {
+        basicPay: number;
+        otAmount: number;
         grossPay: number;
-        netPay: number;
+        salaryAdvance: number;
         deductions: number;
+        netPay: number;
         employeeEPF: number;
         companyEPFETF: number;
     };
@@ -85,156 +91,19 @@ const AllEmployeesSummaryModal = ({
 
     const exportPDF = () => {
         if (!summaryData) return;
-
-        const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
-
-        // Title
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text('ALL EMPLOYEES – PAYROLL SUMMARY REPORT', 14, 15);
-
-        // Metadata
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        let yPos = 30;
-
-        doc.text(`Employee Count: ${summaryData.metadata.employeeCount}`, 14, yPos);
-        doc.text(`Date Period: ${summaryData.metadata.datePeriod}`, 100, yPos);
-        yPos += 7;
-        doc.text(`Department: ${summaryData.metadata.department}`, 14, yPos);
-        doc.text(`Report Type: ${summaryData.metadata.reportType}`, 100, yPos);
-        yPos += 7;
-        doc.text(`Total Gross Pay: RS ${summaryData.metadata.totalGrossPay.toLocaleString()}`, 14, yPos);
-        yPos += 15;
-
-        // Table
-        const tableData = summaryData.employees.map(emp => [
-            emp.employeeCode,
-            emp.employeeName,
-            emp.workedDays.toString(),
-            `RS ${emp.grossPay.toLocaleString()}`,
-            `RS ${emp.netPay.toLocaleString()}`,
-            `RS ${emp.deductions.toLocaleString()}`,
-            `RS ${emp.employeeEPF.toLocaleString()}`,
-            `RS ${emp.companyEPFETF.toLocaleString()}`
-        ]);
-
-        // Totals Row
-        tableData.push([
-            'TOTAL AMOUNTS',
-            '',
-            '',
-            `RS ${summaryData.totals.grossPay.toLocaleString()}`,
-            `RS ${summaryData.totals.netPay.toLocaleString()}`,
-            `RS ${summaryData.totals.deductions.toLocaleString()}`,
-            `RS ${summaryData.totals.employeeEPF.toLocaleString()}`,
-            `RS ${summaryData.totals.companyEPFETF.toLocaleString()}`
-        ]);
-
-        autoTable(doc, {
-            startY: yPos,
-            head: [['Employee ID', 'Employee Name', 'Worked Days', 'Gross Pay', 'Net Pay', 'Deduction', 'Employee EPF', 'Company EPF/ETF']],
-            body: tableData,
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [31, 41, 55], fontStyle: 'bold' }, // Dark Gray
-            didParseCell: (data) => {
-                if (data.row.index === tableData.length - 1) {
-                    data.cell.styles.fillColor = [37, 99, 235]; // Blue
-                    data.cell.styles.textColor = [255, 255, 255];
-                    data.cell.styles.fontStyle = 'bold';
-                }
-            }
-        });
-
-        doc.save(`Selected_Employees_Payroll_Summary_${summaryData.metadata.datePeriod.replace(' ', '_')}.pdf`);
+        exportAllEmployeesSummary('pdf', summaryData);
         setToast({ message: 'PDF exported successfully', type: 'success' });
     };
 
     const exportExcel = () => {
         if (!summaryData) return;
-
-        const wsData: any[][] = [
-            ['ALL EMPLOYEES – PAYROLL SUMMARY REPORT'],
-            [],
-            ['Employee Count:', summaryData.metadata.employeeCount, '', 'Date Period:', summaryData.metadata.datePeriod],
-            ['Department:', summaryData.metadata.department, '', 'Report Type:', summaryData.metadata.reportType],
-            ['Total Gross Pay:', `RS ${summaryData.metadata.totalGrossPay.toLocaleString()}`],
-            [],
-            ['Breakdown Table'],
-            ['Employee ID', 'Employee Name', 'Worked Days', 'Gross Pay', 'Net Pay', 'Deduction', 'Employee EPF', 'Company EPF/ETF'],
-            ...summaryData.employees.map(emp => [
-                emp.employeeCode,
-                emp.employeeName,
-                emp.workedDays,
-                emp.grossPay,
-                emp.netPay,
-                emp.deductions,
-                emp.employeeEPF,
-                emp.companyEPFETF
-            ]),
-            [
-                'TOTAL AMOUNTS',
-                '',
-                '',
-                summaryData.totals.grossPay,
-                summaryData.totals.netPay,
-                summaryData.totals.deductions,
-                summaryData.totals.employeeEPF,
-                summaryData.totals.companyEPFETF
-            ]
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Payroll Summary");
-        XLSX.writeFile(wb, `Selected_Employees_Summary_${summaryData.metadata.datePeriod.replace(' ', '_')}.xlsx`);
+        exportAllEmployeesSummary('excel', summaryData);
         setToast({ message: 'Excel exported successfully', type: 'success' });
     };
 
     const exportCSV = () => {
         if (!summaryData) return;
-
-        const wsData: any[][] = [
-            ['ALL EMPLOYEES – PAYROLL SUMMARY REPORT'],
-            [],
-            ['Employee Count:', summaryData.metadata.employeeCount, '', 'Date Period:', summaryData.metadata.datePeriod],
-            ['Department:', summaryData.metadata.department, '', 'Report Type:', summaryData.metadata.reportType],
-            ['Total Gross Pay:', `RS ${summaryData.metadata.totalGrossPay.toLocaleString()}`],
-            [],
-            ['Employee ID', 'Employee Name', 'Worked Days', 'Gross Pay', 'Net Pay', 'Deduction', 'Employee EPF', 'Company EPF/ETF'],
-            ...summaryData.employees.map(emp => [
-                emp.employeeCode,
-                emp.employeeName,
-                emp.workedDays,
-                emp.grossPay,
-                emp.netPay,
-                emp.deductions,
-                emp.employeeEPF,
-                emp.companyEPFETF
-            ]),
-            [
-                'TOTAL AMOUNTS',
-                '',
-                '',
-                summaryData.totals.grossPay,
-                summaryData.totals.netPay,
-                summaryData.totals.deductions,
-                summaryData.totals.employeeEPF,
-                summaryData.totals.companyEPFETF
-            ]
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const csv = XLSX.utils.sheet_to_csv(ws);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `Selected_Employees_Summary_${summaryData.metadata.datePeriod.replace(' ', '_')}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        exportAllEmployeesSummary('csv', summaryData);
         setToast({ message: 'CSV exported successfully', type: 'success' });
     };
 
@@ -295,38 +164,41 @@ const AllEmployeesSummaryModal = ({
                                             <table className="w-full text-sm">
                                                 <thead className="bg-[#1f2937] text-white">
                                                     <tr>
-                                                        <th className="px-3 py-3 text-left font-medium border-x border-gray-700">Employee ID</th>
-                                                        <th className="px-3 py-3 text-left font-medium border-x border-gray-700">Employee Name</th>
-                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">Worked Days</th>
-                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">Gross Pay</th>
-                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">NetPay</th>
-                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">Deduction</th>
-                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">Employee EPF</th>
-                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">Company ETF/EPF</th>
+                                                        <th className="px-3 py-3 text-left font-medium border-x border-gray-700">Emp ID</th>
+                                                        <th className="px-3 py-3 text-left font-medium border-x border-gray-700">Name</th>
+                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">Days</th>
+                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">Basic</th>
+                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">OT</th>
+                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">Gross</th>
+                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">Advance</th>
+                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">Total Ded.</th>
+                                                        <th className="px-3 py-3 text-center font-medium border-x border-gray-700">Net Pay</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-200">
                                                     {summaryData.employees.map((emp, index) => (
-                                                        <tr key={index} className="hover:bg-gray-50 bg-white">
+                                                        <tr key={index} className="hover:bg-gray-50 bg-white border-b border-gray-100">
                                                             <td className="px-3 py-3 text-gray-900 border-x border-gray-200 text-center font-medium">{emp.employeeCode}</td>
                                                             <td className="px-3 py-3 text-gray-700 border-x border-gray-200">{emp.employeeName}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">{emp.workedDays}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {emp.grossPay.toLocaleString()}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {emp.netPay.toLocaleString()}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {emp.deductions.toLocaleString()}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {emp.employeeEPF.toLocaleString()}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {emp.companyEPFETF.toLocaleString()}</td>
+                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">{emp.workingDays}</td>
+                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {emp.basicPay.toLocaleString()}</td>
+                                                            <td className="px-3 py-3 text-center text-green-600 border-x border-gray-200 font-medium">RS: {emp.otAmount.toLocaleString()}</td>
+                                                            <td className="px-3 py-3 text-center text-gray-900 border-x border-gray-200 font-bold">RS: {emp.grossPay.toLocaleString()}</td>
+                                                            <td className="px-3 py-3 text-center text-red-600 border-x border-gray-200">RS: {emp.salaryAdvance.toLocaleString()}</td>
+                                                            <td className="px-3 py-3 text-center text-red-700 border-x border-gray-200 font-medium">RS: {emp.deductions.toLocaleString()}</td>
+                                                            <td className="px-3 py-3 text-center text-blue-600 border-x border-gray-200 font-bold">RS: {emp.netPay.toLocaleString()}</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
                                                 <tfoot className="bg-[#3b82f6] text-white">
                                                     <tr className="font-bold">
                                                         <td colSpan={3} className="px-3 py-3 uppercase">TOTAL AMOUNTS</td>
+                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.basicPay.toLocaleString()}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.otAmount.toLocaleString()}</td>
                                                         <td className="px-3 py-3 text-center">RS: {summaryData.totals.grossPay.toLocaleString()}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.netPay.toLocaleString()}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.salaryAdvance.toLocaleString()}</td>
                                                         <td className="px-3 py-3 text-center">RS: {summaryData.totals.deductions.toLocaleString()}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.employeeEPF.toLocaleString()}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.companyEPFETF.toLocaleString()}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.netPay.toLocaleString()}</td>
                                                     </tr>
                                                 </tfoot>
                                             </table>

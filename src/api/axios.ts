@@ -10,6 +10,9 @@ const axiosInstance = axios.create({
   },
 });
 
+/* =========================
+   REQUEST INTERCEPTOR
+========================= */
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -18,21 +21,59 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
+/* =========================
+   RESPONSE INTERCEPTOR
+========================= */
+
+// 🔒 Prevent duplicate modal triggers (important for React 18 / prod)
+let renewModalOpened = false;
+
 axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    const status = error.response?.status;
+    const code = error.response?.data?.code;
+
+    /* 🔥 SUBSCRIPTION BLOCK HANDLING */
+    if (status === 403 && code === 'SUBSCRIPTION_BLOCKED') {
+      if (!renewModalOpened) {
+        renewModalOpened = true;
+
+        window.dispatchEvent(
+          new CustomEvent('open-renew-modal')
+        );
+
+        // Reset flag after modal is closed (frontend should emit this)
+        window.addEventListener(
+          'renew-modal-closed',
+          () => {
+            renewModalOpened = false;
+          },
+          { once: true }
+        );
+      }
+
+      // Always reject so API callers still fail safely
+      return Promise.reject(error);
     }
+
+    /* 🔐 AUTH HANDLING */
+    if (status === 401) {
+      // Check if we are already on the login page or making a login request
+      const isLoginPage = window.location.pathname === '/login';
+      const isLoginRequest = error.config?.url?.includes('/auth/login');
+
+      if (!isLoginPage && !isLoginRequest) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
+
     return Promise.reject(error);
   }
 );

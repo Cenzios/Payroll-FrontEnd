@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setTempPassword, clearError, setSignupEmail, loginUser } from '../store/slices/authSlice';
+import { setPassword, clearError, setSignupEmail, loginUser } from '../store/slices/authSlice';
 import { Lock, Loader2, Eye, EyeOff, Mail, ArrowRight } from 'lucide-react';
 import passwordIllustration from '../assets/images/password-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
-import axiosInstance from '../api/axios';
 
 const SetPassword = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { signupEmail, isLoading, error } = useAppSelector((state) => state.auth);
+  const { signupEmail, signupToken, isLoading, error } = useAppSelector((state) => state.auth);
 
   // Form handling
   const [emailInput, setEmailInput] = useState('');
@@ -89,49 +88,46 @@ const SetPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!signupEmail) {
-      alert('Email missing. Please restart signup.');
+    if (!signupToken) {
+      alert('Signup session missing. Please restart signup.');
+      navigate('/signup');
       return;
     }
 
     if (!validatePasswordForm()) return;
 
     try {
-      console.log('Saving password to backend for:', signupEmail);
+      console.log('Initiating setPassword for session...');
 
-      const res = await axiosInstance.post('/auth/set-password', {
-        email: signupEmail,              // ✅ REQUIRED
-        password: formData.password,     // ✅ REQUIRED
-      });
-
-      console.log('Password saved successfully:', res.data);
-
-      // ✅ Auto-login to ensure we have a token for creating company in BuyPlan
-      console.log('Creating session...');
-      const loginResult = await dispatch(loginUser({
-        email: signupEmail,
+      const result = await dispatch(setPassword({
+        signupToken,
         password: formData.password
       }));
 
-      if (loginUser.rejected.match(loginResult)) {
-        throw new Error('Auto-login failed after password set');
+      if (setPassword.fulfilled.match(result)) {
+        console.log('Password set successfully, initiating auto-login...');
+
+        // ✅ Auto-login to ensure we have a token (now we use signupEmail since it was verified)
+        const currentEmail = signupEmail || '';
+
+        const loginResult = await dispatch(loginUser({
+          email: currentEmail,
+          password: formData.password
+        }));
+
+        if (loginUser.fulfilled.match(loginResult)) {
+          console.log('✅ Auto-login successful');
+          navigate('/set-company');
+        } else {
+          throw new Error('Auto-login failed after password set');
+        }
+      } else {
+        throw new Error(result.payload as string || 'Failed to set password');
       }
 
-      console.log('✅ Auto-login successful');
-
-      // ✅ Optional: save to redux if needed for next step
-      dispatch(setTempPassword(formData.password));
-
-      // ✅ Move to company setup
-      navigate('/set-company');
-
     } catch (error: any) {
-      console.error('Password save failed:', error);
-
-      alert(
-        error?.response?.data?.message ||
-        'Failed to set password. Please try again.'
-      );
+      console.error('Password setup process failed:', error);
+      alert(error.message || 'Failed to set password. Please try again.');
     }
   };
 

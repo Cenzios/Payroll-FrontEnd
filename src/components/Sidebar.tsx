@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import logo from '../assets/images/logo.svg';
 import {
     LayoutDashboard,
     Users,
@@ -8,17 +9,21 @@ import {
     Settings,
     ChevronDown,
     ChevronRight,
-    Circle
+    Circle,
+    CreditCard
 } from 'lucide-react';
 
 const Sidebar = () => {
     const location = useLocation();
-    const [isReportsOpen, setIsReportsOpen] = useState(location.pathname.startsWith('/reports'));
+    const [isReportsOpen, setIsReportsOpen] = useState(
+        location.pathname.startsWith('/reports') || location.pathname === '/c-form'
+    );
 
     const navItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { name: 'Employees', path: '/employees', icon: Users },
         { name: 'Salary', path: '/salary', icon: Wallet },
+        { name: 'Loans', path: '/loans', icon: CreditCard },
     ];
 
     const toggleReports = () => {
@@ -28,13 +33,14 @@ const Sidebar = () => {
     return (
         <div className="w-64 bg-white h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 overflow-y-auto">
             {/* Logo Section */}
-            <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center gap-2">
-                    <div className="text-2xl font-bold">
-                        <span className="text-blue-600">P</span>
-                        <span className="text-gray-800">ayroll</span>
-                    </div>
-                </div>
+            <div className="p-6 flex items-center justify-center">
+                <NavLink to="/dashboard" className="cursor-pointer">
+                    <img
+                        src={logo}
+                        alt="Payroll Logo"
+                        className="h-10 object-contain"
+                    />
+                </NavLink>
             </div>
 
             {/* Navigation Items */}
@@ -44,9 +50,9 @@ const Sidebar = () => {
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                                ? 'bg-blue-50 text-blue-600 font-medium'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${isActive
+                                ? 'bg-[#F7F8FB] text-blue-600 font-medium'
+                                : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
                             }`
                         }
                     >
@@ -59,9 +65,9 @@ const Sidebar = () => {
                 <div>
                     <button
                         onClick={toggleReports}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 ${location.pathname.startsWith('/reports')
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${(location.pathname.startsWith('/reports') || location.pathname === '/c-form')
                             ? 'bg-blue-50 text-blue-600 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
                             }`}
                     >
                         <div className="flex items-center gap-3">
@@ -75,15 +81,28 @@ const Sidebar = () => {
                         <div className="mt-1 ml-4 space-y-1 pl-4 border-l-2 border-gray-100">
                             <NavLink
                                 to="/reports"
+                                end
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${isActive
+                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
                                         ? 'text-blue-600 font-medium'
-                                        : 'text-gray-500 hover:text-gray-900'
+                                        : 'text-[#67696C] hover:text-gray-900'
                                     }`
                                 }
                             >
                                 <Circle className="w-2 h-2" />
                                 <span>Salary Report</span>
+                            </NavLink>
+                            <NavLink
+                                to="/c-form"
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
+                                        ? 'text-blue-600 font-medium'
+                                        : 'text-[#67696C] hover:text-gray-900'
+                                    }`
+                                }
+                            >
+                                <Circle className="w-2 h-2" />
+                                <span>C-Form</span>
                             </NavLink>
                             {/* Future reports can go here */}
                         </div>
@@ -97,9 +116,9 @@ const Sidebar = () => {
                 <NavLink
                     to="/settings"
                     className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
+                        `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] ${isActive
                             ? 'bg-blue-50 text-blue-600 font-medium'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
                         }`
                     }
                 >

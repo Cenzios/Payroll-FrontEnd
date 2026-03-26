@@ -1,58 +1,93 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout, setAuthFromToken, setSelectedCompanyId } from '../store/slices/authSlice';
 import {
-  LogOut,
   Users,
   DollarSign,
-  TrendingUp,
   FileText,
   UserPlus,
   BarChart3,
   CreditCard,
   Plus,
+  PieChart,
   ChevronDown,
   Building2
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import QuickAction from '../components/QuickAction';
+import SalaryPaidSummary from '../components/SalaryPaidSummary';
 import UniversalDrawer from '../components/UniversalDrawer';
 import ConfirmationModal from '../components/ConfirmationModal';
 import AddonModal from '../components/AddonModal';
 import Toast from '../components/Toast';
-import { companyApi } from '../api/companyApi';
-import { employeeApi } from '../api/employeeApi';
-import { dashboardApi } from '../api/dashboardApi';
-import { Company, CreateCompanyRequest } from '../types/company.types';
+import { CreateCompanyRequest } from '../types/company.types';
 import { CreateEmployeeRequest } from '../types/employee.types';
+import {
+  useGetDashboardSummaryQuery,
+  useGetCompaniesQuery,
+  useCreateCompanyMutation,
+  useCreateEmployeeMutation
+} from '../store/apiSlice';
+import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
+import CompanySwitcher from '../components/CompanySwitcher';
+import PageHeader from '../components/PageHeader';
+import { salaryApi } from '../api/salaryApi';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
-  const { user, selectedCompanyId } = useAppSelector((state) => state.auth);
+  const { user, selectedCompanyId, token } = useAppSelector((state) => state.auth);
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<'company' | 'employee'>('company');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
 
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const urlToken = searchParams.get('token');
+  const isTokenPending = !!urlToken && urlToken !== token;
+
+  // RTK Query hooks
+  const { data: companies = [] } = useGetCompaniesQuery(undefined, {
+    skip: !user || isTokenPending
+  });
+
+  const { data: dashboardData, isLoading: isDashboardLoading } = useGetDashboardSummaryQuery(selectedCompanyId || undefined, {
+    skip: !user || isTokenPending,
+  });
+
+  const { data: lastMonthSalary = 0 } = useQuery({
+    queryKey: ['lastMonthSalary', selectedCompanyId],
+    queryFn: async () => {
+      if (!selectedCompanyId) return 0;
+      const now = new Date();
+      const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+      const response = await salaryApi.getSalaryReport(
+        selectedCompanyId,
+        lastMonthDate.getMonth() + 1,
+        lastMonthDate.getFullYear(),
+        lastMonthDate.getMonth() + 1,
+        lastMonthDate.getFullYear()
+      );
+
+      return response.data?.monthlyData?.[0]?.totals?.totalNetPay || 0;
+    },
+    enabled: !!selectedCompanyId,
+  });
+
+  const [createCompany] = useCreateCompanyMutation();
+  const [createEmployee] = useCreateEmployeeMutation();
+
+
+
   // Derived state
   const selectedCompany = companies.find(c => c.id === selectedCompanyId) || null;
-
-  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
-
-  const [dashboardData, setDashboardData] = useState<any>({
-    totalEmployees: 0,
-    totalSalaryPaidThisMonth: 0,
-    totalCompanyETF: 0,
-    totalEmployeeEPF: 0,
-    remainingSlots: 0,
-  });
 
   // Handle Google OAuth callback for existing users
   useEffect(() => {
@@ -67,48 +102,18 @@ const Dashboard = () => {
     }
   }, [searchParams, dispatch]);
 
-  // Fetch Companies
-  const fetchCompanies = async () => {
-    try {
-      const data = await companyApi.getCompanies();
-      setCompanies(data);
-      if (data.length > 0 && !selectedCompanyId) {
-        dispatch(setSelectedCompanyId(data[0].id));
-      } else if (data.length > 0 && selectedCompanyId && !data.find(c => c.id === selectedCompanyId)) {
-        // If selected ID exists but provided company is not in the list (e.g. deleted/unauthorized), fallback to first
-        dispatch(setSelectedCompanyId(data[0].id));
-      }
-    } catch (error) {
-      console.error("Failed to load companies");
-    }
-  };
-
+  // Effect to set default selected company
   useEffect(() => {
-    if (user) {
-      fetchCompanies();
+    if (companies.length > 0 && !selectedCompanyId) {
+      dispatch(setSelectedCompanyId(companies[0].id));
+    } else if (companies.length > 0 && selectedCompanyId && !companies.find(c => c.id === selectedCompanyId)) {
+      dispatch(setSelectedCompanyId(companies[0].id));
     }
-  }, [user]);
+  }, [companies, selectedCompanyId, dispatch]);
 
-  // Fetch Dashboard Summary
-  const fetchSummary = async () => {
-    try {
-      const data = await dashboardApi.getSummary(selectedCompany?.id);
-      setDashboardData(data);
-    } catch (error) {
-      console.error("Failed to load dashboard summary");
-    }
-  };
 
-  useEffect(() => {
-    if (user) { // Fetch global summary even if no company selected initially, or filter if company selected
-      fetchSummary();
-    }
-  }, [selectedCompany, user]);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/login');
-  };
+
 
   const [confirmation, setConfirmation] = useState<{
     isOpen: boolean;
@@ -125,15 +130,14 @@ const Dashboard = () => {
     onConfirm: () => { },
   });
 
-  const openLimitModal = (type: 'company' | 'employee', limit: number, current: number) => {
+  const openLimitModal = (type: 'company' | 'employee') => {
     setConfirmation({
       isOpen: true,
       type: 'warning',
       title: `${type === 'company' ? 'Companies' : 'Employees'} Limit Reached`,
       message: `You’ve reached the maximum number of ${type === 'company' ? 'Companies' : 'Employees'} allowed on your current plan. To add more ${type === 'company' ? 'Companies' : 'Employees'}, please ${type === 'company' ? 'upgrade your plan' : 'purchase more slots'}.`,
-      confirmText: 'Update Plan', // Kept generic "Update Plan"
+      confirmText: 'Update Plan',
       onConfirm: () => {
-        // For companies, go to settings. For employees, open AddonModal as it's about slots.
         if (type === 'company') {
           navigate('/settings?tab=subscription');
         } else {
@@ -147,22 +151,25 @@ const Dashboard = () => {
   const handleDrawerSubmit = async (data: any) => {
     try {
       if (drawerMode === 'company') {
-        await companyApi.createCompany(data as CreateCompanyRequest);
+        await createCompany(data as CreateCompanyRequest).unwrap();
         setToast({ message: 'Company created successfully!', type: 'success' });
-        fetchCompanies(); // Refresh list
       } else {
-        await employeeApi.createEmployee(data as CreateEmployeeRequest);
+        await createEmployee(data as CreateEmployeeRequest).unwrap();
         setToast({ message: 'Employee created successfully!', type: 'success' });
-        fetchSummary(); // Refresh stats
       }
       setIsDrawerOpen(false);
     } catch (error: any) {
-      if (error.message && error.message.includes('limit reached')) {
-        // Parse limit if needed or just show generic message based on error
-        // The error message from backend: "Company limit reached (2). Plan allows 2..."
-        openLimitModal(drawerMode, 0, 0);
+      let errorMsg = error?.data?.message || 'Operation failed';
+
+      // Specifically handle duplicate NIC error for shorter message
+      if (errorMsg === "Employee with this NIC already exists in this company") {
+        errorMsg = "NIC already exists in this company";
+      }
+
+      if (errorMsg.includes('limit reached')) {
+        openLimitModal(drawerMode);
       } else {
-        setToast({ message: error.message || 'Operation failed', type: 'error' });
+        setToast({ message: errorMsg, type: 'error' });
       }
     }
   };
@@ -189,231 +196,155 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50 font-sans">
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 ml-64">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-          <div className="px-8 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'}
-                </h1>
-                <p className="text-sm text-gray-500 mt-0.5">Here's your dashboard overview</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-
+      <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
+        <PageHeader
+          title={`${getGreeting()}, ${user?.fullName?.split(' ')[0] || 'User'}`}
+          subtitle="Here's your dashboard overview"
+          showLogout={true}
+          actionElement={
+            <>
               {/* Company Switcher */}
               <div className="relative">
                 <button
                   onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
-                  className="flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium"
+                  className="
+                    flex items-center gap-2
+                    px-4 py-2
+                    rounded-xl
+                    border border-gray-200
+                    bg-white
+                    hover:bg-gray-50
+                    text-sm font-medium text-gray-700
+                  "
                 >
                   <Building2 className="w-4 h-4 text-gray-500" />
-                  {selectedCompany ? selectedCompany.name : "Select Company"}
+                  {selectedCompany ? selectedCompany.name : 'Select Company'}
                   <ChevronDown className="w-4 h-4 text-gray-400" />
                 </button>
 
-                {isCompanyDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
-                    {companies.map(company => (
-                      <button
-                        key={company.id}
-                        onClick={() => {
-                          dispatch(setSelectedCompanyId(company.id));
-                          setIsCompanyDropdownOpen(false);
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-blue-50 text-gray-700 text-sm flex items-center gap-2"
-                      >
-                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                        {company.name}
-                      </button>
-                    ))}
-                    <div className="border-t border-gray-100 mt-1 pt-1">
-                      <button
-                        onClick={() => {
-                          setIsCompanyDropdownOpen(false);
-                          openAddCompany();
-                        }}
-                        className="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-sm font-medium flex items-center gap-2"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Add New Company
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <CompanySwitcher
+                  isOpen={isCompanyDropdownOpen}
+                  onClose={() => setIsCompanyDropdownOpen(false)}
+                  companies={companies}
+                  selectedCompanyId={selectedCompanyId}
+                  onSelectCompany={(id) => dispatch(setSelectedCompanyId(id))}
+                  onAddNew={() => {
+                    setIsCompanyDropdownOpen(false);
+                    openAddCompany();
+                  }}
+                />
               </div>
 
               <button
                 onClick={openAddCompany}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                title="Add New Company"
               >
-                <Plus className="w-4 h-4" />
-                Add New Company
-              </button>
-
-              <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                  {user?.fullName?.charAt(0) || 'U'}
+                <span className="hidden sm:inline whitespace-nowrap">Add New Company</span>
+                <span className="sm:hidden whitespace-nowrap">Add</span>
+                <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                  <Plus className="w-4 h-4" />
                 </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium text-gray-900">
-                    {user?.fullName || 'User'}
-                  </div>
-                  <div className="text-xs text-gray-500">{user?.role || 'Admin'}</div>
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5" />
               </button>
-            </div>
-          </div>
-        </header>
+            </>
+          }
+        />
 
-        {/* Dashboard Content */}
-        <main className="p-8">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatCard
-              icon={Users}
-              title="Total Employees"
-              value={dashboardData.totalEmployees.toString()}
-              subtitle="Current Company"
-              iconBgColor="bg-blue-100"
-              iconColor="text-blue-600"
-            />
-            <StatCard
-              icon={DollarSign}
-              title="Total Salary Paid"
-              value={`Rs ${dashboardData.totalSalaryPaidThisMonth.toLocaleString()}`}
-              subtitle="This Month"
-              iconBgColor="bg-green-100"
-              iconColor="text-green-600"
-            />
-            <StatCard
-              icon={TrendingUp}
-              title="Company EPF Amount"
-              value={`Rs ${dashboardData.totalCompanyETF?.toLocaleString() || '0'}`} // Note: using ETF field for now as per controller
-              subtitle="This Month"
-              iconBgColor="bg-purple-100"
-              iconColor="text-purple-600"
-            />
-            <StatCard
-              icon={CreditCard}
-              title="Total Employee EPF"
-              value={`Rs ${dashboardData.totalEmployeeEPF.toLocaleString()}`}
-              subtitle="This Month"
-              iconBgColor="bg-orange-100"
-              iconColor="text-orange-600"
-            />
-          </div>
-
-          {/* Quick Actions */}
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <QuickAction
-                icon={FileText}
-                title="Generate Payslips"
-                description="Create monthly payslips"
-                bgColor="bg-gradient-to-br from-blue-500 to-blue-600"
-              />
-              <div onClick={openAddEmployee} className="cursor-pointer">
-                <QuickAction
-                  icon={UserPlus}
-                  title="Add Employee"
-                  description="Register new staff member"
-                  bgColor="bg-gradient-to-br from-green-500 to-green-600"
+        <main className="flex-1">
+          {isDashboardLoading ? <DashboardSkeleton /> : (
+            <>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <StatCard
+                  icon={Users}
+                  title="Total Employees"
+                  value={dashboardData?.totalEmployees?.toString() || '0'}
+                  colorTheme="blue"
+                  showLastMonth={true}
+                />
+                <StatCard
+                  icon={DollarSign}
+                  title="Total Salary Paid"
+                  value={`Rs ${lastMonthSalary.toLocaleString()}`}
+                  colorTheme="green"
+                  showLastMonth={true}
+                />
+                <StatCard
+                  icon={Plus}
+                  title="Company EPF/ETF Amount"
+                  value={`Rs ${((dashboardData?.totalCompanyEPF || 0) + (dashboardData?.totalCompanyETF || 0)).toLocaleString()}`}
+                  colorTheme="purple"
+                  showLastMonth={false}
+                />
+                <StatCard
+                  icon={PieChart}
+                  title="Total Employee EPF"
+                  value={`Rs ${dashboardData?.totalEmployeeEPF?.toLocaleString() || '0'}`}
+                  colorTheme="orange"
+                  showLastMonth={false}
                 />
               </div>
-              <QuickAction
-                icon={BarChart3}
-                title="View Reports"
-                description="Access detailed analytics"
-                bgColor="bg-gradient-to-br from-purple-500 to-purple-600"
-              />
-              <div onClick={() => setIsAddonModalOpen(true)} className="cursor-pointer">
-                <QuickAction
-                  icon={CreditCard}
-                  title="Change Plan"
-                  description="Change subscription plan"
-                  bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
-                />
-              </div>
-            </div>
-          </div>
 
-          {/* Employee Usage Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Employee Usage</h3>
-                <span className="text-sm text-gray-500">Current Plan ({dashboardData.planName || 'Unknown'})</span>
-              </div>
-              <div className="flex items-center justify-center py-8">
-                <div className="relative w-48 h-48">
-                  {/* Simple donut chart representation */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-4xl font-bold text-gray-900">{dashboardData.totalEmployees}/{dashboardData.maxEmployees || 0}</div>
-                      <div className="text-sm text-gray-500 mt-1">Employees</div>
-                    </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start flex-1 overflow-hidden">
+                {/* Left (2/3) – Salary Paid Summary Chart */}
+                <div className="lg:col-span-2 h-full flex flex-col">
+                  <SalaryPaidSummary companyId={selectedCompanyId || ''} />
+                </div>
+
+                {/* Right (1/3) – Quick Actions */}
+                <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col h-full">
+                  <h2 className="text-[15px] font-semibold text-gray-900 mb-4">
+                    Quick Actions
+                  </h2>
+
+                  <div className="flex flex-col gap-4">
+                    <QuickAction
+                      icon={FileText}
+                      title="Generate Payslips"
+                      description="Create monthly payslips"
+                      bgColor="text-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
+                      onClick={() => navigate('/salary')}
+                    />
+
+                    <QuickAction
+                      icon={UserPlus}
+                      title="Add Employee"
+                      description="Register new staff member"
+                      bgColor="text-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
+                      onClick={openAddEmployee}
+                    />
+
+                    <QuickAction
+                      icon={BarChart3}
+                      title="View Reports"
+                      description="Access detailed analytics"
+                      bgColor="text-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
+                      onClick={() => navigate('/reports')}
+                    />
+
+                    <QuickAction
+                      icon={CreditCard}
+                      title="Change Plan"
+                      description="Change subscription plan"
+                      bgColor="text-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
+                      onClick={() => setIsAddonModalOpen(true)}
+                    />
                   </div>
-                  <svg className="w-full h-full transform -rotate-90">
-                    <circle
-                      cx="96"
-                      cy="96"
-                      r="80"
-                      stroke="#E5E7EB"
-                      strokeWidth="16"
-                      fill="none"
-                    />
-                    <circle
-                      cx="96"
-                      cy="96"
-                      r="80"
-                      stroke="#F59E0B"
-                      strokeWidth="16"
-                      fill="none"
-                      strokeDasharray={`${(dashboardData.totalEmployees / (dashboardData.maxEmployees || 1)) * 502.4} 502.4`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
                 </div>
               </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Remaining Slots</h3>
-              <div className="space-y-4">
-                <div className="text-center py-8">
-                  <div className="text-5xl font-bold text-orange-500 mb-2">{dashboardData.remainingSlots || 0} left</div>
-                  <p className="text-sm text-gray-600 mb-6">
-                    You can add {dashboardData.remainingSlots || 0} more employees to your current plan
-                  </p>
-                  <button
-                    onClick={() => setIsAddonModalOpen(true)}
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                  >
-                    Get More Slots
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </main>
       </div>
 
-      {/* Universal Drawer */}
       <UniversalDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
@@ -422,7 +353,6 @@ const Dashboard = () => {
         companyId={selectedCompany?.id}
       />
 
-      {/* Toast Notification */}
       {toast && (
         <Toast
           message={toast.message}
@@ -430,7 +360,7 @@ const Dashboard = () => {
           onClose={() => setToast(null)}
         />
       )}
-      {/* Confirmation Modal */}
+
       <ConfirmationModal
         isOpen={confirmation.isOpen}
         onClose={() => setConfirmation(prev => ({ ...prev, isOpen: false }))}
@@ -441,17 +371,15 @@ const Dashboard = () => {
         confirmText={confirmation.confirmText}
       />
 
-      {/* Addon Modal */}
       <AddonModal
         isOpen={isAddonModalOpen}
         onClose={() => setIsAddonModalOpen(false)}
         onSuccess={() => {
           setToast({ message: 'Slots purchased successfully!', type: 'success' });
-          fetchSummary();
         }}
         onUpgradePlan={() => {
           setIsAddonModalOpen(false);
-          navigate('/settings?tab=subscription');
+          navigate('/settings?tab=payment');
         }}
       />
     </div>

@@ -6,6 +6,7 @@ import VerifyEmail from './pages/VerifyEmail';
 import SetPassword from './pages/SetPassword';
 import SetCompany from './pages/SetCompany';
 import GetPlan from './pages/GetPlan';
+import TermsAndConditions from './pages/TermsAndConditions';
 import BuyPlan from './pages/BuyPlan';
 import Confirmation from './pages/Confirmation';
 import Login from './pages/Login';
@@ -13,14 +14,18 @@ import Dashboard from './pages/Dashboard';
 import Companies from './pages/Companies';
 import Employees from './pages/Employees';
 import Salary from './pages/Salary'; // Import Salary
+import Loans from './pages/Loans';
 import Reports from './pages/Reports';
+import CFormReport from './pages/CFormReport';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
+import RenewPlanModal from './components/RenewPlanModal';
 
 function App() {
   return (
     <Router>
+      <RenewPlanModal />
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/signup" element={<Signup />} />
@@ -29,9 +34,12 @@ function App() {
         <Route path="/set-password" element={<SetPassword />} />
         <Route path="/set-company" element={<SetCompany />} />
         <Route path="/get-plan" element={<GetPlan />} />
+        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="/buy-plan" element={<BuyPlan />} />
         <Route path="/confirmation" element={<Confirmation />} />
         <Route path="/confirmation-fail" element={<ConfirmationFail />} />
+        <Route path="/payment/success" element={<Confirmation />} />
+        <Route path="/payment/cancel" element={<ConfirmationFail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
         <Route
@@ -68,10 +76,26 @@ function App() {
           }
         />
         <Route
+          path="/loans"
+          element={
+            <ProtectedRoute>
+              <Loans />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/reports"
           element={
             <ProtectedRoute>
               <Reports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/c-form"
+          element={
+            <ProtectedRoute>
+              <CFormReport />
             </ProtectedRoute>
           }
         />

@@ -1,32 +1,73 @@
+export interface RecurringEntry {
+    type: string;
+    amount: number;
+}
+
+export interface EmployeeDocument {
+    id: string;
+    fileName: string;
+    fileUrl: string;
+    fileType: string;
+    publicId: string;
+    createdAt: string;
+    documentType?: 'EMPLOYEE' | 'LOAN';
+}
+
 export interface Employee {
     id: string;
     fullName: string;
     address: string;
-    nic: string;
     employeeId: string;
     contactNumber: string;
     joinedDate: string;
     designation: string;
     department: string;
     email?: string;
-    dailyRate: number;
+    basicSalary: number;
+    salaryType?: 'DAILY' | 'MONTHLY';
+    otRate: number;
     epfEnabled: boolean;
+    epfNumber?: string;
+    epfEtfAmount?: number;
+    allowanceEnabled: boolean;
+    deductionEnabled: boolean;
+    employeeNIC?: string;
     status: 'ACTIVE' | 'INACTIVE';
     companyId: string;
     createdAt?: string;
     updatedAt?: string;
+    recurringAllowances?: RecurringEntry[];
+    recurringDeductions?: RecurringEntry[];
+    bankName?: string;
+    accountNumber?: string;
+    branchName?: string;
+    accountHolderName?: string;
+    documents?: EmployeeDocument[];
 }
 
 export interface CreateEmployeeRequest {
     fullName: string;
     address: string;
-    nic: string;
     employeeId: string;
     contactNumber: string;
     joinedDate: string;
     designation: string;
     department: string;
-    email?: string; // Optional as per user request flow, but schema has it
-    dailyRate: number;
+    email?: string;
+    basicSalary: number;
+    salaryType?: 'DAILY' | 'MONTHLY';
+    otRate?: number;
+    epfEnabled?: boolean;
+    epfNumber?: string;
+    epfEtfAmount?: number;
+    allowanceEnabled?: boolean;
+    deductionEnabled?: boolean;
+    employeeNIC?: string;
     companyId: string;
+    recurringAllowances?: RecurringEntry[];
+    recurringDeductions?: RecurringEntry[];
+    bankName?: string;
+    accountNumber?: string;
+    branchName?: string;
+    accountHolderName?: string;
 }

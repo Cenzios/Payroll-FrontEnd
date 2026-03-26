@@ -4,7 +4,8 @@ interface QuickActionProps {
     icon: LucideIcon;
     title: string;
     description: string;
-    bgColor: string;
+    bgColor: string; // The icon text color e.g. text-blue-500
+    lightBgColor: string; // The icon background color e.g. bg-blue-50
     onClick?: () => void;
 }
 
@@ -13,23 +14,29 @@ const QuickAction = ({
     title,
     description,
     bgColor,
+    lightBgColor,
     onClick
 }: QuickActionProps) => {
     return (
         <button
             onClick={onClick}
-            className={`${bgColor} p-6 rounded-xl text-left hover:scale-105 transition-transform duration-200 shadow-sm hover:shadow-md w-full`}
+            className={`
+                w-full text-left bg-[#F4F9FF] p-3 rounded-2xl flex items-center gap-5 
+                border border-transparent hover:border-gray-200 transition-all 
+                hover:shadow-sm group
+            `}
         >
-            <div className="flex flex-col gap-3">
-                <div className="bg-white bg-opacity-20 p-3 rounded-lg w-fit">
-                    <Icon className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                    <div className="text-white font-semibold text-lg">{title}</div>
-                    <div className="text-white text-opacity-90 text-sm mt-1">
-                        {description}
-                    </div>
-                </div>
+            <div className={`${lightBgColor} p-3.5 rounded-xl shrink-0 transition-transform group-hover:scale-105`}>
+                <Icon className={`w-4 h-4 ${bgColor}`} />
+            </div>
+            
+            <div className="flex-1">
+                <h3 className="text-[12px] font-bold text-gray-900 leading-tight">
+                    {title}
+                </h3>
+                <p className="text-[10px] text-gray-500 mt-1 leading-snug">
+                    {description}
+                </p>
             </div>
         </button>
     );

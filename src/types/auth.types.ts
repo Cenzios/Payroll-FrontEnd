@@ -13,15 +13,17 @@ export interface StartSignupRequest {
 export interface StartSignupResponse {
   success: boolean;
   message: string;
+  signupToken?: string; // ✅ ADD
 }
 
 export interface VerifyEmailResponse {
   success: boolean;
   message: string;
+  email?: string; // ✅ ADD
 }
 
 export interface SetPasswordRequest {
-  email: string;
+  signupToken: string; // ✅ Use token instead of email
   password: string;
 }
 
@@ -62,6 +64,7 @@ export interface RegisterResponse {
 export interface AuthState {
   user: User | null;
   token: string | null;
+  signupToken: string | null; // ✅ ADD
   isLoading: boolean;
   error: string | null;
   signupEmail: string | null;
