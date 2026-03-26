@@ -299,7 +299,15 @@ const Salary = () => {
     return false;
   };
 
-  const validEmployees = employees.filter(emp => !isBeforeJoinedDate(emp, selectedYear, selectedMonth));
+  const validEmployees = employees
+    .filter(emp => !isBeforeJoinedDate(emp, selectedYear, selectedMonth))
+    .sort((a, b) => {
+      const isALocked = !!generatedSalaries[a.id];
+      const isBLocked = !!generatedSalaries[b.id];
+      if (isALocked && !isBLocked) return 1;
+      if (!isALocked && isBLocked) return -1;
+      return 0;
+    });
 
   // Check if ANY validation error exists (for button disable)
   const hasAnyError = (emp: Employee) => {

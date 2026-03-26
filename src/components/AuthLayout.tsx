@@ -49,11 +49,11 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
   w-full h-full z-0"
           >
             <img
-              src={illustrationAsset}
-              alt="Background Elements"
-              className="w-full h-full object-contain
-    animate-[float-slow_10s_ease-in-out_infinite]"
+              src={logo}
+              alt="Cenzios Logo"
+              className="w-36 h-36 object-contain"
             />
+            
           </div>
 
           {/* Top layer - Main Image */}
