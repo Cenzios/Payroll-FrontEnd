@@ -7,6 +7,8 @@ import App from './App.tsx';
 import './index.css';
 import './api/axios';
 
+const queryClient = new QueryClient();
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
