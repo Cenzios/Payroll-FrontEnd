@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import logo from '../assets/images/logo.svg';
+// import dashboard from '../assets/images/navbar-dashboard.svg';
+// import salary from '../assets/images/navbar-salary.svg';
+// import loan from '../assets/images/navbar-loan.svg';
 
 import {
     LayoutDashboard,
@@ -27,6 +30,13 @@ const Sidebar = () => {
         { name: 'Loans', path: '/loans', icon: CreditCard },
     ];
 
+    // const navItems = [
+    //     { name: 'Dashboard', path: '/dashboard', img: dashboard },
+    //     { name: 'Employees', path: '/employees', icon: Users },
+    //     { name: 'Salary', path: '/salary', img: salary },
+    //     { name: 'Loans', path: '/loans', img: loan },
+    // ];
+
     const toggleReports = () => {
         setIsReportsOpen(!isReportsOpen);
     };
@@ -39,7 +49,7 @@ const Sidebar = () => {
                     <img
                         src={logo}
                         alt="Payroll Logo"
-                        className="w-41 h-16 object-contain"
+                        className="w-30 h-16 object-contain"
                     />
                 </NavLink>
             </div>
@@ -58,6 +68,20 @@ const Sidebar = () => {
                         }
                     >
                         <item.icon className="w-5 h-5" />
+
+                        {/* {item.icon ? (
+                            <item.icon className="w-5 h-5" />
+                        ) : (
+                            <img
+                                src={item.img}
+                                alt={item.name}
+                                className={`w-5 h-5 object-contain 
+                                    ${location.pathname === item.path
+                                        ? "text-blue-700"
+                                        : "opacity-60"
+                                    }`}
+                            />)} */}
+
                         <span>{item.name}</span>
                     </NavLink>
                 ))}
