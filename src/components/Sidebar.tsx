@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import logo from '../assets/images/logo.svg';
+
 import {
     LayoutDashboard,
     Users,
@@ -38,7 +39,7 @@ const Sidebar = () => {
                     <img
                         src={logo}
                         alt="Payroll Logo"
-                        className="h-10 object-contain"
+                        className="w-41 h-16 object-contain"
                     />
                 </NavLink>
             </div>
