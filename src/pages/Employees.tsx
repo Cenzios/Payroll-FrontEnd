@@ -157,11 +157,11 @@ const Employees = () => {
       setEditingEmployee(null); // Reset edit state
       setSelectedEmployee(savedEmployee); // Update profile card instantly
 
-      setModalTitle(isEdit ? "Employee Updated" : "Employee Added");
+      setModalTitle(isEdit ? "Changes Saved" : "Employee Added");
       setModalMessage(
         isEdit
-          ? "The employee has been successfully updated."
-          : "The employee has been successfully saved.",
+          ? "Employee details updated successfully."
+          : "You have successfully added a new employee.",
       );
       setShowSuccessModal(true);
       // Cache invalidation handles refresh
