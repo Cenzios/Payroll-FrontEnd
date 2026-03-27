@@ -670,7 +670,7 @@ const Salary = () => {
           </div>
         </div>
 
-        <div className="flex gap-6 flex-1 overflow-y-auto">
+        <div className="flex gap-6 flex-1 overflow-hidden">
           {/* LEFT SIDE: Employee Salary Cards */}
           <div className="w-8/12 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {isLoading ? (
@@ -724,7 +724,7 @@ const Salary = () => {
           </div>
 
           {/* RIGHT SIDE: Payslip Preview */}
-          <div className="w-5/12 flex flex-col">
+          <div className="w-5/12 overflow-y-auto pr-2 custom-scrollbar flex flex-col">
             <PayslipPreview
               previewPayslip={previewPayslip}
               selectedEmployee={selectedEmployee}
