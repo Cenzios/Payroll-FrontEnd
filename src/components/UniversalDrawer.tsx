@@ -291,8 +291,11 @@ const UniversalDrawer = ({
             error = "Must be +94XXXXXXXXX or 0XXXXXXXXX (10 digits)";
           break;
         case "designation":
-          if (value && /[^a-zA-Z\s.-]/.test(value))
-            error = "Designation can only contain letters, spaces, dots, and hyphens";
+          const designationRegex = /^[A-Za-z\s\-&.()\\\/]+$/;
+          if (value && !designationRegex.test(value)) {
+            error =
+              "Designation can contain letters, spaces, /, \\, dots, hyphens, &, and parentheses";
+          }
           break;
         case "basicSalary":
           if (

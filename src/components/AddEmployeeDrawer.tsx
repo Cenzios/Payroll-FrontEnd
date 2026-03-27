@@ -182,7 +182,11 @@ const AddEmployeeDrawer = ({
                 else if (!employeePhoneRegex.test(value)) error = "Must be +94XXXXXXXXX or 0XXXXXXXXX (10 digits)";
                 break;
             case "designation":
-                if (value && /\d/.test(value)) error = "Designation cannot contain numbers";
+                const designationRegex = /^[A-Za-z\s\-&.()\\\/]+$/;
+
+                if (value && !designationRegex.test(value)) {
+                    error = "Designation can contain letters, spaces, /, \\, dots, hyphens, &, and parentheses";
+                }
                 break;
             case "basicSalary":
                 if (value === undefined || value === null || value === "" || isNaN(Number(value))) error = "Basic salary is required";
