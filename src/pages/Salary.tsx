@@ -104,12 +104,7 @@ const Salary = () => {
   }, {});
 
   // Allowance / Deduction local state per employee
-  const [allowanceToggles, setAllowanceToggles] = useState<
-    Record<string, boolean>
-  >({});
-  const [deductionToggles, setDeductionToggles] = useState<
-    Record<string, boolean>
-  >({});
+
   const [salaryAllowances, setSalaryAllowances] = useState<
     Record<string, { type: string; amount: number }[]>
   >({});
@@ -406,12 +401,15 @@ const Salary = () => {
       basicPay = basicSalaryForCalc * workedDays;
     }
 
-    const allowanceAmount = (salaryAllowances[emp.id] || []).reduce(
-      (sum, a) => sum + (a.amount || 0),
+    const currentAllowances = salaryAllowances[emp.id] || emp.recurringAllowances || [];
+    const currentDeductions = salaryDeductions[emp.id] || emp.recurringDeductions || [];
+
+    const allowanceAmount = currentAllowances.reduce(
+      (sum, a) => sum + (Number(a.amount) || 0),
       0,
     );
-    const deductionAmount = (salaryDeductions[emp.id] || []).reduce(
-      (sum, d) => sum + (d.amount || 0),
+    const deductionAmount = currentDeductions.reduce(
+      (sum, d) => sum + (Number(d.amount) || 0),
       0,
     );
 
@@ -455,9 +453,9 @@ const Salary = () => {
       deductions: [
         { name: "Tax (PAYE)", amount: tax },
         { name: "Salary Advance", amount: salaryAdvance },
-        ...(salaryDeductions[emp.id] || []).map((d) => ({
+        ...currentDeductions.map((d) => ({
           name: d.type,
-          amount: d.amount,
+          amount: Number(d.amount),
         })),
         ...(isLoanEnabled
           ? (allPendingLoans || []).filter(
@@ -469,9 +467,9 @@ const Salary = () => {
           amount: inst.amount - (inst.paidAmount || 0),
         })),
       ],
-      allowances: (salaryAllowances[emp.id] || []).map((a) => ({
+      allowances: currentAllowances.map((a) => ({
         name: a.type,
-        amount: a.amount,
+        amount: Number(a.amount),
       })),
     };
 
@@ -500,8 +498,8 @@ const Salary = () => {
           isLoanEnabled,
           isEpfEnabled: emp.epfEnabled,
           companyWorkingDays: companyWorkingDays,
-          allowances: salaryAllowances[emp.id] || [],
-          deductions: salaryDeductions[emp.id] || [],
+          allowances: currentAllowances.map(a => ({ type: a.type, amount: Number(a.amount) })),
+          deductions: currentDeductions.map(d => ({ type: d.type, amount: Number(d.amount) })),
         });
         setToast({ message: "Salary saved successfully!", type: "success" });
       } catch (error: any) {
@@ -710,10 +708,8 @@ const Salary = () => {
                     handleGeneratePayslip={handleGeneratePayslip}
                     handleConfirmPayslip={handleConfirmPayslip}
                     openManageModal={openManageModal}
-                    allowanceToggles={allowanceToggles}
-                    deductionToggles={deductionToggles}
-                    setAllowanceToggles={setAllowanceToggles}
-                    setDeductionToggles={setDeductionToggles}
+                    salaryAllowances={salaryAllowances}
+                    salaryDeductions={salaryDeductions}
                     isSaving={isSaving}
                     hasAnyError={hasAnyError}
                     setTouchedFields={setTouchedFields}

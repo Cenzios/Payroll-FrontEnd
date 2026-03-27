@@ -21,10 +21,9 @@ interface EmployeeSalaryCardProps {
     handleGeneratePayslip: (emp: Employee) => void;
     handleConfirmPayslip: (emp: Employee) => void;
     openManageModal: (type: "allowance" | "deduction", emp: Employee) => void;
-    allowanceToggles: Record<string, boolean>;
-    deductionToggles: Record<string, boolean>;
-    setAllowanceToggles: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-    setDeductionToggles: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+
+    salaryAllowances: Record<string, { type: string; amount: number }[]>;
+    salaryDeductions: Record<string, { type: string; amount: number }[]>;
     isSaving: boolean;
     hasAnyError: (emp: Employee) => boolean;
     setTouchedFields: React.Dispatch<React.SetStateAction<any>>;
@@ -52,10 +51,9 @@ const EmployeeSalaryCard = ({
     handleGeneratePayslip,
     handleConfirmPayslip,
     openManageModal,
-    allowanceToggles,
-    deductionToggles,
-    setAllowanceToggles,
-    setDeductionToggles,
+
+    salaryAllowances,
+    salaryDeductions,
     isSaving,
     hasAnyError,
     setTouchedFields,
@@ -73,13 +71,15 @@ const EmployeeSalaryCard = ({
     const otRate = emp.otRate || 0;
     const otAmount = isLocked ? generatedSalary.otAmount : (displayOtHours * otRate);
 
+    const currentAllowances = salaryAllowances[emp.id] || emp.recurringAllowances || [];
     const totalAllowances = isLocked
         ? generatedSalary.allowanceTotal
-        : (emp.recurringAllowances || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+        : currentAllowances.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
+    const currentDeductions = salaryDeductions[emp.id] || emp.recurringDeductions || [];
     const totalDeductions_custom = isLocked
         ? generatedSalary.deductionTotal - (generatedSalary.loanDeduction || 0)
-        : (emp.recurringDeductions || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+        : currentDeductions.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
     const basicPay = isLocked
         ? generatedSalary.basicPay
