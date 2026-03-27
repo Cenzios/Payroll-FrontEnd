@@ -23,6 +23,19 @@ const getHistoryBadge = (status: string) => {
     }
 };
 
+const getLoanStatusBadge = (status: string) => {
+    switch (status?.toUpperCase()) {
+        case 'ACTIVE':
+            return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-blue-50 text-blue-600">Active</span>;
+        case 'PENDING':
+            return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-orange-50 text-orange-500">Pending</span>;
+        case 'COMPLETED':
+            return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-green-50 text-emerald-500">Completed</span>;
+        default:
+            return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-gray-50 text-gray-500">{status || 'Active'}</span>;
+    }
+};
+
 const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
     const { data: loan, isLoading, isError } = useGetLoanByIdQuery(
@@ -113,7 +126,8 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                         </div>
                     </div>
                 </div>
-                <div>
+                <div className="flex items-center gap-4">
+                    {getLoanStatusBadge(loan.status)}
                     <a
                         {...(loan.supportingDoc ? {
                             href: loan.supportingDoc.fileUrl,
@@ -122,12 +136,10 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                             download: loan.supportingDoc.fileName
                         } : {
                             onClick: (e) => e.preventDefault(),
-                            style: { pointerEvents: 'none', opacity: 0.5 }
                         })}
-                        className="flex items-center gap-2 bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 hover:border-blue-400 text-sm font-semibold px-4 py-2 rounded-full transition-colors shadow-sm"
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95"
                     >
-                        <ExternalLink className="w-4 h-4" />
-                        Download Document
+                        Updated Documents
                     </a>
                 </div>
             </div>
