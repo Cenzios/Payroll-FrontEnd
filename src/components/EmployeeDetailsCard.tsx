@@ -287,12 +287,10 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     <div className="flex items-center gap-2">
                                         <PlusCircle className="w-[16px] h-[16px] text-[#8B98A8]" />
                                         <span className="text-[12px] font-semibold text-[#8B98A8]">
-                                            Allowances
+                                            Allowances (Rs)
                                         </span>
                                     </div>
-                                    <span className="text-[12px] font-semibold text-[#8B98A8] mr-2">
-                                        Rs
-                                    </span>
+
                                 </div>
                                 <div className="space-y-2">
                                     {selectedEmployee.recurringAllowances &&
@@ -325,12 +323,10 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     <div className="flex items-center gap-2">
                                         <MinusCircle className="w-[16px] h-[16px] text-[#8B98A8]" />
                                         <span className="text-[12px] font-semibold text-[#8B98A8]">
-                                            Deductions
+                                            Deductions (Rs)
                                         </span>
                                     </div>
-                                    <span className="text-[12px] font-semibold text-[#8B98A8] mr-2">
-                                        Rs
-                                    </span>
+
                                 </div>
                                 <div className="space-y-2">
                                     {selectedEmployee.recurringDeductions &&
