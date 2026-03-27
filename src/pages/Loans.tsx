@@ -6,6 +6,7 @@ import PageHeader from '../components/PageHeader';
 import CreateLoanDrawer from '../components/CreateLoanDrawer';
 import LoanHistoryView from '../components/LoanHistoryView';
 import { useGetLoansQuery } from '../store/apiSlice';
+import loanIcon from '../assets/images/loanicon.svg';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -43,21 +44,21 @@ const Loans = () => {
           <>
             {/* Header */}
             <div className="shrink-0">
-            <PageHeader
-              title="Loans"
-              subtitle="Handle Employees Loans"
-              actionElement={
-                <button
-                  onClick={() => setIsCreateDrawerOpen(true)}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
-                >
-                  Create Loan
-                  <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center ml-1">
-                    <Plus className="w-4 h-4" />
-                  </div>
-                </button>
-              }
-            />
+              <PageHeader
+                title="Loans"
+                subtitle="Handle Employees Loans"
+                actionElement={
+                  <button
+                    onClick={() => setIsCreateDrawerOpen(true)}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                  >
+                    Create Loan
+                    <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center ml-1">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                  </button>
+                }
+              />
             </div>
 
             {/* Main Content - Table */}
@@ -73,8 +74,29 @@ const Loans = () => {
                     Failed to load loans. Please try again.
                   </div>
                 ) : loans.length === 0 ? (
-                  <div className="text-center py-20 text-gray-400">
-                    No loans found for this company.
+                  <div className="flex flex-col items-center justify-center flex-1 h-full min-h-[500px]">
+                    <div className="bg-white rounded-[24px] p-10 max-w-[540px] w-full text-center shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-gray-50 flex flex-col items-center">
+                      <div className="w-32 h-32 mb-8 relative">
+                        <div className="absolute inset-0 bg-blue-400/20 blur-[30px] rounded-full scale-110"></div>
+                        <img src={loanIcon} alt="No loans" className="w-full h-full relative z-10" />
+                      </div>
+
+                      <h3 className="text-[24px] font-bold text-[#1D1F24] mb-4">No loans created yet</h3>
+
+                      <p className="text-[#989FA7] leading-[1.6] text-[15px] mb-10 px-4">
+                        Start managing employee loans by creating your first loan record. Track amounts, interest rates, instalments and repayment status all in one place.
+                      </p>
+
+                      <button
+                        onClick={() => setIsCreateDrawerOpen(true)}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-6 pr-2 py-2.5 rounded-full text-[15px] font-semibold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-200"
+                      >
+                        Create Loan
+                        <div className="bg-white text-blue-600 rounded-full w-7 h-7 flex items-center justify-center ml-1">
+                          <Plus className="w-4 h-4" />
+                        </div>
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <table className="w-full text-left border-collapse">
