@@ -1,7 +1,7 @@
 import { useState, FormEvent, useEffect } from "react";
 import {
   X,
-  Building2,
+  Hotel,
   UserRound,
   CreditCard,
   MapPin,
@@ -16,6 +16,10 @@ import {
   ListFilter,
   Landmark,
   UploadCloud,
+  Banknote,
+  HomeIcon,
+  ListOrdered,
+  Wallet
 } from "lucide-react";
 import FileUploadModal from "./FileUploadModal";
 import { CreateCompanyRequest } from "../types/company.types";
@@ -723,9 +727,6 @@ const UniversalDrawer = ({
                 <>
                   <div>
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="bg-[#367AFF] p-1.5 rounded">
-                        <Building2 className="w-4 h-4 text-white" />
-                      </div>
                       <h3 className="font-semibold text-gray-900">
                         Company Information
                       </h3>
@@ -734,9 +735,15 @@ const UniversalDrawer = ({
                     <div className="space-y-4">
                       {/* Company Name */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Company Name
-                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                            <Hotel className="h-4 w-4 text-blue-500" />
+                          </div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2 pl-6">
+                            Company Name
+                          </label>
+                        </div>
+
                         <input
                           type="text"
                           value={companyData.name}
@@ -754,11 +761,18 @@ const UniversalDrawer = ({
                           </p>
                         )}
                       </div>
+
                       {/* Address */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Address
-                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                            <MapPin className="h-4 w-4 text-blue-500" />
+                          </div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2 pl-6">
+                            Address
+                          </label>
+                        </div>
+
                         <input
                           type="text"
                           value={companyData.address}
@@ -776,12 +790,19 @@ const UniversalDrawer = ({
                           </p>
                         )}
                       </div>
+
                       {/* Email and Phone */}
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Email
-                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                              <Mail className="h-4 w-4 text-blue-500" />
+                            </div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2 pl-6">
+                              Email
+                            </label>
+                          </div>
+
                           <input
                             type="email"
                             value={companyData.email}
@@ -799,10 +820,17 @@ const UniversalDrawer = ({
                             </p>
                           )}
                         </div>
+
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Phone Number
-                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                              <Phone className="h-4 w-4 text-blue-500" />
+                            </div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2 pl-6">
+                              Phone Number
+                            </label>
+                          </div>
+
                           <input
                             type="tel"
                             value={companyData.contactNumber}
@@ -842,7 +870,7 @@ const UniversalDrawer = ({
                                 <UserRound className="h-4 w-4 text-blue-500" />
                               </div>
                               <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                                Employee ID *
+                                Employee ID <strong className="text-red-600 text-[15px]">*</strong>
                               </label>
                             </div>
 
@@ -874,7 +902,7 @@ const UniversalDrawer = ({
                                 <UserRound className="h-4 w-4 text-blue-500" />
                               </div>
                               <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                                Name *
+                                Name <strong className="text-red-600 text-[15px]">*</strong>
                               </label>
                             </div>
 
@@ -906,7 +934,7 @@ const UniversalDrawer = ({
                                 <CreditCard className="h-4 w-4 text-blue-500" />
                               </div>
                               <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                                NIC *
+                                NIC <strong className="text-red-600 text-[15px]">*</strong>
                               </label>
                             </div>
                             <input
@@ -969,7 +997,7 @@ const UniversalDrawer = ({
                                 <Activity className="h-4 w-4 text-blue-500" />
                               </div>
                               <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                                EPF Number *
+                                EPF Number <strong className="text-red-600 text-[15px]">*</strong>
                               </label>
                             </div>
 
@@ -1032,7 +1060,7 @@ const UniversalDrawer = ({
                                   <Phone className="h-4 w-4 text-blue-500" />
                                 </div>
                                 <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                                  Phone Number *
+                                  Phone Number <strong className="text-red-600 text-[15px]">*</strong>
                                 </label>
                               </div>
 
@@ -1102,7 +1130,7 @@ const UniversalDrawer = ({
                                 <Calendar className="h-4 w-4 text-blue-500" />
                               </div>
                               <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                                Joined Date *
+                                Joined Date <strong className="text-red-600 text-[15px]">*</strong>
                               </label>
                             </div>
 
@@ -1182,30 +1210,19 @@ const UniversalDrawer = ({
                         <div className="space-y-1.5">
                           {/* ── Monthly Basic Section ── */}
                           <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-[14px] font-medium text-gray-700">
-                                {employeeData.salaryType === "MONTHLY"
-                                  ? "Monthly Basic *"
-                                  : "Daily Basic *"}
-                              </span>
-                              <select
-                                value={employeeData.salaryType || "DAILY"}
-                                onChange={(e) =>
-                                  handleEmployeeChange(
-                                    "salaryType",
-                                    e.target.value as "DAILY" | "MONTHLY",
-                                  )
-                                }
-                                className="px-4 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 bg-white focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-8"
-                              >
-                                <option value="MONTHLY">Monthly</option>
-                                <option value="DAILY">Daily</option>
-                              </select>
-                            </div>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                <Globe className="h-4 w-4 text-gray-400" />
+                            <div className="relative flex items-center justify-between mb-1">
+                              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                <Wallet className="h-4 w-4 text-blue-500" />
                               </div>
+                              <span className="text-[13px] font-medium text-gray-700 pl-6">
+                                {employeeData.salaryType === "MONTHLY"
+                                  ? "Monthly Basic "
+                                  : "Daily Basic "}
+                                <strong className="text-red-600 text-[15px]">*</strong>
+                              </span>
+                            </div>
+
+                            <div className="flex">
                               <input
                                 type="number"
                                 min="0"
@@ -1222,46 +1239,43 @@ const UniversalDrawer = ({
                                     ? "Enter employee Monthly Basic"
                                     : "Enter employee Daily Basic"
                                 }
-                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.basicSalary && errors.basicSalary ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              />
-                            </div>
-                            {touched.basicSalary && errors.basicSalary && (
-                              <p className="text-red-500 text-xs mt-1">
-                                {errors.basicSalary}
-                              </p>
-                            )}
-                          </div>
+                                className={`text-[12px] w-full px-4 pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.basicSalary && errors.basicSalary ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
 
-                          {/* ── EPF/ETF Section ── */}
-                          <div>
-                            <div className="flex items-center gap-3 mb-2">
-                              <Toggle
-                                enabled={epfEnabled}
-                                onToggle={() => setEpfEnabled(!epfEnabled)}
                               />
-                              <span className="text-[14px] font-medium text-gray-700">
-                                EPF/ETF
-                              </span>
+
+                              <select
+                                value={employeeData.salaryType || "DAILY"}
+                                onChange={(e) =>
+                                  handleEmployeeChange(
+                                    "salaryType",
+                                    e.target.value as "DAILY" | "MONTHLY",
+                                  )
+                                }
+                                className="px-4 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 bg-white focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-8"
+                              >
+                                <option value="MONTHLY">Monthly</option>
+                                <option value="DAILY">Daily</option>
+                              </select>
+
+                              {touched.basicSalary && errors.basicSalary && (
+                                <p className="text-red-500 text-[12px] mt-1">
+                                  {errors.basicSalary}
+                                </p>
+                              )}
                             </div>
-                            {epfEnabled && (
-                              <div className="relative ml-0">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  value={epfEtf}
-                                  onChange={(e) => setEpfEtf(e.target.value)}
-                                  placeholder="Enter EPF/ETF Amount"
-                                  className="text-[13px] w-full px-4 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                />
-                              </div>
-                            )}
                           </div>
 
                           {/* ── OT Rate ── */}
                           <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              OT Rate (Rs/hr)
-                            </label>
+                            <div className="relative mt-4">
+                              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                <Banknote className="h-4 w-4 text-blue-500" />
+                              </div>
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                OT Rate (Rs/hr)
+                              </label>
+                            </div>
+
                             <input
                               type="number"
                               min="0"
@@ -1274,7 +1288,7 @@ const UniversalDrawer = ({
                               }
                               onBlur={() => handleBlur("otRate")}
                               placeholder="Enter OT Rate (Rs)"
-                              className={`text-[13px] w-full px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                              className={`text-[12px] w-full px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                             />
                             {touched.otRate && errors.otRate && (
                               <p className="text-red-500 text-xs mt-1">
@@ -1283,16 +1297,42 @@ const UniversalDrawer = ({
                             )}
                           </div>
 
+                          {/* ── EPF/ETF Section ── */}
+                          <div>
+                            <div className="flex items-center gap-3 mb-2 mt-4">
+                              <Toggle
+                                enabled={epfEnabled}
+                                onToggle={() => setEpfEnabled(!epfEnabled)}
+                              />
+                              <span className="text-[13px] font-medium text-gray-700">
+                                EPF/ETF
+                              </span>
+
+                              {epfEnabled && (
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={epfEtf}
+                                    onChange={(e) => setEpfEtf(e.target.value)}
+                                    placeholder="Enter Employee's EPF/ETF Applicable Amount"
+                                    className="text-[13px] w-[330px] px-4 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
                           {/* ── Allowances Section ── */}
                           <div>
-                            <div className="flex items-center gap-3 mb-2">
+                            <div className="flex items-center gap-3 mt-4 mb-2">
                               <Toggle
                                 enabled={allowanceEnabled}
                                 onToggle={() =>
                                   setAllowanceEnabled(!allowanceEnabled)
                                 }
                               />
-                              <span className="text-[14px] font-medium text-gray-700">
+                              <span className="text-[13px] font-medium text-gray-700">
                                 Allowance
                               </span>
                             </div>
@@ -1325,7 +1365,7 @@ const UniversalDrawer = ({
                                         setAllowances(updated);
                                       }}
                                       placeholder="Travelling"
-                                      className="text-[13px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all"
+                                      className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all"
                                     />
                                     <input
                                       type="number"
@@ -1337,7 +1377,7 @@ const UniversalDrawer = ({
                                         setAllowances(updated);
                                       }}
                                       placeholder="15,000.00"
-                                      className="text-[13px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
                                     <button
                                       type="button"
@@ -1372,12 +1412,12 @@ const UniversalDrawer = ({
                                 >
                                   <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-gray-200 rounded-xl group-hover:border-blue-300 transition-colors">
                                     <ListFilter className="w-4 h-4 text-gray-300 group-hover:text-blue-400 transition-colors" />
-                                    <span className="text-sm text-gray-400 group-hover:text-blue-500 transition-colors">
+                                    <span className="text-[12px] text-gray-400 group-hover:text-blue-500 transition-colors">
                                       Add Extra Allowances
                                     </span>
                                   </div>
                                   <div className="px-3 py-1.5 border border-dashed border-gray-200 rounded-xl group-hover:border-blue-300 transition-colors">
-                                    <span className="text-sm text-gray-400">
+                                    <span className="text-[12px] text-gray-400">
                                       Enter Amount
                                     </span>
                                   </div>
@@ -1391,14 +1431,14 @@ const UniversalDrawer = ({
 
                           {/* ── Deductions Section ── */}
                           <div>
-                            <div className="flex items-center gap-3 mb-2">
+                            <div className="flex items-center gap-3 mt-4 mb-2">
                               <Toggle
                                 enabled={deductionEnabled}
                                 onToggle={() =>
                                   setDeductionEnabled(!deductionEnabled)
                                 }
                               />
-                              <span className="text-[14px] font-medium text-gray-700">
+                              <span className="text-[13px] font-medium text-gray-700">
                                 Recurring Deductions
                               </span>
                             </div>
@@ -1431,7 +1471,7 @@ const UniversalDrawer = ({
                                         setDeductions(updated);
                                       }}
                                       placeholder="Loan"
-                                      className="text-[13px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all"
+                                      className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all"
                                     />
                                     <input
                                       type="number"
@@ -1443,7 +1483,7 @@ const UniversalDrawer = ({
                                         setDeductions(updated);
                                       }}
                                       placeholder="Amount"
-                                      className="text-[13px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
                                     <button
                                       type="button"
@@ -1478,12 +1518,12 @@ const UniversalDrawer = ({
                                 >
                                   <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-red-200 rounded-xl group-hover:border-red-400 transition-colors">
                                     <ListFilter className="w-4 h-4 text-red-300 group-hover:text-red-500 transition-colors" />
-                                    <span className="text-sm text-gray-400 group-hover:text-red-500 transition-colors">
+                                    <span className="text-[12px] text-gray-400 group-hover:text-red-500 transition-colors">
                                       Add Deduction
                                     </span>
                                   </div>
                                   <div className="px-3 py-1.5 border border-dashed border-red-200 rounded-xl group-hover:border-red-400 transition-colors">
-                                    <span className="text-sm text-gray-400">
+                                    <span className="text-[12px] text-gray-400">
                                       Enter Amount
                                     </span>
                                   </div>
@@ -1500,32 +1540,62 @@ const UniversalDrawer = ({
                       {/* ===== Bank Details Tab ===== */}
                       {activeTab === "bank" && (
                         <div className="space-y-1.5">
+                          {/* ── Account holder name ── */}
+                          <div>
+                            <div className="relative mt-1">
+                              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                <UserRound className="h-4 w-4 text-blue-500" />
+                              </div>
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1  pl-6">
+                                Account Holder Name
+                              </label>
+                            </div>
+
+                            <input
+                              type="text"
+                              value={employeeData.accountHolderName || ""}
+                              onChange={(e) =>
+                                handleEmployeeChange("accountHolderName", e.target.value)
+                              }
+                              placeholder="Enter your account holder name"
+                              className={`text-[13px] w-full pr-4 px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountHolderName && errors.accountHolderName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            />
+
+                            {touched.accountHolderName && errors.accountHolderName && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {errors.accountHolderName}
+                              </p>
+                            )}
+                          </div>
+
                           {/* ── Bank name ── */}
                           <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Bank name
-                            </label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                <Landmark className="h-4 w-4 text-gray-400" />
+                            <div className="relative mt-4">
+                              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                <Landmark className="h-4 w-4 text-blue-500" />
                               </div>
-                              <select
-                                value={employeeData.bankName || ""}
-                                onChange={(e) =>
-                                  handleEmployeeChange("bankName", e.target.value)
-                                }
-                                onBlur={() => handleBlur("bankName")}
-                                className={`text-[13px] w-full pl-10 pr-10 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_1rem_center] ${touched.bankName && errors.bankName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              >
-                                <option value="">Select Bank</option>
-                                {SRI_LANKAN_BANKS.map((bank) => (
-                                  <option key={bank} value={bank}>
-                                    {bank}
-                                  </option>
-                                ))}
-
-                              </select>
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                Bank Name
+                              </label>
                             </div>
+
+                            <select
+                              value={employeeData.bankName || ""}
+                              onChange={(e) =>
+                                handleEmployeeChange("bankName", e.target.value)
+                              }
+                              onBlur={() => handleBlur("bankName")}
+                              className={`text-[13px] w-full pr-10 px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%239ca3af%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_1rem_center] ${touched.bankName && errors.bankName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            >
+                              <option value="">Select Bank</option>
+                              {SRI_LANKAN_BANKS.map((bank) => (
+                                <option key={bank} value={bank}>
+                                  {bank}
+                                </option>
+                              ))}
+
+                            </select>
+
                             {touched.bankName && errors.bankName && (
                               <p className="text-red-500 text-xs mt-1">
                                 {errors.bankName}
@@ -1533,51 +1603,27 @@ const UniversalDrawer = ({
                             )}
                           </div>
 
-                          {/* ── Account number ── */}
-                          <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Account number
-                            </label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                <Landmark className="h-4 w-4 text-gray-400" />
-                              </div>
-                              <input
-                                type="text"
-                                value={employeeData.accountNumber || ""}
-                                onChange={(e) =>
-                                  handleEmployeeChange("accountNumber", e.target.value)
-                                }
-                                placeholder="Enter your account number"
-                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountNumber && errors.accountNumber ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              />
-                            </div>
-                            {touched.accountNumber && errors.accountNumber && (
-                              <p className="text-red-500 text-xs mt-1">
-                                {errors.accountNumber}
-                              </p>
-                            )}
-                          </div>
-
                           {/* ── Branch ── */}
                           <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Branch
-                            </label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                <Landmark className="h-4 w-4 text-gray-400" />
+                            <div className="relative mt-4">
+                              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                <HomeIcon className="h-4 w-4 text-blue-500" />
                               </div>
-                              <input
-                                type="text"
-                                value={employeeData.branchName || ""}
-                                onChange={(e) =>
-                                  handleEmployeeChange("branchName", e.target.value)
-                                }
-                                placeholder="Branch name"
-                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.branchName && errors.branchName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              />
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1  pl-6">
+                                Branch
+                              </label>
                             </div>
+
+                            <input
+                              type="text"
+                              value={employeeData.branchName || ""}
+                              onChange={(e) =>
+                                handleEmployeeChange("branchName", e.target.value)
+                              }
+                              placeholder="Branch name"
+                              className={`text-[13px] w-full pr-4 px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.branchName && errors.branchName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            />
+
                             {touched.branchName && errors.branchName && (
                               <p className="text-red-500 text-xs mt-1">
                                 {errors.branchName}
@@ -1585,31 +1631,34 @@ const UniversalDrawer = ({
                             )}
                           </div>
 
-                          {/* ── Account holder name ── */}
+                          {/* ── Account number ── */}
                           <div>
-                            <label className="block text-[13px] font-medium text-gray-700 mb-1">
-                              Account holder name
-                            </label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                <UserRound className="h-4 w-4 text-gray-400" />
+                            <div className="relative mt-4">
+                              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                <ListOrdered className="h-4 w-4 text-blue-500" />
                               </div>
-                              <input
-                                type="text"
-                                value={employeeData.accountHolderName || ""}
-                                onChange={(e) =>
-                                  handleEmployeeChange("accountHolderName", e.target.value)
-                                }
-                                placeholder="Enter your account holder name"
-                                className={`text-[13px] w-full pl-10 pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountHolderName && errors.accountHolderName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
-                              />
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                Account Number
+                              </label>
                             </div>
-                            {touched.accountHolderName && errors.accountHolderName && (
+
+                            <input
+                              type="text"
+                              value={employeeData.accountNumber || ""}
+                              onChange={(e) =>
+                                handleEmployeeChange("accountNumber", e.target.value)
+                              }
+                              placeholder="Enter your account number"
+                              className={`text-[13px] w-full pr-4 px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountNumber && errors.accountNumber ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            />
+
+                            {touched.accountNumber && errors.accountNumber && (
                               <p className="text-red-500 text-xs mt-1">
-                                {errors.accountHolderName}
+                                {errors.accountNumber}
                               </p>
                             )}
                           </div>
+
                         </div>
                       )}
 
