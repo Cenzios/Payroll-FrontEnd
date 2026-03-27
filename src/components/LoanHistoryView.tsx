@@ -1,4 +1,4 @@
-import { ExternalLink, Calendar, CheckCircle2, Clock, CalendarDays, ArrowLeft, Loader2 } from 'lucide-react';
+import { ExternalLink, Calendar, CheckCircle2, Clock, CalendarDays, ArrowLeft, Loader2, Coins, PieChart } from 'lucide-react';
 import PageHeader from './PageHeader';
 import { useGetLoanByIdQuery } from '../store/apiSlice';
 import { useAppSelector } from '../store/hooks';
@@ -151,7 +151,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 {/* Card 2 */}
                 <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-[130px]">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
-                        <Clock className="w-4 h-4" />
+                        <PieChart className="w-4 h-4" />
                         Full Amount (w/ Interest)
                     </div>
                     <div>
