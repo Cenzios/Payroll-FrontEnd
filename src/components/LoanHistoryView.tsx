@@ -1,7 +1,9 @@
-import { ExternalLink, Calendar, CheckCircle2, Clock, CalendarDays, ArrowLeft, Loader2, Coins, PieChart } from 'lucide-react';
+import { ExternalLink, Calendar, CheckCircle2, CalendarDays, ArrowLeft, Loader2, Coins, PieChart } from 'lucide-react';
 import PageHeader from './PageHeader';
-import { useGetLoanByIdQuery } from '../store/apiSlice';
+import { useGetLoanByIdQuery, useUploadEmployeeDocumentMutation } from '../store/apiSlice';
 import { useAppSelector } from '../store/hooks';
+import { useRef, useState } from 'react';
+import FileUploadModal from './FileUploadModal';
 
 interface LoanHistoryViewProps {
     loan: any;
@@ -42,6 +44,34 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
         { loanId: initialLoan.id, companyId: selectedCompanyId || "" },
         { skip: !selectedCompanyId || !initialLoan.id }
     );
+    const [uploadDocument, { isLoading: isUploading }] = useUploadEmployeeDocumentMutation();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+    const handleUploadClick = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleUploadSubmit = async () => {
+        if (selectedFiles.length === 0 || !selectedCompanyId || !loan) return;
+
+        const formData = new FormData();
+        // Upload the first file (backend currently handles single file per call based on upload.single('file'))
+        formData.append('file', selectedFiles[0]);
+        formData.append('employeeId', loan.employeeId);
+        formData.append('loanId', loan.id);
+        formData.append('documentType', 'LOAN');
+
+        try {
+            await uploadDocument(formData).unwrap();
+            setIsModalOpen(false);
+            setSelectedFiles([]);
+            alert('Document uploaded successfully');
+        } catch (error) {
+            console.error('Upload failed:', error);
+            alert('Failed to upload document');
+        }
+    };
 
     if (isLoading) {
         return (
@@ -127,20 +157,30 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    {getLoanStatusBadge(loan.status)}
-                    <a
-                        {...(loan.supportingDoc ? {
-                            href: loan.supportingDoc.fileUrl,
-                            target: "_blank",
-                            rel: "noopener noreferrer",
-                            download: loan.supportingDoc.fileName
-                        } : {
-                            onClick: (e) => e.preventDefault(),
-                        })}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95"
+                    <button
+                        onClick={handleUploadClick}
+                        disabled={isUploading}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50"
                     >
-                        Updated Documents
-                    </a>
+                        {isUploading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Uploading...
+                            </>
+                        ) : (
+                            'Updated Documents'
+                        )}
+                    </button>
+                    {getLoanStatusBadge(loan.status)}
+
+                    <FileUploadModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        files={selectedFiles}
+                        onFilesChange={setSelectedFiles}
+                        onUpload={handleUploadSubmit}
+                        isUploading={isUploading}
+                    />
                 </div>
             </div>
 
