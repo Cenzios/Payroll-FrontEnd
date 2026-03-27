@@ -270,36 +270,9 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                                 );
                                             })
                                     ) : (
-                                        // Dummy data shown when no documents exist
-                                        <>
-                                            {[
-                                                { name: "NIC.png", type: "png" },
-                                                { name: "Birth Certificate.pdf", type: "pdf" },
-                                                { name: "Police Certificate.pdf", type: "pdf" },
-                                            ].map((file, i) => (
-                                                <div
-                                                    key={i}
-                                                    className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-100 bg-white hover:border-blue-100 hover:bg-blue-50/30 transition-all group cursor-pointer"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <span
-                                                            className={`text-[11px] font-bold px-2 py-1 rounded-md ${file.type === "pdf"
-                                                                ? "bg-red-100 text-red-500"
-                                                                : "bg-blue-100 text-blue-500"
-                                                                }`}
-                                                        >
-                                                            {file.type.toUpperCase()}
-                                                        </span>
-                                                        <span className="text-[13px] font-normal text-gray-800">
-                                                            {file.name}
-                                                        </span>
-                                                    </div>
-                                                    <button className="text-blue-400 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-red-50">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </>
+                                        <div className="text-[12px] text-gray-400 py-2">
+                                            No documents found
+                                        </div>
                                     )}
                                 </div>
                             </div>

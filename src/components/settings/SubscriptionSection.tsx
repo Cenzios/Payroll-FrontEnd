@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Crown, ShieldCheck, Users, Calendar, ExternalLink, RefreshCcw } from 'lucide-react';
 import { useGetSubscriptionQuery, useCancelSubscriptionMutation } from '../../store/apiSlice';
+import { useAppDispatch } from '../../store/hooks';
+import { logout } from '../../store/slices/authSlice';
 import PaymentPlanSkeleton from '../../components/skeletons/PaymentPlanSkeleton';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import Toast from '../../components/Toast';
@@ -9,6 +11,7 @@ import logo from '../../assets/images/logo.svg';
 
 const SubscriptionSection = () => {
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
     const { data: subscription, isLoading: loading } = useGetSubscriptionQuery();
     const [cancelSubscription, { isLoading: isCancelling }] = useCancelSubscriptionMutation();
 
@@ -18,8 +21,10 @@ const SubscriptionSection = () => {
     const handleCancelPlan = async () => {
         try {
             await cancelSubscription().unwrap();
-            setToast({ message: 'Subscription cancelled successfully', type: 'success' });
             setShowCancelModal(false);
+            // Automatically log out and redirect to signup after cancellation
+            dispatch(logout());
+            navigate('/signup', { replace: true });
         } catch (error: any) {
             setToast({ message: error?.data?.message || 'Failed to cancel subscription', type: 'error' });
             setShowCancelModal(false);
