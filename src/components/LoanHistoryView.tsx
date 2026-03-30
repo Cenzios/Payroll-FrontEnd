@@ -1,7 +1,9 @@
-import { ExternalLink, Calendar, CheckCircle2, Clock, CalendarDays, ArrowLeft, Loader2 } from 'lucide-react';
+import { ExternalLink, Calendar, CheckCircle2, CalendarDays, ArrowLeft, Loader2, Coins, PieChart } from 'lucide-react';
 import PageHeader from './PageHeader';
-import { useGetLoanByIdQuery } from '../store/apiSlice';
+import { useGetLoanByIdQuery, useUploadEmployeeDocumentMutation } from '../store/apiSlice';
 import { useAppSelector } from '../store/hooks';
+import { useRef, useState } from 'react';
+import FileUploadModal from './FileUploadModal';
 
 interface LoanHistoryViewProps {
     loan: any;
@@ -23,12 +25,53 @@ const getHistoryBadge = (status: string) => {
     }
 };
 
+const getLoanStatusBadge = (status: string) => {
+    switch (status?.toUpperCase()) {
+        case 'ACTIVE':
+            return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-blue-50 text-blue-600">Active</span>;
+        case 'PENDING':
+            return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-orange-50 text-orange-500">Pending</span>;
+        case 'COMPLETED':
+            return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-green-50 text-emerald-500">Completed</span>;
+        default:
+            return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-gray-50 text-gray-500">{status || 'Active'}</span>;
+    }
+};
+
 const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
     const { data: loan, isLoading, isError } = useGetLoanByIdQuery(
         { loanId: initialLoan.id, companyId: selectedCompanyId || "" },
         { skip: !selectedCompanyId || !initialLoan.id }
     );
+    const [uploadDocument, { isLoading: isUploading }] = useUploadEmployeeDocumentMutation();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+    const handleUploadClick = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleUploadSubmit = async () => {
+        if (selectedFiles.length === 0 || !selectedCompanyId || !loan) return;
+
+        const formData = new FormData();
+        // Upload the first file (backend currently handles single file per call based on upload.single('file'))
+        formData.append('file', selectedFiles[0]);
+        formData.append('employeeId', loan.employeeId);
+        formData.append('loanId', loan.id);
+        formData.append('documentType', 'LOAN');
+
+        try {
+            await uploadDocument(formData).unwrap();
+            setIsModalOpen(false);
+            setSelectedFiles([]);
+            alert('Document uploaded successfully');
+        } catch (error) {
+            console.error('Upload failed:', error);
+            alert('Failed to upload document');
+        }
+    };
 
     if (isLoading) {
         return (
@@ -113,22 +156,31 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                         </div>
                     </div>
                 </div>
-                <div>
-                    <a
-                        {...(loan.supportingDoc ? {
-                            href: loan.supportingDoc.fileUrl,
-                            target: "_blank",
-                            rel: "noopener noreferrer",
-                            download: loan.supportingDoc.fileName
-                        } : {
-                            onClick: (e) => e.preventDefault(),
-                            style: { pointerEvents: 'none', opacity: 0.5 }
-                        })}
-                        className="flex items-center gap-2 bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 hover:border-blue-400 text-sm font-semibold px-4 py-2 rounded-full transition-colors shadow-sm"
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={handleUploadClick}
+                        disabled={isUploading}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50"
                     >
-                        <ExternalLink className="w-4 h-4" />
-                        Download Document
-                    </a>
+                        {isUploading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Uploading...
+                            </>
+                        ) : (
+                            'Updated Documents'
+                        )}
+                    </button>
+                    {getLoanStatusBadge(loan.status)}
+
+                    <FileUploadModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        files={selectedFiles}
+                        onFilesChange={setSelectedFiles}
+                        onUpload={handleUploadSubmit}
+                        isUploading={isUploading}
+                    />
                 </div>
             </div>
 
@@ -151,7 +203,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 {/* Card 2 */}
                 <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-[130px]">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
-                        <Clock className="w-4 h-4" />
+                        <PieChart className="w-4 h-4" />
                         Full Amount (w/ Interest)
                     </div>
                     <div>
