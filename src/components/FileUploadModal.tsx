@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { UploadCloud, FileText, FileImage, File, Edit2, Trash2, X, Check, Loader2 } from "lucide-react";
+import { UploadCloud, FileText, FileImage, File, Edit2, Trash2, Check, Loader2 } from "lucide-react";
 
 interface FileUploadModalProps {
     isOpen: boolean;
@@ -9,6 +9,7 @@ interface FileUploadModalProps {
     onFilesChange: (files: File[]) => void;
     onUpload?: () => void;
     isUploading?: boolean;
+    maxFiles?: number;
 }
 
 const FileUploadModal: React.FC<FileUploadModalProps> = ({
@@ -18,6 +19,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     onFilesChange,
     onUpload,
     isUploading = false,
+    maxFiles = 3,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -35,13 +37,34 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     }, []);
 
     const validateFiles = (newFiles: File[]) => {
-        return newFiles.filter(file => {
+        const remaining = maxFiles - files.length;
+        if (remaining <= 0) {
+            alert(`You can only upload a maximum of ${maxFiles} documents per employee.`);
+            return [];
+        }
+
+        let acceptedCount = 0;
+        const valid = newFiles.filter(file => {
+            if (acceptedCount >= remaining) return false;
+
             const isValidType = ['image/png', 'image/jpeg', 'application/pdf'].includes(file.type);
             const isValidSize = file.size <= 5 * 1024 * 1024;
+
             if (!isValidType) alert(`File ${file.name} is not a supported format.`);
             if (!isValidSize) alert(`File ${file.name} exceeds 5MB limit.`);
-            return isValidType && isValidSize;
+
+            if (isValidType && isValidSize) {
+                acceptedCount++;
+                return true;
+            }
+            return false;
         });
+
+        if (newFiles.length > remaining) {
+            alert(`Only the first ${remaining} valid file(s) were added. The limit is ${maxFiles} total.`);
+        }
+
+        return valid;
     };
 
     const handleDrop = useCallback((e: React.DragEvent) => {
@@ -49,14 +72,18 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         setIsDragging(false);
         const droppedFiles = Array.from(e.dataTransfer.files);
         const validFiles = validateFiles(droppedFiles);
-        onFilesChange([...files, ...validFiles]);
-    }, [files, onFilesChange]);
+        if (validFiles.length > 0) {
+            onFilesChange([...files, ...validFiles]);
+        }
+    }, [files, onFilesChange, maxFiles]);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const selectedFiles = Array.from(e.target.files);
             const validFiles = validateFiles(selectedFiles);
-            onFilesChange([...files, ...validFiles]);
+            if (validFiles.length > 0) {
+                onFilesChange([...files, ...validFiles]);
+            }
         }
     };
 
@@ -68,7 +95,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         setEditingIndex(index);
         // Remove extension for editing
         const nameParts = files[index].name.split('.');
-        const extension = nameParts.length > 1 ? nameParts.pop() : '';
+        if (nameParts.length > 1) nameParts.pop();
         setTempName(nameParts.join('.'));
     };
 
@@ -83,10 +110,21 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         const newName = `${tempName}.${extension}`;
 
         // Create new file with same content but new name
-        const renamedFile = new File([currentFile], newName, { type: currentFile.type });
-        const newFiles = [...files];
-        newFiles[index] = renamedFile;
-        onFilesChange(newFiles);
+        // Use a simpler approach to avoid TS issues with File constructor if possible, 
+        // but File constructor is standard. The error might be due to environment.
+        try {
+            // Create a new File from the original file's content
+            // Using the currentFile directly in the array is correct as File inherits from Blob
+            const renamedFile = new File([currentFile], newName, {
+                type: currentFile.type,
+                lastModified: currentFile.lastModified
+            });
+            const newFiles = [...files];
+            newFiles[index] = renamedFile;
+            onFilesChange(newFiles);
+        } catch (err) {
+            console.error("Rename failed", err);
+        }
         setEditingIndex(null);
     };
 
@@ -107,9 +145,6 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                 {/* Header */}
                 <div className="px-8 pt-8 pb-4 flex justify-center items-center bg-white border-b border-gray-50">
                     <h2 className="text-xl font-bold text-gray-900">Supporting Documents</h2>
-                    {/* <button onClick={onClose} className="w-10 h-10 flex items-center justify-end hover:bg-gray-100 border border-gray-100 rounded-full transition-all text-gray-400">
-                        <X className="w-5 h-5" />
-                    </button> */}
                 </div>
 
                 <div className="p-8 space-y-6 bg-white">
@@ -135,7 +170,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                         </div>
                         <div className="text-center">
                             <p className="text-[15px] font-semibold text-gray-900">Click to upload or drag and drop</p>
-                            <p className="text-[13px] text-gray-400 mt-1">Add 1 to 3 documents (PDF, JPG, PNG)</p>
+                            <p className="text-[13px] text-gray-400 mt-1">Total Limit: {maxFiles} documents (PDF, JPG, PNG)</p>
                         </div>
                     </div>
 
