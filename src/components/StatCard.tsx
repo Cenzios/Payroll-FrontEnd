@@ -48,8 +48,8 @@ const StatCard = ({
   return (
     <div className="relative rounded-lg p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all group flex items-center justify-between">
 
-      {/* Date Badge — top-right corner, matching the screenshot style */}
-      <div className="absolute top-3 right-6 flex items-center gap-1 bot">
+      {/* Date Badge — top-right corner*/}
+      <div className="absolute top-6 right-6 flex items-center gap-1">
         <span className={`w-[7px] h-[7px] rounded-full ${themeStyle.dot} shrink-0`} />
         <span className="text-[11px] font-medium text-gray-400">
           {monthLabel} {yearLabel}
@@ -58,7 +58,7 @@ const StatCard = ({
 
       {/* Left Content */}
       <div>
-        <div className="text-[11px] text-gray-500 mb-1 font-regular">
+        <div className="text-[11px] text-gray-600 mb-4 font-regular">
           {title}
         </div>
         <div className="text-[20px] font-bold text-gray-900 leading-none">
@@ -67,7 +67,7 @@ const StatCard = ({
       </div>
 
       {/* Right Icon */}
-      <div className={`w-12 h-12 rounded-xl ${themeStyle.bg} flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 mt-2`}>
+      <div className={`mt-5 w-8 h-8 rounded-xl ${themeStyle.bg} flex items-center justify-center shrink-0 transition-transform group-hover:scale-105`}>
         <Icon className={`w-5 h-5 ${themeStyle.text}`} />
       </div>
 

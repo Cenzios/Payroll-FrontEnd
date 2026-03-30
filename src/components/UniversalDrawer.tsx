@@ -12,7 +12,6 @@ import {
   Calendar,
   PlusCircle,
   MinusCircle,
-  Globe,
   ListFilter,
   Landmark,
   UploadCloud,
@@ -774,7 +773,7 @@ const UniversalDrawer = ({
                           <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                             <Hotel className="h-4 w-4 text-blue-500" />
                           </div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2 pl-6">
+                          <label className="block text-[13px] font-medium text-gray-700 mb-2 pl-6">
                             Company Name
                           </label>
                         </div>
@@ -787,7 +786,7 @@ const UniversalDrawer = ({
                           }
                           onBlur={() => handleBlur("name")}
                           placeholder="Enter company name"
-                          className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.name && errors.name ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                          className={`text-[13px] w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.name && errors.name ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                         />
 
                         {touched.name && errors.name && (
@@ -803,7 +802,7 @@ const UniversalDrawer = ({
                           <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                             <MapPin className="h-4 w-4 text-blue-500" />
                           </div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2 pl-6">
+                          <label className="block text-[13px] font-medium text-gray-700 mb-2 pl-6">
                             Address
                           </label>
                         </div>
@@ -816,7 +815,7 @@ const UniversalDrawer = ({
                           }
                           onBlur={() => handleBlur("address")}
                           placeholder="Enter company address"
-                          className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                          className={`text-[13px] w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                         />
 
                         {touched.address && errors.address && (
@@ -833,7 +832,7 @@ const UniversalDrawer = ({
                             <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                               <Mail className="h-4 w-4 text-blue-500" />
                             </div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2 pl-6">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-2 pl-6">
                               Email
                             </label>
                           </div>
@@ -846,7 +845,7 @@ const UniversalDrawer = ({
                             }
                             onBlur={() => handleBlur("email")}
                             placeholder="company@example.com"
-                            className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            className={`text-[13px] w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                           />
 
                           {touched.email && errors.email && (
@@ -861,7 +860,7 @@ const UniversalDrawer = ({
                             <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                               <Phone className="h-4 w-4 text-blue-500" />
                             </div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2 pl-6">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-2 pl-6">
                               Phone Number
                             </label>
                           </div>
@@ -877,7 +876,7 @@ const UniversalDrawer = ({
                             }
                             onBlur={() => handleBlur("contactNumber")}
                             placeholder="+94 77 123 0000"
-                            className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            className={`text-[13px] w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                           />
 
                           {touched.contactNumber && errors.contactNumber && (
@@ -891,6 +890,7 @@ const UniversalDrawer = ({
                   </div>
                 </>
               ) : (
+
                 /* EMPLOYEE FORM */
                 <>
                   <div>
