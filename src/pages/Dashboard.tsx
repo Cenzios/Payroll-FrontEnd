@@ -20,6 +20,10 @@ import StatCard from '../components/StatCard';
 import QuickAction from '../components/QuickAction';
 import SalaryPaidSummary from '../components/SalaryPaidSummary';
 import UniversalDrawer from '../components/UniversalDrawer';
+
+import SuccessModal from '../components/SuccessModal';
+import Employees from './Employees';
+
 import ConfirmationModal from '../components/ConfirmationModal';
 import AddonModal from '../components/AddonModal';
 import Toast from '../components/Toast';
@@ -46,7 +50,16 @@ const Dashboard = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<'company' | 'employee'>('company');
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // company pop up related
+  // const [showSuccessModal, setShowSuccessModal] = useState(false);
+  // const [modalTitle, setModalTitle] = useState("");
+  // const [modalMessage, setModalMessage] = useState("");
+
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error'
+  } | null>(null);
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
 
   const urlToken = searchParams.get('token');
@@ -83,8 +96,6 @@ const Dashboard = () => {
 
   const [createCompany] = useCreateCompanyMutation();
   const [createEmployee] = useCreateEmployeeMutation();
-
-
 
   // Derived state
   const selectedCompany = companies.find(c => c.id === selectedCompanyId) || null;
@@ -153,6 +164,13 @@ const Dashboard = () => {
       if (drawerMode === 'company') {
         await createCompany(data as CreateCompanyRequest).unwrap();
         setToast({ message: 'Company created successfully!', type: 'success' });
+
+        // setModalTitle("Company Created");
+        // setModalMessage(
+        //   "You have successfully created a company.",
+        // );
+        // setShowSuccessModal(true);
+
       } else {
         await createEmployee(data as CreateEmployeeRequest).unwrap();
         setToast({ message: 'Employee created successfully!', type: 'success' });
@@ -239,6 +257,28 @@ const Dashboard = () => {
                 />
               </div>
 
+              {/* add employee button */}
+              <button
+                onClick={() => {
+                  if (!selectedCompanyId) {
+                    setToast({
+                      message: "Please select a company from the Dashboard first.",
+                      type: "error",
+                    });
+                    return;
+                  }
+                  openAddEmployee();
+                }}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
+              >
+                <span className="hidden sm:inline whitespace-nowrap">Add New Employee</span>
+                <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                  <Plus className="w-4 h-4" />
+                </div>
+              </button>
+
+              {/* add company button */}
               <button
                 onClick={openAddCompany}
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
@@ -250,6 +290,8 @@ const Dashboard = () => {
                   <Plus className="w-4 h-4" />
                 </div>
               </button>
+
+
             </>
           }
         />
@@ -360,6 +402,14 @@ const Dashboard = () => {
           onClose={() => setToast(null)}
         />
       )}
+
+      {/* Success Modal */}
+      {/* <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title={modalTitle}
+        message={modalMessage}
+      /> */}
 
       <ConfirmationModal
         isOpen={confirmation.isOpen}
