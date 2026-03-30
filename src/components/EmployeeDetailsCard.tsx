@@ -22,11 +22,13 @@ import { Employee } from "../types/employee.types";
 interface EmployeeDetailsCardProps {
     selectedEmployee: Employee | null;
     setPreviewImage: (url: string | null) => void;
+    onAddFileClick?: () => void;
 }
 
 const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
     selectedEmployee,
     setPreviewImage,
+    onAddFileClick,
 }) => {
     const [activeTab, setActiveTab] = useState("Personal Information");
 
@@ -212,8 +214,10 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                         <FileText className="w-[15px] h-[15px]" />
                                         <span className="text-[12px] font-semibold">Files</span>
                                     </div>
-                                    {/* Add file button — UI only */}
-                                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-[12px] font-semibold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all">
+                                    {/* Add file button */}
+                                    <button
+                                        onClick={onAddFileClick}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-[12px] font-semibold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all">
                                         <Plus className="w-3.5 h-3.5" />
                                         Add file
                                     </button>

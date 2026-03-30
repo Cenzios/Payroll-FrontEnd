@@ -1,26 +1,5 @@
 import { useState, FormEvent, useEffect } from "react";
-import {
-  X,
-  Hotel,
-  UserRound,
-  CreditCard,
-  MapPin,
-  Activity,
-  Mail,
-  Phone,
-  Award,
-  Calendar,
-  PlusCircle,
-  MinusCircle,
-  Globe,
-  ListFilter,
-  Landmark,
-  UploadCloud,
-  Banknote,
-  HomeIcon,
-  ListOrdered,
-  Wallet
-} from "lucide-react";
+import { PlusCircle, MinusCircle, UploadCloud, Activity, MapPin, Phone, Mail, UserRound, Landmark, Home as HomeIcon, ListOrdered, CreditCard, Hotel, ListFilter, X, RotateCcw, Award, Calendar, Banknote, Wallet } from "lucide-react";
 import FileUploadModal from "./FileUploadModal";
 import { CreateCompanyRequest } from "../types/company.types";
 import { CreateEmployeeRequest } from "../types/employee.types";
@@ -125,9 +104,13 @@ const UniversalDrawer = ({
   >([{ type: "", amount: "" }]);
 
   // Reset forms when drawer opens/closes or mode changes or initialData changes
+  // Reset and load data effect
   useEffect(() => {
     if (isOpen) {
       setActiveTab("employee");
+      setErrors({}); // Reset validation errors
+      setTouched({}); // Reset touched fields
+
       if (mode === "company") {
         if (initialData) {
           setCompanyData(initialData);
@@ -150,6 +133,13 @@ const UniversalDrawer = ({
           });
           setEpfEnabled(initialData.epfEnabled ?? true);
           setEpfEtf(initialData.epfEtfAmount?.toString() || "");
+
+          // These will be overridden by the dedicated effect for recurring data
+          // but we reset them here for safety
+          setAllowanceEnabled(false);
+          setDeductionEnabled(false);
+          setAllowances([{ type: "", amount: "" }]);
+          setDeductions([{ type: "", amount: "" }]);
         } else {
           // Check for draft in localStorage
           const draftKey = `employee_add_draft_${companyId}`;
@@ -237,7 +227,7 @@ const UniversalDrawer = ({
 
   // Save draft effect
   useEffect(() => {
-    if (mode === "employee" && !initialData && companyId) {
+    if (isOpen && mode === "employee" && !initialData && companyId) {
       const draftKey = `employee_add_draft_${companyId}`;
       const draftValues = {
         employeeData,
@@ -249,7 +239,7 @@ const UniversalDrawer = ({
         deductions,
       };
 
-      // Check if it's actually "dirty" before saving (avoid saving mostly empty objects if we can)
+      // Check if it's actually "dirty" before saving
       const isDirty =
         employeeData.fullName ||
         employeeData.employeeId ||
@@ -275,6 +265,7 @@ const UniversalDrawer = ({
     mode,
     initialData,
     companyId,
+    isOpen
   ]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -774,7 +765,7 @@ const UniversalDrawer = ({
                           <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                             <Hotel className="h-4 w-4 text-blue-500" />
                           </div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2 pl-6">
+                          <label className="block text-[13px] font-medium text-gray-700 mb-2 pl-6">
                             Company Name
                           </label>
                         </div>
@@ -787,7 +778,7 @@ const UniversalDrawer = ({
                           }
                           onBlur={() => handleBlur("name")}
                           placeholder="Enter company name"
-                          className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.name && errors.name ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                          className={`text-[13px] w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.name && errors.name ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                         />
 
                         {touched.name && errors.name && (
@@ -803,7 +794,7 @@ const UniversalDrawer = ({
                           <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                             <MapPin className="h-4 w-4 text-blue-500" />
                           </div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2 pl-6">
+                          <label className="block text-[13px] font-medium text-gray-700 mb-2 pl-6">
                             Address
                           </label>
                         </div>
@@ -816,7 +807,7 @@ const UniversalDrawer = ({
                           }
                           onBlur={() => handleBlur("address")}
                           placeholder="Enter company address"
-                          className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                          className={`text-[13px] w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                         />
 
                         {touched.address && errors.address && (
@@ -833,7 +824,7 @@ const UniversalDrawer = ({
                             <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                               <Mail className="h-4 w-4 text-blue-500" />
                             </div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2 pl-6">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-2 pl-6">
                               Email
                             </label>
                           </div>
@@ -846,7 +837,7 @@ const UniversalDrawer = ({
                             }
                             onBlur={() => handleBlur("email")}
                             placeholder="company@example.com"
-                            className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            className={`text-[13px] w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.email && errors.email ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                           />
 
                           {touched.email && errors.email && (
@@ -861,7 +852,7 @@ const UniversalDrawer = ({
                             <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                               <Phone className="h-4 w-4 text-blue-500" />
                             </div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2 pl-6">
+                            <label className="block text-[13px] font-medium text-gray-700 mb-2 pl-6">
                               Phone Number
                             </label>
                           </div>
@@ -877,7 +868,7 @@ const UniversalDrawer = ({
                             }
                             onBlur={() => handleBlur("contactNumber")}
                             placeholder="+94 77 123 0000"
-                            className={`w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
+                            className={`text-[13px] w-full px-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
                           />
 
                           {touched.contactNumber && errors.contactNumber && (
@@ -891,9 +882,17 @@ const UniversalDrawer = ({
                   </div>
                 </>
               ) : (
+
                 /* EMPLOYEE FORM */
                 <>
                   <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900">
+                          {activeTab === "employee" ? "Employee Information" : activeTab === "payment" ? "Salary Information" : "Bank Details"}
+                        </h3>
+                      </div>
+                    </div>
                     <div className="space-y-1.5">
                       {/* ===== Employee Information Tab ===== */}
                       {activeTab === "employee" && (
@@ -1196,18 +1195,30 @@ const UniversalDrawer = ({
                                 <UploadCloud className="h-4 w-4 text-blue-500" />
                               </div>
                               <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                                Add Files
+                                Supporting Documents (Max 3)
                               </label>
                             </div>
 
+                            {/* Show already uploaded count if editing */}
+                            {initialData?.documents && initialData.documents.length > 0 && (
+                              <div className="mb-2 px-3 py-1.5 bg-gray-50 rounded-xl border border-gray-100">
+                                <span className="text-[12px] text-gray-500 font-medium">
+                                  {initialData.documents.length} document(s) already uploaded
+                                </span>
+                              </div>
+                            )}
 
                             <button
                               type="button"
                               onClick={() => setIsUploadModalOpen(true)}
-                              className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all text-[13px] text-gray-500 font-medium group"
+                              disabled={((initialData?.documents?.length || 0) + employeeFiles.length) >= 3}
+                              className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all text-[13px] text-gray-500 font-medium group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent"
                             >
-
-                              <span className="text-gray-400 text-[13px] font-light">Upload Employee Documents</span>
+                              <span className="text-gray-400 text-[13px] font-light">
+                                {((initialData?.documents?.length || 0) + employeeFiles.length) >= 3
+                                  ? "Document limit reached"
+                                  : "Upload Employee Documents"}
+                              </span>
                               <div className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-gray-50 group-hover:bg-blue-100 transition-colors">
                                 <PlusCircle className="h-3.5 w-3.5 text-gray-400 group-hover:text-blue-600" />
                               </div>
@@ -1236,6 +1247,7 @@ const UniversalDrawer = ({
                             onClose={() => setIsUploadModalOpen(false)}
                             files={employeeFiles}
                             onFilesChange={setEmployeeFiles}
+                            maxFiles={3 - (initialData?.documents?.length || 0)}
                           />
                         </div>
                       )}
@@ -1697,10 +1709,6 @@ const UniversalDrawer = ({
                         </div>
                       )}
 
-
-
-
-
                       {/* Hidden Fields */}
                       <input type="hidden" value={employeeData.department} />
                     </div>
@@ -1735,8 +1743,8 @@ const UniversalDrawer = ({
               </button>
             )}
           </div>
-        </div >
-      </div >
+        </div>
+      </div>
     </>
   );
 };
