@@ -468,7 +468,6 @@ const Salary = () => {
       etf3: etfEmployer, // For display purposes
       dailyRate: emp.salaryType === "MONTHLY" ? ((emp.basicSalary || 0) / companyWorkingDays) : (emp.basicSalary || 0),
       deductions: [
-        { name: "Tax (PAYE)", amount: tax },
         { name: "Salary Advance", amount: salaryAdvance },
         ...currentDeductions.map((d) => ({
           name: d.type,
@@ -753,10 +752,8 @@ const Salary = () => {
                       handleGeneratePayslip={handleGeneratePayslip}
                       handleConfirmPayslip={handleConfirmPayslip}
                       openManageModal={openManageModal}
-                      allowanceToggles={allowanceToggles}
-                      deductionToggles={deductionToggles}
-                      setAllowanceToggles={setAllowanceToggles}
-                      setDeductionToggles={setDeductionToggles}
+                      salaryAllowances={salaryAllowances}
+                      salaryDeductions={salaryDeductions}
                       isSaving={isSaving}
                       hasAnyError={hasAnyError}
                       setTouchedFields={setTouchedFields}
