@@ -34,7 +34,7 @@ interface SalaryState {
 }
 
 const initialState: SalaryState = {
-    companyWorkingDays: 30, // Default to 30 as per requirements
+    companyWorkingDays: new Date().getDate(),
     selectedMonth: new Date().getMonth(),
     selectedYear: new Date().getFullYear(),
     employeeWorkedDays: {},

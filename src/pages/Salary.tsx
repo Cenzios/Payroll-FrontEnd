@@ -331,11 +331,22 @@ const Salary = () => {
   const handleMonthChange = (month: number) => {
     setTouchedFields((prev) => ({ ...prev, month: true }));
     dispatch(setMonth(month));
+    dispatch(setCompanyWorkingDays(getMaxAllowedDays(selectedYear, month)));
   };
 
   const handleYearChange = (year: number) => {
     setTouchedFields((prev) => ({ ...prev, month: true }));
+
+    // Prevent keeping a future month if year is changed to current
+    let targetMonth = selectedMonth;
+    const now = new Date();
+    if (year === now.getFullYear() && selectedMonth > now.getMonth()) {
+      targetMonth = now.getMonth();
+      dispatch(setMonth(targetMonth));
+    }
+
     dispatch(setYear(year));
+    dispatch(setCompanyWorkingDays(getMaxAllowedDays(year, targetMonth)));
   };
 
   const handleToggleEpfEtf = (empId: string) => {
@@ -627,11 +638,20 @@ const Salary = () => {
                 onChange={(e) => handleMonthChange(parseInt(e.target.value))}
                 className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
               >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <option key={i} value={i}>
-                    {new Date(0, i).toLocaleString("default", { month: "long" })}
-                  </option>
-                ))}
+                {Array.from({ length: 12 }, (_, i) => i)
+                  .filter((i) => {
+                    const now = new Date();
+                    // If current year is selected, only show up to current month
+                    if (selectedYear === now.getFullYear()) {
+                      return i <= now.getMonth();
+                    }
+                    return true;
+                  })
+                  .map((i) => (
+                    <option key={i} value={i}>
+                      {new Date(0, i).toLocaleString("default", { month: "long" })}
+                    </option>
+                  ))}
               </select>
               <select
                 value={selectedYear}
