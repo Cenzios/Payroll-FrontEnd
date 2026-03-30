@@ -752,8 +752,10 @@ const Salary = () => {
                       handleGeneratePayslip={handleGeneratePayslip}
                       handleConfirmPayslip={handleConfirmPayslip}
                       openManageModal={openManageModal}
-                      salaryAllowances={salaryAllowances}
-                      salaryDeductions={salaryDeductions}
+                      allowanceToggles={allowanceToggles}
+                      deductionToggles={deductionToggles}
+                      setAllowanceToggles={setAllowanceToggles}
+                      setDeductionToggles={setDeductionToggles}
                       isSaving={isSaving}
                       hasAnyError={hasAnyError}
                       setTouchedFields={setTouchedFields}
