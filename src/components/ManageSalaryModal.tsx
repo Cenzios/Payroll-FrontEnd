@@ -80,20 +80,23 @@ const ManageSalaryModal = ({
                                             setModalEntries(updated);
                                         }}
                                         placeholder="15,000.00"
-                                        className="w-32 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:border-blue-400 transition-colors placeholder:text-gray-300"
+                                        className="w-32 px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:border-blue-400 transition-colors placeholder:text-gray-300 no-spinner"
                                         min="0"
                                         step="0.01"
                                     />
                                     {isLastRow ? (
                                         /* Plus button for the last row */
                                         <button
-                                            onClick={() =>
-                                                setModalEntries((prev) => [
-                                                    ...prev,
-                                                    { type: "", amount: 0 },
-                                                ])
-                                            }
-                                            className="shrink-0 w-8 h-8 flex items-center justify-center text-blue-500 hover:text-blue-600 transition-colors"
+                                            onClick={() => {
+                                                if (entry.type.trim() && entry.amount > 0) {
+                                                    setModalEntries((prev) => [
+                                                        ...prev,
+                                                        { type: "", amount: 0 },
+                                                    ]);
+                                                }
+                                            }}
+                                            disabled={!entry.type.trim() || entry.amount <= 0}
+                                            className={`shrink-0 w-8 h-8 flex items-center justify-center transition-colors ${!entry.type.trim() || entry.amount <= 0 ? "text-blue-300 cursor-not-allowed" : "text-blue-500 hover:text-blue-600"}`}
                                         >
                                             <svg
                                                 className="w-6 h-6"

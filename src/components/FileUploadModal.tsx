@@ -1,12 +1,14 @@
 import React, { useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { UploadCloud, FileText, FileImage, File, Edit2, Trash2, X, Check } from "lucide-react";
+import { UploadCloud, FileText, FileImage, File, Edit2, Trash2, X, Check, Loader2 } from "lucide-react";
 
 interface FileUploadModalProps {
     isOpen: boolean;
     onClose: () => void;
     files: File[];
     onFilesChange: (files: File[]) => void;
+    onUpload?: () => void;
+    isUploading?: boolean;
 }
 
 const FileUploadModal: React.FC<FileUploadModalProps> = ({
@@ -14,6 +16,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     onClose,
     files,
     onFilesChange,
+    onUpload,
+    isUploading = false,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -194,10 +198,18 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                         Cancel
                     </button>
                     <button
-                        onClick={onClose}
-                        className="flex-[1.5] py-3.5 px-8 text-[14px] font-bold text-white bg-blue-600 rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25"
+                        onClick={onUpload || onClose}
+                        disabled={isUploading || files.length === 0}
+                        className="flex-[1.5] py-3.5 px-8 text-[14px] font-bold text-white bg-blue-600 rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:grayscale-[0.5] flex items-center justify-center gap-2"
                     >
-                        Upload Employee Documents
+                        {isUploading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Uploading...
+                            </>
+                        ) : (
+                            'Upload Documents'
+                        )}
                     </button>
                 </div>
             </div>
