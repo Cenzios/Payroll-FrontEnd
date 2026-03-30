@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, UploadCloud, Loader2, Calendar, Percent, Info, Calculator, FileText, CheckCircle2, PlusCircle, Search, User, ChevronDown } from 'lucide-react';
+import { X, UploadCloud, Loader2, Calendar, Percent, Info, Calculator, FileText, CheckCircle2, PlusCircle, Search, User, ChevronDown, UserRound, MessageSquareQuote, PercentCircle, PercentSquare, PercentSquareIcon, Text, CircleDollarSign, MessageSquareDiff } from 'lucide-react';
 import { useGetEmployeesQuery, useCreateLoanMutation, useUploadEmployeeDocumentMutation } from '../store/apiSlice';
 import { Employee } from '../types/employee.types';
 import Toast from './Toast';
 import FileUploadModal from './FileUploadModal';
+
 
 interface CreateLoanDrawerProps {
   isOpen: boolean;
@@ -194,35 +195,59 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
 
           {/* Form Content */}
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="p-8 space-y-6">
+            <div className="p-8 space-y-4">
 
               {/* 1. Loan Title */}
               <div>
-                <label className="block text-[13px] font-semibold text-gray-700 mb-2">Loan Title</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                    <Text className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                    Loan Title <strong className="text-red-600 text-[15px]">*</strong>
+                  </label>
+                </div>
+
                 <input
                   type="text"
                   value={loanTitle}
                   onChange={(e) => setLoanTitle(e.target.value)}
                   placeholder="Personal Home Renovation"
-                  className="w-full px-4 py-3 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-300 text-gray-900"
+                  className="w-full px-4 py-1.5 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-300 text-gray-900"
                 />
               </div>
 
               {/* 2. Description */}
               <div>
-                <label className="block text-[13px] font-semibold text-gray-700 mb-2">Description</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                    <MessageSquareQuote className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                    Description <strong className="text-red-600 text-[15px]">*</strong>
+                  </label>
+                </div>
+
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Requesting a loan for home improvement projects and general repairs."
                   rows={4}
-                  className="w-full px-4 py-3 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-300 text-gray-900 resize-none"
+                  className="w-full px-4 py-1.5 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-300 text-gray-900 resize-none"
                 />
               </div>
 
               {/* 3. Employee (Searchable Dropdown) */}
               <div className="relative" ref={dropdownRef}>
-                <label className="block text-[13px] font-semibold text-gray-700 mb-2">Employee</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                    <UserRound className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                    Employee ID <strong className="text-red-600 text-[15px]">*</strong>
+                  </label>
+                </div>
+
                 <div
                   className={`relative flex items-center bg-white border rounded-xl focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all ${isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200'}`}
                 >
@@ -238,7 +263,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                     }}
                     onFocus={() => setIsDropdownOpen(true)}
                     placeholder="Search employee by name or ID..."
-                    className="w-full px-3 py-3 text-[14px] bg-transparent outline-none text-gray-900 placeholder:text-gray-300"
+                    className="w-full px-3 py-1.5 text-[13px] bg-transparent outline-none text-gray-900 placeholder:text-gray-300"
                   />
                   <div className="pr-4 pointer-events-none">
                     <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -286,23 +311,38 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
               {/* 4. Start & End Dates */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">Start Date</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                      <Calendar className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                      Start Date <strong className="text-red-600 text-[15px]">*</strong>
+                    </label>
+                  </div>
                   <div className="relative">
                     <input
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-4 py-3 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
+                      className="w-full px-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">End Date</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                      <Calendar className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                      End Date <strong className="text-red-600 text-[15px]">*</strong>
+                    </label>
+                  </div>
+
                   <input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-4 py-3 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
+                    className="w-full px-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                   />
                 </div>
               </div>
@@ -310,7 +350,14 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
               {/* 5. Interest Rate Type & Rate */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">Interest Rate Type</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                      <PercentSquare className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                      Interest Rate Type <strong className="text-red-600 text-[15px]">*</strong>
+                    </label>
+                  </div>
                   <div className="flex items-center bg-gray-100 rounded-full p-[3px] h-[44px]">
                     <button
                       type="button"
@@ -335,8 +382,17 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                     </button>
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">Interest Rate (%)</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                      <PercentSquareIcon className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                      Interest Rate (%) <strong className="text-red-600 text-[15px]">*</strong>
+                    </label>
+                  </div>
+
                   <div className="relative">
                     <input
                       type="number"
@@ -347,37 +403,53 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                       className="no-spinner w-full px-4 py-3 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                     />
                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                      <span className="text-gray-400 text-[14px] font-medium">%</span>
+                      <span className="text-gray-400 text-[13px] font-medium">%</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 6. Amount & Installments */}
+              {/* 6.1. Amount */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">Amount</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                      <CircleDollarSign className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                      Amount <strong className="text-red-600 text-[15px]">*</strong>
+                    </label>
+                  </div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <span className="text-gray-400 text-[14px] font-medium">Rs</span>
+                      <span className="text-gray-400 text-[13px] font-medium">Rs</span>
                     </div>
                     <input
                       type="number"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       placeholder="120000"
-                      className="no-spinner w-full pl-11 pr-4 py-3 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
+                      className="no-spinner w-full pl-11 pr-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                     />
                   </div>
                 </div>
+
+                {/* 6.2. Installments Count */}
                 <div>
-                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">Installment Count</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                      <MessageSquareDiff className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                      Installment Count <strong className="text-red-600 text-[15px]">*</strong>
+                    </label>
+                  </div>
                   <input
                     type="number"
                     value={installmentCount}
                     onChange={handleInstallmentChange}
                     placeholder="12"
-                    className="no-spinner w-full px-4 py-3 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
+                    className="no-spinner w-full px-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                   />
                   <p className="text-[11px] text-gray-400 mt-1">Maximum 15 installments</p>
                 </div>
@@ -398,7 +470,14 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
 
               {/* 8. Supporting Documents */}
               <div>
-                <label className="block text-[13px] font-semibold text-gray-700 mb-2">Supporting Documents</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                    <FileText className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                    Supporting Documents <strong className="text-red-600 text-[15px]">*</strong>
+                  </label>
+                </div>
                 <button
                   type="button"
                   onClick={() => setIsUploadModalOpen(true)}
