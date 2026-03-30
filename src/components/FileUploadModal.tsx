@@ -113,7 +113,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         // Use a simpler approach to avoid TS issues with File constructor if possible, 
         // but File constructor is standard. The error might be due to environment.
         try {
-            const renamedFile = new (File as any)([currentFile], newName, { type: currentFile.type });
+            // Create a new File from the original file's content
+            // Using the currentFile directly in the array is correct as File inherits from Blob
+            const renamedFile = new File([currentFile], newName, {
+                type: currentFile.type,
+                lastModified: currentFile.lastModified
+            });
             const newFiles = [...files];
             newFiles[index] = renamedFile;
             onFilesChange(newFiles);
