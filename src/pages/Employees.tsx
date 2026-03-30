@@ -178,8 +178,8 @@ const Employees = () => {
           errorMessage = error.message;
         }
 
-        // Specifically handle duplicate NIC error for shorter message as requested
-        if (errorMessage === "Employee with this NIC already exists in this company") {
+        // Specifically handle duplicate NIC error for shorter message as requested (If backend doesn't already handle specifically)
+        if (errorMessage === "Employee with this NIC already exists in this company" || errorMessage.includes("NIC already exists")) {
           errorMessage = "NIC already exists in this company";
         }
 
