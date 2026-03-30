@@ -6,6 +6,7 @@ import UniversalDrawer from "../components/UniversalDrawer";
 import SuccessModal from "../components/SuccessModal";
 import ConfirmationModal from "../components/ConfirmationModal"; // Import ConfirmationModal
 import AddonModal from "../components/AddonModal"; // Import AddonModal
+import FileUploadModal from "../components/FileUploadModal"; // Import FileUploadModal
 import { useAppSelector } from "../store/hooks";
 import {
   useGetEmployeesQuery,
@@ -82,6 +83,11 @@ const Employees = () => {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
+  // Quick File Upload State
+  const [isFileModalOpen, setIsFileModalOpen] = useState(false);
+  const [quickUploadFiles, setQuickUploadFiles] = useState<File[]>([]);
+  const [isQuickUploading, setIsQuickUploading] = useState(false);
+
   // Select first employee default logic
   useEffect(() => {
     if (employees.length > 0 && !selectedEmployee) {
@@ -106,6 +112,16 @@ const Employees = () => {
     }
   }, [employees, selectedEmployee]);
 
+  // Sync selected employee when list updates (e.g. after document upload)
+  useEffect(() => {
+    if (selectedEmployee && employees.length > 0) {
+      const updatedEmployee = employees.find(e => e.id === selectedEmployee.id);
+      if (updatedEmployee && JSON.stringify(updatedEmployee) !== JSON.stringify(selectedEmployee)) {
+        setSelectedEmployee(updatedEmployee);
+      }
+    }
+  }, [employees]);
+
   // Sync menu anchor with activeMenuId
   useEffect(() => {
     if (!activeMenuId) {
@@ -126,6 +142,44 @@ const Employees = () => {
         setConfirmation((prev) => ({ ...prev, isOpen: false }));
       },
     });
+  };
+
+  const handleQuickUpload = async () => {
+    if (!selectedEmployee || !selectedCompanyId || quickUploadFiles.length === 0) return;
+
+    const existingCount = selectedEmployee.documents?.length || 0;
+    const totalAfterUpload = existingCount + quickUploadFiles.length;
+
+    if (totalAfterUpload > 3) {
+      setToast({
+        message: `Cannot upload. Total documents would exceed the limit of 3 (Existing: ${existingCount}, New: ${quickUploadFiles.length})`,
+        type: "error"
+      });
+      return;
+    }
+
+    setIsQuickUploading(true);
+    try {
+      let uploadCount = 0;
+      for (const file of quickUploadFiles) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("employeeId", selectedEmployee.id);
+        await uploadEmployeeDocument(formData).unwrap();
+        uploadCount++;
+      }
+
+      setToast({ message: `Successfully uploaded ${uploadCount} document(s)`, type: "success" });
+      setIsFileModalOpen(false);
+      setQuickUploadFiles([]);
+    } catch (error: any) {
+      setToast({
+        message: error?.data?.message || error?.message || "Failed to upload documents",
+        type: "error",
+      });
+    } finally {
+      setIsQuickUploading(false);
+    }
   };
 
   const handleDrawerSubmit = async (data: any, files?: File[]) => {
@@ -479,6 +533,7 @@ const Employees = () => {
             <EmployeeDetailsCard
               selectedEmployee={selectedEmployee}
               setPreviewImage={setPreviewImage}
+              onAddFileClick={() => setIsFileModalOpen(true)}
             />
           </div>
         )}
@@ -495,6 +550,21 @@ const Employees = () => {
         mode="employee"
         companyId={selectedCompanyId || undefined}
         initialData={editingEmployee || undefined}
+      />
+
+      {/* Quick File Upload Modal */}
+      <FileUploadModal
+        isOpen={isFileModalOpen}
+        onClose={() => {
+          if (!isQuickUploading) {
+            setIsFileModalOpen(false);
+            setQuickUploadFiles([]);
+          }
+        }}
+        files={quickUploadFiles}
+        onFilesChange={setQuickUploadFiles}
+        onUpload={handleQuickUpload}
+        isUploading={isQuickUploading}
       />
 
       {/* Success Modal */}
