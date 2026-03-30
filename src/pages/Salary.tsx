@@ -3,6 +3,7 @@ import {
   Search,
   Loader2,
   Calculator,
+  Calendar,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
@@ -104,7 +105,12 @@ const Salary = () => {
   }, {});
 
   // Allowance / Deduction local state per employee
-
+  const [allowanceToggles, setAllowanceToggles] = useState<
+    Record<string, boolean>
+  >({});
+  const [deductionToggles, setDeductionToggles] = useState<
+    Record<string, boolean>
+  >({});
   const [salaryAllowances, setSalaryAllowances] = useState<
     Record<string, { type: string; amount: number }[]>
   >({});
@@ -612,135 +618,155 @@ const Salary = () => {
       <Sidebar />
 
       <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
-        {/* Header + Filters - Sticky */}
+        {/* Header */}
         <div className="shrink-0">
           <PageHeader
             title="Salary"
             subtitle="View and calculate employee salaries"
           />
-
-          {/* Filters/Search Bar */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex items-center justify-between">
-            <div className="w-full max-w-md relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search Employee..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-              />
-            </div>
-            {/* Month & Year Pickers */}
-            <div className="flex items-center gap-4">
-              <select
-                value={selectedMonth}
-                onChange={(e) => handleMonthChange(parseInt(e.target.value))}
-                className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
-              >
-                {Array.from({ length: 12 }, (_, i) => i)
-                  .filter((i) => {
-                    const now = new Date();
-                    // If current year is selected, only show up to current month
-                    if (selectedYear === now.getFullYear()) {
-                      return i <= now.getMonth();
-                    }
-                    return true;
-                  })
-                  .map((i) => (
-                    <option key={i} value={i}>
-                      {new Date(0, i).toLocaleString("default", { month: "long" })}
-                    </option>
-                  ))}
-              </select>
-              <select
-                value={selectedYear}
-                onChange={(e) => handleYearChange(parseInt(e.target.value))}
-                className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
-              >
-                {Array.from({ length: 6 }, (_, i) => {
-                  const year = new Date().getFullYear() - 5 + i;
-                  return (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  );
-                })}
-              </select>
-              {/* Working Days Editable Input within same style container */}
-              <div className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium flex items-center gap-2">
-                <span>Working Days:</span>
-                <input
-                  type="number"
-                  value={companyWorkingDays}
-                  onChange={(e) =>
-                    handleCompanyWorkingDaysChange(parseInt(e.target.value) || 0)
-                  }
-                  onBlur={() =>
-                    setTouchedFields((prev) => ({ ...prev, companyDays: true }))
-                  }
-                  className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center font-bold text-gray-800"
-                  min="0"
-                  max="31"
-                />
-              </div>
-            </div>
-          </div>
         </div>
 
+        {/* MAIN CONTENT */}
         <div className="flex gap-6 flex-1 overflow-hidden">
-          {/* LEFT SIDE: Employee Salary Cards */}
-          <div className="w-8/12 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {isLoading ? (
-              <SalaryListSkeleton />
-            ) : validEmployees.length === 0 ? (
-              <div className="text-center p-12 text-gray-500">
-                No employees found.
+
+          {/* LEFT SIDE */}
+          <div className="w-10/12 flex flex-col overflow-hidden">
+
+            {/* FILTER BOX */}
+            <div className="bg-white p-7 w-fit rounded-xl mb-6 flex flex-col border border-gray-200">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search Employee
+              </label>
+
+              <div className="shadow-sm border border-gray-100 mb-6 w-full flex items-center justify-between relative">
+                <Search className="w-4 h-4 text-gray-400 absolute ml-3" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by Name or ID"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 font-medium border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                />
               </div>
-            ) : (
-              validEmployees.map((emp) => {
-                const {
-                  workedDays,
-                  isEpfEnabled,
-                  isLoanEnabled,
-                  otHours,
-                  salaryAdvance,
-                  loanDeduction,
-                } = getEmployeeValues(emp.id);
-                return (
-                  <EmployeeSalaryCard
-                    key={emp.id}
-                    emp={emp}
-                    generatedSalary={generatedSalaries[emp.id]}
-                    selectedEmployee={selectedEmployee}
-                    handleSelectEmployee={handleSelectEmployee}
-                    workedDays={workedDays}
-                    isEpfEnabled={isEpfEnabled}
-                    isLoanEnabled={isLoanEnabled}
-                    otHours={otHours}
-                    salaryAdvance={salaryAdvance}
-                    loanDeduction={loanDeduction}
-                    handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
-                    handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
-                    handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}
-                    handleToggleLoan={handleToggleLoan}
-                    handleToggleEpfEtf={handleToggleEpfEtf}
-                    handleGeneratePayslip={handleGeneratePayslip}
-                    handleConfirmPayslip={handleConfirmPayslip}
-                    openManageModal={openManageModal}
-                    salaryAllowances={salaryAllowances}
-                    salaryDeductions={salaryDeductions}
-                    isSaving={isSaving}
-                    hasAnyError={hasAnyError}
-                    setTouchedFields={setTouchedFields}
-                  />
-                );
-              })
-            )}
+
+              <div className="gap-11 flex">
+                {/* Month */}
+                <label className="text-sm font-medium text-gray-800 flex flex-col">
+                  Enter Month
+                  <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) =>
+                      handleMonthChange(parseInt(e.target.value))
+                    }
+                    className="bg-gray-50 mt-3 px-16 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none cursor-pointer"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <option key={i} value={i}>
+                        {new Date(0, i).toLocaleString("default", {
+                          month: "long",
+                        })}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                {/* Year */}
+                <label className="text-sm font-medium text-gray-800 flex flex-col">
+                  Enter Year
+                  <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
+                  <select
+                    value={selectedYear}
+                    onChange={(e) =>
+                      handleYearChange(parseInt(e.target.value))
+                    }
+                    className="bg-gray-50 mt-3 px-20 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none cursor-pointer"
+                  >
+                    {Array.from({ length: 6 }, (_, i) => {
+                      const year = new Date().getFullYear() - 5 + i;
+                      return (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </label>
+
+                {/* Working Days */}
+                <label className="text-sm font-medium text-gray-800 flex flex-col">
+                  Working Days
+                  <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
+                  <div className="bg-gray-50 mt-3 px-20 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300">
+                    <input
+                      type="number"
+                      value={companyWorkingDays}
+                      onChange={(e) =>
+                        handleCompanyWorkingDaysChange(
+                          parseInt(e.target.value) || 0
+                        )
+                      }
+                      className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center"
+                    />
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* EMPLOYEE LIST */}
+            <div className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {isLoading ? (
+                <SalaryListSkeleton />
+              ) : validEmployees.length === 0 ? (
+                <div className="text-center p-12 text-gray-500">
+                  No employees found.
+                </div>
+              ) : (
+                validEmployees.map((emp) => {
+                  const {
+                    workedDays,
+                    isEpfEnabled,
+                    isLoanEnabled,
+                    otHours,
+                    salaryAdvance,
+                    loanDeduction,
+                  } = getEmployeeValues(emp.id);
+
+                  return (
+                    <EmployeeSalaryCard
+                      key={emp.id}
+                      emp={emp}
+                      generatedSalary={generatedSalaries[emp.id]}
+                      selectedEmployee={selectedEmployee}
+                      handleSelectEmployee={handleSelectEmployee}
+                      workedDays={workedDays}
+                      isEpfEnabled={isEpfEnabled}
+                      isLoanEnabled={isLoanEnabled}
+                      otHours={otHours}
+                      salaryAdvance={salaryAdvance}
+                      loanDeduction={loanDeduction}
+                      handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
+                      handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
+                      handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}
+                      handleToggleLoan={handleToggleLoan}
+                      handleToggleEpfEtf={handleToggleEpfEtf}
+                      handleGeneratePayslip={handleGeneratePayslip}
+                      handleConfirmPayslip={handleConfirmPayslip}
+                      openManageModal={openManageModal}
+                      salaryAllowances={salaryAllowances}
+                      salaryDeductions={salaryDeductions}
+                      isSaving={isSaving}
+                      hasAnyError={hasAnyError}
+                      setTouchedFields={setTouchedFields}
+                    />
+                  );
+                })
+              )}
+            </div>
           </div>
 
-          {/* RIGHT SIDE: Payslip Preview */}
-          <div className="w-5/12 overflow-y-auto pr-2 custom-scrollbar flex flex-col">
+          {/* RIGHT SIDE */}
+          <div className="w-5/12 flex flex-col overflow-y-auto">
             <PayslipPreview
               previewPayslip={previewPayslip}
               selectedEmployee={selectedEmployee}
@@ -755,7 +781,7 @@ const Salary = () => {
           </div>
         </div>
 
-        {/* Manage Allowances / Deductions Modal */}
+        {/* MODAL */}
         <ManageSalaryModal
           manageModal={manageModal}
           modalEntries={modalEntries}
@@ -764,7 +790,7 @@ const Salary = () => {
           onCancel={handleModalCancel}
         />
 
-        {/* Toast */}
+        {/* TOAST */}
         {toast && (
           <Toast
             message={toast.message}
