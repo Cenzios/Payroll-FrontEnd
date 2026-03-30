@@ -468,7 +468,6 @@ const Salary = () => {
       etf3: etfEmployer, // For display purposes
       dailyRate: emp.salaryType === "MONTHLY" ? ((emp.basicSalary || 0) / companyWorkingDays) : (emp.basicSalary || 0),
       deductions: [
-        { name: "Tax (PAYE)", amount: tax },
         { name: "Salary Advance", amount: salaryAdvance },
         ...currentDeductions.map((d) => ({
           name: d.type,
