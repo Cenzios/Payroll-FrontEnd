@@ -337,11 +337,22 @@ const Salary = () => {
   const handleMonthChange = (month: number) => {
     setTouchedFields((prev) => ({ ...prev, month: true }));
     dispatch(setMonth(month));
+    dispatch(setCompanyWorkingDays(getMaxAllowedDays(selectedYear, month)));
   };
 
   const handleYearChange = (year: number) => {
     setTouchedFields((prev) => ({ ...prev, month: true }));
+
+    // Prevent keeping a future month if year is changed to current
+    let targetMonth = selectedMonth;
+    const now = new Date();
+    if (year === now.getFullYear() && selectedMonth > now.getMonth()) {
+      targetMonth = now.getMonth();
+      dispatch(setMonth(targetMonth));
+    }
+
     dispatch(setYear(year));
+    dispatch(setCompanyWorkingDays(getMaxAllowedDays(year, targetMonth)));
   };
 
   const handleToggleEpfEtf = (empId: string) => {
@@ -407,12 +418,15 @@ const Salary = () => {
       basicPay = basicSalaryForCalc * workedDays;
     }
 
-    const allowanceAmount = (salaryAllowances[emp.id] || []).reduce(
-      (sum, a) => sum + (a.amount || 0),
+    const currentAllowances = salaryAllowances[emp.id] || emp.recurringAllowances || [];
+    const currentDeductions = salaryDeductions[emp.id] || emp.recurringDeductions || [];
+
+    const allowanceAmount = currentAllowances.reduce(
+      (sum, a) => sum + (Number(a.amount) || 0),
       0,
     );
-    const deductionAmount = (salaryDeductions[emp.id] || []).reduce(
-      (sum, d) => sum + (d.amount || 0),
+    const deductionAmount = currentDeductions.reduce(
+      (sum, d) => sum + (Number(d.amount) || 0),
       0,
     );
 
@@ -454,11 +468,10 @@ const Salary = () => {
       etf3: etfEmployer, // For display purposes
       dailyRate: emp.salaryType === "MONTHLY" ? ((emp.basicSalary || 0) / companyWorkingDays) : (emp.basicSalary || 0),
       deductions: [
-        { name: "Tax (PAYE)", amount: tax },
         { name: "Salary Advance", amount: salaryAdvance },
-        ...(salaryDeductions[emp.id] || []).map((d) => ({
+        ...currentDeductions.map((d) => ({
           name: d.type,
-          amount: d.amount,
+          amount: Number(d.amount),
         })),
         ...(isLoanEnabled
           ? (allPendingLoans || []).filter(
@@ -470,9 +483,9 @@ const Salary = () => {
           amount: inst.amount - (inst.paidAmount || 0),
         })),
       ],
-      allowances: (salaryAllowances[emp.id] || []).map((a) => ({
+      allowances: currentAllowances.map((a) => ({
         name: a.type,
-        amount: a.amount,
+        amount: Number(a.amount),
       })),
     };
 
@@ -501,8 +514,8 @@ const Salary = () => {
           isLoanEnabled,
           isEpfEnabled: emp.epfEnabled,
           companyWorkingDays: companyWorkingDays,
-          allowances: salaryAllowances[emp.id] || [],
-          deductions: salaryDeductions[emp.id] || [],
+          allowances: currentAllowances.map(a => ({ type: a.type, amount: Number(a.amount) })),
+          deductions: currentDeductions.map(d => ({ type: d.type, amount: Number(d.amount) })),
         });
         setToast({ message: "Salary saved successfully!", type: "success" });
       } catch (error: any) {
@@ -739,10 +752,8 @@ const Salary = () => {
                       handleGeneratePayslip={handleGeneratePayslip}
                       handleConfirmPayslip={handleConfirmPayslip}
                       openManageModal={openManageModal}
-                      allowanceToggles={allowanceToggles}
-                      deductionToggles={deductionToggles}
-                      setAllowanceToggles={setAllowanceToggles}
-                      setDeductionToggles={setDeductionToggles}
+                      salaryAllowances={salaryAllowances}
+                      salaryDeductions={salaryDeductions}
                       isSaving={isSaving}
                       hasAnyError={hasAnyError}
                       setTouchedFields={setTouchedFields}

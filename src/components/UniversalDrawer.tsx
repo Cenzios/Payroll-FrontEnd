@@ -12,7 +12,6 @@ import {
   Calendar,
   PlusCircle,
   MinusCircle,
-  Globe,
   ListFilter,
   Landmark,
   UploadCloud,
@@ -856,6 +855,7 @@ const UniversalDrawer = ({
                   </div>
                 </>
               ) : (
+
                 /* EMPLOYEE FORM */
                 <>
                   <div>

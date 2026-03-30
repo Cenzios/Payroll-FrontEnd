@@ -101,11 +101,11 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="px-8 pt-8 pb-4 flex justify-between items-center bg-white border-b border-gray-50">
+                <div className="px-8 pt-8 pb-4 flex justify-center items-center bg-white border-b border-gray-50">
                     <h2 className="text-xl font-bold text-gray-900">Supporting Documents</h2>
-                    <button onClick={onClose} className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 border border-gray-100 rounded-full transition-all text-gray-400">
+                    {/* <button onClick={onClose} className="w-10 h-10 flex items-center justify-end hover:bg-gray-100 border border-gray-100 rounded-full transition-all text-gray-400">
                         <X className="w-5 h-5" />
-                    </button>
+                    </button> */}
                 </div>
 
                 <div className="p-8 space-y-6 bg-white">
