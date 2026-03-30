@@ -149,8 +149,6 @@ const UniversalDrawer = ({
           });
           setEpfEnabled(initialData.epfEnabled ?? true);
           setEpfEtf(initialData.epfEtfAmount?.toString() || "");
-          setAllowanceEnabled(initialData.allowanceEnabled ?? false);
-          setDeductionEnabled(initialData.deductionEnabled ?? false);
         } else {
           // Check for draft in localStorage
           const draftKey = `employee_add_draft_${companyId}`;
@@ -198,6 +196,43 @@ const UniversalDrawer = ({
       }
     }
   }, [isOpen, mode, initialData, companyId]);
+
+  // Dedicated Effect for Recurring Data Population (Avoids race conditions)
+  useEffect(() => {
+    if (isOpen && mode === "employee" && initialData) {
+      // 1. Auto-enable and Populate Allowances
+      const internalAllowances = initialData.recurringAllowances || [];
+      const hasAllowances = internalAllowances.length > 0;
+      setAllowanceEnabled(!!initialData.allowanceEnabled || hasAllowances);
+
+      if (hasAllowances) {
+        setAllowances(
+          internalAllowances.map((a: any) => ({
+            type: a.type || "",
+            amount: a.amount !== undefined ? a.amount.toString() : "",
+          }))
+        );
+      } else {
+        setAllowances([{ type: "", amount: "" }]);
+      }
+
+      // 2. Auto-enable and Populate Deductions
+      const internalDeductions = initialData.recurringDeductions || [];
+      const hasDeductions = internalDeductions.length > 0;
+      setDeductionEnabled(!!initialData.deductionEnabled || hasDeductions);
+
+      if (hasDeductions) {
+        setDeductions(
+          internalDeductions.map((d: any) => ({
+            type: d.type || "",
+            amount: d.amount !== undefined ? d.amount.toString() : "",
+          }))
+        );
+      } else {
+        setDeductions([{ type: "", amount: "" }]);
+      }
+    }
+  }, [isOpen, mode, initialData]);
 
   // Save draft effect
   useEffect(() => {
