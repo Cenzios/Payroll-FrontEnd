@@ -143,6 +143,18 @@ const Employees = () => {
       }
 
       if (files && files.length > 0 && selectedCompanyId) {
+        // Calculate total count (existing from editingEmployee + new files)
+        const existingCount = editingEmployee?.documents?.length || 0;
+        const totalAfterUpload = existingCount + files.length;
+
+        if (totalAfterUpload > 3) {
+          setToast({
+            message: `Cannot upload. Total documents would exceed the limit of 3 (Existing: ${existingCount}, New: ${files.length})`,
+            type: "error"
+          });
+          return; // Stop upload if limit exceeded
+        }
+
         setToast({ message: "Uploading documents...", type: "success" });
         for (const file of files) {
           const formData = new FormData();
@@ -164,6 +176,9 @@ const Employees = () => {
           : "You have successfully added a new employee.",
       );
       setShowSuccessModal(true);
+      if (!isEdit && selectedCompanyId) {
+        localStorage.removeItem(`employee_add_draft_${selectedCompanyId}`);
+      }
       // Cache invalidation handles refresh
     } catch (error: any) {
       if (error.message && error.message.includes("limit reached")) {
