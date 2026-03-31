@@ -93,7 +93,7 @@ const UniversalDrawer = ({
 
   // Payment tab state
   const [epfEtf, setEpfEtf] = useState("");
-  const [epfEnabled, setEpfEnabled] = useState(false);
+  const [epfEnabled, setEpfEnabled] = useState(true);
   const [allowanceEnabled, setAllowanceEnabled] = useState(false);
   const [deductionEnabled, setDeductionEnabled] = useState(false);
   const [allowances, setAllowances] = useState<
