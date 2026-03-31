@@ -324,13 +324,37 @@ const AddEmployeeDrawer = ({
         }
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
+            const target = e.target as HTMLElement;
+            if (target.tagName === "TEXTAREA") return;
+
+            e.preventDefault();
+            const container = e.currentTarget as HTMLElement;
+            if (container) {
+                const inputs = Array.from(
+                    container.querySelectorAll(
+                        'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])'
+                    )
+                ) as HTMLElement[];
+                const index = inputs.indexOf(target);
+                if (index > -1 && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                } else if (index === inputs.length - 1) {
+                    // If it's the last input, maybe trigger "Next" or "Submit"?
+                    // For now, just blur or do nothing.
+                }
+            }
+        }
+    };
+
     if (!isOpen) return null;
 
     const isEdit = !!initialData;
     const title = isEdit ? "Edit Employee" : "Add New Employee";
 
     return (
-        <div className="fixed inset-0 z-50 overflow-hidden">
+        <div className="fixed inset-0 z-50 overflow-hidden" onKeyDown={handleKeyDown}>
             {/* Backdrop */}
             <div className="fixed inset-0 bg-gray-900/50 transition-opacity" onClick={onClose} />
 

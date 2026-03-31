@@ -169,6 +169,27 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "TEXTAREA") return;
+
+      e.preventDefault();
+      const container = e.currentTarget as HTMLElement;
+      if (container) {
+        const inputs = Array.from(
+          container.querySelectorAll(
+            'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])'
+          )
+        ) as HTMLElement[];
+        const index = inputs.indexOf(target);
+        if (index > -1 && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      }
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -181,7 +202,10 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
         />
 
         {/* Drawer */}
-        <div className="relative w-full max-w-[480px] bg-white h-full shadow-2xl flex flex-col animate-slide-in-right">
+        <div
+          className="relative w-full max-w-[480px] bg-white h-full shadow-2xl flex flex-col animate-slide-in-right"
+          onKeyDown={handleKeyDown}
+        >
           {/* Header */}
           <div className="flex items-center justify-between px-8 py-3 border-b border-gray-50">
             <h2 className="text-[20px] font-bold text-[#141B3B]">Create Loan</h2>
