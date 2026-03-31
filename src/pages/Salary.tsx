@@ -621,7 +621,7 @@ const Salary = () => {
         <div className="shrink-0">
           <PageHeader
             title="Salary"
-            subtitle="View and calculate employee salaries"
+            subtitle="View and Calculate Employee Salaries"
           />
         </div>
 
@@ -632,84 +632,55 @@ const Salary = () => {
           <div className="w-10/12 flex flex-col overflow-hidden">
 
             {/* FILTER BOX */}
-            <div className="bg-white p-7 w-fit rounded-xl mb-6 flex flex-col border border-gray-200">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="bg-white gap-12 p-7 w-fit rounded-xl mb-6 flex flex-row border border-gray-200">
+              <label className="text-sm font-medium text-gray-800 flex flex-row">
                 Search Employee
               </label>
 
-              <div className="shadow-sm border border-gray-100 mb-6 w-full flex items-center justify-between relative">
-                <Search className="w-4 h-4 text-gray-400 absolute ml-3" />
+              <Search className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by Name or ID"
+                className="bg-gray-50 mt-8 -ml-40 px-10 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none"
+              />
+
+              <label className="text-sm font-medium text-gray-800 flex flex-col">
+                Month & Year
+                <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
+
                 <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by Name or ID"
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 font-medium border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                  type="month"
+                  value={`${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`}
+                  onChange={(e) => {
+                    const [year, month] = e.target.value.split("-");
+                    handleYearChange(parseInt(year));
+                    handleMonthChange(parseInt(month) - 1); // month is 0-based in JS
+                  }}
+                  className="bg-gray-50 mt-3 px-10 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none cursor-pointer"
                 />
-              </div>
+              </label>
 
-              <div className="gap-11 flex">
-                {/* Month */}
-                <label className="text-sm font-medium text-gray-800 flex flex-col">
-                  Enter Month
-                  <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
-                  <select
-                    value={selectedMonth}
+              {/* Working Days */}
+              <label className="text-sm font-medium text-gray-800 flex flex-col">
+                Working Days
+                <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
+                <div className="bg-gray-50 mt-3 px-14 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300">
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={companyWorkingDays}
                     onChange={(e) =>
-                      handleMonthChange(parseInt(e.target.value))
+                      handleCompanyWorkingDaysChange(
+                        parseInt(e.target.value) || 0
+                      )
                     }
-                    className="bg-gray-50 mt-3 px-16 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none cursor-pointer"
-                  >
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <option key={i} value={i}>
-                        {new Date(0, i).toLocaleString("default", {
-                          month: "long",
-                        })}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                {/* Year */}
-                <label className="text-sm font-medium text-gray-800 flex flex-col">
-                  Enter Year
-                  <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
-                  <select
-                    value={selectedYear}
-                    onChange={(e) =>
-                      handleYearChange(parseInt(e.target.value))
-                    }
-                    className="bg-gray-50 mt-3 px-20 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none cursor-pointer"
-                  >
-                    {Array.from({ length: 6 }, (_, i) => {
-                      const year = new Date().getFullYear() - 5 + i;
-                      return (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </label>
-
-                {/* Working Days */}
-                <label className="text-sm font-medium text-gray-800 flex flex-col">
-                  Working Days
-                  <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
-                  <div className="bg-gray-50 mt-3 px-20 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300">
-                    <input
-                      type="number"
-                      value={companyWorkingDays}
-                      onChange={(e) =>
-                        handleCompanyWorkingDaysChange(
-                          parseInt(e.target.value) || 0
-                        )
-                      }
-                      className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center"
-                    />
-                  </div>
-                </label>
-              </div>
+                    className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center"
+                  />
+                </div>
+              </label>
             </div>
 
             {/* EMPLOYEE LIST */}
@@ -798,7 +769,7 @@ const Salary = () => {
           />
         )}
       </div>
-    </div>
+    </div >
   );
 };
 
