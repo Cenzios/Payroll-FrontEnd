@@ -137,10 +137,24 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     if (!isOpen) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4" onClick={onClose}>
+        <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4"
+            onClick={onClose}
+        >
             <div
-                className="bg-white w-full max-w-lg rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300"
+                className="bg-white w-full max-w-lg rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 outline-none"
                 onClick={(e) => e.stopPropagation()}
+                tabIndex={0}
+                autoFocus
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' && editingIndex === null) {
+                        const canUpload = !isUploading && files.length > 0 && Object.keys(fileTitles).length === files.length;
+                        if (canUpload) {
+                            e.preventDefault();
+                            onUpload?.();
+                        }
+                    }
+                }}
             >
                 {/* Header */}
                 <div className="px-8 pt-8 pb-4 flex justify-center items-center bg-white border-b border-gray-50">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
     XAxis,
@@ -19,8 +19,27 @@ interface SalaryPaidSummaryProps {
 const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
     const [timeRange, setTimeRange] = useState('Monthly');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const ranges = ['Monthly', '3 monthly', '6 monthly', 'yearly'];
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        if (isDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isDropdownOpen]);
 
     const { data, isLoading } = useQuery({
         queryKey: ['salaryPaidSummary', companyId, timeRange],
@@ -73,7 +92,7 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
             <div className="flex items-center justify-between mb-8">
                 <h2 className="text-[15px] font-semibold text-gray-900">Salary Paid Summary</h2>
 
-                <div className="relative">
+                <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                         className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-[13px] font-normal text-gray-600 hover:bg-gray-50 transition-colors"
