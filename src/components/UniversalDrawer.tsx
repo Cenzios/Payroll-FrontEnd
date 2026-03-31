@@ -90,6 +90,7 @@ const UniversalDrawer = ({
   );
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [employeeFiles, setEmployeeFiles] = useState<File[]>([]);
+  const [employeeFileTitles, setEmployeeFileTitles] = useState<Record<number, string>>({});
 
   // Payment tab state
   const [epfEtf, setEpfEtf] = useState("");
@@ -632,7 +633,7 @@ const UniversalDrawer = ({
           recurringDeductions,
         } as CreateEmployeeRequest;
 
-        await onSubmit(finalEmployeeData, employeeFiles);
+        await onSubmit(finalEmployeeData, employeeFiles, employeeFileTitles);
 
         // Clear draft on success
         if (companyId) {
@@ -1247,6 +1248,8 @@ const UniversalDrawer = ({
                             onClose={() => setIsUploadModalOpen(false)}
                             files={employeeFiles}
                             onFilesChange={setEmployeeFiles}
+                            fileTitles={employeeFileTitles}
+                            onTitlesChange={setEmployeeFileTitles}
                             maxFiles={3 - (initialData?.documents?.length || 0)}
                           />
                         </div>

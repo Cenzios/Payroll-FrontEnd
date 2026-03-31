@@ -7,6 +7,8 @@ interface FileUploadModalProps {
     onClose: () => void;
     files: File[];
     onFilesChange: (files: File[]) => void;
+    fileTitles?: Record<number, string>;
+    onTitlesChange?: (titles: Record<number, string>) => void;
     onUpload?: () => void;
     isUploading?: boolean;
     maxFiles?: number;
@@ -17,13 +19,15 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     onClose,
     files,
     onFilesChange,
+    fileTitles = {},
+    onTitlesChange,
     onUpload,
     isUploading = false,
     maxFiles = 3,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
-    const [tempName, setTempName] = useState("");
+    const [tempTitle, setTempTitle] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -89,41 +93,37 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
     const removeFile = (index: number) => {
         onFilesChange(files.filter((_, i) => i !== index));
+        if (onTitlesChange) {
+            const newTitles = { ...fileTitles };
+            delete newTitles[index];
+            // Re-index remaining titles
+            const reindexedTitles: Record<number, string> = {};
+            let newIdx = 0;
+            for (let i = 0; i < files.length; i++) {
+                if (i !== index) {
+                    if (newTitles[i]) reindexedTitles[newIdx] = newTitles[i];
+                    newIdx++;
+                }
+            }
+            onTitlesChange(reindexedTitles);
+        }
     };
 
-    const startRename = (index: number) => {
+    const startEditingTitle = (index: number) => {
         setEditingIndex(index);
-        // Remove extension for editing
-        const nameParts = files[index].name.split('.');
-        if (nameParts.length > 1) nameParts.pop();
-        setTempName(nameParts.join('.'));
+        setTempTitle(fileTitles[index] || "");
     };
 
-    const confirmRename = (index: number) => {
-        if (!tempName.trim()) {
+    const confirmTitle = (index: number) => {
+        if (!tempTitle.trim()) {
             setEditingIndex(null);
             return;
         }
-        const currentFile = files[index];
-        const nameParts = currentFile.name.split('.');
-        const extension = nameParts.length > 1 ? nameParts.pop() : '';
-        const newName = `${tempName}.${extension}`;
-
-        // Create new file with same content but new name
-        // Use a simpler approach to avoid TS issues with File constructor if possible, 
-        // but File constructor is standard. The error might be due to environment.
-        try {
-            // Create a new File from the original file's content
-            // Using the currentFile directly in the array is correct as File inherits from Blob
-            const renamedFile = new File([currentFile], newName, {
-                type: currentFile.type,
-                lastModified: currentFile.lastModified
+        if (onTitlesChange) {
+            onTitlesChange({
+                ...fileTitles,
+                [index]: tempTitle.trim()
             });
-            const newFiles = [...files];
-            newFiles[index] = renamedFile;
-            onFilesChange(newFiles);
-        } catch (err) {
-            console.error("Rename failed", err);
         }
         setEditingIndex(null);
     };
@@ -185,30 +185,36 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
                                     <div className="flex-1 min-w-0">
                                         {editingIndex === idx ? (
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex flex-col gap-1">
                                                 <input
                                                     autoFocus
                                                     type="text"
-                                                    value={tempName}
-                                                    onChange={(e) => setTempName(e.target.value)}
-                                                    onBlur={() => confirmRename(idx)}
-                                                    onKeyDown={(e) => e.key === 'Enter' && confirmRename(idx)}
+                                                    value={tempTitle}
+                                                    onChange={(e) => setTempTitle(e.target.value)}
+                                                    onBlur={() => confirmTitle(idx)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && confirmTitle(idx)}
+                                                    placeholder="Enter Document Title (e.g., NIC)"
                                                     className="w-full text-sm font-semibold text-gray-900 border-none bg-blue-50 rounded-lg px-2 py-1 outline-none ring-2 ring-blue-500/20"
                                                 />
-                                                <span className="text-sm text-gray-400 font-medium">.{file.name.split('.').pop()}</span>
+                                                <p className="text-xs text-gray-400 truncate">{file.name}</p>
                                             </div>
                                         ) : (
-                                            <p className="text-sm font-semibold text-gray-700 truncate">{file.name}</p>
+                                            <div className="flex flex-col">
+                                                <p className="text-sm font-semibold text-gray-700 truncate">
+                                                    {fileTitles[idx] || <span className="text-red-400 italic">No Title Provided</span>}
+                                                </p>
+                                                <p className="text-xs text-gray-400 truncate">{file.name}</p>
+                                            </div>
                                         )}
                                     </div>
 
                                     <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                                         {editingIndex === idx ? (
-                                            <button onClick={(e) => { e.stopPropagation(); confirmRename(idx); }} className="w-8 h-8 flex items-center justify-center text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                                            <button onClick={(e) => { e.stopPropagation(); confirmTitle(idx); }} className="w-8 h-8 flex items-center justify-center text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
                                                 <Check className="w-4 h-4" />
                                             </button>
                                         ) : (
-                                            <button onClick={(e) => { e.stopPropagation(); startRename(idx); }} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                                            <button onClick={(e) => { e.stopPropagation(); startEditingTitle(idx); }} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
                                         )}
@@ -234,7 +240,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                     </button>
                     <button
                         onClick={onUpload || onClose}
-                        disabled={isUploading || files.length === 0}
+                        disabled={isUploading || files.length === 0 || Object.keys(fileTitles).length !== files.length}
+                        title={Object.keys(fileTitles).length !== files.length ? 'Please enter a title for all documents' : ''}
                         className="flex-[1.5] py-3.5 px-8 text-[14px] font-bold text-white bg-blue-600 rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:grayscale-[0.5] flex items-center justify-center gap-2"
                     >
                         {isUploading ? (

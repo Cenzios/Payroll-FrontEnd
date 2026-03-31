@@ -88,6 +88,7 @@ const Employees = () => {
   // Quick File Upload State
   const [isFileModalOpen, setIsFileModalOpen] = useState(false);
   const [quickUploadFiles, setQuickUploadFiles] = useState<File[]>([]);
+  const [quickUploadTitles, setQuickUploadTitles] = useState<Record<number, string>>({});
   const [isQuickUploading, setIsQuickUploading] = useState(false);
 
   // Select first employee default logic
@@ -163,10 +164,12 @@ const Employees = () => {
     setIsQuickUploading(true);
     try {
       let uploadCount = 0;
-      for (const file of quickUploadFiles) {
+      for (let i = 0; i < quickUploadFiles.length; i++) {
+        const file = quickUploadFiles[i];
         const formData = new FormData();
         formData.append("file", file);
         formData.append("employeeId", selectedEmployee.id);
+        if (quickUploadTitles[i]) formData.append("docTitle", quickUploadTitles[i]);
         await uploadEmployeeDocument(formData).unwrap();
         uploadCount++;
       }
@@ -174,6 +177,7 @@ const Employees = () => {
       setToast({ message: `Successfully uploaded ${uploadCount} document(s)`, type: "success" });
       setIsFileModalOpen(false);
       setQuickUploadFiles([]);
+      setQuickUploadTitles({});
     } catch (error: any) {
       setToast({
         message: error?.data?.message || error?.message || "Failed to upload documents",
@@ -207,7 +211,7 @@ const Employees = () => {
     });
   };
 
-  const handleDrawerSubmit = async (data: any, files?: File[]) => {
+  const handleDrawerSubmit = async (data: any, files?: File[], fileTitles?: Record<number, string>) => {
     try {
       let savedEmployee;
       if (editingEmployee) {
@@ -235,10 +239,14 @@ const Employees = () => {
         }
 
         setToast({ message: "Uploading documents...", type: "success" });
-        for (const file of files) {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
           const formData = new FormData();
           formData.append("file", file);
           formData.append("employeeId", savedEmployee.id);
+          if (fileTitles && fileTitles[i]) {
+            formData.append("docTitle", fileTitles[i]);
+          }
           await uploadEmployeeDocument(formData).unwrap();
         }
       }
@@ -585,10 +593,13 @@ const Employees = () => {
           if (!isQuickUploading) {
             setIsFileModalOpen(false);
             setQuickUploadFiles([]);
+            setQuickUploadTitles({});
           }
         }}
         files={quickUploadFiles}
         onFilesChange={setQuickUploadFiles}
+        fileTitles={quickUploadTitles}
+        onTitlesChange={setQuickUploadTitles}
         onUpload={handleQuickUpload}
         isUploading={isQuickUploading}
       />

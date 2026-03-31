@@ -5,6 +5,7 @@ export interface RecurringEntry {
 
 export interface EmployeeDocument {
     id: string;
+    docTitle?: string;
     fileName: string;
     fileUrl: string;
     fileType: string;
