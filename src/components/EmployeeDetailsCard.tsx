@@ -16,6 +16,11 @@ import {
     Users as UsersIcon,
     Trash2,
     Plus,
+    HomeIcon,
+    Landmark,
+    Banknote,
+    Wallet,
+    CoinsIcon,
 } from "lucide-react";
 import { Employee } from "../types/employee.types";
 
@@ -77,7 +82,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
 
                 {/* Tabs */}
                 <div className="flex items-center gap-6 border-b-[2px] border-gray-100 mb-4 mt-1 shrink-0">
-                    {["Personal Information", "Earnings & Deductions", "Bank Details"].map(
+                    {["Personal Information", "Salary Information", "Bank Details"].map(
                         (tab) => (
                             <button
                                 key={tab}
@@ -292,8 +297,62 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                         </div>
                     )}
 
-                    {activeTab === "Earnings & Deductions" && (
+                    {activeTab === "Salary Information" && (
                         <div className="space-y-5 pt-2 pb-2">
+                            {/* Basic Salary Section */}
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <Banknote className="w-[16px] h-[16px] text-[#8B98A8]" />
+                                    <span className="text-[12px] font-semibold text-[#8B98A8]">
+                                        {selectedEmployee.salaryType} Basic Salary
+                                    </span>
+                                </div>
+                                <div className="space-y-2 flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
+                                    <span>
+                                        {selectedEmployee.basicSalary.toLocaleString("en-US", {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* OT Section */}
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <Banknote className="w-[16px] h-[16px] text-[#8B98A8]" />
+                                    <span className="text-[12px] font-semibold text-[#8B98A8]">
+                                        OT Rate
+                                    </span>
+                                </div>
+                                <div className="space-y-2 flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
+                                    <span>
+                                        {selectedEmployee.otRate.toLocaleString("en-US", {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* EPF Section */}
+                            {/* <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <Banknote className="w-[16px] h-[16px] text-[#8B98A8]" />
+                                    <span className="text-[12px] font-semibold text-[#8B98A8]">
+                                        EPF/ETF
+                                    </span>
+                                </div>
+                                <div className="space-y-2 flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
+                                    <span>
+                                        {selectedEmployee.epfEnabled.toLocaleString("en-US", {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                    </span>
+                                </div>
+                            </div> */}
+
                             {/* Allowances Section */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
@@ -371,27 +430,36 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                     {activeTab === "Bank Details" && (
                         <div className="space-y-3 pt-2">
                             <div className="flex items-center">
-                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
-                                    <Home className="w-[16px] h-[16px]" />
-                                    <span>Bank name</span>
+                                <div className="w-[180px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                    <Landmark className="w-[16px] h-[16px]" />
+                                    <span>Bank Name</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.bankName || "Bank of Ceylon"}
                                 </div>
                             </div>
+                            <div className="flex items-center">
+                                <div className="w-[180px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                    <HomeIcon className="w-[16px] h-[16px]" />
+                                    <span>Branch</span>
+                                </div>
+                                <div className="text-[13px] font-medium text-gray-800">
+                                    {selectedEmployee.branchName || "Kandy"}
+                                </div>
+                            </div>
                             <div className="flex items-center pt-1">
-                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                <div className="w-[180px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <ListOrdered className="w-[16px] h-[16px]" />
-                                    <span>Account number</span>
+                                    <span>Account Number</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.accountNumber || "5585154"}
                                 </div>
                             </div>
                             <div className="flex items-center pt-1">
-                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                <div className="w-[180px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <UsersIcon className="w-[16px] h-[16px]" />
-                                    <span>Account name</span>
+                                    <span>Account Name</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.accountHolderName || selectedEmployee.fullName}
