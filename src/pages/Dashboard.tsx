@@ -21,8 +21,8 @@ import QuickAction from '../components/QuickAction';
 import SalaryPaidSummary from '../components/SalaryPaidSummary';
 import UniversalDrawer from '../components/UniversalDrawer';
 
-import SuccessModal from '../components/SuccessModal';
-import Employees from './Employees';
+// import SuccessModal from '../components/SuccessModal';
+// import Employees from './Employees';
 
 import ConfirmationModal from '../components/ConfirmationModal';
 import AddonModal from '../components/AddonModal';
@@ -208,9 +208,9 @@ const Dashboard = () => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
   };
 
   return (
@@ -221,7 +221,7 @@ const Dashboard = () => {
       <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
         <PageHeader
           title={`${getGreeting()}, ${user?.fullName?.split(' ')[0] || 'User'}`}
-          subtitle="Here's your dashboard overview"
+          subtitle="Here's Your Dashboard Overview"
           showLogout={true}
           actionElement={
             <>
@@ -303,7 +303,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <StatCard
                   icon={Users}
-                  title="Total Employees"
+                  title="Total Active Employees"
                   value={dashboardData?.totalEmployees?.toString() || '0'}
                   colorTheme="blue"
                   showLastMonth={true}

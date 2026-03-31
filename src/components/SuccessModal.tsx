@@ -1,5 +1,4 @@
-import { CheckCircle, Sparkles } from 'lucide-react';
-import success from '../assets/images/success.png';
+import success from '../assets/images/success.svg';
 
 interface SuccessModalProps {
     isOpen: boolean;
@@ -15,17 +14,15 @@ const SuccessModal = ({ isOpen, onClose, title, message }: SuccessModalProps) =>
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 transition-opacity">
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 text-center transform transition-all scale-100">
                 <div className="flex justify-center mb-4">
-                    <div className="p-3 rounded-full">
-                        {/* <CheckCircle className="w-8 h-8 text-[#407BFF]" /> */}
-                        {/* <Sparkles className="w-10 h-10 text-[#407BFF]" /> */}
+                    <div className="relative flex items-center justify-center p-3 rounded-full">
 
-                        <div className="p-2 flex items-center justify-center">
-                            <img
-                                src={success}
-                                alt="Payroll Logo"
-                                className="w-30 h-16 object-contain"
-                            />
-                        </div>
+                        <img
+                            src={success}
+                            alt="Payroll Logo"
+                            className="w-32 h-32 relative z-0"
+                        />
+
+
                     </div>
                 </div>
 
