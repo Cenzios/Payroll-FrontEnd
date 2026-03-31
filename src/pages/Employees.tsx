@@ -65,12 +65,14 @@ const Employees = () => {
     message: string;
     confirmText?: string;
     onConfirm: () => void;
+    isLoading?: boolean;
   }>({
     isOpen: false,
     type: "danger",
     title: "",
     message: "",
     onConfirm: () => { },
+    isLoading: false,
   });
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -196,6 +198,7 @@ const Employees = () => {
       message: `Are you sure you want to delete the document "${fileName}"? This action cannot be undone.`,
       confirmText: "Delete",
       onConfirm: async () => {
+        setConfirmation((prev) => ({ ...prev, isLoading: true }));
         try {
           await deleteEmployeeDocument(documentId).unwrap();
           setToast({ message: "Document deleted successfully", type: "success" });
@@ -205,7 +208,7 @@ const Employees = () => {
             type: "error",
           });
         } finally {
-          setConfirmation((prev) => ({ ...prev, isOpen: false }));
+          setConfirmation((prev) => ({ ...prev, isOpen: false, isLoading: false }));
         }
       },
     });
@@ -621,6 +624,7 @@ const Employees = () => {
         message={confirmation.message}
         type={confirmation.type}
         confirmText={confirmation.confirmText}
+        isLoading={confirmation.isLoading}
       />
 
       {/* Addon Modal */}

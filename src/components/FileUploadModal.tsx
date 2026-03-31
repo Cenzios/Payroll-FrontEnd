@@ -196,14 +196,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                                                     placeholder="Enter Document Title (e.g., NIC)"
                                                     className="w-full text-sm font-semibold text-gray-900 border-none bg-blue-50 rounded-lg px-2 py-1 outline-none ring-2 ring-blue-500/20"
                                                 />
-                                                <p className="text-xs text-gray-400 truncate">{file.name}</p>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col">
                                                 <p className="text-sm font-semibold text-gray-700 truncate">
                                                     {fileTitles[idx] || <span className="text-red-400 italic">No Title Provided</span>}
                                                 </p>
-                                                <p className="text-xs text-gray-400 truncate">{file.name}</p>
                                             </div>
                                         )}
                                     </div>

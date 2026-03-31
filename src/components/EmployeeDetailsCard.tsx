@@ -264,11 +264,6 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                                                 <span className="text-[13px] font-medium text-gray-800 line-clamp-1">
                                                                     {doc.docTitle || doc.fileName}
                                                                 </span>
-                                                                {doc.docTitle && (
-                                                                    <span className="text-[10px] text-gray-400 line-clamp-1 max-w-[200px]">
-                                                                        {doc.fileName}
-                                                                    </span>
-                                                                )}
                                                             </div>
                                                         </div>
 
