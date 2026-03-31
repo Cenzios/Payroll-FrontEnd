@@ -14,6 +14,7 @@ import {
   useUpdateEmployeeMutation,
   useDeleteEmployeeMutation,
   useUploadEmployeeDocumentMutation,
+  useDeleteEmployeeDocumentMutation,
 } from "../store/apiSlice";
 import { Employee } from '../types/employee.types';
 import PageHeader from '../components/PageHeader';
@@ -44,6 +45,7 @@ const Employees = () => {
   const [updateEmployee] = useUpdateEmployeeMutation();
   const [deleteEmployee] = useDeleteEmployeeMutation();
   const [uploadEmployeeDocument] = useUploadEmployeeDocumentMutation();
+  const [deleteEmployeeDocument] = useDeleteEmployeeDocumentMutation();
 
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null,
@@ -180,6 +182,29 @@ const Employees = () => {
     } finally {
       setIsQuickUploading(false);
     }
+  };
+
+  const handleDeleteFileClick = (documentId: string, fileName: string) => {
+    setConfirmation({
+      isOpen: true,
+      type: "danger",
+      title: "Delete Document",
+      message: `Are you sure you want to delete the document "${fileName}"? This action cannot be undone.`,
+      confirmText: "Delete",
+      onConfirm: async () => {
+        try {
+          await deleteEmployeeDocument(documentId).unwrap();
+          setToast({ message: "Document deleted successfully", type: "success" });
+        } catch (error: any) {
+          setToast({
+            message: error?.data?.message || error?.message || "Failed to delete document",
+            type: "error",
+          });
+        } finally {
+          setConfirmation((prev) => ({ ...prev, isOpen: false }));
+        }
+      },
+    });
   };
 
   const handleDrawerSubmit = async (data: any, files?: File[]) => {
@@ -534,6 +559,7 @@ const Employees = () => {
               selectedEmployee={selectedEmployee}
               setPreviewImage={setPreviewImage}
               onAddFileClick={() => setIsFileModalOpen(true)}
+              onDeleteFileClick={handleDeleteFileClick}
             />
           </div>
         )}

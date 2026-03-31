@@ -23,12 +23,14 @@ interface EmployeeDetailsCardProps {
     selectedEmployee: Employee | null;
     setPreviewImage: (url: string | null) => void;
     onAddFileClick?: () => void;
+    onDeleteFileClick?: (documentId: string, fileName: string) => void;
 }
 
 const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
     selectedEmployee,
     setPreviewImage,
     onAddFileClick,
+    onDeleteFileClick,
 }) => {
     const [activeTab, setActiveTab] = useState("Personal Information");
 
@@ -263,9 +265,14 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                                             </span>
                                                         </div>
 
-                                                        {/* Right: delete button — UI only */}
+                                                        {/* Right: delete button */}
                                                         <button
-                                                            onClick={(e) => e.stopPropagation()}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (onDeleteFileClick) {
+                                                                    onDeleteFileClick(doc.id, doc.fileName);
+                                                                }
+                                                            }}
                                                             className="text-blue-400 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-red-50"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
