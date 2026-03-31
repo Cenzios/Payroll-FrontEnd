@@ -303,7 +303,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <StatCard
                   icon={Users}
-                  title="Total Employees"
+                  title="Active Employees"
                   value={dashboardData?.totalEmployees?.toString() || '0'}
                   colorTheme="blue"
                   showLastMonth={true}
