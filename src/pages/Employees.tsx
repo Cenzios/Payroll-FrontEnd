@@ -14,6 +14,7 @@ import {
   useUpdateEmployeeMutation,
   useDeleteEmployeeMutation,
   useUploadEmployeeDocumentMutation,
+  useDeleteEmployeeDocumentMutation,
 } from "../store/apiSlice";
 import { Employee } from '../types/employee.types';
 import PageHeader from '../components/PageHeader';
@@ -44,6 +45,7 @@ const Employees = () => {
   const [updateEmployee] = useUpdateEmployeeMutation();
   const [deleteEmployee] = useDeleteEmployeeMutation();
   const [uploadEmployeeDocument] = useUploadEmployeeDocumentMutation();
+  const [deleteEmployeeDocument] = useDeleteEmployeeDocumentMutation();
 
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null,
@@ -63,12 +65,14 @@ const Employees = () => {
     message: string;
     confirmText?: string;
     onConfirm: () => void;
+    isLoading?: boolean;
   }>({
     isOpen: false,
     type: "danger",
     title: "",
     message: "",
     onConfirm: () => { },
+    isLoading: false,
   });
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -86,6 +90,7 @@ const Employees = () => {
   // Quick File Upload State
   const [isFileModalOpen, setIsFileModalOpen] = useState(false);
   const [quickUploadFiles, setQuickUploadFiles] = useState<File[]>([]);
+  const [quickUploadTitles, setQuickUploadTitles] = useState<Record<number, string>>({});
   const [isQuickUploading, setIsQuickUploading] = useState(false);
 
   // Select first employee default logic
@@ -161,10 +166,12 @@ const Employees = () => {
     setIsQuickUploading(true);
     try {
       let uploadCount = 0;
-      for (const file of quickUploadFiles) {
+      for (let i = 0; i < quickUploadFiles.length; i++) {
+        const file = quickUploadFiles[i];
         const formData = new FormData();
         formData.append("file", file);
         formData.append("employeeId", selectedEmployee.id);
+        if (quickUploadTitles[i]) formData.append("docTitle", quickUploadTitles[i]);
         await uploadEmployeeDocument(formData).unwrap();
         uploadCount++;
       }
@@ -172,6 +179,7 @@ const Employees = () => {
       setToast({ message: `Successfully uploaded ${uploadCount} document(s)`, type: "success" });
       setIsFileModalOpen(false);
       setQuickUploadFiles([]);
+      setQuickUploadTitles({});
     } catch (error: any) {
       setToast({
         message: error?.data?.message || error?.message || "Failed to upload documents",
@@ -182,7 +190,31 @@ const Employees = () => {
     }
   };
 
-  const handleDrawerSubmit = async (data: any, files?: File[]) => {
+  const handleDeleteFileClick = (documentId: string, fileName: string) => {
+    setConfirmation({
+      isOpen: true,
+      type: "danger",
+      title: "Delete Document",
+      message: `Are you sure you want to delete the document "${fileName}"? This action cannot be undone.`,
+      confirmText: "Delete",
+      onConfirm: async () => {
+        setConfirmation((prev) => ({ ...prev, isLoading: true }));
+        try {
+          await deleteEmployeeDocument(documentId).unwrap();
+          setToast({ message: "Document deleted successfully", type: "success" });
+        } catch (error: any) {
+          setToast({
+            message: error?.data?.message || error?.message || "Failed to delete document",
+            type: "error",
+          });
+        } finally {
+          setConfirmation((prev) => ({ ...prev, isOpen: false, isLoading: false }));
+        }
+      },
+    });
+  };
+
+  const handleDrawerSubmit = async (data: any, files?: File[], fileTitles?: Record<number, string>) => {
     try {
       let savedEmployee;
       if (editingEmployee) {
@@ -210,10 +242,14 @@ const Employees = () => {
         }
 
         setToast({ message: "Uploading documents...", type: "success" });
-        for (const file of files) {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
           const formData = new FormData();
           formData.append("file", file);
           formData.append("employeeId", savedEmployee.id);
+          if (fileTitles && fileTitles[i]) {
+            formData.append("docTitle", fileTitles[i]);
+          }
           await uploadEmployeeDocument(formData).unwrap();
         }
       }
@@ -534,6 +570,7 @@ const Employees = () => {
               selectedEmployee={selectedEmployee}
               setPreviewImage={setPreviewImage}
               onAddFileClick={() => setIsFileModalOpen(true)}
+              onDeleteFileClick={handleDeleteFileClick}
             />
           </div>
         )}
@@ -559,10 +596,13 @@ const Employees = () => {
           if (!isQuickUploading) {
             setIsFileModalOpen(false);
             setQuickUploadFiles([]);
+            setQuickUploadTitles({});
           }
         }}
         files={quickUploadFiles}
         onFilesChange={setQuickUploadFiles}
+        fileTitles={quickUploadTitles}
+        onTitlesChange={setQuickUploadTitles}
         onUpload={handleQuickUpload}
         isUploading={isQuickUploading}
       />
@@ -584,6 +624,7 @@ const Employees = () => {
         message={confirmation.message}
         type={confirmation.type}
         confirmText={confirmation.confirmText}
+        isLoading={confirmation.isLoading}
       />
 
       {/* Addon Modal */}

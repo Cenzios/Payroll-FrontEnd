@@ -162,6 +162,14 @@ export const apiSlice = createApi({
             invalidatesTags: ['Employee'],
         }),
 
+        deleteEmployeeDocument: builder.mutation<void, string>({
+            query: (documentId) => ({
+                url: `/documents/${documentId}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Employee'],
+        }),
+
         // --- SUBSCRIPTION ---
         getSubscription: builder.query<any, void>({
             query: () => ({ url: '/subscription/current', method: 'GET' }),
@@ -349,5 +357,6 @@ export const {
     useGetBankDetailsQuery,
     useSaveBankDetailsMutation,
     useUploadEmployeeDocumentMutation,
+    useDeleteEmployeeDocumentMutation,
     useGetSalaryHistoryQuery,
 } = apiSlice;
