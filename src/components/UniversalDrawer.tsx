@@ -1,5 +1,5 @@
 import { useState, FormEvent, useEffect } from "react";
-import { PlusCircle, MinusCircle, UploadCloud, Activity, MapPin, Phone, Mail, UserRound, Landmark, Home as HomeIcon, ListOrdered, CreditCard, Hotel, ListFilter, X, RotateCcw, Award, Calendar, Banknote, Wallet } from "lucide-react";
+import { PlusCircle, MinusCircle, UploadCloud, Activity, MapPin, Phone, Mail, UserRound, Landmark, Home as HomeIcon, ListOrdered, CreditCard, Hotel, ListFilter, X, Award, Calendar, Banknote, Wallet } from "lucide-react";
 import FileUploadModal from "./FileUploadModal";
 import { CreateCompanyRequest } from "../types/company.types";
 import { CreateEmployeeRequest } from "../types/employee.types";
@@ -7,7 +7,7 @@ import { CreateEmployeeRequest } from "../types/employee.types";
 interface UniversalDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any, files?: File[]) => Promise<void>;
+  onSubmit: (data: any, files?: File[], fileTitles?: Record<number, string>) => Promise<void>;
   mode: "company" | "employee";
   companyId?: string;
   initialData?: any; // For edit mode
@@ -188,6 +188,27 @@ const UniversalDrawer = ({
       }
     }
   }, [isOpen, mode, initialData, companyId]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "TEXTAREA") return;
+
+      e.preventDefault();
+      const container = e.currentTarget as HTMLElement;
+      if (container) {
+        const inputs = Array.from(
+          container.querySelectorAll(
+            'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])'
+          )
+        ) as HTMLElement[];
+        const index = inputs.indexOf(target);
+        if (index > -1 && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      }
+    }
+  };
 
   // Dedicated Effect for Recurring Data Population (Avoids race conditions)
   useEffect(() => {
@@ -692,6 +713,7 @@ const UniversalDrawer = ({
       {/* Drawer */}
       <div
         className={`fixed right-0 top-0 h-full w-full max-w-lg bg-gray-50 shadow-2xl z-50 transform transition-all duration-500 ease-in-out sm:duration-700 ${isVisible ? "translate-x-0" : "translate-x-full"}`}
+        onKeyDown={handleKeyDown}
       >
         <div className="h-full flex flex-col">
           {/* Header */}
