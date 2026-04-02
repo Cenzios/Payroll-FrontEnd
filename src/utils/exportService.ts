@@ -130,32 +130,32 @@ export const exportPayslip = (
             head: [["Description", "Amount (Rs.)"]],
             body: [
                 ["Rate Type", previewPayslip.salaryType],
-                ["Basic Rate", `Rs. ${previewPayslip.basicSalary.toLocaleString()}`],
+                ["Basic Rate", formatCurrency(previewPayslip.basicSalary)],
                 ["Working Days", companyWorkingDays.toString()],
                 ["Worked Days", previewPayslip.workedDays.toString()],
-                ["Calculated Basic Pay", `Rs. ${previewPayslip.basicPay.toLocaleString()}`],
+                ["Calculated Basic Pay", formatCurrency(previewPayslip.basicPay)],
                 ...(previewPayslip.otAmount > 0
                     ? [
                         [
                             `OT Amount (${previewPayslip.otHours} hrs)`,
-                            `Rs. ${previewPayslip.otAmount.toLocaleString()}`,
+                            formatCurrency(previewPayslip.otAmount),
                         ],
                     ]
                     : []),
                 ...(previewPayslip.allowances || []).map((a) => [
                     a.name,
-                    `Rs. ${a.amount.toLocaleString()}`,
+                    formatCurrency(a.amount),
                 ]),
                 [
                     "Gross Earnings",
-                    `Rs. ${(
+                    formatCurrency(
                         previewPayslip.basicPay +
                         previewPayslip.otAmount +
                         (previewPayslip.allowances || []).reduce(
                             (sum, a) => sum + a.amount,
                             0
                         )
-                    ).toLocaleString()}`,
+                    ),
                 ],
             ],
             theme: "plain",
@@ -253,7 +253,7 @@ export const exportPayslip = (
         const wsData = [
             [companyName.toUpperCase()],
             [
-                `PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" })}`,
+                `PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" })} `,
             ],
             [],
             ["Employee Name", selectedEmployee.fullName],
@@ -269,7 +269,7 @@ export const exportPayslip = (
             ...(previewPayslip.otAmount > 0
                 ? [
                     [
-                        `OT Amount (${previewPayslip.otHours} hrs)`,
+                        `OT Amount(${previewPayslip.otHours} hrs)`,
                         previewPayslip.otAmount,
                     ],
                 ]
@@ -340,7 +340,7 @@ export const exportPayrollSummaryReport = (
     }
 ) => {
     const { monthlyData, startMonth, startYear, endMonth, endYear } = data;
-    const dateRangeText = `${new Date(startYear, startMonth).toLocaleString("default", { month: "long", year: "numeric" })} - ${new Date(endYear, endMonth).toLocaleString("default", { month: "long", year: "numeric" })}`;
+    const dateRangeText = `${new Date(startYear, startMonth).toLocaleString("default", { month: "long", year: "numeric" })} - ${new Date(endYear, endMonth).toLocaleString("default", { month: "long", year: "numeric" })} `;
 
     if (format === "pdf") {
         const doc = new jsPDF();
@@ -353,7 +353,7 @@ export const exportPayrollSummaryReport = (
             if (monthData.employees.length === 0) return;
 
             doc.setFontSize(12);
-            doc.text(`${monthData.month} ${monthData.year}`, 14, startY);
+            doc.text(`${monthData.month} ${monthData.year} `, 14, startY);
             startY += 5;
 
             const tableBody = monthData.employees.map((emp) => [
@@ -398,7 +398,7 @@ export const exportPayrollSummaryReport = (
         monthlyData.forEach((monthData) => {
             if (monthData.employees.length === 0) return;
 
-            wsData.push([`${monthData.month} ${monthData.year}`]);
+            wsData.push([`${monthData.month} ${monthData.year} `]);
             wsData.push([
                 "Emp ID",
                 "Name",
@@ -480,41 +480,41 @@ export const exportEmployeeMonthlySummary = (
         doc.setFont("helvetica", "normal");
         let yPos = 30;
 
-        doc.text(`Employee Name: ${employeeName}`, 14, yPos);
-        doc.text(`Employee ID: ${employeeCode}`, 120, yPos);
+        doc.text(`Employee Name: ${employeeName} `, 14, yPos);
+        doc.text(`Employee ID: ${employeeCode} `, 120, yPos);
         yPos += 7;
 
-        doc.text(`Position: ${designation}`, 14, yPos);
-        doc.text(`Basic Salary: RS ${basicSalary.toLocaleString()}`, 120, yPos);
+        doc.text(`Position: ${designation} `, 14, yPos);
+        doc.text(`Basic Salary: RS ${basicSalary.toLocaleString()} `, 120, yPos);
         yPos += 7;
 
-        doc.text(`Joined Date: ${joinedDate}`, 14, yPos);
+        doc.text(`Joined Date: ${joinedDate} `, 14, yPos);
         yPos += 10;
 
         const tableData = monthlyBreakdown.map((row) => [
             row.month,
             row.workedDays.toString(),
-            `RS ${row.basicPay.toLocaleString()}`,
+            `RS ${row.basicPay.toLocaleString()} `,
             `RS ${row.otAmount.toLocaleString()} (${row.otHours}h)`,
-            `RS ${row.grossPay.toLocaleString()}`,
-            `RS ${row.netPay.toLocaleString()}`,
-            `RS ${row.salaryAdvance.toLocaleString()}`,
-            `RS ${row.deductions.toLocaleString()}`,
-            `RS ${row.employeeEPF.toLocaleString()}`,
-            `RS ${row.companyEPFETF.toLocaleString()}`,
+            `RS ${row.grossPay.toLocaleString()} `,
+            `RS ${row.netPay.toLocaleString()} `,
+            `RS ${row.salaryAdvance.toLocaleString()} `,
+            `RS ${row.deductions.toLocaleString()} `,
+            `RS ${row.employeeEPF.toLocaleString()} `,
+            `RS ${row.companyEPFETF.toLocaleString()} `,
         ]);
 
         tableData.push([
             "SELECTED MONTH TOTALS",
             annualTotals.workedDays.toString(),
-            `RS ${annualTotals.basicPay.toLocaleString()}`,
-            `RS ${annualTotals.otAmount.toLocaleString()}`,
-            `RS ${annualTotals.grossPay.toLocaleString()}`,
-            `RS ${annualTotals.netPay.toLocaleString()}`,
-            `RS ${annualTotals.salaryAdvance.toLocaleString()}`,
-            `RS ${annualTotals.deductions.toLocaleString()}`,
-            `RS ${annualTotals.employeeEPF.toLocaleString()}`,
-            `RS ${annualTotals.companyEPFETF.toLocaleString()}`,
+            `RS ${annualTotals.basicPay.toLocaleString()} `,
+            `RS ${annualTotals.otAmount.toLocaleString()} `,
+            `RS ${annualTotals.grossPay.toLocaleString()} `,
+            `RS ${annualTotals.netPay.toLocaleString()} `,
+            `RS ${annualTotals.salaryAdvance.toLocaleString()} `,
+            `RS ${annualTotals.deductions.toLocaleString()} `,
+            `RS ${annualTotals.employeeEPF.toLocaleString()} `,
+            `RS ${annualTotals.companyEPFETF.toLocaleString()} `,
         ]);
 
         autoTable(doc, {
@@ -546,7 +546,7 @@ export const exportEmployeeMonthlySummary = (
             },
         });
 
-        doc.save(`${employeeCode}_Payroll_Summary.pdf`);
+        doc.save(`${employeeCode} _Payroll_Summary.pdf`);
     } else {
         const wsData: any[][] = [
             ["PAYROLL SUMMARY REPORT"],
@@ -557,7 +557,7 @@ export const exportEmployeeMonthlySummary = (
                 designation,
                 "",
                 "Basic Salary:",
-                `RS ${basicSalary.toLocaleString()}`,
+                `RS ${basicSalary.toLocaleString()} `,
             ],
             ["Joined Date:", joinedDate],
             [],
@@ -605,14 +605,14 @@ export const exportEmployeeMonthlySummary = (
         if (format === "excel") {
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Payroll Summary");
-            XLSX.writeFile(wb, `${employeeCode}_Payroll_Summary.xlsx`);
+            XLSX.writeFile(wb, `${employeeCode} _Payroll_Summary.xlsx`);
         } else {
             const csv = XLSX.utils.sheet_to_csv(ws);
             const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
             link.setAttribute("href", url);
-            link.setAttribute("download", `${employeeCode}_Payroll_Summary.csv`);
+            link.setAttribute("download", `${employeeCode} _Payroll_Summary.csv`);
             link.style.visibility = "hidden";
             document.body.appendChild(link);
             link.click();
@@ -647,14 +647,14 @@ export const exportAllEmployeesSummary = (
         doc.setFont("helvetica", "normal");
         let yPos = 30;
 
-        doc.text(`Employee Count: ${metadata.employeeCount}`, 14, yPos);
-        doc.text(`Date Period: ${metadata.datePeriod}`, 100, yPos);
+        doc.text(`Employee Count: ${metadata.employeeCount} `, 14, yPos);
+        doc.text(`Date Period: ${metadata.datePeriod} `, 100, yPos);
         yPos += 7;
-        doc.text(`Department: ${metadata.department}`, 14, yPos);
-        doc.text(`Report Type: ${metadata.reportType}`, 100, yPos);
+        doc.text(`Department: ${metadata.department} `, 14, yPos);
+        doc.text(`Report Type: ${metadata.reportType} `, 100, yPos);
         yPos += 7;
         doc.text(
-            `Total Gross Pay: RS ${metadata.totalGrossPay.toLocaleString()}`,
+            `Total Gross Pay: RS ${metadata.totalGrossPay.toLocaleString()} `,
             14,
             yPos
         );
@@ -664,24 +664,24 @@ export const exportAllEmployeesSummary = (
             emp.employeeCode,
             emp.employeeName,
             emp.workingDays.toString(),
-            `RS ${(emp.basicPay || 0).toLocaleString()}`,
+            `RS ${(emp.basicPay || 0).toLocaleString()} `,
             `RS ${(emp.otAmount || 0).toLocaleString()} (${emp.otHours || 0}h)`,
-            `RS ${(emp.grossPay || 0).toLocaleString()}`,
-            `RS ${(emp.salaryAdvance || 0).toLocaleString()}`,
-            `RS ${(emp.deductions || 0).toLocaleString()}`,
-            `RS ${(emp.netPay || 0).toLocaleString()}`,
+            `RS ${(emp.grossPay || 0).toLocaleString()} `,
+            `RS ${(emp.salaryAdvance || 0).toLocaleString()} `,
+            `RS ${(emp.deductions || 0).toLocaleString()} `,
+            `RS ${(emp.netPay || 0).toLocaleString()} `,
         ]);
 
         tableData.push([
             "TOTAL AMOUNTS",
             "",
             "",
-            `RS ${totals.basicPay.toLocaleString()}`,
-            `RS ${totals.otAmount.toLocaleString()}`,
-            `RS ${totals.grossPay.toLocaleString()}`,
-            `RS ${totals.salaryAdvance.toLocaleString()}`,
-            `RS ${totals.deductions.toLocaleString()}`,
-            `RS ${totals.netPay.toLocaleString()}`,
+            `RS ${totals.basicPay.toLocaleString()} `,
+            `RS ${totals.otAmount.toLocaleString()} `,
+            `RS ${totals.grossPay.toLocaleString()} `,
+            `RS ${totals.salaryAdvance.toLocaleString()} `,
+            `RS ${totals.deductions.toLocaleString()} `,
+            `RS ${totals.netPay.toLocaleString()} `,
         ]);
 
         autoTable(doc, {
@@ -732,7 +732,7 @@ export const exportAllEmployeesSummary = (
                 "Report Type:",
                 metadata.reportType,
             ],
-            ["Total Gross Pay:", `RS ${metadata.totalGrossPay.toLocaleString()}`],
+            ["Total Gross Pay:", `RS ${metadata.totalGrossPay.toLocaleString()} `],
             [],
             ["Breakdown Table"],
             [
