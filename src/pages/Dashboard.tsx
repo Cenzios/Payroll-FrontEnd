@@ -371,14 +371,14 @@ const Dashboard = () => {
                       onClick={() => navigate('/reports')}
                     />
 
-                    <QuickAction
+                    {/* <QuickAction
                       icon={CreditCard}
                       title="Change Plan"
                       description="Change subscription plan"
                       bgColor="text-[#4182F9]"
                       lightBgColor="bg-[#EBF2FF]"
                       onClick={() => setIsAddonModalOpen(true)}
-                    />
+                    /> */}
                   </div>
                 </div>
               </div>
