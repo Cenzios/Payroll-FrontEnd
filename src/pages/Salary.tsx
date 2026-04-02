@@ -627,7 +627,7 @@ const Salary = () => {
         <div className="shrink-0">
           <PageHeader
             title="Salary"
-            subtitle="View and calculate employee salaries"
+            subtitle="View and Calculate Employee Salaries"
           />
         </div>
 
@@ -638,92 +638,64 @@ const Salary = () => {
           <div className="w-10/12 flex flex-col overflow-hidden">
 
             {/* FILTER BOX */}
-            <div className="bg-white p-7 w-fit rounded-xl mb-6 flex flex-col border border-gray-200">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Search Employee
-              </label>
-
-              <div className="shadow-sm border border-gray-100 mb-6 w-full flex items-center justify-between relative">
-                <Search className="w-4 h-4 text-gray-400 absolute ml-3" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by Name or ID"
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 font-medium border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                />
+            <div className="bg-white gap-12 p-7 w-fit rounded-xl mb-6 flex flex-row border border-gray-200">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-800 mb-2">
+                  Search Employee
+                </label>
+                <div className="relative">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by Name or ID"
+                    className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none w-64"
+                  />
+                </div>
               </div>
 
-              <div className="gap-11 flex">
-                {/* Month */}
-                <label className="text-sm font-medium text-gray-800 flex flex-col">
-                  Enter Month
-                  <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
-                  <select
-                    value={selectedMonth}
-                    onChange={(e) =>
-                      handleMonthChange(parseInt(e.target.value))
-                    }
-                    className="bg-gray-50 mt-3 px-16 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none cursor-pointer"
-                  >
-                    {Array.from({ length: 12 }, (_, i) => {
-                      const now = new Date();
-                      const currentYear = now.getFullYear();
-                      const currentMonth = now.getMonth();
-                      const isDisabled = selectedYear === currentYear && i > currentMonth;
-                      if (isDisabled) return null;
-                      return (
-                        <option key={i} value={i}>
-                          {new Date(0, i).toLocaleString("default", {
-                            month: "long",
-                          })}
-                        </option>
-                      );
-                    })}
-                  </select>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-800 mb-2">
+                  Month & Year
                 </label>
+                <div className="relative">
+                  <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="month"
+                    value={`${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`}
+                    max={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`}
+                    onChange={(e) => {
+                      if (!e.target.value) return;
+                      const [year, month] = e.target.value.split("-");
+                      handleYearChange(parseInt(year));
+                      handleMonthChange(parseInt(month) - 1);
+                    }}
+                    className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none cursor-pointer"
+                  />
+                </div>
+              </div>
 
-                {/* Year */}
-                <label className="text-sm font-medium text-gray-800 flex flex-col">
-                  Enter Year
-                  <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
-                  <select
-                    value={selectedYear}
-                    onChange={(e) =>
-                      handleYearChange(parseInt(e.target.value))
-                    }
-                    className="bg-gray-50 mt-3 px-20 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none cursor-pointer"
-                  >
-                    {Array.from({ length: 6 }, (_, i) => {
-                      const year = new Date().getFullYear() - 5 + i;
-                      return (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </label>
-
-                {/* Working Days */}
-                <label className="text-sm font-medium text-gray-800 flex flex-col">
+              {/* Working Days */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-800 mb-2">
                   Working Days
-                  <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
-                  <div className="bg-gray-50 mt-3 px-20 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300">
-                    <input
-                      type="number"
-                      min="1"
-                      max={maxAllowedCompanyDays}
-                      value={companyWorkingDays}
-                      onChange={(e) =>
-                        handleCompanyWorkingDaysChange(
-                          parseInt(e.target.value) || 0
-                        )
-                      }
-                      className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center"
-                    />
-                  </div>
                 </label>
+                <div className="relative flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-300">
+                  <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                  <input
+                    type="number"
+                    min="1"
+                    max={maxAllowedCompanyDays}
+                    value={companyWorkingDays}
+                    onChange={(e) =>
+                      handleCompanyWorkingDaysChange(
+                        parseInt(e.target.value) || 0
+                      )
+                    }
+                    className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center text-sm font-medium text-gray-700"
+                  />
+                </div>
               </div>
             </div>
 
@@ -816,7 +788,7 @@ const Salary = () => {
           />
         )}
       </div>
-    </div>
+    </div >
   );
 };
 
