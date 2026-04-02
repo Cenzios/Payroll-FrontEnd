@@ -331,7 +331,7 @@ const EmployeeSalaryCard = ({
                         {/* Earnings */}
                         <div className="pr-6 border-r border-gray-200">
                             <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-1">Earnings</p>
-                            <p className="text-[26px] font-extrabold text-green-500 leading-none">{fmt(totalEarnings)}</p>
+                            <p className="text-[26px] font-extrabold text-[#10b981] leading-none">{fmt(totalEarnings)}</p>
                         </div>
 
                         {/* Deduction */}
@@ -343,7 +343,7 @@ const EmployeeSalaryCard = ({
                         {/* Net Salary */}
                         <div className="pr-6">
                             <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-1">Net Salary</p>
-                            <p className="text-[26px] font-extrabold text-blue-600 leading-none">{fmt(netSalary)}</p>
+                            <p className="text-[26px] font-extrabold text-[#4785ff] leading-none">{fmt(netSalary)}</p>
                         </div>
 
                         {/* Actions — pushed to right */}
@@ -354,7 +354,7 @@ const EmployeeSalaryCard = ({
                                 disabled={isSaving || (!isLocked && hasAnyError(emp))}
                                 className={`px-7 py-3 rounded-2xl text-[14px] font-bold transition-all duration-200 flex items-center gap-2
                   ${isSaving || (!isLocked && hasAnyError(emp))
-                                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                        ? "bg-gray-200 text-[#4584ff] cursor-not-allowed"
                                         : "bg-[#4584ff] text-white hover:bg-[#3b73e6] shadow-sm hover:shadow-md active:scale-95"
                                     }`}
                             >
@@ -374,7 +374,7 @@ const EmployeeSalaryCard = ({
                                 className={`px-7 py-3 rounded-2xl text-[14px] font-bold transition-all duration-200
                     ${isLocked || isSaving || hasAnyError(emp)
                                         ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                        : "bg-[#28aa58] text-white hover:bg-[#23964e] shadow-sm hover:shadow-md active:scale-95"
+                                        : "bg-[#2dac5c] text-white hover:bg-[#23964e] shadow-sm hover:shadow-md active:scale-95"
                                     }`}
                             >
                                 Confirm
