@@ -94,7 +94,7 @@ const UniversalDrawer = ({
 
   // Payment tab state
   const [epfEtf, setEpfEtf] = useState("");
-  const [epfEnabled, setEpfEnabled] = useState(true);
+  const [epfEnabled, setEpfEnabled] = useState(false);
   const [allowanceEnabled, setAllowanceEnabled] = useState(false);
   const [deductionEnabled, setDeductionEnabled] = useState(false);
   const [allowances, setAllowances] = useState<
@@ -210,6 +210,13 @@ const UniversalDrawer = ({
     }
   };
 
+  useEffect(() => {
+    if (isOpen && mode === "employee" && !initialData) {
+      setEpfEnabled(false);
+    }
+  }, [isOpen, mode, initialData]);
+
+
   // Dedicated Effect for Recurring Data Population (Avoids race conditions)
   useEffect(() => {
     if (isOpen && mode === "employee" && initialData) {
@@ -306,8 +313,8 @@ const UniversalDrawer = ({
     if (formMode === "company") {
       switch (field) {
         case "name":
-          if (!value || value.trim().length < 2)
-            error = "Name must be at least 2 characters";
+          if (!value || value.trim().length < 3 || value.trim().length > 20)
+            error = "Name must be between 3 and 20 characters";
           break;
         case "email":
           if (!value) error = "Email is required";
@@ -325,8 +332,8 @@ const UniversalDrawer = ({
     } else {
       switch (field) {
         case "fullName":
-          if (!value || value.trim().length < 2)
-            error = "Full name must be at least 2 characters";
+          if (!value || value.trim().length < 3 || value.trim().length > 50)
+            error = "Name must be between 3 and 50 characters";
           else if (/[^a-zA-Z\s.-]/.test(value))
             error = "Full name can only contain letters, spaces, dots, and hyphens";
           break;
@@ -488,6 +495,45 @@ const UniversalDrawer = ({
       );
     }
     return true;
+  };
+
+  const handleTabChange = (targetTab: typeof activeTab) => {
+    if (mode === "company") {
+      setActiveTab(targetTab);
+      return;
+    }
+
+    // // Block Salary tab
+    // if (targetTab === "payment" && !isTabValid("employee")) {
+    //   setErrors({
+    //     ...errors,
+    //     form: "",
+    //     //Please Complete Employee Information
+    //   });
+    //   return;
+    // }
+
+    // // Block Bank tab
+    // if (targetTab === "bank") {
+    //   if (!isTabValid("employee")) {
+    //     setErrors({
+    //       ...errors,
+    //       form: "",
+    //       //Please Complete Employee Information
+    //     });
+    //     return;
+    //   }
+    //   if (!isTabValid("payment")) {
+    //     setErrors({
+    //       ...errors,
+    //       form: "",
+    //       //Please Complete Salary Information
+    //     });
+    //     return;
+    //   }
+    // }
+
+    setActiveTab(targetTab);
   };
 
   const isFormValid = () => {
@@ -736,7 +782,7 @@ const UniversalDrawer = ({
               <div className="flex gap-6 border-b border-gray-100">
                 <button
                   type="button"
-                  onClick={() => setActiveTab("employee")}
+                  onClick={() => handleTabChange("employee")}
                   className={`pb-2 text-[13px] font-medium transition-colors relative ${activeTab === "employee" ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}`}
                 >
                   Employee Information
@@ -746,7 +792,7 @@ const UniversalDrawer = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("payment")}
+                  onClick={() => handleTabChange("payment")}
                   className={`pb-2 text-[13px] font-medium transition-colors relative ${activeTab === "payment" ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}`}
                 >
                   Salary Information
@@ -756,7 +802,7 @@ const UniversalDrawer = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("bank")}
+                  onClick={() => handleTabChange("bank")}
                   className={`pb-2 text-[13px] font-medium transition-colors relative ${activeTab === "bank" ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}`}
                 >
                   Bank Details
@@ -912,6 +958,17 @@ const UniversalDrawer = ({
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-gray-900">
+                          {/* {errors.form && (
+                            <div
+                              onClick={() =>
+                                setErrors((prev) => ({ ...prev, form: "" }))
+                              }
+                            // className="mb-3 text-red-600 text-sm"
+                            >
+                              {errors.form}
+                            </div>
+                          )} */}
+
                           {activeTab === "employee" ? "Employee Information" : activeTab === "payment" ? "Salary Information" : "Bank Details"}
                         </h3>
                       </div>
@@ -1474,12 +1531,18 @@ const UniversalDrawer = ({
 
                                 {/* Add new allowance row */}
                                 <div
-                                  onClick={() =>
+                                  onClick={() => {
+                                    const last = allowances[allowances.length - 1];
+
+                                    if (!last.type.trim() || !last.amount) {
+                                      return;
+                                    }
+
                                     setAllowances([
                                       ...allowances,
                                       { type: "", amount: "" },
-                                    ])
-                                  }
+                                    ]);
+                                  }}
                                   className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center cursor-pointer group"
                                 >
                                   <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-gray-200 rounded-xl group-hover:border-blue-300 transition-colors">
@@ -1580,12 +1643,18 @@ const UniversalDrawer = ({
 
                                 {/* Add new deduction row */}
                                 <div
-                                  onClick={() =>
+                                  onClick={() => {
+                                    const last = deductions[deductions.length - 1];
+
+                                    if (!last.type.trim() || !last.amount) {
+                                      return;
+                                    }
+
                                     setDeductions([
                                       ...deductions,
                                       { type: "", amount: "" },
-                                    ])
-                                  }
+                                    ]);
+                                  }}
                                   className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center cursor-pointer group"
                                 >
                                   <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-red-200 rounded-xl group-hover:border-red-400 transition-colors">
@@ -1758,8 +1827,8 @@ const UniversalDrawer = ({
               <button
                 type="button"
                 onClick={() => {
-                  if (activeTab === "employee") setActiveTab("payment");
-                  else if (activeTab === "payment") setActiveTab("bank");
+                  if (activeTab === "employee") handleTabChange("payment");
+                  else if (activeTab === "payment") handleTabChange("bank");
                 }}
                 disabled={!isTabValid(activeTab)}
                 className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed"

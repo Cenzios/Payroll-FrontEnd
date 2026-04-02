@@ -444,7 +444,7 @@ const Employees = () => {
         <div className="shrink-0">
           <PageHeader
             title="Employees"
-            subtitle="Here's your Employees overview"
+            subtitle="Here's Your Employees Overview"
             actionElement={
               <button
                 onClick={() => {
