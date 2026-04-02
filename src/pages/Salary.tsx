@@ -227,7 +227,8 @@ const Salary = () => {
     const isLoanEnabled = employeeLoanEnabled[empId] ?? true;
     const otHours = employeeOtHours[empId] ?? 0;
     const salaryAdvance = employeeSalaryAdvance[empId] ?? 0;
-    const loanDeduction = isLoanEnabled ? employeeLoanMap[empId] || 0 : 0;
+    const hasLoanInstallment = !!employeeLoanMap[empId];
+    const loanDeduction = (isLoanEnabled && hasLoanInstallment) ? employeeLoanMap[empId] || 0 : 0;
     return {
       workedDays,
       isEpfEnabled,
@@ -235,6 +236,7 @@ const Salary = () => {
       otHours,
       salaryAdvance,
       loanDeduction,
+      hasLoanInstallment,
     };
   };
 
@@ -323,7 +325,9 @@ const Salary = () => {
 
   const handleCompanyWorkingDaysChange = (val: number) => {
     setTouchedFields((prev) => ({ ...prev, companyDays: true }));
-    dispatch(setCompanyWorkingDays(val));
+    const maxVal = getMaxAllowedDays(selectedYear, selectedMonth);
+    const clippedVal = Math.min(Math.max(0, val), maxVal);
+    dispatch(setCompanyWorkingDays(clippedVal));
   };
 
   const handleEmployeeWorkedDaysChange = (empId: string, val: number) => {
@@ -331,7 +335,8 @@ const Salary = () => {
       ...prev,
       employeeDays: { ...prev.employeeDays, [empId]: true },
     }));
-    dispatch(setEmployeeWorkedDays({ id: empId, days: val }));
+    const clippedVal = Math.min(Math.max(0, val), companyWorkingDays);
+    dispatch(setEmployeeWorkedDays({ id: empId, days: clippedVal }));
   };
 
   const handleMonthChange = (month: number) => {
@@ -384,8 +389,9 @@ const Salary = () => {
       otHours,
       salaryAdvance,
       loanDeduction,
+      hasLoanInstallment,
     } = getEmployeeValues(emp.id);
-    const otAmount = otHours * (emp.otRate || 0);
+    const otAmount = emp.otRate > 0 ? otHours * (emp.otRate || 0) : 0;
 
     // FINAL VALIDATION BLOCK - Mark all as touched and check
     setTouchedFields({
@@ -435,7 +441,7 @@ const Salary = () => {
     let epfEmployer = basicPay * 0.12;
     let etfEmployer = basicPay * 0.03;
 
-    if (isEpfEnabled) {
+    if (emp.epfEnabled && isEpfEnabled) {
       epfEmployee = basicPay * 0.08;
     } else {
       epfEmployer = 0;
@@ -473,7 +479,7 @@ const Salary = () => {
           name: d.type,
           amount: Number(d.amount),
         })),
-        ...(isLoanEnabled
+        ...((isLoanEnabled && hasLoanInstallment)
           ? (allPendingLoans || []).filter(
             (inst: any) => inst.loan?.employeeId === emp.id,
           )
@@ -633,54 +639,64 @@ const Salary = () => {
 
             {/* FILTER BOX */}
             <div className="bg-white gap-12 p-7 w-fit rounded-xl mb-6 flex flex-row border border-gray-200">
-              <label className="text-sm font-medium text-gray-800 flex flex-row">
-                Search Employee
-              </label>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-800 mb-2">
+                  Search Employee
+                </label>
+                <div className="relative">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by Name or ID"
+                    className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none w-64"
+                  />
+                </div>
+              </div>
 
-              <Search className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by Name or ID"
-                className="bg-gray-50 mt-8 -ml-40 px-10 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none"
-              />
-
-              <label className="text-sm font-medium text-gray-800 flex flex-col">
-                Month & Year
-                <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
-
-                <input
-                  type="month"
-                  value={`${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`}
-                  onChange={(e) => {
-                    const [year, month] = e.target.value.split("-");
-                    handleYearChange(parseInt(year));
-                    handleMonthChange(parseInt(month) - 1); // month is 0-based in JS
-                  }}
-                  className="bg-gray-50 mt-3 px-10 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none cursor-pointer"
-                />
-              </label>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-800 mb-2">
+                  Month & Year
+                </label>
+                <div className="relative">
+                  <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="month"
+                    value={`${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`}
+                    max={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`}
+                    onChange={(e) => {
+                      if (!e.target.value) return;
+                      const [year, month] = e.target.value.split("-");
+                      handleYearChange(parseInt(year));
+                      handleMonthChange(parseInt(month) - 1);
+                    }}
+                    className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none cursor-pointer"
+                  />
+                </div>
+              </div>
 
               {/* Working Days */}
-              <label className="text-sm font-medium text-gray-800 flex flex-col">
-                Working Days
-                <Calendar className="w-4 h-4 text-gray-400 absolute ml-3 mt-11" />
-                <div className="bg-gray-50 mt-3 px-14 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-800 mb-2">
+                  Working Days
+                </label>
+                <div className="relative flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-300">
+                  <Calendar className="w-4 h-4 text-gray-400 mr-2" />
                   <input
                     type="number"
                     min="1"
-                    max="31"
+                    max={maxAllowedCompanyDays}
                     value={companyWorkingDays}
                     onChange={(e) =>
                       handleCompanyWorkingDaysChange(
                         parseInt(e.target.value) || 0
                       )
                     }
-                    className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center"
+                    className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center text-sm font-medium text-gray-700"
                   />
                 </div>
-              </label>
+              </div>
             </div>
 
             {/* EMPLOYEE LIST */}
@@ -700,6 +716,7 @@ const Salary = () => {
                     otHours,
                     salaryAdvance,
                     loanDeduction,
+                    hasLoanInstallment,
                   } = getEmployeeValues(emp.id);
 
                   return (
@@ -715,6 +732,8 @@ const Salary = () => {
                       otHours={otHours}
                       salaryAdvance={salaryAdvance}
                       loanDeduction={loanDeduction}
+                      companyWorkingDays={companyWorkingDays}
+                      hasLoanInstallment={hasLoanInstallment}
                       handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
                       handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
                       handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}

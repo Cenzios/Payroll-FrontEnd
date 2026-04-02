@@ -236,15 +236,19 @@ const AddEmployeeDrawer = ({
 
     const isStepValid = (step: typeof activeTab) => {
         if (step === "employee") {
-            const fields = ["fullName", "employeeId", "contactNumber", "joinedDate"];
-            return fields.every(f => !validateField(f, (employeeData as any)[f]));
+            const fields = ["fullName", "employeeId", "contactNumber", "joinedDate", "employeeNIC", "email", "designation"];
+            const isValid = fields.every(f => {
+                const error = validateField(f, (employeeData as any)[f]);
+                return error === "";
+            });
+            return isValid;
         }
         if (step === "payment") {
-            return !validateField("basicSalary", employeeData.basicSalary);
+            return validateField("basicSalary", employeeData.basicSalary) === "";
         }
         if (step === "bank") {
             const fields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
-            return fields.every(f => !validateField(f, (employeeData as any)[f]));
+            return fields.every(f => validateField(f, (employeeData as any)[f]) === "");
         }
         return true;
     };
@@ -837,6 +841,16 @@ const AddEmployeeDrawer = ({
 
                 {/* Fixed Footer Actions */}
                 <div className="border-t border-gray-100 p-6 bg-white shrink-0 flex items-center gap-3 sticky bottom-0 z-10">
+                    {activeTab !== "employee" && (
+                        <button
+                            type="button"
+                            onClick={handleBack}
+                            disabled={isSubmitting}
+                            className="flex-1 py-2.5 bg-white text-gray-600 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            Back
+                        </button>
+                    )}
                     {activeTab === "bank" ? (
                         <button
                             type="button"
@@ -855,7 +869,7 @@ const AddEmployeeDrawer = ({
                         <button
                             type="button"
                             onClick={handleNext}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || !isStepValid(activeTab)}
                             className="flex-1 py-2.5 bg-[#3B82F6] text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition-colors shadow-sm shadow-blue-500/20 disabled:opacity-50"
                         >
                             Next
