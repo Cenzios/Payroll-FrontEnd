@@ -229,7 +229,7 @@ const PayslipPreview = ({
 
                         {/* Net Salary Payable */}
                         <div className="flex text-[12px] pl-1 mb-0.5">
-                            <span className="w-56">Net Salary Payable</span>
+                            <span className="w-56">Net Salary Payable (Rs)</span>
                             <span>: <strong>{previewPayslip.netSalary.toLocaleString()}</strong></span>
                         </div>
 
