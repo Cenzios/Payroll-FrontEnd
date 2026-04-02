@@ -370,6 +370,20 @@ const UniversalDrawer = ({
             error = "OT rate must be a number";
           else if (Number(value) < 0) error = "OT rate cannot be negative";
           break;
+        case "epfEtf":
+          if (epfEnabled) {
+            if (value === undefined || value === null || value === "") {
+              error = "EPF/ETF amount is required";
+            } else {
+              const amount = Number(value);
+              const basic = Number(employeeData.basicSalary) || 0;
+              const limit = employeeData.salaryType === "MONTHLY" ? basic : basic * 20;
+              if (amount > limit) {
+                error = `Cannot exceed ${employeeData.salaryType === "MONTHLY" ? "monthly salary" : "20x daily rate"} (Rs. ${limit.toLocaleString()})`;
+              }
+            }
+          }
+          break;
         case "joinedDate":
           if (!value) error = "Joined date is required";
           else if (new Date(value) > new Date())
@@ -455,6 +469,12 @@ const UniversalDrawer = ({
     const error = validateField(field, value, "employee");
     setErrors((prev) => ({ ...prev, [field]: error }));
 
+    // Re-validate EPF amount if basic salary or salary type changes
+    if (field === "basicSalary" || field === "salaryType") {
+      const epfError = validateField("epfEtf", epfEtf, "employee");
+      setErrors((prev) => ({ ...prev, epfEtf: epfError }));
+    }
+
     // Real-time validation: Mark as touched once the user starts typing
     if (value && String(value).trim() !== "") {
       setTouched((prev) => ({ ...prev, [field]: true }));
@@ -478,7 +498,9 @@ const UniversalDrawer = ({
       );
     }
     if (tab === "payment") {
-      return !validateField("basicSalary", employeeData.basicSalary, "employee");
+      const basicError = validateField("basicSalary", employeeData.basicSalary, "employee");
+      const epfError = epfEnabled ? validateField("epfEtf", epfEtf, "employee") : "";
+      return !basicError && !epfError;
     }
     if (tab === "bank") {
       const fields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
@@ -517,11 +539,12 @@ const UniversalDrawer = ({
             !validateField(field, (employeeData as any)[field], "employee"),
         ) &&
         bankFields.every(
-          (field) =>
-            !validateField(field, (employeeData as any)[field], "employee"),
+          (f) =>
+            !validateField(f, (employeeData as any)[f], "employee"),
         ) &&
         (!employeeData.email ||
-          !validateField("email", employeeData.email, "employee"))
+          !validateField("email", employeeData.email, "employee")) &&
+        (!epfEnabled || !validateField("epfEtf", epfEtf, "employee"))
       );
     }
   };
@@ -563,6 +586,10 @@ const UniversalDrawer = ({
         const err = validateField(f, (employeeData as any)[f], "employee");
         if (err) newErrors[f] = err;
       });
+
+      // EPF validation
+      const epfErr = epfEnabled ? validateField("epfEtf", epfEtf, "employee") : "";
+      if (epfErr) newErrors.epfEtf = epfErr;
     }
 
     setErrors(newErrors);
@@ -588,6 +615,7 @@ const UniversalDrawer = ({
         "accountNumber",
         "branchName",
         "accountHolderName",
+        "epfEtf",
       ].forEach((f) => (allTouched[f] = true));
     }
     setTouched(allTouched);
@@ -1374,7 +1402,16 @@ const UniversalDrawer = ({
                             <div className="flex items-center gap-3 mb-2 mt-4">
                               <Toggle
                                 enabled={epfEnabled}
-                                onToggle={() => setEpfEnabled(!epfEnabled)}
+                                onToggle={() => {
+                                  const newVal = !epfEnabled;
+                                  setEpfEnabled(newVal);
+                                  if (!newVal) {
+                                    setErrors(prev => ({ ...prev, epfEtf: "" }));
+                                  } else {
+                                    const error = validateField("epfEtf", epfEtf, "employee");
+                                    setErrors(prev => ({ ...prev, epfEtf: error }));
+                                  }
+                                }}
                               />
                               <span className="text-[13px] font-medium text-gray-700">
                                 EPF/ETF
@@ -1386,10 +1423,25 @@ const UniversalDrawer = ({
                                     type="number"
                                     min="0"
                                     value={epfEtf}
-                                    onChange={(e) => setEpfEtf(e.target.value)}
-                                    placeholder="Enter Employee's EPF/ETF Applicable Amount"
-                                    className="text-[13px] w-[330px] px-4 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setEpfEtf(val);
+                                      const error = validateField("epfEtf", val, "employee");
+                                      setErrors(prev => ({ ...prev, epfEtf: error }));
+                                    }}
+                                    onBlur={() => {
+                                      setTouched(prev => ({ ...prev, epfEtf: true }));
+                                      const error = validateField("epfEtf", epfEtf, "employee");
+                                      setErrors(prev => ({ ...prev, epfEtf: error }));
+                                    }}
+                                    placeholder="Enter EPF/ETF Amount"
+                                    className={`text-[13px] w-[330px] px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.epfEtf && errors.epfEtf ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                                   />
+                                  {touched.epfEtf && errors.epfEtf && (
+                                    <p className="text-red-500 text-[11px] absolute top-full mt-1 left-0 whitespace-nowrap">
+                                      {errors.epfEtf}
+                                    </p>
+                                  )}
                                 </div>
                               )}
                             </div>

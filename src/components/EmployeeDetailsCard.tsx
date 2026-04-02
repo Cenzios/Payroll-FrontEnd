@@ -327,10 +327,12 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                                 <div className="space-y-2 flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
                                     <span>
-                                        {selectedEmployee.otRate.toLocaleString("en-US", {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
+                                        {selectedEmployee.otRate === 0
+                                            ? "N/A"
+                                            : selectedEmployee.otRate.toLocaleString("en-US", {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })}
                                     </span>
                                 </div>
                             </div>
