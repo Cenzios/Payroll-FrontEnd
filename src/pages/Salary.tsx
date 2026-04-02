@@ -227,7 +227,8 @@ const Salary = () => {
     const isLoanEnabled = employeeLoanEnabled[empId] ?? true;
     const otHours = employeeOtHours[empId] ?? 0;
     const salaryAdvance = employeeSalaryAdvance[empId] ?? 0;
-    const loanDeduction = isLoanEnabled ? employeeLoanMap[empId] || 0 : 0;
+    const hasLoanInstallment = !!employeeLoanMap[empId];
+    const loanDeduction = (isLoanEnabled && hasLoanInstallment) ? employeeLoanMap[empId] || 0 : 0;
     return {
       workedDays,
       isEpfEnabled,
@@ -235,6 +236,7 @@ const Salary = () => {
       otHours,
       salaryAdvance,
       loanDeduction,
+      hasLoanInstallment,
     };
   };
 
@@ -387,8 +389,9 @@ const Salary = () => {
       otHours,
       salaryAdvance,
       loanDeduction,
+      hasLoanInstallment,
     } = getEmployeeValues(emp.id);
-    const otAmount = otHours * (emp.otRate || 0);
+    const otAmount = emp.otRate > 0 ? otHours * (emp.otRate || 0) : 0;
 
     // FINAL VALIDATION BLOCK - Mark all as touched and check
     setTouchedFields({
@@ -438,7 +441,7 @@ const Salary = () => {
     let epfEmployer = basicPay * 0.12;
     let etfEmployer = basicPay * 0.03;
 
-    if (isEpfEnabled) {
+    if (emp.epfEnabled && isEpfEnabled) {
       epfEmployee = basicPay * 0.08;
     } else {
       epfEmployer = 0;
@@ -476,7 +479,7 @@ const Salary = () => {
           name: d.type,
           amount: Number(d.amount),
         })),
-        ...(isLoanEnabled
+        ...((isLoanEnabled && hasLoanInstallment)
           ? (allPendingLoans || []).filter(
             (inst: any) => inst.loan?.employeeId === emp.id,
           )
@@ -741,6 +744,7 @@ const Salary = () => {
                     otHours,
                     salaryAdvance,
                     loanDeduction,
+                    hasLoanInstallment,
                   } = getEmployeeValues(emp.id);
 
                   return (
@@ -757,6 +761,7 @@ const Salary = () => {
                       salaryAdvance={salaryAdvance}
                       loanDeduction={loanDeduction}
                       companyWorkingDays={companyWorkingDays}
+                      hasLoanInstallment={hasLoanInstallment}
                       handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
                       handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
                       handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}

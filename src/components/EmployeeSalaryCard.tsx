@@ -14,6 +14,7 @@ interface EmployeeSalaryCardProps {
     salaryAdvance: number;
     loanDeduction: number;
     companyWorkingDays: number;
+    hasLoanInstallment: boolean;
     handleEmployeeWorkedDaysChange: (empId: string, val: number) => void;
     handleEmployeeOtHoursChange: (empId: string, val: number) => void;
     handleEmployeeSalaryAdvanceChange: (empId: string, val: number) => void;
@@ -45,6 +46,7 @@ const EmployeeSalaryCard = ({
     salaryAdvance,
     loanDeduction,
     companyWorkingDays,
+    hasLoanInstallment,
     handleEmployeeWorkedDaysChange,
     handleEmployeeOtHoursChange,
     handleEmployeeSalaryAdvanceChange,
@@ -89,10 +91,10 @@ const EmployeeSalaryCard = ({
             ? (companyWorkingDays > 0 ? (basicSalary / companyWorkingDays) * displayWorkedDays : 0)
             : basicSalary * displayWorkedDays);
 
-    const epfAmount = isLocked ? generatedSalary.employeeEPF : (isEpfEnabled ? basicPay * 0.08 : 0);
+    const epfAmount = isLocked ? generatedSalary.employeeEPF : (emp.epfEnabled && isEpfEnabled ? basicPay * 0.08 : 0);
 
-    const totalEarnings = isLocked ? generatedSalary.grossSalary : (basicPay + otAmount + totalAllowances);
-    const totalDeductions = isLocked ? generatedSalary.totalDeduction : (displaySalaryAdvance + epfAmount + (isLoanEnabled ? loanDeduction : 0) + totalDeductions_custom);
+    const totalEarnings = isLocked ? generatedSalary.grossSalary : (basicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances);
+    const totalDeductions = isLocked ? generatedSalary.totalDeduction : (displaySalaryAdvance + epfAmount + (hasLoanInstallment && isLoanEnabled ? loanDeduction : 0) + totalDeductions_custom);
     const netSalary = isLocked ? generatedSalary.netSalary : (totalEarnings - totalDeductions);
 
     return (
@@ -209,26 +211,30 @@ const EmployeeSalaryCard = ({
                                 </div>
 
                                 {/* OT Hours */}
-                                <div className="flex items-center justify-between gap-3">
-                                    <label className="text-[13px] text-gray-600 whitespace-nowrap">OT Hours</label>
-                                    <input
-                                        type="number"
-                                        step="0.5"
-                                        value={displayOtHours === 0 ? "" : displayOtHours}
-                                        onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
-                                        className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner ${isLocked ? "bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed" : "border-gray-200 text-gray-800"}`}
-                                        min="0"
-                                        disabled={isLocked}
-                                    />
-                                </div>
+                                {emp.otRate > 0 && (
+                                    <>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <label className="text-[13px] text-gray-600 whitespace-nowrap">OT Hours</label>
+                                            <input
+                                                type="number"
+                                                step="0.5"
+                                                value={displayOtHours === 0 ? "" : displayOtHours}
+                                                onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
+                                                className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner ${isLocked ? "bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed" : "border-gray-200 text-gray-800"}`}
+                                                min="0"
+                                                disabled={isLocked}
+                                            />
+                                        </div>
 
-                                {/* OT Amount (read-only) */}
-                                <div className="flex items-center justify-between gap-3">
-                                    <label className="text-[13px] text-gray-600 whitespace-nowrap">OT Amount</label>
-                                    <div className="w-28 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-lg text-[13px] font-bold text-blue-600 text-right">
-                                        {fmt(otAmount)}
-                                    </div>
-                                </div>
+                                        {/* OT Amount (read-only) */}
+                                        <div className="flex items-center justify-between gap-3">
+                                            <label className="text-[13px] text-gray-600 whitespace-nowrap">OT Amount</label>
+                                            <div className="w-28 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-lg text-[13px] font-bold text-blue-600 text-right">
+                                                {fmt(otAmount)}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -255,38 +261,42 @@ const EmployeeSalaryCard = ({
                                 </div>
 
                                 {/* EPF Contribution */}
-                                <div className="flex items-center justify-between gap-3">
-                                    <div className="flex items-center justify-between w-full max-w-[220px]">
-                                        <label className="text-[13px] text-gray-600">EPF Contribution</label>
-                                        <button
-                                            onClick={() => handleToggleEpfEtf(emp.id)}
-                                            disabled={isLocked}
-                                            className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${isEpfEnabled ? (isLocked ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500") : "bg-gray-300"} ${isLocked && !isEpfEnabled ? "opacity-50 cursor-not-allowed" : ""}`}
-                                        >
-                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isEpfEnabled ? "translate-x-5" : "translate-x-1"}`} />
-                                        </button>
+                                {emp.epfEnabled && (
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center justify-between w-full max-w-[220px]">
+                                            <label className="text-[13px] text-gray-600">EPF Contribution</label>
+                                            <button
+                                                onClick={() => handleToggleEpfEtf(emp.id)}
+                                                disabled={isLocked}
+                                                className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${isEpfEnabled ? (isLocked ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500") : "bg-gray-300"} ${isLocked && !isEpfEnabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                                            >
+                                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isEpfEnabled ? "translate-x-5" : "translate-x-1"}`} />
+                                            </button>
+                                        </div>
+                                        <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right transition-opacity ${isEpfEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50"}`}>
+                                            {fmt(isEpfEnabled ? epfAmount : 0)}
+                                        </div>
                                     </div>
-                                    <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right transition-opacity ${isEpfEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50"}`}>
-                                        {fmt(isEpfEnabled ? epfAmount : 0)}
-                                    </div>
-                                </div>
+                                )}
 
                                 {/* Loan */}
-                                <div className="flex items-center justify-between gap-3">
-                                    <div className="flex items-center justify-between w-full max-w-[220px]">
-                                        <label className="text-[13px] text-gray-600">Loan</label>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleToggleLoan(emp.id); }}
-                                            disabled={isLocked}
-                                            className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${isLoanEnabled ? (isLocked ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500") : "bg-gray-300"} ${isLocked && !isLoanEnabled ? "opacity-50 cursor-not-allowed" : ""}`}
-                                        >
-                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isLoanEnabled ? "translate-x-5" : "translate-x-1"}`} />
-                                        </button>
+                                {hasLoanInstallment && (
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex items-center justify-between w-full max-w-[220px]">
+                                            <label className="text-[13px] text-gray-600">Loan</label>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleToggleLoan(emp.id); }}
+                                                disabled={isLocked}
+                                                className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${isLoanEnabled ? (isLocked ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500") : "bg-gray-300"} ${isLocked && !isLoanEnabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                                            >
+                                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isLoanEnabled ? "translate-x-5" : "translate-x-1"}`} />
+                                            </button>
+                                        </div>
+                                        <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right transition-opacity ${isLoanEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50 line-through"}`}>
+                                            {fmt(isLoanEnabled ? loanDeduction : 0)}
+                                        </div>
                                     </div>
-                                    <div className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right transition-opacity ${isLoanEnabled ? "bg-blue-50 border-blue-100 text-blue-600" : "bg-gray-50 border-gray-100 text-gray-300 opacity-50 line-through"}`}>
-                                        {fmt(isLoanEnabled ? loanDeduction : 0)}
-                                    </div>
-                                </div>
+                                )}
                             </div>
                         </div>
 
