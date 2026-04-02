@@ -118,14 +118,14 @@ const PayslipPreview = ({
                                 <span className="w-56">
                                     {previewPayslip.salaryType === "MONTHLY" ? "Monthly Basic" : "Daily Basic"}
                                 </span>
-                                <span>: {previewPayslip.basicSalary.toLocaleString()}</span>
+                                <span>: {previewPayslip.basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
 
                             {/* Allowances */}
                             {previewPayslip.allowances?.map((a: any, i: number) => (
                                 <div key={i} className="flex text-[12px]">
                                     <span className="w-56">{a.name}</span>
-                                    <span>: {a.amount.toLocaleString()}</span>
+                                    <span>: {a.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                             ))}
 
@@ -144,16 +144,16 @@ const PayslipPreview = ({
                             {/* Basic pay calculation */}
                             <div className="flex text-[12px]">
                                 <span className="w-56">
-                                    Basic Salary ({previewPayslip.basicSalary.toLocaleString()} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
+                                    Basic Salary ({previewPayslip.basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
                                 </span>
-                                <span>:  {previewPayslip.basicPay.toLocaleString()}</span>
+                                <span>:  {previewPayslip.basicPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
 
                             {/* OT if any */}
                             {previewPayslip.otAmount > 0 && (
                                 <div className="flex text-[12px]">
                                     <span className="w-56">OT ({previewPayslip.otHours} hrs)</span>
-                                    <span>:  {previewPayslip.otAmount.toLocaleString()}</span>
+                                    <span>:  {previewPayslip.otAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                             )}
                         </div>
@@ -161,7 +161,7 @@ const PayslipPreview = ({
                         {/* Gross Earnings */}
                         <div className="flex text-[12px] pl-1 mb-0.5">
                             <span className="w-56">Gross Earnings</span>
-                            <span>: <strong>{grossEarnings.toLocaleString()}</strong></span>
+                            <span>: <strong>{grossEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
                         </div>
 
                         <Divider />
