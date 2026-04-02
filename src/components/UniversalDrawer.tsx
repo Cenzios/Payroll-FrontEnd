@@ -1367,17 +1367,15 @@ const UniversalDrawer = ({
                         <div className="space-y-1.5">
                           {/* ── Monthly Basic Section ── */}
                           <div>
-                            <div className="relative flex items-center justify-between mb-1">
+                            <div className="relative mt-4">
                               <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
                                 <Wallet className="h-4 w-4 text-blue-500" />
                               </div>
-                              <span className="text-[13px] font-medium text-gray-700 pl-6">
-                                {employeeData.salaryType === "MONTHLY"
-                                  ? "Monthly Basic Salary "
-                                  : "Daily Basic Salary "}
-                                <strong className="text-red-600 text-[15px]">*</strong>
-                              </span>
+                              <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                Basic Salary <strong className="text-red-600 text-[15px]">*</strong>
+                              </label>
                             </div>
+
 
                             <div className="flex">
                               <input
@@ -1396,7 +1394,7 @@ const UniversalDrawer = ({
                                     ? "Enter Employee's Monthly Basic"
                                     : "Enter Employee's Daily Basic"
                                 }
-                                className={`text-[13px] w-full px-4 pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.basicSalary && errors.basicSalary ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                className={`text-[13px] w-full px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
 
                               />
 
@@ -1408,19 +1406,20 @@ const UniversalDrawer = ({
                                     e.target.value as "DAILY" | "MONTHLY",
                                   )
                                 }
-                                className="px-4 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 bg-white focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-8"
+                                className="ml-2 px-4 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 bg-white focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none cursor-pointer"
                               >
                                 <option value="MONTHLY">Monthly</option>
                                 <option value="DAILY">Daily</option>
                               </select>
-
-                              {touched.basicSalary && errors.basicSalary && (
-                                <p className="text-red-500 text-[12px] mt-1">
-                                  {errors.basicSalary}
-                                </p>
-                              )}
                             </div>
+
+                            {touched.basicSalary && errors.basicSalary && (
+                              <p className="text-red-500 text-[12px] mt-1">
+                                {errors.basicSalary}
+                              </p>
+                            )}
                           </div>
+
 
                           {/* ── OT Rate ── */}
                           <div>
