@@ -210,6 +210,19 @@ const AddEmployeeDrawer = ({
                 if (!value || value.trim().length < 2) error = "Account holder name must be at least 2 characters";
                 else if (/\d/.test(value)) error = "Account holder name cannot contain numbers";
                 break;
+            case "epfEtf":
+                if (epfEnabled) {
+                    if (!value || value === "") error = "EPF/ETF amount is required";
+                    else {
+                        const amount = Number(value);
+                        const basic = Number(employeeData.basicSalary) || 0;
+                        const limit = employeeData.salaryType === "MONTHLY" ? basic : basic * 20;
+                        if (amount > limit) {
+                            error = `Cannot exceed ${employeeData.salaryType === "MONTHLY" ? "monthly salary" : "20x daily rate"} (Rs. ${limit.toLocaleString()})`;
+                        }
+                    }
+                }
+                break;
             case "employeeNIC":
                 if (value && value.trim()) {
                     const nic = value.trim();
@@ -232,6 +245,12 @@ const AddEmployeeDrawer = ({
         setEmployeeData((prev) => ({ ...prev, [field]: value }));
         const error = validateField(field, value);
         setErrors((prev) => ({ ...prev, [field]: error }));
+
+        // Re-validate EPF amount if basic salary or salary type changes
+        if (field === "basicSalary" || field === "salaryType") {
+            const epfError = validateField("epfEtf", epfEtf);
+            setErrors((prev) => ({ ...prev, epfEtf: epfError }));
+        }
     };
 
     const isStepValid = (step: typeof activeTab) => {
@@ -244,7 +263,9 @@ const AddEmployeeDrawer = ({
             return isValid;
         }
         if (step === "payment") {
-            return validateField("basicSalary", employeeData.basicSalary) === "";
+            const basicValid = validateField("basicSalary", employeeData.basicSalary) === "";
+            const epfValid = !epfEnabled || validateField("epfEtf", epfEtf) === "";
+            return basicValid && epfValid;
         }
         if (step === "bank") {
             const fields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
@@ -269,8 +290,16 @@ const AddEmployeeDrawer = ({
             if (isStepValid("employee")) setActiveTab("payment");
             else setToast({ message: "Please correct errors in Employee Information", type: "error" });
         } else if (activeTab === "payment") {
+            // Mark fields in this step as touched
+            const newTouched = { ...touched, basicSalary: true, epfEtf: true };
+            const newErrors = { ...errors };
+            newErrors.basicSalary = validateField("basicSalary", employeeData.basicSalary);
+            newErrors.epfEtf = validateField("epfEtf", epfEtf);
+            setTouched(newTouched);
+            setErrors(newErrors);
+
             if (isStepValid("payment")) setActiveTab("bank");
-            else setToast({ message: "Please enter a valid basic salary", type: "error" });
+            else setToast({ message: "Please correct errors in Salary Information", type: "error" });
         }
     };
 
@@ -660,13 +689,54 @@ const AddEmployeeDrawer = ({
                                     </div>
                                 </div>
 
-                                {/* EPF Toggle */}
-                                <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100">
-                                    <div>
-                                        <div className="text-[14px] font-bold text-gray-800">EPF/ETF Contribution</div>
-                                        <div className="text-[12px] text-gray-500">Enable EPF/ETF for this employee</div>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100">
+                                        <div>
+                                            <div className="text-[14px] font-bold text-gray-800">EPF/ETF Contribution</div>
+                                            <div className="text-[12px] text-gray-500">Enable EPF/ETF for this employee</div>
+                                        </div>
+                                        <Toggle enabled={epfEnabled} onToggle={() => {
+                                            const newVal = !epfEnabled;
+                                            setEpfEnabled(newVal);
+                                            if (!newVal) {
+                                                setErrors(prev => ({ ...prev, epfEtf: "" }));
+                                            } else {
+                                                const error = validateField("epfEtf", epfEtf);
+                                                setErrors(prev => ({ ...prev, epfEtf: error }));
+                                            }
+                                        }} />
                                     </div>
-                                    <Toggle enabled={epfEnabled} onToggle={() => setEpfEnabled(!epfEnabled)} />
+
+                                    {epfEnabled && (
+                                        <div>
+                                            <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
+                                                EPF/ETF Applicable Amount
+                                            </label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none">
+                                                    <div className="bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100 text-[12px] font-bold text-gray-400">Rs</div>
+                                                </div>
+                                                <input
+                                                    type="number"
+                                                    value={epfEtf}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setEpfEtf(val);
+                                                        const error = validateField("epfEtf", val);
+                                                        setErrors(prev => ({ ...prev, epfEtf: error }));
+                                                    }}
+                                                    onBlur={() => {
+                                                        setTouched(prev => ({ ...prev, epfEtf: true }));
+                                                        const error = validateField("epfEtf", epfEtf);
+                                                        setErrors(prev => ({ ...prev, epfEtf: error }));
+                                                    }}
+                                                    placeholder="0.00"
+                                                    className={`text-[14px] w-full pl-12 pr-4 py-2.5 bg-white border rounded-xl focus:ring-2 outline-none transition-all ${touched.epfEtf && errors.epfEtf ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-blue-500/20 focus:border-blue-500"}`}
+                                                />
+                                            </div>
+                                            {touched.epfEtf && errors.epfEtf && <p className="text-red-500 text-xs mt-1">{errors.epfEtf}</p>}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Allowances Toggle */}
