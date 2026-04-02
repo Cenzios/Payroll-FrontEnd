@@ -323,7 +323,9 @@ const Salary = () => {
 
   const handleCompanyWorkingDaysChange = (val: number) => {
     setTouchedFields((prev) => ({ ...prev, companyDays: true }));
-    dispatch(setCompanyWorkingDays(val));
+    const maxVal = getMaxAllowedDays(selectedYear, selectedMonth);
+    const clippedVal = Math.min(Math.max(0, val), maxVal);
+    dispatch(setCompanyWorkingDays(clippedVal));
   };
 
   const handleEmployeeWorkedDaysChange = (empId: string, val: number) => {
@@ -331,7 +333,8 @@ const Salary = () => {
       ...prev,
       employeeDays: { ...prev.employeeDays, [empId]: true },
     }));
-    dispatch(setEmployeeWorkedDays({ id: empId, days: val }));
+    const clippedVal = Math.min(Math.max(0, val), companyWorkingDays);
+    dispatch(setEmployeeWorkedDays({ id: empId, days: clippedVal }));
   };
 
   const handleMonthChange = (month: number) => {
@@ -660,13 +663,20 @@ const Salary = () => {
                     }
                     className="bg-gray-50 mt-3 px-16 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none cursor-pointer"
                   >
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <option key={i} value={i}>
-                        {new Date(0, i).toLocaleString("default", {
-                          month: "long",
-                        })}
-                      </option>
-                    ))}
+                    {Array.from({ length: 12 }, (_, i) => {
+                      const now = new Date();
+                      const currentYear = now.getFullYear();
+                      const currentMonth = now.getMonth();
+                      const isDisabled = selectedYear === currentYear && i > currentMonth;
+                      if (isDisabled) return null;
+                      return (
+                        <option key={i} value={i}>
+                          {new Date(0, i).toLocaleString("default", {
+                            month: "long",
+                          })}
+                        </option>
+                      );
+                    })}
                   </select>
                 </label>
 
@@ -699,6 +709,8 @@ const Salary = () => {
                   <div className="bg-gray-50 mt-3 px-20 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300">
                     <input
                       type="number"
+                      min="1"
+                      max={maxAllowedCompanyDays}
                       value={companyWorkingDays}
                       onChange={(e) =>
                         handleCompanyWorkingDaysChange(
@@ -744,6 +756,7 @@ const Salary = () => {
                       otHours={otHours}
                       salaryAdvance={salaryAdvance}
                       loanDeduction={loanDeduction}
+                      companyWorkingDays={companyWorkingDays}
                       handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
                       handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
                       handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}

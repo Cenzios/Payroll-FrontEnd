@@ -30,6 +30,13 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     const [tempTitle, setTempTitle] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // ✅ Centralized submit logic
+    const handleSubmit = () => {
+        if (editingIndex === null && !isUploading && files.length > 0 && Object.keys(fileTitles).length === files.length) {
+            onUpload?.();
+        }
+    };
+
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(true);
@@ -96,7 +103,6 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         if (onTitlesChange) {
             const newTitles = { ...fileTitles };
             delete newTitles[index];
-            // Re-index remaining titles
             const reindexedTitles: Record<number, string> = {};
             let newIdx = 0;
             for (let i = 0; i < files.length; i++) {
@@ -141,19 +147,16 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4"
             onClick={onClose}
         >
-            <div
+            {/* ✅ onSubmit + onKeyDown both call handleSubmit */}
+            <form
                 className="bg-white w-full max-w-lg rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 outline-none"
                 onClick={(e) => e.stopPropagation()}
-                tabIndex={0}
-                autoFocus
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSubmit();
+                }}
                 onKeyDown={(e) => {
-                    if (e.key === 'Enter' && editingIndex === null) {
-                        const canUpload = !isUploading && files.length > 0 && Object.keys(fileTitles).length === files.length;
-                        if (canUpload) {
-                            e.preventDefault();
-                            onUpload?.();
-                        }
-                    }
+                    if (e.key === 'Enter') handleSubmit();
                 }}
             >
                 {/* Header */}
@@ -206,7 +209,11 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                                                     value={tempTitle}
                                                     onChange={(e) => setTempTitle(e.target.value)}
                                                     onBlur={() => confirmTitle(idx)}
-                                                    onKeyDown={(e) => e.key === 'Enter' && confirmTitle(idx)}
+                                                    onKeyDown={(e) => {
+                                                        // ✅ Stop Enter from bubbling up to the form when editing a title
+                                                        e.stopPropagation();
+                                                        if (e.key === 'Enter') confirmTitle(idx);
+                                                    }}
                                                     placeholder="Enter Document Title (e.g., NIC)"
                                                     className="w-full text-sm font-semibold text-gray-900 border-none bg-blue-50 rounded-lg px-2 py-1 outline-none ring-2 ring-blue-500/20"
                                                 />
@@ -251,7 +258,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                         Cancel
                     </button>
                     <button
-                        onClick={onUpload || onClose}
+                        type="submit"
                         disabled={isUploading || files.length === 0 || Object.keys(fileTitles).length !== files.length}
                         title={Object.keys(fileTitles).length !== files.length ? 'Please enter a title for all documents' : ''}
                         className="flex-[1.5] py-3.5 px-8 text-[14px] font-bold text-white bg-blue-600 rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:grayscale-[0.5] flex items-center justify-center gap-2"
@@ -266,7 +273,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                         )}
                     </button>
                 </div>
-            </div>
+            </form>
         </div>,
         document.body
     );

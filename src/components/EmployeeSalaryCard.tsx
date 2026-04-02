@@ -13,6 +13,7 @@ interface EmployeeSalaryCardProps {
     otHours: number;
     salaryAdvance: number;
     loanDeduction: number;
+    companyWorkingDays: number;
     handleEmployeeWorkedDaysChange: (empId: string, val: number) => void;
     handleEmployeeOtHoursChange: (empId: string, val: number) => void;
     handleEmployeeSalaryAdvanceChange: (empId: string, val: number) => void;
@@ -43,6 +44,7 @@ const EmployeeSalaryCard = ({
     otHours,
     salaryAdvance,
     loanDeduction,
+    companyWorkingDays,
     handleEmployeeWorkedDaysChange,
     handleEmployeeOtHoursChange,
     handleEmployeeSalaryAdvanceChange,
@@ -83,7 +85,9 @@ const EmployeeSalaryCard = ({
 
     const basicPay = isLocked
         ? generatedSalary.basicPay
-        : (emp.salaryType === "MONTHLY" ? basicSalary : basicSalary * displayWorkedDays);
+        : (emp.salaryType === "MONTHLY"
+            ? (companyWorkingDays > 0 ? (basicSalary / companyWorkingDays) * displayWorkedDays : 0)
+            : basicSalary * displayWorkedDays);
 
     const epfAmount = isLocked ? generatedSalary.employeeEPF : (isEpfEnabled ? basicPay * 0.08 : 0);
 
@@ -195,11 +199,11 @@ const EmployeeSalaryCard = ({
                                     <input
                                         type="number"
                                         step="0.5"
-                                        value={displayWorkedDays}
+                                        value={displayWorkedDays === 0 ? "" : displayWorkedDays}
                                         onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
                                         onBlur={() => setTouchedFields((prev: any) => ({ ...prev, employeeDays: { ...prev.employeeDays, [emp.id]: true } }))}
                                         className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner ${isLocked ? "bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed" : "border-gray-200 text-gray-800"}`}
-                                        min="0" max="31"
+                                        min="0" max={companyWorkingDays}
                                         disabled={isLocked}
                                     />
                                 </div>
@@ -210,7 +214,7 @@ const EmployeeSalaryCard = ({
                                     <input
                                         type="number"
                                         step="0.5"
-                                        value={displayOtHours}
+                                        value={displayOtHours === 0 ? "" : displayOtHours}
                                         onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
                                         className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner ${isLocked ? "bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed" : "border-gray-200 text-gray-800"}`}
                                         min="0"
@@ -242,7 +246,7 @@ const EmployeeSalaryCard = ({
                                     <label className="text-[13px] text-gray-600 whitespace-nowrap">Advance</label>
                                     <input
                                         type="number"
-                                        value={displaySalaryAdvance}
+                                        value={displaySalaryAdvance === 0 ? "" : displaySalaryAdvance}
                                         onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
                                         className={`w-28 px-3 py-1.5 border rounded-lg text-[13px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner ${isLocked ? "bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed" : "border-gray-200 text-gray-800"}`}
                                         min="0"
