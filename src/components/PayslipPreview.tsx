@@ -70,7 +70,7 @@ const PayslipPreview = ({
 
                         {/* Company Header */}
                         <div className="text-center pl-1 mb-0.5">
-                            <p className="font-bold text-[12px] uppercase">{companyName} (PVT) LTD</p>
+                            <p className="font-bold text-[12px] uppercase">{companyName}</p>
                             <p className="font-bold text-[12px] uppercase">
                                 PAY SLIP – MONTH OF: {monthLabel.toUpperCase()}
                             </p>
