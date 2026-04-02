@@ -578,16 +578,34 @@ const UniversalDrawer = ({
         "employeeNIC",
         "epfNumber",
       ];
-      const bankFields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
+
+      const bankFields = [
+        "bankName",
+        "accountNumber",
+        "branchName",
+        "accountHolderName",
+      ];
+
+      // Check ANY bank field is filled
+      const isBankFilled = bankFields.some((f) => {
+        const val = (employeeData as any)[f];
+        return val && val.toString().trim() !== "";
+      });
+
+      // Validate bank ONLY if user started filling
+      const isBankValid =
+        !isBankFilled ||
+        bankFields.every(
+          (f) =>
+            !validateField(f, (employeeData as any)[f], "employee"),
+        );
+
       return (
         requiredFields.every(
           (field) =>
             !validateField(field, (employeeData as any)[field], "employee"),
         ) &&
-        bankFields.every(
-          (f) =>
-            !validateField(f, (employeeData as any)[f], "employee"),
-        ) &&
+        isBankValid &&
         (!employeeData.email ||
           !validateField("email", employeeData.email, "employee")) &&
         (!epfEnabled || !validateField("epfEtf", epfEtf, "employee"))
@@ -628,10 +646,18 @@ const UniversalDrawer = ({
 
       // Bank detail fields
       const bankFields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
-      bankFields.forEach((f) => {
-        const err = validateField(f, (employeeData as any)[f], "employee");
-        if (err) newErrors[f] = err;
+
+      const isBankFilled = bankFields.some((f) => {
+        const val = (employeeData as any)[f];
+        return val && val.toString().trim() !== "";
       });
+
+      if (isBankFilled) {
+        bankFields.forEach((f) => {
+          const err = validateField(f, (employeeData as any)[f], "employee");
+          if (err) newErrors[f] = err;
+        });
+      }
 
       // EPF validation
       const epfErr = epfEnabled ? validateField("epfEtf", epfEtf, "employee") : "";
@@ -1490,7 +1516,7 @@ const UniversalDrawer = ({
                                       const error = validateField("epfEtf", epfEtf, "employee");
                                       setErrors(prev => ({ ...prev, epfEtf: error }));
                                     }}
-                                    placeholder="Enter EPF/ETF Amount"
+                                    placeholder="Enter Employee's EPF/ETF Applicable Amount"
                                     className={`text-[13px] w-[330px] px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.epfEtf && errors.epfEtf ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                                   />
                                   {touched.epfEtf && errors.epfEtf && (

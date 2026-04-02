@@ -21,6 +21,7 @@ import {
     Banknote,
     Wallet,
     CoinsIcon,
+    Wallet2,
 } from "lucide-react";
 import { Employee } from "../types/employee.types";
 
@@ -299,12 +300,27 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
 
                     {activeTab === "Salary Information" && (
                         <div className="space-y-5 pt-2 pb-2">
+                            {/* Salary Mode */}
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <Wallet className="w-[16px] h-[16px] text-[#8B98A8]" />
+                                    <span className="text-[12px] font-semibold text-[#8B98A8]">
+                                        Salary Mode
+                                    </span>
+                                </div>
+                                <div className="space-y-2 flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
+                                    <span>
+                                        {selectedEmployee.salaryType}
+                                    </span>
+                                </div>
+                            </div>
+
                             {/* Basic Salary Section */}
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
-                                    <Banknote className="w-[16px] h-[16px] text-[#8B98A8]" />
+                                    <Wallet2 className="w-[16px] h-[16px] text-[#8B98A8]" />
                                     <span className="text-[12px] font-semibold text-[#8B98A8]">
-                                        {selectedEmployee.salaryType} Basic Salary
+                                        Basic Salary
                                     </span>
                                 </div>
                                 <div className="space-y-2 flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
@@ -338,7 +354,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             </div>
 
                             {/* EPF Section */}
-                            {/* <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     <Banknote className="w-[16px] h-[16px] text-[#8B98A8]" />
                                     <span className="text-[12px] font-semibold text-[#8B98A8]">
@@ -346,14 +362,16 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     </span>
                                 </div>
                                 <div className="space-y-2 flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
-                                    <span>
-                                        {selectedEmployee.epfEnabled.toLocaleString("en-US", {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
+                                    <span className="text-[12px] font-medium text-gray-800">
+                                        {selectedEmployee.epfEnabled
+                                            ? Number(selectedEmployee.epfEtfAmount || 0).toLocaleString("en-US", {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })
+                                            : "N/A"}
                                     </span>
                                 </div>
-                            </div> */}
+                            </div>
 
                             {/* Allowances Section */}
                             <div>
