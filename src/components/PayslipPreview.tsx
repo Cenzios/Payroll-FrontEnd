@@ -230,7 +230,7 @@ const PayslipPreview = ({
                         {/* Net Salary Payable */}
                         <div className="flex text-[12px] pl-1 mb-0.5">
                             <span className="w-56">Net Salary Payable</span>
-                            <span>: <strong>Rs {previewPayslip.netSalary.toLocaleString()}</strong></span>
+                            <span>: <strong>{previewPayslip.netSalary.toLocaleString()}</strong></span>
                         </div>
 
                         <Divider />
@@ -260,7 +260,7 @@ const PayslipPreview = ({
 
                         {/* Footer */}
                         <div className="text-center text-[11px] text-gray-500 my-0.5">
-                            Powered by {companyName} (PVT) LTD
+                            Powered by {companyName}
                         </div>
 
                         <Divider />
