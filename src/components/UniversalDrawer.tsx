@@ -1928,7 +1928,6 @@ const UniversalDrawer = ({
 
                         </div>
                       )}
-
                       {/* Hidden Fields */}
                       <input type="hidden" value={employeeData.department} />
                     </div>
