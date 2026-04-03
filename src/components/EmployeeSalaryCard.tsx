@@ -224,16 +224,20 @@ const EmployeeSalaryCard = ({
                 </div>
 
                 {/* OT Rate */}
-                <div className="px-6 border-r border-gray-200">
-                    <p className="text-[11px] text-gray-400 mb-0.5">OT rate</p>
-                    <p className="text-[15px] font-bold text-gray-800">{fmt(otRate)}</p>
-                </div>
+                {emp.otRate > 0 && (
+                    <div className="px-6 border-r border-gray-200">
+                        <p className="text-[11px] text-gray-400 mb-0.5">OT rate</p>
+                        <p className="text-[15px] font-bold text-gray-800">{fmt(otRate)}</p>
+                    </div>
+                )}
 
                 {/* OT Amount */}
-                <div className="px-6 border-r border-gray-200">
-                    <p className="text-[11px] text-gray-400 mb-0.5">OT amount</p>
-                    <p className="text-[15px] font-bold text-gray-800">{fmt(otAmount)}</p>
-                </div>
+                {emp.otRate > 0 && (
+                    <div className="px-6 border-r border-gray-200">
+                        <p className="text-[11px] text-gray-400 mb-0.5">OT amount</p>
+                        <p className="text-[15px] font-bold text-gray-800">{fmt(otAmount)}</p>
+                    </div>
+                )}
 
                 {/* Period */}
                 <div className="px-6 border-r border-gray-200">
@@ -278,18 +282,20 @@ const EmployeeSalaryCard = ({
                         </div>
 
                         {/* OT Hours */}
-                        <div>
-                            <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">OT Hours</p>
-                            <input
-                                type="number"
-                                step="0.5"
-                                value={displayOtHours === 0 ? "" : displayOtHours}
-                                onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
-                                className={inputClass(isLocked)}
-                                min="0"
-                                disabled={isLocked || emp.otRate <= 0}
-                            />
-                        </div>
+                        {emp.otRate > 0 && (
+                            <div>
+                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">OT Hours</p>
+                                <input
+                                    type="number"
+                                    step="0.5"
+                                    value={displayOtHours === 0 ? "" : displayOtHours}
+                                    onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
+                                    className={inputClass(isLocked)}
+                                    min="0"
+                                    disabled={isLocked || emp.otRate <= 0}
+                                />
+                            </div>
+                        )}
 
                         {/* Advance */}
                         <div>
