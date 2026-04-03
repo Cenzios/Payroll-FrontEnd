@@ -260,7 +260,8 @@ const PayslipPreview = ({
 
                         {/* Footer */}
                         <div className="text-center text-[11px] text-gray-500 my-0.5">
-                            Powered by {companyName}
+                            {/* Powered by {companyName} */}
+                            Powered by Cenzios (PVT) LTD
                         </div>
 
                         <Divider />

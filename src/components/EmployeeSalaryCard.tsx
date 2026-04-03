@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Loader2, ChevronRight, Eye, Lock } from "lucide-react";
+import { Loader2, ChevronRight, Eye, Lock, ArrowBigDown, ArrowDown, Loader, ChevronDown } from "lucide-react";
 import { Employee } from "../types/employee.types";
 
 interface EmployeeSalaryCardProps {
@@ -139,6 +139,11 @@ const EmployeeSalaryCard = ({
     // Current period label
     const periodLabel = new Date().toLocaleString("default", { month: "short", year: "numeric" });
 
+    // const periodLabel = new Date(selectedYear, selectedMonth).toLocaleString("default", {
+    //     month: "long",
+    //     year: "numeric",
+    // });
+
     const inputClass = (locked: boolean) =>
         `w-full px-3 py-2 border rounded-xl text-[14px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner font-semibold
     ${locked
@@ -157,7 +162,7 @@ const EmployeeSalaryCard = ({
         >
             {/* Lock overlay — covers upper rows in both collapsed and expanded state, never covers bottom bar */}
             {isLocked && (
-                <div className={`absolute inset-x-0 top-0 z-20 bg-gray-900/50 flex flex-col items-center justify-center pointer-events-none ${isSelected ? "bottom-[72px] rounded-t-2xl" : "bottom-0 rounded-2xl"}`}>
+                <div className={`absolute inset-x-0 top-0 z-20 bg-gray-700/50 flex flex-col items-center justify-center pointer-events-none ${isSelected ? "bottom-[72px] rounded-t-2xl" : "bottom-0 rounded-2xl"}`}>
                     <span className="text-[15px] font-bold text-white text-center px-6 drop-shadow-md">
                         Pay-slip already generated and locked – cannot be edited.
                     </span>
@@ -165,7 +170,7 @@ const EmployeeSalaryCard = ({
             )}
 
             {/* ── ROW 1: Employee info + pill badges ── */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-blue-100/70">
+            <div className="flex items-center justify-between px-5 py-4 bg-[#F9FCFF] border-b border-blue-100/70">
                 {/* Avatar + name */}
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold text-[16px] shrink-0">
@@ -181,7 +186,7 @@ const EmployeeSalaryCard = ({
                 {/* Pill badges */}
                 <div className="flex items-center gap-2 flex-wrap justify-end">
                     {/* Salary type pill */}
-                    <span className="px-4 py-1.5 rounded-full border border-blue-300 bg-blue-100 text-[13px] font-semibold text-blue-600">
+                    <span className="px-4 py-1.5 rounded-full border border-[#0B74E633] bg-[#DEEEFF1F] text-[13px] font-semibold text-blue-600">
                         {emp.salaryType === "MONTHLY" ? "Monthly" : "Daily"}
                     </span>
 
@@ -191,8 +196,8 @@ const EmployeeSalaryCard = ({
                         disabled={isLocked}
                         className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[13px] font-semibold transition-all
               ${isLocked
-                                ? "border-blue-100 bg-blue-50 text-blue-300 cursor-not-allowed"
-                                : "border-blue-300 bg-blue-100 text-blue-600 hover:bg-blue-200 hover:border-blue-400 active:scale-95"
+                                ? "border-[#0B74E633] bg-[#DEEEFF1F] text-blue-300 cursor-not-allowed"
+                                : "border-[#0B74E633] bg-[#DEEEFF1F] text-blue-600 hover:bg-blue-200 hover:border-blue-400 active:scale-95"
                             }`}
                     >
                         Allowances {fmt(totalAllowances)}
@@ -205,8 +210,8 @@ const EmployeeSalaryCard = ({
                         disabled={isLocked}
                         className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[13px] font-semibold transition-all
               ${isLocked
-                                ? "border-red-100 bg-red-50 text-red-300 cursor-not-allowed"
-                                : "border-red-300 bg-red-100 text-red-500 hover:bg-red-200 hover:border-red-400 active:scale-95"
+                                ? "border-[#EF444433] bg-[#FFB3B31A] text-[#EF4444] cursor-not-allowed"
+                                : "border-[#EF444433] bg-[#FFB3B31A] text-[#EF4444] hover:bg-red-200 hover:border-red-400 active:scale-95"
                             }`}
                     >
                         Deductions {fmt(totalDeductions_custom)}
@@ -216,17 +221,17 @@ const EmployeeSalaryCard = ({
             </div>
 
             {/* ── ROW 2: Salary info strip ── */}
-            <div className="flex items-center gap-0 px-5 py-3 border-b border-blue-100/70 bg-white/60">
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-blue-100/70 bg-white">
                 {/* Monthly/Daily pay */}
                 <div className="pr-6 border-r border-gray-200">
-                    <p className="text-[11px] text-gray-400 mb-0.5">{emp.salaryType === "MONTHLY" ? "Monthly pay" : "Daily Rate"}</p>
+                    <p className="text-[12px] text-gray-400 mb-0.5">{emp.salaryType === "MONTHLY" ? "Monthly pay" : "Daily Rate"}</p>
                     <p className="text-[15px] font-bold text-gray-800">{fmt(basicSalary)}</p>
                 </div>
 
                 {/* OT Rate */}
                 {emp.otRate > 0 && (
                     <div className="px-6 border-r border-gray-200">
-                        <p className="text-[11px] text-gray-400 mb-0.5">OT rate</p>
+                        <p className="text-[12px] text-gray-400 mb-0.5">OT rate</p>
                         <p className="text-[15px] font-bold text-gray-800">{fmt(otRate)}</p>
                     </div>
                 )}
@@ -234,14 +239,14 @@ const EmployeeSalaryCard = ({
                 {/* OT Amount */}
                 {emp.otRate > 0 && (
                     <div className="px-6 border-r border-gray-200">
-                        <p className="text-[11px] text-gray-400 mb-0.5">OT amount</p>
+                        <p className="text-[12px] text-gray-400 mb-0.5">OT amount</p>
                         <p className="text-[15px] font-bold text-gray-800">{fmt(otAmount)}</p>
                     </div>
                 )}
 
                 {/* Period */}
                 <div className="px-6 border-r border-gray-200">
-                    <p className="text-[11px] text-gray-400 mb-0.5">Period</p>
+                    <p className="text-[12px] text-gray-400 mb-0.5">Period</p>
                     <p className="text-[15px] font-bold text-gray-800">{periodLabel}</p>
                 </div>
 
@@ -264,9 +269,9 @@ const EmployeeSalaryCard = ({
                 <div onClick={(e) => e.stopPropagation()} className="animate-in fade-in slide-in-from-top-1 duration-200">
 
                     {/* ── ROW 3: Input fields ── */}
-                    <div className="px-5 py-4 grid grid-cols-4 gap-4 border-b border-blue-100/70">
-                        {/* Worked Days */}
-                        <div>
+                    <div className="flex items-center gap-2 px-5 py-3 border-b border-blue-100/70 bg-white">
+                        {/* Worked */}
+                        <div className="pr-6 w-36 border-r border-gray-200">
                             <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Worked Days</p>
                             <input
                                 type="number"
@@ -283,7 +288,7 @@ const EmployeeSalaryCard = ({
 
                         {/* OT Hours */}
                         {emp.otRate > 0 && (
-                            <div>
+                            <div className="px-6 w-44 border-r border-gray-200">
                                 <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">OT Hours</p>
                                 <input
                                     type="number"
@@ -298,58 +303,62 @@ const EmployeeSalaryCard = ({
                         )}
 
                         {/* Advance */}
-                        <div>
-                            <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Advance</p>
-                            <input
-                                type="number"
-                                value={displaySalaryAdvance === 0 ? "" : displaySalaryAdvance}
-                                onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
-                                className={inputClass(isLocked)}
-                                min="0"
-                                disabled={isLocked}
-                            />
-                        </div>
-
-                        {/* Loan */}
-                        {hasLoanInstallment && (
-                            <div>
-                                <div className="flex items-center gap-2 mb-2 h-6">
-                                    <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase">Loan</p>
-                                    <Toggle
-                                        enabled={isLoanEnabled}
-                                        onToggle={() => handleToggleLoan(emp.id)}
-                                        disabled={isLocked}
-                                    />
-                                </div>
-                                <div className={`w-full px-3 py-2 border rounded-xl text-[14px] text-right font-semibold
-                  ${isLoanEnabled
-                                        ? "bg-white border-gray-200 text-gray-800"
-                                        : "bg-gray-50 border-gray-100 text-gray-300 line-through"
-                                    }`}>
-                                    {fmt(isLoanEnabled ? loanDeduction : 0)}
-                                </div>
+                        {emp.otRate > 0 && (
+                            <div className="px-6 w-44 border-r border-gray-200">
+                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Advance</p>
+                                <input
+                                    type="number"
+                                    value={displaySalaryAdvance === 0 ? "" : displaySalaryAdvance}
+                                    onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
+                                    className={inputClass(isLocked)}
+                                    min="0"
+                                    disabled={isLocked}
+                                />
                             </div>
                         )}
+
+                        {/* Loan */}
+                        <div className="px-6 w-44 border-r border-gray-200">
+                            {hasLoanInstallment && (
+                                <div>
+                                    <div className="flex items-center gap-2 mb-2 h-6">
+                                        <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase">Loan</p>
+                                        <Toggle
+                                            enabled={isLoanEnabled}
+                                            onToggle={() => handleToggleLoan(emp.id)}
+                                            disabled={isLocked}
+                                        />
+                                    </div>
+                                    <div className={`w-full px-3 py-2 border rounded-xl text-[14px] text-right font-semibold
+                                        ${isLoanEnabled
+                                            ? "bg-white border-gray-200 text-gray-800"
+                                            : "bg-gray-50 border-gray-100 text-gray-300 line-through"
+                                        }`}>
+                                        {fmt(isLoanEnabled ? loanDeduction : 0)}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* ── ROW 4: Totals + Actions ── */}
-                    <div className="flex items-center px-5 py-4 gap-6 bg-white/40">
+                    <div className="flex items-center px-5 py-4 gap-6 bg-[#F9FCFF]">
                         {/* Earnings */}
                         <div className="pr-6 border-r border-gray-200">
-                            <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-1">Earnings</p>
-                            <p className="text-[26px] font-extrabold text-[#10b981] leading-none">{fmt(totalEarnings)}</p>
+                            <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-1">Earnings</p>
+                            <p className="text-[20px] font-extrabold text-[#10b981] leading-none">{fmt(totalEarnings)}</p>
                         </div>
 
                         {/* Deduction */}
                         <div className="pr-6 border-r border-gray-200">
-                            <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-1">Deduction</p>
-                            <p className="text-[26px] font-extrabold text-red-500 leading-none">{fmt(totalDeductions)}</p>
+                            <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-1">Deduction</p>
+                            <p className="text-[20px] font-extrabold text-red-500 leading-none">{fmt(totalDeductions)}</p>
                         </div>
 
                         {/* Net Salary */}
                         <div className="pr-6">
-                            <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-1">Net Salary</p>
-                            <p className="text-[26px] font-extrabold text-[#4785ff] leading-none">{fmt(netSalary)}</p>
+                            <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-1">Net Salary</p>
+                            <p className="text-[20px] font-extrabold text-[#4785ff] leading-none">{fmt(netSalary)}</p>
                         </div>
 
                         {/* Actions — pushed to right */}
@@ -390,10 +399,17 @@ const EmployeeSalaryCard = ({
                 </div>
             )}
 
-            {/* Collapsed hint */}
+            {/* Click to Calculate */}
             {!isSelected && (
-                <div className="px-5 pb-3 text-[12px] text-gray-400 italic">
-                    Click to calculate salary
+                <div className="flex justify-center items-center gap-10 px-5 py-3 text-[12px] bg-[#F8F9FE] text-gray-400 italic">
+                    <div className="flex">
+                        <Loader className="w-5 h-5 rounded-full p-[2.5px] bg-[#5C81FE] text-white mr-2" />
+                        <p className="text-[#3D70F5] font-semibold">Click to Calculate Salary</p>
+                    </div>
+                    <div className="flex">
+                        <p className="text-[#8791A9] font-extralight">Enter OT hours, deductions & generate pay-slip</p>
+                        <ChevronDown className="w-4 h-4 text-[#8791A9] ml-1" />
+                    </div>
                 </div>
             )}
 
