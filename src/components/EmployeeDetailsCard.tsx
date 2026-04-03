@@ -11,7 +11,6 @@ import {
     FileText,
     PlusCircle,
     MinusCircle,
-    Home,
     ListOrdered,
     Users as UsersIcon,
     Trash2,
@@ -20,7 +19,6 @@ import {
     Landmark,
     Banknote,
     Wallet,
-    CoinsIcon,
     Wallet2,
 } from "lucide-react";
 import { Employee } from "../types/employee.types";
@@ -30,6 +28,7 @@ interface EmployeeDetailsCardProps {
     setPreviewImage: (url: string | null) => void;
     onAddFileClick?: () => void;
     onDeleteFileClick?: (documentId: string, fileName: string) => void;
+    isAddFileDisabled?: boolean;
 }
 
 const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
@@ -37,6 +36,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
     setPreviewImage,
     onAddFileClick,
     onDeleteFileClick,
+    isAddFileDisabled = false,
 }) => {
     const [activeTab, setActiveTab] = useState("Personal Information");
 
@@ -225,9 +225,14 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     {/* Add file button */}
                                     <button
                                         onClick={onAddFileClick}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-[12px] font-semibold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all">
+                                        disabled={isAddFileDisabled}
+                                        title={isAddFileDisabled ? "Document limit reached (Max 3)" : ""}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-semibold transition-all ${isAddFileDisabled
+                                            ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
+                                            : "border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+                                            }`}>
                                         <Plus className="w-3.5 h-3.5" />
-                                        Add file
+                                        {isAddFileDisabled ? "Limit reached" : "Add file"}
                                     </button>
                                 </div>
 

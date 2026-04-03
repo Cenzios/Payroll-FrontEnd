@@ -139,11 +139,13 @@ const EmployeeSalaryCard = ({
     // Current period label
     const periodLabel = new Date().toLocaleString("default", { month: "short", year: "numeric" });
 
-    const inputClass = (locked: boolean) =>
+    const inputClass = (locked: boolean, hasError?: boolean) =>
         `w-full px-3 py-2 border rounded-xl text-[14px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner font-semibold
     ${locked
             ? "bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-white border-gray-200 text-gray-800 hover:border-blue-300"
+            : hasError
+                ? "bg-red-50 border-red-300 text-red-600 focus:ring-red-100"
+                : "bg-white border-gray-200 text-gray-800 hover:border-blue-300"
         }`;
 
     return (
@@ -272,7 +274,15 @@ const EmployeeSalaryCard = ({
                                 type="number"
                                 step="0.5"
                                 value={displayWorkedDays === 0 ? "" : displayWorkedDays}
-                                onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
+                                onChange={(e) => {
+                                    const val = parseFloat(e.target.value) || 0;
+                                    handleEmployeeWorkedDaysChange(emp.id, Math.max(0, val));
+                                }}
+                                onKeyDown={(e) => {
+                                    if (["-", "+", "e", "E"].includes(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                }}
                                 onBlur={() => setTouchedFields((prev: any) => ({ ...prev, employeeDays: { ...prev.employeeDays, [emp.id]: true } }))}
                                 className={inputClass(isLocked)}
                                 min="0"
@@ -289,7 +299,15 @@ const EmployeeSalaryCard = ({
                                     type="number"
                                     step="0.5"
                                     value={displayOtHours === 0 ? "" : displayOtHours}
-                                    onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
+                                    onChange={(e) => {
+                                        const val = parseFloat(e.target.value) || 0;
+                                        handleEmployeeOtHoursChange(emp.id, Math.max(0, val));
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (["-", "+", "e", "E"].includes(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                    }}
                                     className={inputClass(isLocked)}
                                     min="0"
                                     disabled={isLocked || emp.otRate <= 0}
@@ -303,11 +321,29 @@ const EmployeeSalaryCard = ({
                             <input
                                 type="number"
                                 value={displaySalaryAdvance === 0 ? "" : displaySalaryAdvance}
-                                onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
-                                className={inputClass(isLocked)}
+                                onChange={(e) => {
+                                    const val = parseFloat(e.target.value) || 0;
+                                    // Calculate net before advance: Total Earnings - (EPF + Loan + Extra Deductions)
+                                    const deductionsExcludingAdvance = epfAmount +
+                                        (hasLoanInstallment && isLoanEnabled ? loanDeduction : 0) +
+                                        totalDeductions_custom;
+                                    const maxPossibleAdvance = Math.max(0, totalEarnings - deductionsExcludingAdvance);
+
+                                    handleEmployeeSalaryAdvanceChange(emp.id, Math.min(maxPossibleAdvance, Math.max(0, val)));
+                                }}
+                                onKeyDown={(e) => {
+                                    if (["-", "+", "e", "E"].includes(e.key)) {
+                                        e.preventDefault();
+                                    }
+                                }}
+                                className={inputClass(isLocked, netSalary < 0)}
                                 min="0"
+                                max={Math.max(0, totalEarnings - (epfAmount + (hasLoanInstallment && isLoanEnabled ? loanDeduction : 0) + totalDeductions_custom))}
                                 disabled={isLocked}
                             />
+                            {netSalary < 0 && (
+                                <p className="text-[10px] text-red-500 font-bold mt-1">Exceeds available net</p>
+                            )}
                         </div>
 
                         {/* Loan */}
