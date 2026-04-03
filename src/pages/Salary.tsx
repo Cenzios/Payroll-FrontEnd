@@ -318,8 +318,21 @@ const Salary = () => {
     if (isBeforeJoinedDate(emp, selectedYear, selectedMonth)) return true;
     if (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays)
       return true;
-    const { workedDays } = getEmployeeValues(emp.id);
+    const { workedDays, otHours, salaryAdvance, isEpfEnabled, isLoanEnabled, loanDeduction } = getEmployeeValues(emp.id);
     if (workedDays < 0 || workedDays > companyWorkingDays) return true;
+
+    // Check for negative net salary
+    const otRate = emp.otRate || 0;
+    const otAmount = emp.otRate > 0 ? otHours * otRate : 0;
+    const basicPay = emp.salaryType === "MONTHLY"
+      ? (companyWorkingDays > 0 ? (emp.basicSalary / companyWorkingDays) * workedDays : 0)
+      : emp.basicSalary * workedDays;
+
+    const epfAmount = emp.epfEnabled && isEpfEnabled ? basicPay * 0.08 : 0;
+    const totalEarnings = basicPay + otAmount + (salaryAllowances[emp.id] || emp.recurringAllowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
+    const otherDeductions = epfAmount + (isLoanEnabled ? loanDeduction : 0) + (salaryDeductions[emp.id] || emp.recurringDeductions || []).reduce((s, d) => s + (Number(d.amount) || 0), 0);
+
+    if (totalEarnings - (otherDeductions + salaryAdvance) < 0) return true;
     return false;
   };
 
