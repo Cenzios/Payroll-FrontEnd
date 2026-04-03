@@ -203,7 +203,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
 
         {/* Drawer */}
         <div
-          className="relative w-full max-w-[480px] bg-white h-full shadow-2xl flex flex-col animate-slide-in-right"
+          className="relative w-full max-w-[480px]  bg-white shadow-2xl flex flex-col animate-slide-in-right"
           onKeyDown={handleKeyDown}
         >
           {/* Header */}
@@ -237,7 +237,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                   value={loanTitle}
                   onChange={(e) => setLoanTitle(e.target.value)}
                   placeholder="Personal Home Renovation"
-                  className="w-full px-4 py-1.5 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-300 text-gray-900"
+                  className="w-full px-4 py-1.5 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
                 />
               </div>
 
@@ -257,7 +257,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Requesting a loan for home improvement projects and general repairs."
                   rows={4}
-                  className="w-full px-4 py-1.5 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-300 text-gray-900 resize-none"
+                  className="w-full px-4 py-1.5 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-4 resize-none"
                 />
               </div>
 
@@ -287,7 +287,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                     }}
                     onFocus={() => setIsDropdownOpen(true)}
                     placeholder="Search employee by name or ID..."
-                    className="w-full px-3 py-1.5 text-[13px] bg-transparent outline-none text-gray-900 placeholder:text-gray-300"
+                    className="w-full px-3 py-1.5 text-[13px] bg-transparent outline-none  placeholder:text-gray-400"
                   />
                   <div className="pr-4 pointer-events-none">
                     <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -348,7 +348,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-4 py-3 text-[13px] bg-white border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
+                      className="text-[14px] w-full pl-4 pr-4 py-2.5 bg-white border rounded-xl focus:ring-2 outline-none transition-all "
                     />
                   </div>
                 </div>
@@ -366,7 +366,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
+                    className="text-[14px] w-full pl-4 pr-4 py-2.5 bg-white border rounded-xl focus:ring-2 outline-none transition-all "
                   />
                 </div>
               </div>
@@ -505,7 +505,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                 <button
                   type="button"
                   onClick={() => setIsUploadModalOpen(true)}
-                  className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all text-[13px] text-gray-500 font-medium group"
+                  className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all text-[13px] text-gray-400 font-medium group"
                 >
                   <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
                     <UploadCloud className="h-4 w-4 text-gray-400 group-hover:text-blue-500" />
