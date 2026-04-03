@@ -638,7 +638,7 @@ const Salary = () => {
           <div className="w-10/12 flex flex-col overflow-hidden">
 
             {/* FILTER BOX */}
-            <div className="bg-white gap-12 p-7 w-fit rounded-xl mb-6 flex flex-row border border-gray-200">
+            <div className="bg-white gap-12 p-7 w-full rounded-xl mb-6 flex flex-row border border-gray-200">
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-800 mb-2">
                   Search Employee
