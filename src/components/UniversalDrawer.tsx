@@ -297,6 +297,13 @@ const UniversalDrawer = ({
     isOpen
   ]);
 
+  const [isAccountNameEdited, setIsAccountNameEdited] = useState(false);
+  useEffect(() => {
+    if (employeeData.fullName && !isAccountNameEdited) {
+      handleEmployeeChange("accountHolderName", employeeData.fullName);
+    }
+  }, [employeeData.fullName, isAccountNameEdited]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
@@ -316,10 +323,30 @@ const UniversalDrawer = ({
           if (!value || value.trim().length < 3 || value.trim().length > 20)
             error = "Name must be between 3 and 20 characters";
           break;
-        case "email":
-          if (!value) error = "Email is required";
-          else if (!emailRegex.test(value)) error = "Invalid email format";
+        case "email": {
+          const email = value?.trim();
+          if (!value)
+            error = "Email is required";
+          else if (email.length > 100) {
+            error = "Email must be less than 100 characters";
+            break;
+          }
+          else if (value && value.trim() && !emailRegex.test(value.trim()))
+            error = "Invalid email format";
+          else if (email.includes("..")) {
+            error = "Email cannot contain consecutive dots";
+            break;
+          }
+          else if (email.startsWith(".") || email.endsWith(".")) {
+            error = "Email cannot start or end with a dot";
+            break;
+          }
+          else if (email.split("@")[1]?.startsWith("-") || email.split("@")[1]?.endsWith("-")) {
+            error = "Invalid domain format";
+            break;
+          }
           break;
+        }
         case "contactNumber":
           if (!value) error = "Contact number is required";
           else if (!phoneRegex.test(value))
@@ -340,10 +367,28 @@ const UniversalDrawer = ({
         case "employeeId":
           if (!value || !value.trim()) error = "Employee ID is required";
           break;
-        case "email":
-          if (value && value.trim() && !emailRegex.test(value.trim()))
+        case "email": {
+          const email = value?.trim();
+          if (email.length > 100) {
+            error = "Email must be less than 100 characters";
+            break;
+          }
+          else if (value && value.trim() && !emailRegex.test(value.trim()))
             error = "Invalid email format";
+          else if (email.includes("..")) {
+            error = "Email cannot contain consecutive dots";
+            break;
+          }
+          else if (email.startsWith(".") || email.endsWith(".")) {
+            error = "Email cannot start or end with a dot";
+            break;
+          }
+          else if (email.split("@")[1]?.startsWith("-") || email.split("@")[1]?.endsWith("-")) {
+            error = "Invalid domain format";
+            break;
+          }
           break;
+        }
         case "contactNumber":
           if (!value) error = "Contact number is required";
           else if (!employeePhoneRegex.test(value))
@@ -411,8 +456,8 @@ const UniversalDrawer = ({
         case "branchName":
           if (!value || !value.trim())
             error = "Branch name is required";
-          else if (/[^a-zA-Z\s.-]/.test(value))
-            error = "Branch name can only contain letters, spaces, dots, and hyphens";
+          // else if (/[^a-zA-Z\s.-]/.test(value))
+          //   error = "Branch name can only contain letters, spaces, dots, and hyphens";
           break;
         case "accountHolderName":
           if (!value || value.trim().length < 2)
@@ -892,7 +937,7 @@ const UniversalDrawer = ({
                             <Hotel className="h-4 w-4 text-blue-500" />
                           </div>
                           <label className="block text-[13px] font-medium text-gray-700 mb-2 pl-6">
-                            Company Name
+                            Company Name <strong className="text-red-600 text-[15px]">*</strong>
                           </label>
                         </div>
 
@@ -921,7 +966,7 @@ const UniversalDrawer = ({
                             <MapPin className="h-4 w-4 text-blue-500" />
                           </div>
                           <label className="block text-[13px] font-medium text-gray-700 mb-2 pl-6">
-                            Address
+                            Address <strong className="text-red-600 text-[15px]">*</strong>
                           </label>
                         </div>
 
@@ -951,7 +996,7 @@ const UniversalDrawer = ({
                               <Mail className="h-4 w-4 text-blue-500" />
                             </div>
                             <label className="block text-[13px] font-medium text-gray-700 mb-2 pl-6">
-                              Email
+                              Email <strong className="text-red-600 text-[15px]">*</strong>
                             </label>
                           </div>
 
@@ -979,7 +1024,7 @@ const UniversalDrawer = ({
                               <Phone className="h-4 w-4 text-blue-500" />
                             </div>
                             <label className="block text-[13px] font-medium text-gray-700 mb-2 pl-6">
-                              Phone Number
+                              Phone Number <strong className="text-red-600 text-[15px]">*</strong>
                             </label>
                           </div>
 
@@ -1790,10 +1835,11 @@ const UniversalDrawer = ({
 
                             <input
                               type="text"
-                              value={employeeData.accountHolderName || ""}
-                              onChange={(e) =>
-                                handleEmployeeChange("accountHolderName", e.target.value)
-                              }
+                              value={employeeData.accountHolderName ?? ""}
+                              onChange={(e) => {
+                                setIsAccountNameEdited(true);
+                                handleEmployeeChange("accountHolderName", e.target.value);
+                              }}
                               placeholder="Enter Your Account Holder Name"
                               className={`text-[13px] w-full pr-4 px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountHolderName && errors.accountHolderName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                             />
