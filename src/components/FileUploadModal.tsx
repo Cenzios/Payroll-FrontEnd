@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { UploadCloud, FileText, FileImage, File, Edit2, Trash2, Check, Loader2 } from "lucide-react";
+import { UploadCloud, FileText, FileImage, File, Trash2, Loader2 } from "lucide-react";
 
 interface FileUploadModalProps {
     isOpen: boolean;
@@ -26,13 +26,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     maxFiles = 3,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
-    const [editingIndex, setEditingIndex] = useState<number | null>(null);
-    const [tempTitle, setTempTitle] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // ✅ Centralized submit logic
     const handleSubmit = () => {
-        if (editingIndex === null && !isUploading && files.length > 0 && Object.keys(fileTitles).length === files.length) {
+        const allTitlesEntered = files.length > 0 && files.every((_, idx) => fileTitles[idx] && fileTitles[idx].trim() !== "");
+        if (!isUploading && allTitlesEntered) {
             onUpload?.();
         }
     };
@@ -115,25 +114,6 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         }
     };
 
-    const startEditingTitle = (index: number) => {
-        setEditingIndex(index);
-        setTempTitle(fileTitles[index] || "");
-    };
-
-    const confirmTitle = (index: number) => {
-        if (!tempTitle.trim()) {
-            setEditingIndex(null);
-            return;
-        }
-        if (onTitlesChange) {
-            onTitlesChange({
-                ...fileTitles,
-                [index]: tempTitle.trim()
-            });
-        }
-        setEditingIndex(null);
-    };
-
     const getFileIcon = (type: string) => {
         if (type.startsWith('image/')) return <FileImage className="w-5 h-5 text-blue-500" />;
         if (type === 'application/pdf') return <FileText className="w-5 h-5 text-red-500" />;
@@ -144,7 +124,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
     return createPortal(
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4"
             onClick={onClose}
         >
             {/* ✅ onSubmit + onKeyDown both call handleSubmit */}
@@ -201,44 +181,36 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                                     </div>
 
                                     <div className="flex-1 min-w-0">
-                                        {editingIndex === idx ? (
-                                            <div className="flex flex-col gap-1">
-                                                <input
-                                                    autoFocus
-                                                    type="text"
-                                                    value={tempTitle}
-                                                    onChange={(e) => setTempTitle(e.target.value)}
-                                                    onBlur={() => confirmTitle(idx)}
-                                                    onKeyDown={(e) => {
-                                                        // ✅ Stop Enter from bubbling up to the form when editing a title
-                                                        e.stopPropagation();
-                                                        if (e.key === 'Enter') confirmTitle(idx);
-                                                    }}
-                                                    placeholder="Enter Document Title (e.g., NIC)"
-                                                    className="w-full text-sm font-semibold text-gray-900 border-none bg-blue-50 rounded-lg px-2 py-1 outline-none ring-2 ring-blue-500/20"
-                                                />
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Document Title</p>
+                                                <p className="text-[10px] text-gray-400 truncate max-w-[150px]">{file.name}</p>
                                             </div>
-                                        ) : (
-                                            <div className="flex flex-col">
-                                                <p className="text-sm font-semibold text-gray-700 truncate">
-                                                    {fileTitles[idx] || <span className="text-red-400 italic">No Title Provided</span>}
-                                                </p>
-                                            </div>
-                                        )}
+                                            <input
+                                                type="text"
+                                                value={fileTitles[idx] || ""}
+                                                onChange={(e) => {
+                                                    if (onTitlesChange) {
+                                                        onTitlesChange({
+                                                            ...fileTitles,
+                                                            [idx]: e.target.value
+                                                        });
+                                                    }
+                                                }}
+                                                placeholder="e.g. NIC Front, Contract, etc."
+                                                className="w-full text-sm font-semibold text-gray-900 bg-gray-50 hover:bg-blue-50/50 focus:bg-blue-50 border border-gray-100 focus:border-blue-200 rounded-xl px-3 py-2 outline-none transition-all"
+                                            />
+                                        </div>
                                     </div>
 
-                                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {editingIndex === idx ? (
-                                            <button onClick={(e) => { e.stopPropagation(); confirmTitle(idx); }} className="w-8 h-8 flex items-center justify-center text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
-                                                <Check className="w-4 h-4" />
-                                            </button>
-                                        ) : (
-                                            <button onClick={(e) => { e.stopPropagation(); startEditingTitle(idx); }} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
-                                                <Edit2 className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                        <button onClick={(e) => { e.stopPropagation(); removeFile(idx); }} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                            <Trash2 className="w-4 h-4" />
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
+                                            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                            title="Remove file"
+                                        >
+                                            <Trash2 className="w-4.5 h-4.5" />
                                         </button>
                                     </div>
                                 </div>
@@ -259,8 +231,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                     </button>
                     <button
                         type="submit"
-                        disabled={isUploading || files.length === 0 || Object.keys(fileTitles).length !== files.length}
-                        title={Object.keys(fileTitles).length !== files.length ? 'Please enter a title for all documents' : ''}
+                        disabled={isUploading || files.length === 0 || !files.every((_, idx) => fileTitles[idx] && fileTitles[idx].trim() !== "")}
+                        title={!files.every((_, idx) => fileTitles[idx] && fileTitles[idx].trim() !== "") ? 'Please enter a title for all documents' : ''}
                         className="flex-[1.5] py-3.5 px-8 text-[14px] font-bold text-white bg-blue-600 rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:grayscale-[0.5] flex items-center justify-center gap-2"
                     >
                         {isUploading ? (

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, MoreVertical, Phone, Mail, User, Briefcase, Edit, Trash2, Ban, Flag, FileText } from "lucide-react";
+import { Plus, Search, MoreVertical, Phone, Mail, User, Briefcase, Edit, Trash2, Ban } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import EmployeeDetailsCard from "../components/EmployeeDetailsCard";
 import UniversalDrawer from "../components/UniversalDrawer";
@@ -571,6 +571,7 @@ const Employees = () => {
               setPreviewImage={setPreviewImage}
               onAddFileClick={() => setIsFileModalOpen(true)}
               onDeleteFileClick={handleDeleteFileClick}
+              isAddFileDisabled={(selectedEmployee?.documents?.length || 0) >= 3}
             />
           </div>
         )}
@@ -605,6 +606,7 @@ const Employees = () => {
         onTitlesChange={setQuickUploadTitles}
         onUpload={handleQuickUpload}
         isUploading={isQuickUploading}
+        maxFiles={3 - (selectedEmployee?.documents?.length || 0)}
       />
 
       {/* Success Modal */}
