@@ -77,14 +77,17 @@ const AccountTab = () => {
     const validatePersonal = (field: string, value: string) => {
         if (field === 'fullName') {
             if (!value.trim()) return 'Full name is required';
-            if (value.trim().length < 2) return 'Name too short';
+            if (value.trim().length < 3 || value.trim().length > 20) return 'Name must be between 3 and 20 characters';
         }
         return '';
     };
 
     const validateCompany = (field: string, value: string) => {
         switch (field) {
-            case 'name': if (!value.trim()) return 'Company name is required'; break;
+            case 'name':
+                if (!value.trim()) return 'Company name is required';
+                if (value.trim().length < 3 || value.trim().length > 20) return 'Name must be between 3 and 20 characters';
+                break;
             case 'email':
                 if (!value.trim()) return 'Email is required';
                 if (!/^(?!.*\.\.)[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$/.test(value)) return 'Invalid email format';
@@ -146,8 +149,7 @@ const AccountTab = () => {
 
     // Input field style helper
     const inputClasses = (hasError: boolean, isDisabled: boolean) =>
-        `w-full pl-10 pr-4 py-2.5 rounded-full transition-all border outline-none text-[13px] ${
-            hasError ? 'border-red-400 focus:ring-red-100' : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50'
+        `w-full pl-10 pr-4 py-2.5 rounded-full transition-all border outline-none text-[13px] ${hasError ? 'border-red-400 focus:ring-red-100' : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50'
         } ${isDisabled ? 'bg-gray-50 text-gray-500 cursor-not-allowed border-gray-200' : 'bg-white'}`;
 
     return (
@@ -397,9 +399,8 @@ const AccountTab = () => {
                                         value={passwordData.currentPassword}
                                         onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                                         placeholder="Enter Current Password"
-                                        className={`w-full pl-10 pr-10 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-[13px] ${
-                                            passwordErrors.currentPassword ? 'border-red-400' : ''
-                                        }`}
+                                        className={`w-full pl-10 pr-10 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-[13px] ${passwordErrors.currentPassword ? 'border-red-400' : ''
+                                            }`}
                                     />
                                     <button
                                         onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
@@ -423,9 +424,8 @@ const AccountTab = () => {
                                         value={passwordData.newPassword}
                                         onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                                         placeholder="Enter New Password"
-                                        className={`w-full pl-10 pr-10 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-[13px] ${
-                                            passwordErrors.newPassword ? 'border-red-400' : ''
-                                        }`}
+                                        className={`w-full pl-10 pr-10 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-[13px] ${passwordErrors.newPassword ? 'border-red-400' : ''
+                                            }`}
                                     />
                                     <button
                                         onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
@@ -447,9 +447,8 @@ const AccountTab = () => {
                                         value={passwordData.confirmPassword}
                                         onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                                         placeholder="Confirm New Password"
-                                        className={`w-full pl-10 pr-10 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-[13px] ${
-                                            passwordErrors.confirmPassword ? 'border-red-400' : ''
-                                        }`}
+                                        className={`w-full pl-10 pr-10 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-[13px] ${passwordErrors.confirmPassword ? 'border-red-400' : ''
+                                            }`}
                                     />
                                     <button
                                         onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
