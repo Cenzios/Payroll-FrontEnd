@@ -651,7 +651,7 @@ const Salary = () => {
           <div className="w-10/12 flex flex-col overflow-hidden">
 
             {/* FILTER BOX */}
-            <div className="bg-white gap-12 p-7 w-full rounded-xl mb-6 flex flex-row border border-gray-200">
+            <div className="bg-white gap-14 p-7 w-full rounded-xl mb-6 flex flex-row border border-gray-200">
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-800 mb-2">
                   Search Employee
@@ -663,7 +663,7 @@ const Salary = () => {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search by Name or ID"
-                    className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none w-64"
+                    className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none w-80"
                   />
                 </div>
               </div>
