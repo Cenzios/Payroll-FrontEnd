@@ -1368,7 +1368,23 @@ const UniversalDrawer = ({
                                     <span className="truncate max-w-[85%]">{file.name}</span>
                                     <button
                                       type="button"
-                                      onClick={() => setEmployeeFiles(prev => prev.filter((_, i) => i !== idx))}
+                                      onClick={() => {
+                                        const newFiles = employeeFiles.filter((_, i) => i !== idx);
+                                        setEmployeeFiles(newFiles);
+
+                                        // Re-index titles to match new file order
+                                        const newTitles: Record<number, string> = {};
+                                        let newIdx = 0;
+                                        for (let i = 0; i < employeeFiles.length; i++) {
+                                          if (i !== idx) {
+                                            if (employeeFileTitles[i]) {
+                                              newTitles[newIdx] = employeeFileTitles[i];
+                                            }
+                                            newIdx++;
+                                          }
+                                        }
+                                        setEmployeeFileTitles(newTitles);
+                                      }}
                                       className="text-gray-400 hover:text-red-500 transition-colors p-1"
                                     >
                                       <X className="w-3.5 h-3.5" />
