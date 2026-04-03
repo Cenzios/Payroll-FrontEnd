@@ -297,6 +297,13 @@ const UniversalDrawer = ({
     isOpen
   ]);
 
+  const [isAccountNameEdited, setIsAccountNameEdited] = useState(false);
+  useEffect(() => {
+    if (employeeData.fullName && !isAccountNameEdited) {
+      handleEmployeeChange("accountHolderName", employeeData.fullName);
+    }
+  }, [employeeData.fullName, isAccountNameEdited]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
@@ -1812,10 +1819,11 @@ const UniversalDrawer = ({
 
                             <input
                               type="text"
-                              value={employeeData.accountHolderName || ""}
-                              onChange={(e) =>
-                                handleEmployeeChange("accountHolderName", e.target.value)
-                              }
+                              value={employeeData.accountHolderName ?? ""}
+                              onChange={(e) => {
+                                setIsAccountNameEdited(true);
+                                handleEmployeeChange("accountHolderName", e.target.value);
+                              }}
                               placeholder="Enter Your Account Holder Name"
                               className={`text-[13px] w-full pr-4 px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountHolderName && errors.accountHolderName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                             />
