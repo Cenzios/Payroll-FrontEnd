@@ -27,6 +27,7 @@ const initialState: AuthState = {
   tempPassword: null,
   tempPlanId: null,
   selectedCompanyId: localStorage.getItem('selectedCompanyId') || null,
+  accessStatus: 'LOADING', // 'LOADING' | 'ACTIVE' | 'BLOCKED'
 };
 
 interface DecodedToken {
@@ -61,6 +62,21 @@ export const startSignup = createAsyncThunk(
         error.message ||
         'Signup failed';
       return rejectWithValue(message);
+    }
+  }
+);
+
+export const checkAccessStatus = createAsyncThunk(
+  'auth/checkAccessStatus',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get('/subscription/access-status');
+      return response.data.data; // { status: 'ACTIVE' | 'BLOCKED', message?: string }
+    } catch (error: any) {
+      if (error.response?.status === 403 && error.response?.data?.code === 'SUBSCRIPTION_BLOCKED') {
+        return { status: 'BLOCKED', message: error.response.data.message };
+      }
+      return rejectWithValue(error.response?.data?.message || 'Failed to check access status');
     }
   }
 );
@@ -304,6 +320,17 @@ const authSlice = createSlice({
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+      .addCase(checkAccessStatus.pending, (state) => {
+        state.accessStatus = 'LOADING';
+      })
+      .addCase(checkAccessStatus.fulfilled, (state, action) => {
+        state.accessStatus = action.payload.status;
+      })
+      .addCase(checkAccessStatus.rejected, (state) => {
+        // If it fails, default to ACTIVE so we don't break the app due to network errors
+        // unless it's a hard 403 which is handled in try/catch block
+        state.accessStatus = 'ACTIVE';
       });
   },
 });

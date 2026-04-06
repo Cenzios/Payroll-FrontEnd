@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Crown, ShieldCheck, Users, Calendar, ExternalLink, RefreshCcw } from 'lucide-react';
+import { Crown, ShieldCheck, Users, Calendar, RefreshCcw } from 'lucide-react';
 import { useGetSubscriptionQuery, useCancelSubscriptionMutation } from '../../store/apiSlice';
 import { useAppDispatch } from '../../store/hooks';
 import { logout } from '../../store/slices/authSlice';
@@ -131,12 +131,6 @@ const SubscriptionSection = () => {
                                     className="px-6 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-all order-2 sm:order-1 capitalize whitespace-nowrap disabled:opacity-50"
                                 >
                                     {isCancelling ? 'Cancelling...' : 'Cancel plan'}
-                                </button>
-                                <button
-                                    onClick={() => navigate('/get-plan?isPlanChange=true')}
-                                    className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 order-1 sm:order-2 shadow-lg shadow-blue-100 whitespace-nowrap"
-                                >
-                                    Change Plan <ExternalLink className="h-4 w-4" />
                                 </button>
                             </div>
                         </div>
