@@ -83,6 +83,7 @@ export const exportPayslip = (
         previewPayslip: PayslipData;
         selectedEmployee: Employee;
         companyName: string;
+        companyAddress?: string;
         selectedMonth: number;
         selectedYear: number;
         companyWorkingDays: number;
@@ -92,6 +93,7 @@ export const exportPayslip = (
         previewPayslip,
         selectedEmployee,
         companyName,
+        companyAddress,
         selectedMonth,
         selectedYear,
         companyWorkingDays,
@@ -99,154 +101,202 @@ export const exportPayslip = (
 
     if (format === "pdf") {
         const doc = new jsPDF();
+        const periodStr = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" });
 
-        // Header
-        doc.setFontSize(18);
+        // 1. Header Background (Dark Rect at top)
+        doc.setFillColor(45, 45, 45); // #2d2d2d
+        doc.rect(0, 0, 210, 45, "F");
+
+        // Simulated curves in header
+        doc.setFillColor(60, 60, 60);
+        doc.circle(210, 10, 70, "F");
+        doc.setFillColor(15, 15, 15);
+        doc.circle(240, 20, 65, "F");
+
+        // Vertical accent line
+        doc.setFillColor(255, 255, 255);
+        doc.rect(14, 10, 1, 26, "F");
+
+        // Clip overflow: Draw white rect over everything below the header
+        doc.rect(0, 45, 210, 252, "F");
+
+        // Header Texts - Left
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
         doc.setFont("helvetica", "bold");
-        doc.text(companyName.toUpperCase(), 105, 20, { align: "center" });
+        doc.text("CenzHRM", 18, 13);
+
+        doc.setFontSize(26);
+        doc.text("Pay Slip", 18, 25);
+
+        doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(12);
-        doc.text(
-            `PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" })}`,
-            105,
-            30,
-            { align: "center" }
-        );
+        doc.setTextColor(180, 180, 180);
+        doc.text(`Here's your Payroll History • Period: ${periodStr}`, 18, 33);
 
-        doc.line(14, 35, 196, 35);
+        // Header Texts - Right
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        const companyLines = doc.splitTextToSize(companyName, 80);
+        // align correctly by calculating offset or just relying on right align
+        doc.text(companyLines, 196, 18, { align: "right" });
 
-        // Employee Details
-        doc.setFontSize(10);
-        doc.text(`Employee Name : ${selectedEmployee.fullName}`, 14, 45);
-        doc.text(`Employee No   : ${selectedEmployee.employeeId}`, 14, 52);
-        doc.text(`Designation   : ${selectedEmployee.designation}`, 14, 59);
-
-        // Earnings
-        doc.setFontSize(11);
-        doc.text("EARNINGS", 14, 70);
-
-        autoTable(doc, {
-            startY: 75,
-            head: [["Description", "Amount (Rs.)"]],
-            body: [
-                ["Rate Type", previewPayslip.salaryType],
-                ["Basic Rate", formatCurrency(previewPayslip.basicSalary)],
-                ["Working Days", companyWorkingDays.toString()],
-                ["Worked Days", previewPayslip.workedDays.toString()],
-                ["Calculated Basic Pay", formatCurrency(previewPayslip.basicPay)],
-                ...(previewPayslip.otAmount > 0
-                    ? [
-                        [
-                            `OT Amount (${previewPayslip.otHours} hrs)`,
-                            formatCurrency(previewPayslip.otAmount),
-                        ],
-                    ]
-                    : []),
-                ...(previewPayslip.allowances || []).map((a) => [
-                    a.name,
-                    formatCurrency(a.amount),
-                ]),
-                [
-                    "Gross Earnings",
-                    formatCurrency(
-                        previewPayslip.basicPay +
-                        previewPayslip.otAmount +
-                        (previewPayslip.allowances || []).reduce(
-                            (sum, a) => sum + a.amount,
-                            0
-                        )
-                    ),
-                ],
-            ],
-            theme: "plain",
-            styles: { fontSize: 10, cellPadding: 2 },
-            headStyles: { halign: "left" },
-            columnStyles: {
-                1: { halign: "right" },
-            },
-            didParseCell: (data) => {
-                if (data.section === "head" && data.column.index === 1) {
-                    data.cell.styles.halign = "right";
-                }
-            },
-        });
-
-        let currentY = (doc as any).lastAutoTable.finalY + 10;
-
-        // Deductions
-        doc.text("DEDUCTIONS", 14, currentY);
-        currentY += 5;
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-
-        if (previewPayslip.isEpfEnabled) {
-            doc.text("EPF Employee (8%)", 14, currentY);
-            doc.text(formatCurrency(previewPayslip.epf8), 196, currentY, {
-                align: "right",
-            });
-            currentY += 7;
+        if (companyAddress) {
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(180, 180, 180);
+            const addressLines = doc.splitTextToSize(companyAddress, 80);
+            doc.text(addressLines, 196, 18 + (companyLines.length * 6), { align: "right" });
         }
 
-        previewPayslip.deductions.forEach((d) => {
+        // 2. EMPLOYEE DETAILS Section
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("EMPLOYEE DETAILS", 14, 60);
+
+        // Details Grid
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.setFont("helvetica", "normal");
+        doc.text("Employee Name", 14, 70);
+        doc.text("Employee No", 75, 70);
+        doc.text("Designation", 125, 70);
+        doc.text("Pay Period", 175, 70);
+
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "bold");
+        doc.text(selectedEmployee.fullName, 14, 76);
+        doc.text(selectedEmployee.employeeId, 75, 76);
+
+        const designation = selectedEmployee.designation || "-";
+        const desigLines = doc.splitTextToSize(designation, 40);
+        doc.text(desigLines, 125, 76);
+        doc.text(periodStr, 175, 76);
+
+        // 3. EARNINGS Section
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("EARNINGS", 14, 92);
+
+        let currentY = 100;
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0, 0, 0);
+        doc.text("Description", 14, currentY);
+        doc.text("Amount (Rs.)", 196, currentY, { align: "right" });
+        currentY += 4;
+
+        doc.setLineWidth(0.2);
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, currentY, 196, currentY);
+        currentY += 8;
+
+        const addRow = (desc: string, val: string, isBold: boolean = false) => {
+            if (isBold) {
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(0, 0, 0);
+            } else {
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(60, 60, 60);
+            }
+            doc.text(desc, 14, currentY);
+            doc.text(val, 196, currentY, { align: "right" });
+            currentY += 7;
+        };
+
+        addRow("Rate Type", previewPayslip.salaryType);
+        addRow("Basic Rate", formatCurrency(previewPayslip.basicSalary));
+        addRow("Working Days", companyWorkingDays.toString());
+        addRow("Worked Days", previewPayslip.workedDays.toString());
+        addRow("Calculated Basic Pay", formatCurrency(previewPayslip.basicPay));
+
+        if (previewPayslip.otAmount > 0) {
+            addRow(`OT Amount (${previewPayslip.otHours} hrs)`, formatCurrency(previewPayslip.otAmount));
+        }
+
+        (previewPayslip.allowances || []).forEach(a => {
+            addRow(a.name, formatCurrency(a.amount));
+        });
+
+        // Gross Earnings End Line
+        currentY += 1;
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.6);
+        doc.line(14, currentY, 196, currentY);
+        currentY += 6;
+
+        let gross = previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum, a) => sum + a.amount, 0);
+        addRow("Gross Earnings", formatCurrency(gross), true);
+
+        // 4. DEDUCTIONS SECTION
+        currentY += 8;
+        doc.setTextColor(100, 100, 100);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("DEDUCTIONS", 14, currentY);
+        currentY += 8;
+
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0, 0, 0);
+        doc.text("Description", 14, currentY);
+        doc.text("Amount (Rs.)", 196, currentY, { align: "right" });
+        currentY += 4;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.2);
+        doc.line(14, currentY, 196, currentY);
+        currentY += 8;
+
+        if (previewPayslip.isEpfEnabled) {
+            addRow("EPF Employee (8%)", formatCurrency(previewPayslip.epf8));
+        }
+        if (previewPayslip.loanDeduction > 0) {
+            addRow("Loan Installment", formatCurrency(previewPayslip.loanDeduction));
+        }
+        previewPayslip.deductions.forEach(d => {
             if (d.amount > 0) {
-                doc.text(d.name, 14, currentY);
-                doc.text(formatCurrency(d.amount), 196, currentY, { align: "right" });
-                currentY += 7;
+                addRow(d.name, formatCurrency(d.amount));
             }
         });
 
-        // Total Deductions
-        doc.setLineWidth(0.2);
+        currentY += 1;
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.6);
         doc.line(14, currentY, 196, currentY);
         currentY += 6;
+        addRow("Total Deductions", formatCurrency(previewPayslip.totalDeductions), true);
+
+        // 5. NET SALARY BOX
+        currentY += 12;
+        doc.setFillColor(85, 80, 85); // Dark banner
+        doc.rect(14, currentY, 182, 14, "F");
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text("Total Deductions", 14, currentY);
-        doc.text(formatCurrency(previewPayslip.totalDeductions), 196, currentY, {
-            align: "right",
-        });
-        currentY += 10;
+        doc.text("NET SALARY", 20, currentY + 9);
+        doc.text(`Net Salary Payable : ${formatCurrency(previewPayslip.netSalary)}`, 190, currentY + 9, { align: "right" });
 
-        // Net Salary
-        doc.setLineWidth(0.5);
-        doc.line(14, currentY, 196, currentY);
-        doc.setFontSize(12);
-        doc.text("NET SALARY", 14, currentY + 8);
-        doc.text(
-            `Net Salary Payable : ${formatCurrency(previewPayslip.netSalary)}`,
-            196,
-            currentY + 8,
-            { align: "right" }
-        );
-        doc.line(14, currentY + 12, 196, currentY + 12);
-        doc.line(14, currentY + 14, 196, currentY + 14);
+        // 6. BOTTOM FOOTER
+        const pageHeight = doc.internal.pageSize.getHeight();
+        doc.setFillColor(10, 10, 10);
+        doc.rect(0, pageHeight - 15, 210, 15, "F");
 
-        currentY += 25;
+        doc.setTextColor(120, 120, 120);
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Generated by CenzHRM - Product by Cenzios Pvt Ltd - Year: ${selectedYear} - Month: ${new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "short" })}`, 105, pageHeight - 6, { align: "center" });
 
-        // Employer Contributions
-        if (previewPayslip.isEpfEnabled) {
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "bold");
-            doc.text("EMPLOYER CONTRIBUTIONS (Informational)", 14, currentY);
-            currentY += 7;
-            doc.setFont("helvetica", "normal");
-            doc.text("EPF Employer (12%)", 14, currentY);
-            doc.text(formatCurrency(previewPayslip.epf12), 196, currentY, {
-                align: "right",
-            });
-            currentY += 7;
-            doc.text("ETF Employer (3%)", 14, currentY);
-            doc.text(formatCurrency(previewPayslip.etf3), 196, currentY, {
-                align: "right",
-            });
-        }
-
-        // Signature Area
-        currentY += 30;
-        doc.line(14, currentY, 70, currentY);
-        doc.line(140, currentY, 196, currentY);
-        doc.setFontSize(9);
-        doc.text("Prepared By", 42, currentY + 5, { align: "center" });
-        doc.text("Employee Signature", 168, currentY + 5, { align: "center" });
+        doc.setFillColor(180, 180, 180);
+        doc.rect(184, pageHeight - 10, 12, 5, "F");
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7);
+        doc.text("Page 1/1", 190, pageHeight - 6.5, { align: "center" });
 
         doc.save(`Payslip_${selectedEmployee.employeeId}.pdf`);
     } else if (format === "excel" || format === "csv") {
