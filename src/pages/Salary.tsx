@@ -388,11 +388,11 @@ const Salary = () => {
   };
 
   const handleEmployeeOtHoursChange = (empId: string, val: number) => {
-    dispatch(setEmployeeOtHours({ id: empId, hours: val }));
+    dispatch(setEmployeeOtHours({ id: empId, hours: Math.max(0, val) }));
   };
 
   const handleEmployeeSalaryAdvanceChange = (empId: string, val: number) => {
-    dispatch(setEmployeeSalaryAdvance({ id: empId, advance: val }));
+    dispatch(setEmployeeSalaryAdvance({ id: empId, advance: Math.max(0, val) }));
   };
 
   // Handle Generate process (Preview or Save)
@@ -576,7 +576,11 @@ const Salary = () => {
         epf12: savedRecord.employerEPF,
         etf3: savedRecord.etfAmount,
         dailyRate: savedRecord.salaryType === "MONTHLY" ? ((savedRecord.basicSalary || 0) / companyWorkingDays) : (savedRecord.basicSalary || 0),
-        deductions: (savedRecord.deductions || []).map((d: any) => ({ name: d.type, amount: d.amount })),
+        deductions: [
+          ...(savedRecord.salaryAdvance > 0 ? [{ name: "Salary Advance", amount: savedRecord.salaryAdvance }] : []),
+          ...(savedRecord.loanDeduction > 0 ? [{ name: "Loan Deduction", amount: savedRecord.loanDeduction }] : []),
+          ...(savedRecord.deductions || []).map((d: any) => ({ name: d.type, amount: d.amount })),
+        ],
         allowances: (savedRecord.allowances || []).map((a: any) => ({ name: a.type, amount: a.amount })),
       };
       dispatch(setPreviewPayslip(details));

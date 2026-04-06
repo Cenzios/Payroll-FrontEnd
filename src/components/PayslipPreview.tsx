@@ -179,6 +179,8 @@ const PayslipPreview = ({
                             <span>Amount (Rs.)</span>
                         </div>
 
+                        <Divider />
+
                         {/* Deductions rows */}
                         <div className="space-y-0.5 pl-1 mb-1">
                             {previewPayslip.isEpfEnabled && (
@@ -187,22 +189,8 @@ const PayslipPreview = ({
                                     <span>:  {previewPayslip.epf8.toFixed(2)}</span>
                                 </div>
                             )}
-                            {/* Salary Advance */}
-                            {previewPayslip.salaryAdvance > 0 && (
-                                <div className="flex text-[12px]">
-                                    <span className="w-56">Salary Advance</span>
-                                    <span>:  {previewPayslip.salaryAdvance.toFixed(2)}</span>
-                                </div>
-                            )}
-                            {/* Loan */}
-                            {previewPayslip.loanDeduction > 0 && (
-                                <div className="flex text-[12px]">
-                                    <span className="w-56">Loan Deduction</span>
-                                    <span>:  {previewPayslip.loanDeduction.toFixed(2)}</span>
-                                </div>
-                            )}
-                            {/* Other deductions */}
-                            {previewPayslip.deductions?.map((d: any, i: number) => (
+                            {/* Deductions including Salary Advance & Loans */}
+                            {previewPayslip.deductions?.filter((d: any) => d.amount > 0).map((d: any, i: number) => (
                                 <div key={i} className="flex text-[12px]">
                                     <span className="w-56">{d.name}</span>
                                     <span>:  {d.amount.toFixed(2)}</span>

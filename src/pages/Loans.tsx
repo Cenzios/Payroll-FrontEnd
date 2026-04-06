@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar';
 import PageHeader from '../components/PageHeader';
 import CreateLoanDrawer from '../components/CreateLoanDrawer';
 import LoanHistoryView from '../components/LoanHistoryView';
+import SuccessModal from '../components/SuccessModal';
 import { useGetLoansQuery } from '../store/apiSlice';
 import loanIcon from '../assets/images/loanicon.svg';
 import { DollarSign, HandCoins, CircleDotDashed, Shapes } from 'lucide-react';
@@ -27,6 +28,7 @@ const getStatusBadge = (status: string) => {
 
 const Loans = () => {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<any | null>(null);
   const { selectedCompanyId } = useAppSelector((state) => state.auth);
 
@@ -162,48 +164,50 @@ const Loans = () => {
                       />
                     </div>
 
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-[#F3F4F6]">
-                          <th className="py-4 px-6 text-sm font-medium text-[#989FA7]">Employee</th>
-                          <th className="py-4 px-6 text-sm font-medium text-[#989FA7]">Loan Title</th>
-                          <th className="py-4 px-6 text-sm font-medium text-[#989FA7]">Amount</th>
-                          <th className="py-4 px-6 text-sm font-medium text-[#989FA7]">Interest Rate</th>
-                          <th className="py-4 px-6 text-sm font-medium text-[#989FA7]">Installments</th>
-                          <th className="py-4 px-6 text-sm font-medium text-[#989FA7]">Monthly Premium</th>
-                          <th className="py-4 px-6 text-sm font-medium text-[#989FA7]">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#F3F4F6] ">
-                        {loans.map((loan: any) => (
-                          <tr
-                            key={loan.id}
-                            className="hover:bg-gray-50 transition-colors cursor-pointer"
-                            onClick={() => setSelectedLoan(loan)}
-                          >
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 border border-transparent flex items-center justify-center text-blue-600 font-bold overflow-hidden shrink-0">
-                                  {loan.employee?.fullName?.charAt(0) || 'E'}
-                                </div>
-                                <div>
-                                  <div className="text-[14px] font-bold text-[#353843]">{loan.employee?.fullName}</div>
-                                  <div className="text-[12px] text-[#A8B0B9] mt-0.5">{loan.employee?.employeeId}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.loanTitle}</td>
-                            <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">Rs: {loan.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                            <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.interestRate}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})</td>
-                            <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.installments?.filter((i: any) => i.status === 'PAID').length || 0} / {loan.installmentCount}</td>
-                            <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">Rs:{loan.monthlyPremium.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                            <td className="py-4 px-6">
-                              {getStatusBadge(loan.status || 'Active')}
-                            </td>
+                    <div className="border border-[#F3F4F6] rounded-xl overflow-hidden">
+                      <table className="w-full text-left border-collapse bg-white">
+                        <thead className="bg-[#FAFBFC]">
+                          <tr className="border-b border-[#F3F4F6] border-t-2">
+                            <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Employee</th>
+                            <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Loan Title</th>
+                            <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Amount</th>
+                            <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Interest Rate</th>
+                            <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Installments</th>
+                            <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Monthly Premium</th>
+                            <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Status</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-[#F3F4F6] ">
+                          {loans.map((loan: any) => (
+                            <tr
+                              key={loan.id}
+                              className="hover:bg-gray-50 transition-colors cursor-pointer"
+                              onClick={() => setSelectedLoan(loan)}
+                            >
+                              <td className="py-4 px-6">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-blue-100 border border-transparent flex items-center justify-center text-blue-600 font-bold overflow-hidden shrink-0">
+                                    {loan.employee?.fullName?.charAt(0) || 'E'}
+                                  </div>
+                                  <div>
+                                    <div className="text-[14px] font-bold text-[#353843]">{loan.employee?.fullName}</div>
+                                    <div className="text-[12px] text-[#A8B0B9] mt-0.5">{loan.employee?.employeeId}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.loanTitle}</td>
+                              <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">Rs: {loan.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                              <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.interestRate}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})</td>
+                              <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.installments?.filter((i: any) => i.status === 'PAID').length || 0} / {loan.installmentCount}</td>
+                              <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">Rs:{loan.monthlyPremium.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                              <td className="py-4 px-6">
+                                {getStatusBadge(loan.status || 'Active')}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </>
                 )}
               </div>
@@ -215,7 +219,15 @@ const Loans = () => {
       <CreateLoanDrawer
         isOpen={isCreateDrawerOpen}
         onClose={() => setIsCreateDrawerOpen(false)}
+        onSuccess={() => setShowSuccessModal(true)}
         companyId={selectedCompanyId}
+      />
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="Changes Saved"
+        message="Loan details successfully added."
       />
     </div>
 
