@@ -164,7 +164,7 @@ const Loans = () => {
 
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="border-b border-gray-100">
+                        <tr className="border-b border-[#F3F4F6]">
                           <th className="py-4 px-6 text-sm font-medium text-[#989FA7]">Employee</th>
                           <th className="py-4 px-6 text-sm font-medium text-[#989FA7]">Loan Title</th>
                           <th className="py-4 px-6 text-sm font-medium text-[#989FA7]">Amount</th>
@@ -174,7 +174,7 @@ const Loans = () => {
                           <th className="py-4 px-6 text-sm font-medium text-[#989FA7]">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-50">
+                      <tbody className="divide-y divide-[#F3F4F6] ">
                         {loans.map((loan: any) => (
                           <tr
                             key={loan.id}
@@ -218,6 +218,8 @@ const Loans = () => {
         companyId={selectedCompanyId}
       />
     </div>
+
+
   );
 };
 

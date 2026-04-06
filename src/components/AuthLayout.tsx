@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import logo from '../assets/images/logo.svg';
+import logo from '../assets/images/logo-login.svg';
 import illustrationAsset from '../assets/images/Ilustration-Asset.svg';
 import mainImage from '../assets/images/Image.svg';
 import kit2 from '../assets/images/Kit 2.svg';

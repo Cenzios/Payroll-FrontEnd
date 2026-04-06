@@ -156,8 +156,8 @@ const EmployeeSalaryCard = ({
             onClick={() => handleSelectEmployee(emp)}
             className={`relative bg-[#f0f5ff] rounded-2xl border cursor-pointer transition-all duration-200 overflow-hidden
         ${isSelected
-                    ? "border-blue-300 shadow-lg ring-1 ring-blue-200"
-                    : "border-blue-100 hover:border-blue-200 hover:shadow-md"
+                    ? "border-[#407BFF] shadow-lg ring-1 ring-blue-200"
+                    : "border-[#407BFF] border-l-4 border-l-[#407BFF] "
                 }`}
         >
             {/* Lock overlay — covers upper rows in both collapsed and expanded state, never covers bottom bar */}
@@ -221,7 +221,7 @@ const EmployeeSalaryCard = ({
             </div>
 
             {/* ── ROW 2: Salary info strip ── */}
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-blue-100/70 bg-white">
+            <div className="flex items-center gap-3 px-5 py-3 border-b border-blue-100/70 bg-white">
                 {/* Monthly/Daily pay */}
                 <div className="pr-6 border-r border-gray-200">
                     <p className="text-[12px] text-gray-400 mb-0.5">{emp.salaryType === "MONTHLY" ? "Monthly pay" : "Daily Rate"}</p>
@@ -271,7 +271,7 @@ const EmployeeSalaryCard = ({
                     {/* ── ROW 3: Input fields ── */}
                     <div className="flex items-center gap-2 px-5 py-3 border-b border-blue-100/70 bg-white">
                         {/* Worked */}
-                        <div className="pr-6 w-36 border-r border-gray-200">
+                        <div className="pr-6 w-[120px] border-r border-gray-200">
                             <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Worked Days</p>
                             <input
                                 type="number"
@@ -288,7 +288,7 @@ const EmployeeSalaryCard = ({
 
                         {/* OT Hours */}
                         {emp.otRate > 0 && (
-                            <div className="px-6 w-44 border-r border-gray-200">
+                            <div className="px-6 w-40 border-r border-gray-200">
                                 <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">OT Hours</p>
                                 <input
                                     type="number"
@@ -304,7 +304,7 @@ const EmployeeSalaryCard = ({
 
                         {/* Advance */}
                         {emp.otRate > 0 && (
-                            <div className="px-6 w-44 border-r border-gray-200">
+                            <div className="px-6 w-40 border-r border-gray-200">
                                 <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Advance</p>
                                 <input
                                     type="number"
@@ -406,10 +406,10 @@ const EmployeeSalaryCard = ({
                         <Loader className="w-5 h-5 rounded-full p-[2.5px] bg-[#5C81FE] text-white mr-2" />
                         <p className="text-[#3D70F5] font-semibold">Click to Calculate Salary</p>
                     </div>
-                    <div className="flex">
+                    {/* <div className="flex">
                         <p className="text-[#8791A9] font-extralight">Enter OT hours, deductions & generate pay-slip</p>
                         <ChevronDown className="w-4 h-4 text-[#8791A9] ml-1" />
-                    </div>
+                    </div> */}
                 </div>
             )}
 

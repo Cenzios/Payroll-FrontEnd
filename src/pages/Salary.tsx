@@ -668,12 +668,12 @@ const Salary = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-800 mb-2">
-                  Month & Year
+              <div className="flex flex-col max-w-xs">
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5 ml-1">
+                  Select Period
                 </label>
-                <div className="relative">
-                  <Calendar className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <div className="group relative">
+                  <Calendar className="w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="month"
                     value={`${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`}
@@ -684,7 +684,7 @@ const Salary = () => {
                       handleYearChange(parseInt(year));
                       handleMonthChange(parseInt(month) - 1);
                     }}
-                    className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none cursor-pointer"
+                    className="w-full bg-white pl-10 pr-4 py-2.5 rounded-xl text-sm text-gray-800 border border-gray-200 shadow-sm transition-all hover:border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none cursor-pointer"
                   />
                 </div>
               </div>
