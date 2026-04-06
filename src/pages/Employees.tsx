@@ -571,6 +571,7 @@ const Employees = () => {
               setPreviewImage={setPreviewImage}
               onAddFileClick={() => setIsFileModalOpen(true)}
               onDeleteFileClick={handleDeleteFileClick}
+              onEditClick={() => selectedEmployee && handleEdit(selectedEmployee)}
               isAddFileDisabled={(selectedEmployee?.documents?.length || 0) >= 3}
             />
           </div>
