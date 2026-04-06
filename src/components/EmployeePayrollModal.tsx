@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, FileText, FileSpreadsheet, Download, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
 import Toast from './Toast';
-import { exportEmployeeMonthlySummary } from '../utils/exportService';
 
 interface EmployeePayrollModalProps {
     isOpen: boolean;
@@ -27,8 +26,8 @@ interface MonthlyData {
     employeeEPF: number;
     companyEPFETF: number;
     loanDeduction?: number;
-    allowances?: { type: string, amount: number }[];
-    customDeductions?: { type: string, amount: number }[];
+    allowances?: { type: string; amount: number }[];
+    customDeductions?: { type: string; amount: number }[];
 }
 
 interface EmployeeData {
@@ -52,15 +51,20 @@ interface EmployeeData {
     };
 }
 
-const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, year }: EmployeePayrollModalProps) => {
+const fmt = (val: number) =>
+    `Rs. ${val.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+
+const EmployeePayrollModal = ({
+    isOpen,
+    onClose,
+    employeeId,
+    companyId,
+    month,
+    year,
+}: EmployeePayrollModalProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const [employeeData, setEmployeeData] = useState<EmployeeData | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-    const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
-
-    const toggleMonth = (month: string) => {
-        setExpandedMonths(prev => ({ ...prev, [month]: !prev[month] }));
-    };
 
     useEffect(() => {
         if (isOpen && employeeId && companyId && month && year) {
@@ -71,251 +75,235 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
     const fetchEmployeeData = async () => {
         setIsLoading(true);
         try {
-            console.log('Fetching data for:', { employeeId, companyId, month, year });
             const response = await reportApi.getEmployeePayrollSummary(employeeId, companyId, month, year);
-            console.log('API Response:', response);
-
-            // The API returns { success, message, data: {...} }
-            // The reportApi.getEmployeePayrollSummary already returns response.data from axios
-            // So we need to access response.data to get the actual employee data
             const actualData = response.data || response;
-            console.log('Setting employee data:', actualData);
             setEmployeeData(actualData);
         } catch (error: any) {
-            console.error('Error fetching employee data:', error);
             setToast({
                 message: error.response?.data?.message || 'Failed to fetch employee data',
-                type: 'error'
+                type: 'error',
             });
         } finally {
             setIsLoading(false);
         }
     };
 
-    const exportPDF = () => {
-        if (!employeeData) return;
-        exportEmployeeMonthlySummary('pdf', employeeData);
-        setToast({ message: 'PDF exported successfully', type: 'success' });
-    };
-
-    const exportExcel = () => {
-        if (!employeeData) return;
-        exportEmployeeMonthlySummary('excel', employeeData);
-        setToast({ message: 'Excel exported successfully', type: 'success' });
-    };
-
-    const exportCSV = () => {
-        if (!employeeData) return;
-        exportEmployeeMonthlySummary('csv', employeeData);
-        setToast({ message: 'CSV exported successfully', type: 'success' });
-    };
-
     if (!isOpen) return null;
+
+    const row: MonthlyData | undefined = employeeData?.monthlyBreakdown?.[0];
+    const totals = employeeData?.annualTotals;
+
+    const monthLabels = employeeData?.monthlyBreakdown?.map(m => m.month) ?? [];
+    const monthRangeLabel =
+        monthLabels.length > 1
+            ? `${monthLabels[0]} – ${monthLabels[monthLabels.length - 1]}`
+            : monthLabels[0] ?? '';
 
     return (
         <>
             <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-                    {/* Header */}
-                    <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-gray-50">
-                        <h2 className="text-xl font-bold text-gray-900">PAYROLL SUMMARY REPORT</h2>
-                        <button
-                            onClick={onClose}
-                            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                        >
-                            <X className="w-5 h-5 text-gray-600" />
-                        </button>
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden">
+
+                    {/* ── Header ── */}
+                    <div className="flex items-center justify-between px-7 pt-6 pb-4">
+                        <h2 className="text-xl font-bold text-gray-900">
+                            {employeeData?.employeeName ?? '—'}
+                        </h2>
+                        <div className="flex items-center gap-3">
+                            {(employeeData?.employeeCode || monthRangeLabel) && (
+                                <p className="text-sm text-blue-400">
+                                    {employeeData?.employeeCode
+                                        ? `${employeeData.employeeCode}${monthRangeLabel ? ` · ${monthRangeLabel}` : ''}`
+                                        : monthRangeLabel}
+                                </p>
+                            )}
+                            <button
+                                onClick={onClose}
+                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                <X className="w-5 h-5 text-gray-400" />
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-6">
+                    {/* ── Summary Pills ── */}
+                    <div className="flex gap-3 px-7 pb-5">
+                        <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white flex-1">
+                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">Net Pay</span>
+                            <span className="text-sm font-bold text-blue-600 whitespace-nowrap ml-auto">
+                                {totals ? fmt(totals.netPay) : '—'}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white flex-1">
+                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">Gross Pay</span>
+                            <span className="text-sm font-bold text-gray-800 whitespace-nowrap ml-auto">
+                                {totals ? fmt(totals.grossPay) : '—'}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white flex-1">
+                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">Deductions</span>
+                            <span className="text-sm font-bold text-red-500 whitespace-nowrap ml-auto">
+                                {totals ? `– ${fmt(totals.deductions)}` : '—'}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* ── Body ── */}
+                    <div className="flex-1 overflow-y-auto px-7 pb-2 max-h-[60vh]">
                         {isLoading ? (
-                            <div className="flex justify-center items-center h-32">
+                            <div className="flex justify-center items-center py-16">
                                 <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
                             </div>
-                        ) : employeeData ? (
+                        ) : !employeeData || !row ? (
+                            <div className="text-center py-16 text-gray-400 text-sm">No data available</div>
+                        ) : (
                             <>
-                                {/* Employee Information */}
-                                <div className="bg-gray-50 rounded-lg p-1 mb-3">
-                                    <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Employee Name:</span>
-                                            <span className="text-base font-medium text-gray-900">{employeeData.employeeName}</span>
-                                        </div>
+                                {/* EARNINGS */}
+                                <div className="mb-5">
+                                    {/* Section header row */}
+                                    <div className="flex items-center justify-between py-2 mb-1">
+                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Earnings</span>
+                                        <span className="text-sm font-bold text-green-600">{fmt(row.grossPay)}</span>
+                                    </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Employee ID:</span>
-                                            <span className="text-base font-medium text-gray-900">{employeeData.employeeCode}</span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Position:</span>
-                                            <span className="text-base font-medium text-gray-900">{employeeData.designation}</span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Basic Salary:</span>
-                                            <span className="text-base font-medium text-gray-900">
-                                                RS: {employeeData.basicSalary.toLocaleString()}
+                                    {/* Table rows */}
+                                    <div className="rounded-xl border border-gray-100 overflow-hidden">
+                                        {/* Basic Salary */}
+                                        <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
+                                            <span className="text-sm font-medium text-gray-800 w-44">Basic salary</span>
+                                            <span className="text-sm text-gray-400 flex-1 text-center">
+                                                {row.workedDays} days
+                                            </span>
+                                            <span className="text-sm font-semibold text-gray-900 text-right w-36">
+                                                {fmt(row.basicPay)}
                                             </span>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Joined Date:</span>
-                                            <span className="text-base font-medium text-gray-900">{employeeData.joinedDate}</span>
-                                        </div>
-                                    </div>
+                                        {/* Overtime */}
+                                        {row.otAmount > 0 && (
+                                            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
+                                                <span className="text-sm font-medium text-gray-800 w-44">Overtime</span>
+                                                <span className="text-sm text-gray-400 flex-1 text-center">
+                                                    {row.otHours} hrs × Rs.{' '}
+                                                    {row.otHours > 0
+                                                        ? (row.otAmount / row.otHours).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                                                        : '0.00'}
+                                                    /hr
+                                                </span>
+                                                <span className="text-sm font-semibold text-gray-900 text-right w-36">
+                                                    {fmt(row.otAmount)}
+                                                </span>
+                                            </div>
+                                        )}
 
+                                        {/* Custom Allowances */}
+                                        {row.allowances?.map((a, i) => (
+                                            <div key={i} className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
+                                                <span className="text-sm font-medium text-gray-800 w-44">{a.type}</span>
+                                                <span className="text-sm text-gray-400 flex-1 text-center"></span>
+                                                <span className="text-sm font-semibold text-gray-900 text-right w-36">
+                                                    {fmt(a.amount)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
-                                {/* Monthly Breakdown Table */}
-                                <div className="bg-white rounded-lg border border-gray-200">
-                                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                                        <h3 className="text-sm font-bold text-gray-800">Monthly Breakdown</h3>
+                                {/* DEDUCTIONS */}
+                                <div className="mb-5">
+                                    <div className="flex items-center justify-between py-2 mb-1">
+                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Deductions</span>
+                                        <span className="text-sm font-bold text-red-500">– {fmt(row.deductions)}</span>
                                     </div>
 
-                                    {employeeData.monthlyBreakdown.length === 0 ? (
-                                        <div className="px-6 py-12 text-center text-gray-500">
-                                            No salary data available
+                                    <div className="rounded-xl border border-gray-100 overflow-hidden">
+                                        {/* Employee EPF */}
+                                        <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
+                                            <span className="text-sm font-medium text-gray-800 w-44">Employee EPF</span>
+                                            <span className="text-sm text-gray-400 flex-1 text-center">8% of basic salary</span>
+                                            <span className="text-sm font-semibold text-red-500 text-right w-36">
+                                                – {fmt(row.employeeEPF)}
+                                            </span>
                                         </div>
-                                    ) : (
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full text-sm">
-                                                <thead className="bg-gray-800 text-white">
-                                                    <tr>
-                                                        <th className="px-4 py-3 text-center w-10"></th>
-                                                        <th className="px-4 py-3 text-left font-semibold">Month</th>
-                                                        <th className="px-4 py-3 text-center font-semibold">Days</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Basic</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">OT</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Gross</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Net</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Advance</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Total Ded.</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Loan Ded.</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">EPF 8%</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-100">
-                                                    {employeeData.monthlyBreakdown.map((row, index) => (
-                                                        <React.Fragment key={index}>
-                                                            <tr className="hover:bg-gray-50 border-b border-gray-100 cursor-pointer" onClick={() => toggleMonth(row.month)}>
-                                                                <td className="px-4 py-3 text-center">
-                                                                    {expandedMonths[row.month] ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
-                                                                </td>
-                                                                <td className="px-4 py-3 font-medium text-gray-900">{row.month}</td>
-                                                                <td className="px-4 py-3 text-center text-gray-700">{row.workedDays}</td>
-                                                                <td className="px-4 py-3 text-right text-gray-900 font-medium">RS: {row.basicPay.toLocaleString()}</td>
-                                                                <td className="px-4 py-3 text-right text-green-600 font-medium">RS: {row.otAmount.toLocaleString()}</td>
-                                                                <td className="px-4 py-3 text-right text-gray-900 font-bold">RS: {row.grossPay.toLocaleString()}</td>
-                                                                <td className="px-4 py-3 text-right text-blue-600 font-bold">RS: {row.netPay.toLocaleString()}</td>
-                                                                <td className="px-4 py-3 text-right text-red-600">RS: {row.salaryAdvance.toLocaleString()}</td>
-                                                                <td className="px-4 py-3 text-right text-red-700 font-medium">RS: {row.deductions.toLocaleString()}</td>
-                                                                <td className="px-4 py-3 text-right text-orange-600 font-bold">RS: {row.loanDeduction?.toLocaleString() || '0'}</td>
-                                                                <td className="px-4 py-3 text-right text-gray-900">RS: {row.employeeEPF.toLocaleString()}</td>
-                                                            </tr>
-                                                            {expandedMonths[row.month] && (
-                                                                <tr className="bg-blue-50/30 border-b border-gray-100">
-                                                                    <td colSpan={11} className="px-8 py-4">
-                                                                        <div className="grid grid-cols-2 gap-8">
-                                                                            <div className="bg-white rounded-xl p-4 border border-green-100 shadow-sm">
-                                                                                <h4 className="text-xs font-bold text-green-600 mb-3 uppercase tracking-wide flex items-center gap-2">
-                                                                                    <span className="w-2 h-2 rounded-full bg-green-500"></span> Allowances
-                                                                                </h4>
-                                                                                {row.allowances && row.allowances.length > 0 ? (
-                                                                                    <div className="space-y-2">
-                                                                                        {row.allowances.map((a, i) => (
-                                                                                            <div key={i} className="flex justify-between text-sm py-1 border-b border-gray-50 last:border-0">
-                                                                                                <span className="text-gray-600">{a.type}</span>
-                                                                                                <span className="font-semibold text-gray-900">RS: {a.amount.toLocaleString()}</span>
-                                                                                            </div>
-                                                                                        ))}
-                                                                                    </div>
-                                                                                ) : (
-                                                                                    <div className="text-sm text-gray-500 italic">No custom allowances</div>
-                                                                                )}
-                                                                            </div>
-                                                                            <div className="bg-white rounded-xl p-4 border border-red-100 shadow-sm">
-                                                                                <h4 className="text-xs font-bold text-red-600 mb-3 uppercase tracking-wide flex items-center gap-2">
-                                                                                    <span className="w-2 h-2 rounded-full bg-red-500"></span> Deductions
-                                                                                </h4>
-                                                                                {row.customDeductions && row.customDeductions.length > 0 ? (
-                                                                                    <div className="space-y-2">
-                                                                                        {row.customDeductions.map((d, i) => (
-                                                                                            <div key={i} className="flex justify-between text-sm py-1 border-b border-gray-50 last:border-0">
-                                                                                                <span className="text-gray-600">{d.type}</span>
-                                                                                                <span className="font-semibold text-gray-900">RS: {d.amount.toLocaleString()}</span>
-                                                                                            </div>
-                                                                                        ))}
-                                                                                    </div>
-                                                                                ) : (
-                                                                                    <div className="text-sm text-gray-500 italic">No custom deductions</div>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            )}
-                                                        </React.Fragment>
-                                                    ))}
-                                                </tbody>
-                                                {/* Annual Totals Footer */}
-                                                <tfoot className="bg-blue-600 text-white font-bold">
-                                                    <tr>
-                                                        <td colSpan={2} className="px-4 py-3 text-left">SELECTED MONTH TOTALS</td>
-                                                        <td className="px-4 py-3 text-center">{employeeData.annualTotals.workedDays}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.basicPay.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.otAmount.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.grossPay.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.netPay.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.salaryAdvance.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.deductions.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.employeeEPF.toLocaleString()}</td>
-                                                    </tr>
-                                                </tfoot>
-                                            </table>
-                                        </div>
-                                    )}
+
+                                        {/* Loan Deduction */}
+                                        {(row.loanDeduction ?? 0) > 0 && (
+                                            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
+                                                <span className="text-sm font-medium text-gray-800 w-44">Loan deduction</span>
+                                                <span className="text-sm text-gray-400 flex-1 text-center">Monthly instalment</span>
+                                                <span className="text-sm font-semibold text-red-500 text-right w-36">
+                                                    – {fmt(row.loanDeduction ?? 0)}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Salary Advance */}
+                                        {row.salaryAdvance > 0 && (
+                                            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
+                                                <span className="text-sm font-medium text-gray-800 w-44">Advance deduction</span>
+                                                <span className="text-sm text-gray-400 flex-1 text-center">Salary advance recovery</span>
+                                                <span className="text-sm font-semibold text-red-500 text-right w-36">
+                                                    – {fmt(row.salaryAdvance)}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Custom Deductions */}
+                                        {row.customDeductions?.map((d, i) => (
+                                            <div key={i} className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
+                                                <span className="text-sm font-medium text-gray-800 w-44">{d.type}</span>
+                                                <span className="text-sm text-gray-400 flex-1 text-center"></span>
+                                                <span className="text-sm font-semibold text-red-500 text-right w-36">
+                                                    – {fmt(d.amount)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Company EPF/ETF note */}
+                                <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-gray-100 bg-white mb-1">
+                                    <span className="text-sm text-blue-500">
+                                        Company EPF/ETF contribution (not deducted from employee)
+                                    </span>
+                                    <span className="text-sm font-semibold text-blue-600 ml-4 whitespace-nowrap">
+                                        {fmt(row.companyEPFETF)}
+                                    </span>
+                                </div>
+
+                                {/* Net Pay Row */}
+                                <div className="flex items-center justify-between px-4 py-4 rounded-xl border border-gray-200 bg-white mt-3">
+                                    <span className="text-base font-bold text-gray-800">Net pay</span>
+                                    <span className="text-lg font-bold text-blue-600">{fmt(row.netPay)}</span>
                                 </div>
                             </>
-                        ) : (
-                            <div className="flex justify-center items-center h-64 text-gray-500">
-                                No data available
-                            </div>
                         )}
                     </div>
 
-                    {/* Footer - Export Buttons */}
-                    <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
-                        <button
-                            onClick={exportPDF}
-                            disabled={!employeeData || employeeData.monthlyBreakdown.length === 0}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                        >
-                            <FileText className="w-4 h-4" />
-                            Export PDF
-                        </button>
-                        <button
-                            onClick={exportExcel}
-                            disabled={!employeeData || employeeData.monthlyBreakdown.length === 0}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                        >
-                            <FileSpreadsheet className="w-4 h-4" />
-                            Export Excel
-                        </button>
-                        <button
-                            onClick={exportCSV}
-                            disabled={!employeeData || employeeData.monthlyBreakdown.length === 0}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                        >
-                            <Download className="w-4 h-4" />
-                            Export CSV
-                        </button>
+                    {/* ── Footer Buttons ── */}
+                    <div className="px-7 py-5 border-t border-gray-100 mt-3">
+                        <div className="flex gap-3">
+                            <button
+                                disabled={!employeeData}
+                                className="flex-1 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
+                            >
+                                Generate Pay-slip
+                            </button>
+                            <button
+                                disabled={!employeeData}
+                                className="flex-1 py-3.5 rounded-xl border border-green-500 hover:bg-green-50 disabled:border-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed text-green-600 text-sm font-semibold transition-colors"
+                            >
+                                Export Pay-slip
+                            </button>
+                        </div>
+                        <p className="text-center text-xs text-gray-400 mt-3">All values in LKR</p>
                     </div>
                 </div>
             </div>
 
-            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+            {toast && (
+                <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+            )}
         </>
     );
 };
