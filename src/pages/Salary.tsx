@@ -6,6 +6,10 @@ import {
   Calendar,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 import {
   useGetEmployeesQuery,
@@ -668,25 +672,52 @@ const Salary = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col max-w-xs">
+              <div className="flex flex-col max-w-xs min-w-[200px]">
                 <label className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5 ml-1">
                   Select Period
                 </label>
-                <div className="group relative">
-                  <Calendar className="w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type="month"
-                    value={`${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`}
-                    max={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`}
-                    onChange={(e) => {
-                      if (!e.target.value) return;
-                      const [year, month] = e.target.value.split("-");
-                      handleYearChange(parseInt(year));
-                      handleMonthChange(parseInt(month) - 1);
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    views={['month', 'year']}
+                    value={dayjs(new Date(selectedYear, selectedMonth))}
+                    maxDate={dayjs(new Date())}
+                    onChange={(newValue) => {
+                      if (newValue && newValue.isValid()) {
+                        handleYearChange(newValue.year());
+                        handleMonthChange(newValue.month());
+                      }
                     }}
-                    className="w-full bg-white pl-10 pr-4 py-2.5 rounded-xl text-sm text-gray-800 border border-gray-200 shadow-sm transition-all hover:border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none cursor-pointer"
+                    slotProps={{
+                      textField: {
+                        size: "small",
+                        sx: {
+                          backgroundColor: "white",
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: "0.75rem",
+                            "& fieldset": {
+                              borderColor: "#e5e7eb",
+                              transition: "all 0.2s ease-in-out",
+                            },
+                            "&:hover fieldset": {
+                              borderColor: "#d1d5db",
+                            },
+                            "&.Mui-focused fieldset": {
+                              borderColor: "#3b82f6",
+                              borderWidth: "1px",
+                              boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
+                            },
+                          },
+                          "& .MuiInputBase-input": {
+                            paddingY: "9.5px",
+                            paddingX: "14px",
+                            fontSize: "0.875rem",
+                            color: "#1f2937",
+                          }
+                        }
+                      }
+                    }}
                   />
-                </div>
+                </LocalizationProvider>
               </div>
 
               {/* Working Days */}

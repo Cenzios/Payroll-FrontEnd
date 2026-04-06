@@ -3,6 +3,10 @@ import { PlusCircle, MinusCircle, UploadCloud, Activity, MapPin, Phone, Mail, Us
 import FileUploadModal from "./FileUploadModal";
 import { CreateCompanyRequest } from "../types/company.types";
 import { CreateEmployeeRequest } from "../types/employee.types";
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 interface UniversalDrawerProps {
   isOpen: boolean;
@@ -1350,18 +1354,47 @@ const UniversalDrawer = ({
                               </label>
                             </div>
 
-                            <input
-                              type="date"
-                              value={employeeData.joinedDate}
-                              onChange={(e) =>
-                                handleEmployeeChange(
-                                  "joinedDate",
-                                  e.target.value,
-                                )
-                              }
-                              onBlur={() => handleBlur("joinedDate")}
-                              className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.joinedDate && errors.joinedDate ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                              <DatePicker
+                                value={employeeData.joinedDate ? dayjs(employeeData.joinedDate) : null}
+                                onChange={(newValue) => {
+                                  handleEmployeeChange(
+                                    "joinedDate",
+                                    newValue ? newValue.format('YYYY-MM-DD') : ""
+                                  );
+                                }}
+                                slotProps={{
+                                  textField: {
+                                    size: "small",
+                                    onBlur: () => handleBlur("joinedDate"),
+                                    error: !!(touched.joinedDate && errors.joinedDate),
+                                    sx: {
+                                      width: "100%",
+                                      "& .MuiOutlinedInput-root": {
+                                        borderRadius: "0.5rem",
+                                        "& fieldset": {
+                                          borderColor: (touched.joinedDate && errors.joinedDate) ? "#ef4444" : "#d1d5db",
+                                        },
+                                        "&:hover fieldset": {
+                                          borderColor: (touched.joinedDate && errors.joinedDate) ? "#ef4444" : "#9ca3af",
+                                        },
+                                        "&.Mui-focused fieldset": {
+                                          borderColor: (touched.joinedDate && errors.joinedDate) ? "#ef4444" : "#367AFF",
+                                          borderWidth: "1px",
+                                          boxShadow: (touched.joinedDate && errors.joinedDate) ? "0 0 0 2px rgba(239, 68, 68, 0.2)" : "0 0 0 2px rgba(54, 122, 255, 0.2)",
+                                        },
+                                      },
+                                      "& .MuiInputBase-input": {
+                                        paddingY: "6px",
+                                        paddingX: "12px",
+                                        fontSize: "13px",
+                                        color: "#374151",
+                                      }
+                                    }
+                                  }
+                                }}
+                              />
+                            </LocalizationProvider>
 
                             {touched.joinedDate && errors.joinedDate && (
                               <p className="text-red-500 text-xs mt-1">

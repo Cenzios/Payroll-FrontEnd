@@ -4,6 +4,10 @@ import { useGetEmployeesQuery, useCreateLoanMutation, useUploadEmployeeDocumentM
 import { Employee } from '../types/employee.types';
 import Toast from './Toast';
 import FileUploadModal from './FileUploadModal';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 
 interface CreateLoanDrawerProps {
@@ -344,12 +348,36 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                     </label>
                   </div>
                   <div className="relative">
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="text-[14px] w-full pl-4 pr-4 py-2.5 bg-white border rounded-xl focus:ring-2 outline-none transition-all "
-                    />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        value={startDate ? dayjs(startDate) : null}
+                        onChange={(newValue) => {
+                          setStartDate(newValue ? newValue.format('YYYY-MM-DD') : '');
+                        }}
+                        slotProps={{
+                          textField: {
+                            size: "small",
+                            sx: {
+                              width: "100%",
+                              backgroundColor: "white",
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: "0.75rem",
+                                "& fieldset": { borderColor: "#e5e7eb", transition: "all 0.2s" },
+                                "&:hover fieldset": { borderColor: "#d1d5db" },
+                                "&.Mui-focused fieldset": {
+                                  borderColor: "#3b82f6",
+                                  borderWidth: "1px",
+                                  boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
+                                },
+                              },
+                              "& .MuiInputBase-input": {
+                                paddingY: "9.5px", paddingX: "14px", paddingLeft: "36px", fontSize: "14px", color: "#374151",
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </LocalizationProvider>
                   </div>
                 </div>
                 <div>
@@ -362,12 +390,36 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
                     </label>
                   </div>
 
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="text-[14px] w-full pl-4 pr-4 py-2.5 bg-white border rounded-xl focus:ring-2 outline-none transition-all "
-                  />
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      value={endDate ? dayjs(endDate) : null}
+                      onChange={(newValue) => {
+                        setEndDate(newValue ? newValue.format('YYYY-MM-DD') : '');
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: "small",
+                          sx: {
+                            width: "100%",
+                            backgroundColor: "white",
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "0.75rem",
+                              "& fieldset": { borderColor: "#e5e7eb", transition: "all 0.2s" },
+                              "&:hover fieldset": { borderColor: "#d1d5db" },
+                              "&.Mui-focused fieldset": {
+                                borderColor: "#3b82f6",
+                                borderWidth: "1px",
+                                boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
+                              },
+                            },
+                            "& .MuiInputBase-input": {
+                              paddingY: "9.5px", paddingX: "14px", paddingLeft: "36px", fontSize: "14px", color: "#374151",
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </LocalizationProvider>
                 </div>
               </div>
 
