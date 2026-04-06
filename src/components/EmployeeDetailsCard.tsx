@@ -316,146 +316,122 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                     )}
 
                     {activeTab === "Salary Information" && (
-                        <div className="space-y-5 pt-2 pb-2">
+                        <div className="space-y-3 pt-2 pb-2">
                             {/* Salary Mode */}
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    <Wallet className="w-[16px] h-[16px] text-[#8B98A8]" />
-                                    <span className="text-[12px] font-semibold text-[#8B98A8]">
-                                        Salary Mode
-                                    </span>
+                            <div className="flex items-center">
+                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                    <Wallet className="w-[14px] h-[14px]" />
+                                    <span>Salary Mode</span>
                                 </div>
-                                <div className="space-y-2 flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
-                                    <span>
-                                        {selectedEmployee.salaryType}
-                                    </span>
+                                <div className="text-[13px] font-medium text-gray-800">
+                                    {selectedEmployee.salaryType}
                                 </div>
                             </div>
 
-                            {/* Basic Salary Section */}
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    <Wallet2 className="w-[16px] h-[16px] text-[#8B98A8]" />
-                                    <span className="text-[12px] font-semibold text-[#8B98A8]">
-                                        Basic Salary
-                                    </span>
+                            {/* Basic Salary */}
+                            <div className="flex items-center">
+                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                    <Wallet2 className="w-[14px] h-[14px]" />
+                                    <span>Basic Salary</span>
                                 </div>
-                                <div className="space-y-2 flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
-                                    <span>
-                                        {selectedEmployee.basicSalary.toLocaleString("en-US", {
+                                <div className="text-[13px] font-medium text-gray-800">
+                                    {selectedEmployee.basicSalary.toLocaleString("en-US", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* OT Rate */}
+                            <div className="flex items-center">
+                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                    <Banknote className="w-[14px] h-[14px]" />
+                                    <span>OT Rate</span>
+                                </div>
+                                <div className="text-[13px] font-medium text-gray-800">
+                                    {selectedEmployee.otRate === 0
+                                        ? "N/A"
+                                        : selectedEmployee.otRate.toLocaleString("en-US", {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2,
                                         })}
-                                    </span>
                                 </div>
                             </div>
 
-                            {/* OT Section */}
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    <Banknote className="w-[16px] h-[16px] text-[#8B98A8]" />
-                                    <span className="text-[12px] font-semibold text-[#8B98A8]">
-                                        OT Rate
-                                    </span>
+                            {/* EPF/ETF */}
+                            <div className="flex items-center">
+                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                    <Banknote className="w-[14px] h-[14px]" />
+                                    <span>EPF/ETF</span>
                                 </div>
-                                <div className="space-y-2 flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
-                                    <span>
-                                        {selectedEmployee.otRate === 0
-                                            ? "N/A"
-                                            : selectedEmployee.otRate.toLocaleString("en-US", {
-                                                minimumFractionDigits: 2,
-                                                maximumFractionDigits: 2,
-                                            })}
-                                    </span>
+                                <div className="text-[13px] font-medium text-gray-800">
+                                    {selectedEmployee.epfEnabled
+                                        ? Number(selectedEmployee.epfEtfAmount || 0).toLocaleString("en-US", {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })
+                                        : "N/A"}
                                 </div>
                             </div>
 
-                            {/* EPF Section */}
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    <Banknote className="w-[16px] h-[16px] text-[#8B98A8]" />
-                                    <span className="text-[12px] font-semibold text-[#8B98A8]">
-                                        EPF/ETF
-                                    </span>
-                                </div>
-                                <div className="space-y-2 flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2">
-                                    <span className="text-[12px] font-medium text-gray-800">
-                                        {selectedEmployee.epfEnabled
-                                            ? Number(selectedEmployee.epfEtfAmount || 0).toLocaleString("en-US", {
-                                                minimumFractionDigits: 2,
-                                                maximumFractionDigits: 2,
-                                            })
-                                            : "N/A"}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Allowances Section */}
+                            {/* Allowances */}
                             <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <PlusCircle className="w-[16px] h-[16px] text-[#8B98A8]" />
-                                        <span className="text-[12px] font-semibold text-[#8B98A8]">
-                                            Allowances (Rs)
-                                        </span>
+                                <div className="flex items-center mb-2">
+                                    <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                        <PlusCircle className="w-[14px] h-[14px]" />
+                                        <span>Allowances (Rs)</span>
                                     </div>
-
                                 </div>
                                 <div className="space-y-2">
                                     {selectedEmployee.recurringAllowances &&
                                         selectedEmployee.recurringAllowances.length > 0 ? (
                                         selectedEmployee.recurringAllowances.map((allowance, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2"
-                                            >
-                                                <span>{allowance.type}</span>
-                                                <span>
+                                            <div key={index} className="flex items-center">
+                                                <div className="w-[150px] pl-[22px] text-[12px] font-medium text-gray-600">
+                                                    {allowance.type}
+                                                </div>
+                                                <div className="text-[13px] font-medium text-gray-800">
                                                     {allowance.amount.toLocaleString("en-US", {
                                                         minimumFractionDigits: 2,
                                                         maximumFractionDigits: 2,
                                                     })}
-                                                </span>
+                                                </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="pl-[28px] text-[12px] text-gray-400">
+                                        <div className="pl-[22px] text-[12px] text-gray-400">
                                             No allowances found
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Deductions Section */}
+                            {/* Deductions */}
                             <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <MinusCircle className="w-[16px] h-[16px] text-[#8B98A8]" />
-                                        <span className="text-[12px] font-semibold text-[#8B98A8]">
-                                            Deductions (Rs)
-                                        </span>
+                                <div className="flex items-center mb-2">
+                                    <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                        <MinusCircle className="w-[14px] h-[14px]" />
+                                        <span>Deductions (Rs)</span>
                                     </div>
-
                                 </div>
                                 <div className="space-y-2">
                                     {selectedEmployee.recurringDeductions &&
                                         selectedEmployee.recurringDeductions.length > 0 ? (
                                         selectedEmployee.recurringDeductions.map((deduction, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex items-center justify-between pl-[28px] text-[12px] font-medium text-gray-800 pr-2"
-                                            >
-                                                <span>{deduction.type}</span>
-                                                <span>
+                                            <div key={index} className="flex items-center">
+                                                <div className="w-[150px] pl-[22px] text-[12px] font-medium text-gray-600">
+                                                    {deduction.type}
+                                                </div>
+                                                <div className="text-[13px] font-medium text-gray-800">
                                                     {deduction.amount.toLocaleString("en-US", {
                                                         minimumFractionDigits: 2,
                                                         maximumFractionDigits: 2,
                                                     })}
-                                                </span>
+                                                </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="pl-[28px] text-[12px] text-gray-400">
+                                        <div className="pl-[22px] text-[12px] text-gray-400">
                                             No deductions found
                                         </div>
                                     )}
