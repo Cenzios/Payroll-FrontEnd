@@ -13,10 +13,11 @@ import dayjs from 'dayjs';
 interface CreateLoanDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   companyId: string | null;
 }
 
-const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps) => {
+const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanDrawerProps) => {
   const [loanTitle, setLoanTitle] = useState('');
   const [description, setDescription] = useState('');
   const [employeeId, setEmployeeId] = useState('');
@@ -130,13 +131,17 @@ const CreateLoanDrawer = ({ isOpen, onClose, companyId }: CreateLoanDrawerProps)
         supportingDocId: documentId
       }).unwrap();
 
-      setToast({ message: 'Loan created successfully!', type: 'success' });
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        setToast({ message: 'Loan Created Successfully!', type: 'success' });
+      }
+      onClose();
       setTimeout(() => {
-        onClose();
         resetForm();
-      }, 1500);
+      }, 300);
     } catch (error: any) {
-      setToast({ message: error.data?.message || 'Failed to create loan', type: 'error' });
+      setToast({ message: error.data?.message || 'Failed to Create Loan', type: 'error' });
     } finally {
       setIsSubmitting(false);
     }

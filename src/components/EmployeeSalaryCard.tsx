@@ -160,113 +160,120 @@ const EmployeeSalaryCard = ({
                     : "border-[#407BFF] border-l-4 border-l-[#407BFF] "
                 }`}
         >
-            {/* Lock overlay — covers upper rows in both collapsed and expanded state, never covers bottom bar */}
+            {/* Lock Pill Overlay */}
             {isLocked && (
-                <div className={`absolute inset-x-0 top-0 z-20 bg-gray-700/50 flex flex-col items-center justify-center pointer-events-none ${isSelected ? "bottom-[72px] rounded-t-2xl" : "bottom-0 rounded-2xl"}`}>
-                    <span className="text-[15px] font-bold text-white text-center px-6 drop-shadow-md">
-                        Pay-slip already generated and locked – cannot be edited.
-                    </span>
+                <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center pointer-events-none">
+                    <div className="border border-yellow-500/90 rounded-full px-5 py-1.5 bg-[#FFEA001A]/10 shadow-md">
+                        <span className="text-[13px] font-medium text-[#FFEA00] text-center">
+                            Pay-Slip Already Generated and Locked – Cannot be Edited.
+                        </span>
+                    </div>
                 </div>
             )}
 
-            {/* ── ROW 1: Employee info + pill badges ── */}
-            <div className="flex items-center justify-between px-5 py-4 bg-[#F9FCFF] border-b border-blue-100/70">
-                {/* Avatar + name */}
-                <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold text-[16px] shrink-0">
-                        {emp.fullName.charAt(0)}
+            <div className="relative">
+                {isLocked && <div className="absolute inset-0 z-10 bg-[#1D1F24]/50 pointer-events-none" />}
+
+                {/* ── ROW 1: Employee info + pill badges ── */}
+                <div className="flex items-center justify-between px-5 py-4 bg-[#F9FCFF] border-b border-blue-100/70">
+                    {/* Avatar + name */}
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold text-[16px] shrink-0">
+                            {emp.fullName.charAt(0)}
+                        </div>
+                        <div>
+                            <h3 className="text-[16px] font-bold text-gray-900 leading-tight">{emp.fullName}</h3>
+                            <p className="text-[12px] font-semibold text-blue-500 leading-tight">{emp.employeeId}</p>
+                            <p className="text-[12px] text-gray-400 leading-tight mt-0.5">{emp.designation}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="text-[16px] font-bold text-gray-900 leading-tight">{emp.fullName}</h3>
-                        <p className="text-[12px] font-semibold text-blue-500 leading-tight">{emp.employeeId}</p>
-                        <p className="text-[12px] text-gray-400 leading-tight mt-0.5">{emp.designation}</p>
-                    </div>
-                </div>
 
-                {/* Pill badges */}
-                <div className="flex items-center gap-2 flex-wrap justify-end">
-                    {/* Salary type pill */}
-                    <span className="px-4 py-1.5 rounded-full border border-[#0B74E633] bg-[#DEEEFF1F] text-[13px] font-semibold text-blue-600">
-                        {emp.salaryType === "MONTHLY" ? "Monthly" : "Daily"}
-                    </span>
+                    {/* Pill badges */}
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {/* Salary type pill */}
+                        <span className="px-4 py-1.5 rounded-full border border-[#0B74E633] bg-[#DEEEFF1F] text-[13px] font-semibold text-blue-600">
+                            {emp.salaryType === "MONTHLY" ? "Monthly" : "Daily"}
+                        </span>
 
-                    {/* Allowances pill */}
-                    <button
-                        onClick={(e) => { e.stopPropagation(); openManageModal("allowance", emp); }}
-                        disabled={isLocked}
-                        className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[13px] font-semibold transition-all
-              ${isLocked
-                                ? "border-[#0B74E633] bg-[#DEEEFF1F] text-blue-300 cursor-not-allowed"
-                                : "border-[#0B74E633] bg-[#DEEEFF1F] text-blue-600 hover:bg-blue-200 hover:border-blue-400 active:scale-95"
-                            }`}
-                    >
-                        Allowances {fmt(totalAllowances)}
-                        <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-
-                    {/* Deductions pill */}
-                    <button
-                        onClick={(e) => { e.stopPropagation(); openManageModal("deduction", emp); }}
-                        disabled={isLocked}
-                        className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[13px] font-semibold transition-all
-              ${isLocked
-                                ? "border-[#EF444433] bg-[#FFB3B31A] text-[#EF4444] cursor-not-allowed"
-                                : "border-[#EF444433] bg-[#FFB3B31A] text-[#EF4444] hover:bg-red-200 hover:border-red-400 active:scale-95"
-                            }`}
-                    >
-                        Deductions {fmt(totalDeductions_custom)}
-                        <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                </div>
-            </div>
-
-            {/* ── ROW 2: Salary info strip ── */}
-            <div className="flex items-center gap-3 px-5 py-3 border-b border-blue-100/70 bg-white">
-                {/* Monthly/Daily pay */}
-                <div className="pr-6 border-r border-gray-200">
-                    <p className="text-[12px] text-gray-400 mb-0.5">{emp.salaryType === "MONTHLY" ? "Monthly pay" : "Daily Rate"}</p>
-                    <p className="text-[15px] font-bold text-gray-800">{fmt(basicSalary)}</p>
-                </div>
-
-                {/* OT Rate */}
-                {emp.otRate > 0 && (
-                    <div className="px-6 border-r border-gray-200">
-                        <p className="text-[12px] text-gray-400 mb-0.5">OT rate</p>
-                        <p className="text-[15px] font-bold text-gray-800">{fmt(otRate)}</p>
-                    </div>
-                )}
-
-                {/* OT Amount */}
-                {emp.otRate > 0 && (
-                    <div className="px-6 border-r border-gray-200">
-                        <p className="text-[12px] text-gray-400 mb-0.5">OT amount</p>
-                        <p className="text-[15px] font-bold text-gray-800">{fmt(otAmount)}</p>
-                    </div>
-                )}
-
-                {/* Period */}
-                <div className="px-6 border-r border-gray-200">
-                    <p className="text-[12px] text-gray-400 mb-0.5">Period</p>
-                    <p className="text-[15px] font-bold text-gray-800">{periodLabel}</p>
-                </div>
-
-                {/* EPF/ETF toggle — pushed to right */}
-                {emp.epfEnabled && (
-                    <div className="ml-auto flex items-center gap-3">
-                        <span className="text-[13px] font-semibold text-gray-500">EPF / ETF</span>
-                        <Toggle
-                            enabled={isEpfEnabled}
-                            onToggle={() => handleToggleEpfEtf(emp.id)}
+                        {/* Allowances pill */}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); openManageModal("allowance", emp); }}
                             disabled={isLocked}
-                        />
-                        <span className="text-[16px] font-bold text-red-500">{fmt(isEpfEnabled ? epfAmount : 0)}</span>
+                            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[13px] font-semibold transition-all
+              ${isLocked
+                                    ? "border-[#0B74E633] bg-[#DEEEFF1F] text-blue-300 cursor-not-allowed"
+                                    : "border-[#0B74E633] bg-[#DEEEFF1F] text-blue-600 hover:bg-blue-200 hover:border-blue-400 active:scale-95"
+                                }`}
+                        >
+                            Allowances {fmt(totalAllowances)}
+                            <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Deductions pill */}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); openManageModal("deduction", emp); }}
+                            disabled={isLocked}
+                            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[13px] font-semibold transition-all
+              ${isLocked
+                                    ? "border-[#EF444433] bg-[#FFB3B31A] text-[#EF4444] cursor-not-allowed"
+                                    : "border-[#EF444433] bg-[#FFB3B31A] text-[#EF4444] hover:bg-red-200 hover:border-red-400 active:scale-95"
+                                }`}
+                        >
+                            Deductions {fmt(totalDeductions_custom)}
+                            <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
                     </div>
-                )}
+                </div>
+
+                {/* ── ROW 2: Salary info strip ── */}
+                <div className="flex items-center gap-3 px-5 py-3 border-b border-blue-100/70 bg-white">
+                    {/* Monthly/Daily pay */}
+                    <div className="pr-6 border-r border-gray-200">
+                        <p className="text-[12px] text-gray-400 mb-0.5">{emp.salaryType === "MONTHLY" ? "Monthly pay" : "Daily Rate"}</p>
+                        <p className="text-[15px] font-bold text-gray-800">{fmt(basicSalary)}</p>
+                    </div>
+
+                    {/* OT Rate */}
+                    {emp.otRate > 0 && (
+                        <div className="px-6 border-r border-gray-200">
+                            <p className="text-[12px] text-gray-400 mb-0.5">OT rate</p>
+                            <p className="text-[15px] font-bold text-gray-800">{fmt(otRate)}</p>
+                        </div>
+                    )}
+
+                    {/* OT Amount */}
+                    {emp.otRate > 0 && (
+                        <div className="px-6 border-r border-gray-200">
+                            <p className="text-[12px] text-gray-400 mb-0.5">OT amount</p>
+                            <p className="text-[15px] font-bold text-gray-800">{fmt(otAmount)}</p>
+                        </div>
+                    )}
+
+                    {/* Period */}
+                    <div className="px-6 border-r border-gray-200">
+                        <p className="text-[12px] text-gray-400 mb-0.5">Period</p>
+                        <p className="text-[15px] font-bold text-gray-800">{periodLabel}</p>
+                    </div>
+
+                    {/* EPF/ETF toggle — pushed to right */}
+                    {emp.epfEnabled && (
+                        <div className="ml-auto flex items-center gap-3">
+                            <span className="text-[13px] font-semibold text-gray-500">EPF / ETF</span>
+                            <Toggle
+                                enabled={isEpfEnabled}
+                                onToggle={() => handleToggleEpfEtf(emp.id)}
+                                disabled={isLocked}
+                            />
+                            <span className="text-[16px] font-bold text-red-500">{fmt(isEpfEnabled ? epfAmount : 0)}</span>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* ── EXPANDED BODY ── */}
             {isSelected && (
-                <div onClick={(e) => e.stopPropagation()} className="animate-in fade-in slide-in-from-top-1 duration-200">
+                <div onClick={(e) => e.stopPropagation()} className="animate-in fade-in slide-in-from-top-1 duration-200 relative">
+                    {isLocked && <div className="absolute inset-0 z-10 bg-[#1D1F24]/50 pointer-events-none" />}
 
                     {/* ── ROW 3: Input fields ── */}
                     <div className="flex items-center gap-2 px-5 py-3 border-b border-blue-100/70 bg-white">
@@ -362,21 +369,23 @@ const EmployeeSalaryCard = ({
                         </div>
 
                         {/* Actions — pushed to right */}
-                        <div className="ml-auto flex items-center gap-3">
+                        <div className={`ml-auto flex items-center gap-3 ${isLocked ? "relative z-30" : ""}`}>
                             {/* Generate / View */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleGeneratePayslip(emp); }}
                                 disabled={isSaving || (!isLocked && hasAnyError(emp))}
-                                className={`px-7 py-3 rounded-2xl text-[14px] font-bold transition-all duration-200 flex items-center gap-2
+                                className={`px-7 py-2.5 rounded-2xl text-[14px] font-bold transition-all duration-200 flex items-center gap-2 pointer-events-auto
                   ${isSaving || (!isLocked && hasAnyError(emp))
                                         ? "bg-gray-200 text-[#4584ff] cursor-not-allowed"
-                                        : "bg-[#4584ff] text-white hover:bg-[#3b73e6] shadow-sm hover:shadow-md active:scale-95"
+                                        : isLocked
+                                            ? "relative z-30 bg-[#4584ff] text-white hover:bg-[#3b73e6] shadow-[0_0_15px_rgba(69,132,255,0.4)] border border-[#6b9dff] active:scale-95"
+                                            : "bg-[#4584ff] text-white hover:bg-[#3b73e6] shadow-sm hover:shadow-md active:scale-95"
                                     }`}
                             >
                                 {isSaving ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : isLocked ? (
-                                    <><Eye className="w-4 h-4" /> View</>
+                                    "View Pay-Slip"
                                 ) : (
                                     "Generate"
                                 )}
@@ -386,10 +395,12 @@ const EmployeeSalaryCard = ({
                             <button
                                 onClick={(e) => { e.stopPropagation(); if (!isLocked) setIsConfirmModalOpen(true); }}
                                 disabled={isLocked || isSaving || hasAnyError(emp)}
-                                className={`px-7 py-3 rounded-2xl text-[14px] font-bold transition-all duration-200
-                    ${isLocked || isSaving || hasAnyError(emp)
-                                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                        : "bg-[#2dac5c] text-white hover:bg-[#23964e] shadow-sm hover:shadow-md active:scale-95"
+                                className={`px-6 py-2.5 rounded-2xl text-[14px] font-bold transition-all duration-200
+                    ${isLocked
+                                        ? "relative z-30 bg-[#40444d] text-[#868c98] cursor-not-allowed pointer-events-auto border justify-center border-transparent"
+                                        : isSaving || hasAnyError(emp)
+                                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                            : "bg-[#2dac5c] text-white hover:bg-[#23964e] shadow-sm hover:shadow-md active:scale-95 pointer-events-auto"
                                     }`}
                             >
                                 Confirm
@@ -401,15 +412,20 @@ const EmployeeSalaryCard = ({
 
             {/* Click to Calculate */}
             {!isSelected && (
-                <div className="flex justify-center items-center gap-10 px-5 py-3 text-[12px] bg-[#F8F9FE] text-gray-400 italic">
-                    <div className="flex">
-                        <Loader className="w-5 h-5 rounded-full p-[2.5px] bg-[#5C81FE] text-white mr-2" />
-                        <p className="text-[#3D70F5] font-semibold">Click to Calculate Salary</p>
+                <div className="relative">
+                    {isLocked &&
+                        <div className="absolute inset-0 z-10 bg-[#1D1F24]/50 pointer-events-none" />
+                    }
+                    <div className="flex justify-center items-center gap-10 px-5 py-3 text-[12px] bg-[#F8F9FE] text-gray-400 italic">
+                        <div className="flex">
+                            <Loader className="w-5 h-5 rounded-full p-[2.5px] bg-[#5C81FE] text-white mr-2" />
+                            <p className="text-[#3D70F5] font-semibold">Click to Calculate Salary</p>
+                        </div>
+                        {/* <div className="flex">
+                            <p className="text-[#8791A9] font-extralight">Enter OT hours, deductions & generate pay-slip</p>
+                            <ChevronDown className="w-4 h-4 text-[#8791A9] ml-1" />
+                        </div> */}
                     </div>
-                    {/* <div className="flex">
-                        <p className="text-[#8791A9] font-extralight">Enter OT hours, deductions & generate pay-slip</p>
-                        <ChevronDown className="w-4 h-4 text-[#8791A9] ml-1" />
-                    </div> */}
                 </div>
             )}
 
