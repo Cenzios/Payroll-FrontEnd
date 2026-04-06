@@ -20,6 +20,7 @@ import {
     Banknote,
     Wallet,
     Wallet2,
+    Pencil
 } from "lucide-react";
 import { Employee } from "../types/employee.types";
 
@@ -28,6 +29,7 @@ interface EmployeeDetailsCardProps {
     setPreviewImage: (url: string | null) => void;
     onAddFileClick?: () => void;
     onDeleteFileClick?: (documentId: string, fileName: string) => void;
+    onEditClick?: () => void;
     isAddFileDisabled?: boolean;
 }
 
@@ -36,6 +38,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
     setPreviewImage,
     onAddFileClick,
     onDeleteFileClick,
+    onEditClick,
     isAddFileDisabled = false,
 }) => {
     const [activeTab, setActiveTab] = useState("Personal Information");
@@ -57,7 +60,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
         <div className="flex-1 bg-[#FBFBFF] rounded-2xl shadow-sm border border-[#E4E4E7] p-6 h-full overflow-hidden">
             <div className="max-w-2xl h-full flex flex-col">
                 {/* Profile Header */}
-                <div className="flex items-center gap-4 mb-4 shrink-0">
+                <div className="flex items-center gap-4 mb-4 shrink-0 relative">
                     <div className="w-[60px] h-[60px] rounded-full bg-blue-200 flex items-center justify-center shrink-0 overflow-hidden">
                         {selectedEmployee?.avatar ? (
                             <img
@@ -79,6 +82,15 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             {selectedEmployee.employeeId}
                         </p>
                     </div>
+
+                    {/* Edit Button — top right */}
+                    <button
+                        onClick={onEditClick}
+                        className="absolute top-0 right-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-[13px] font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 shadow-sm transition-all"
+                    >
+                        <Pencil className="w-3.5 h-3.5" />
+                        Edit
+                    </button>
                 </div>
 
                 {/* Tabs */}
