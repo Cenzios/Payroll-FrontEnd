@@ -18,6 +18,10 @@ import {
 import FileUploadModal from "./FileUploadModal";
 import { CreateEmployeeRequest } from "../types/employee.types";
 import Toast from "./Toast";
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 interface AddEmployeeDrawerProps {
     isOpen: boolean;
@@ -567,13 +571,46 @@ const AddEmployeeDrawer = ({
                                                     <Calendar className="h-4 w-4 text-gray-400" />
                                                 </div>
                                             </div>
-                                            <input
-                                                type="date"
-                                                value={employeeData.joinedDate}
-                                                onChange={(e) => handleChange("joinedDate", e.target.value)}
-                                                onBlur={() => handleBlur("joinedDate")}
-                                                className={`text-[14px] w-full pl-12 pr-4 py-2.5 bg-white border rounded-xl focus:ring-2 outline-none transition-all ${touched.joinedDate && errors.joinedDate ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-blue-500/20 focus:border-blue-500"}`}
-                                            />
+                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                <DatePicker
+                                                    value={employeeData.joinedDate ? dayjs(employeeData.joinedDate) : null}
+                                                    onChange={(newValue) => {
+                                                        handleChange("joinedDate", newValue ? newValue.format('YYYY-MM-DD') : "");
+                                                    }}
+                                                    slotProps={{
+                                                        textField: {
+                                                            size: "small",
+                                                            onBlur: () => handleBlur("joinedDate"),
+                                                            error: !!(touched.joinedDate && errors.joinedDate),
+                                                            sx: {
+                                                                width: "100%",
+                                                                backgroundColor: "white",
+                                                                "& .MuiOutlinedInput-root": {
+                                                                    borderRadius: "0.75rem",
+                                                                    "& fieldset": {
+                                                                        borderColor: (touched.joinedDate && errors.joinedDate) ? "#ef4444" : "#e5e7eb",
+                                                                    },
+                                                                    "&:hover fieldset": {
+                                                                        borderColor: (touched.joinedDate && errors.joinedDate) ? "#ef4444" : "#d1d5db",
+                                                                    },
+                                                                    "&.Mui-focused fieldset": {
+                                                                        borderColor: (touched.joinedDate && errors.joinedDate) ? "#ef4444" : "#3b82f6",
+                                                                        borderWidth: "1px",
+                                                                        boxShadow: (touched.joinedDate && errors.joinedDate) ? "0 0 0 2px rgba(239, 68, 68, 0.2)" : "0 0 0 2px rgba(59, 130, 246, 0.2)",
+                                                                    },
+                                                                },
+                                                                "& .MuiInputBase-input": {
+                                                                    paddingY: "9.5px",
+                                                                    paddingX: "14px",
+                                                                    paddingLeft: "48px",
+                                                                    fontSize: "14px",
+                                                                    color: "#374151",
+                                                                }
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                            </LocalizationProvider>
                                         </div>
                                         {touched.joinedDate && errors.joinedDate && <p className="text-red-500 text-xs mt-1">{errors.joinedDate}</p>}
                                     </div>
