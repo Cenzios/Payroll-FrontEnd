@@ -80,17 +80,33 @@ const SettleInvoice = () => {
 
             <div className="w-full max-w-5xl mx-auto relative z-10">
                 {error && (
-                    <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center">
-                        {error}
+                    <div className="bg-white rounded-2xl shadow-xl flex flex-col items-center justify-center py-16 px-4">
+                        <div className="bg-green-50 rounded-full p-4 mb-4">
+                            <Receipt className="w-10 h-10 text-green-600" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">No Pending Invoices</h2>
+                        <p className="text-gray-600 text-center mb-8 max-w-md">
+                            {error === 'No pending blocking invoice found.'
+                                ? "You don't have any outstanding monthly invoices blocking your access."
+                                : error || "It looks like you're all caught up! You have no outstanding invoices to settle."}
+                        </p>
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 transition"
+                        >
+                            Go to Dashboard
+                        </button>
                     </div>
                 )}
 
-                {isLoading ? (
+                {isLoading && !error && (
                     <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-xl">
                         <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
                         <p className="text-gray-600 font-medium">Preparing your invoice summary...</p>
                     </div>
-                ) : (
+                )}
+
+                {!isLoading && !error && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
                         {/* Left Column: Invoice Summary */}
                         {invoice && (
