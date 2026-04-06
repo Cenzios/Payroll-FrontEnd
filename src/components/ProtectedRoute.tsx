@@ -30,6 +30,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
+  // Temporary SKIP: User wants to bypass the monthly payment block check
+  /*
   // Only show loader if we have a token (so checkAccessStatus will eventually run) and it's LOADING
   if (accessStatus === 'LOADING') {
     return (
@@ -42,6 +44,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   if (accessStatus === 'BLOCKED') {
     return <Navigate to="/settle-invoice" replace />;
   }
+  */
 
   return <>{children}</>;
 };
