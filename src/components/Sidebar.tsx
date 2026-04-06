@@ -63,7 +63,7 @@ const Sidebar = () => {
                         className={({ isActive }) =>
                             `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${isActive
                                 ? 'bg-white/10 backdrop-blur-md text-white '
-                                : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
+                                : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
                             }`
                         }
                     >
@@ -92,7 +92,7 @@ const Sidebar = () => {
                         onClick={toggleReports}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${(location.pathname.startsWith('/reports') || location.pathname === '/c-form')
                             ? 'bg-blue-50 text-blue-600 font-medium'
-                            : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
+                            : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                     >
                         <div className="flex items-center gap-3">
@@ -143,7 +143,7 @@ const Sidebar = () => {
                     className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] ${isActive
                             ? 'bg-blue-50 text-blue-600 font-medium'
-                            : 'text-[#67696C] hover:bg-gray-50 hover:text-gray-900'
+                            : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
                         }`
                     }
                 >

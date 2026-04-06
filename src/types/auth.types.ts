@@ -71,4 +71,5 @@ export interface AuthState {
   tempPassword: string | null;
   tempPlanId: string | null;
   selectedCompanyId: string | null;
+  accessStatus: 'LOADING' | 'ACTIVE' | 'BLOCKED';
 }

@@ -21,8 +21,21 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 import RenewPlanModal from './components/RenewPlanModal';
+import SettleInvoice from './pages/SettleInvoice';
+import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import { checkAccessStatus } from './store/slices/authSlice';
 
 function App() {
+  const dispatch = useAppDispatch();
+  const { token } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (token) {
+      dispatch(checkAccessStatus());
+    }
+  }, [token, dispatch]);
+
   return (
     <Router>
       <RenewPlanModal />
@@ -42,6 +55,7 @@ function App() {
         <Route path="/payment/cancel" element={<ConfirmationFail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
+        <Route path="/settle-invoice" element={<SettleInvoice />} />
         <Route
           path="/dashboard"
           element={
