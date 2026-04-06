@@ -32,19 +32,19 @@ interface AddEmployeeDrawerProps {
 }
 
 const SRI_LANKAN_BANKS = [
-    "Bank of Ceylon (State-owned)",
-    "People’s Bank (State-owned)",
-    "Commercial Bank of Ceylon PLC",
-    "Hatton National Bank PLC (HNB)",
-    "Sampath Bank PLC",
-    "Seylan Bank PLC",
-    "Nations Trust Bank PLC (NTB)",
-    "DFCC Bank PLC",
-    "National Development Bank PLC (NDB)",
-    "Pan Asia Banking Corporation PLC (PABC)",
-    "Union Bank of Colombo PLC",
-    "Amana Bank PLC (Non-interest based/Islamic banking)",
-    "Cargills Bank PLC",
+    "Bank of Ceylon",
+    "People’s Bank",
+    "Commercial Bank of Ceylon",
+    "Hatton National Bank (HNB)",
+    "Sampath Bank",
+    "Seylan Bank",
+    "Nations Trust Bank (NTB)",
+    "DFCC Bank",
+    "National Development Bank (NDB)",
+    "Pan Asia Bank (PABC)",
+    "Union Bank of Colombo",
+    "Amana Bank",
+    "Cargills Bank",
 ];
 
 const Toggle = ({
