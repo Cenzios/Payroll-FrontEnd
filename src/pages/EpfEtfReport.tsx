@@ -91,12 +91,32 @@ const EpfEtfReport = () => {
                 }
 
                 const record = employeeMap.get(emp.employeeId);
-                record.basicSalary += emp.basicPay || 0;
+                const employeeInfo = employeesData?.employees.find(e => e.id === emp.employeeId);
+
+                // Fields from API (try various naming conventions)
+                const basicPay = emp.basicPay || 0;
+                const empEpf = emp.employeeEPF || emp.employeeEpf || 0;
+                const employerEpf = emp.employerEPF || emp.employerEpf || 0;
+                const etf = emp.etfAmount || emp.etf || 0;
+
+                // Fallback calculations if they are missing but EPF is enabled
+                const isEpfEnabled = emp.epfEnabled ?? employeeInfo?.epfEnabled ?? (empEpf > 0);
+
+                record.basicSalary += basicPay;
                 record.grossPay += emp.grossPay || 0;
-                record.empEpf += emp.employeeEPF || 0;
-                record.employerEpf += emp.employerEPF || 0;
-                record.etf += emp.etfAmount || 0;
-                record.totalContribution += (emp.employeeEPF || 0) + (emp.employerEPF || 0) + (emp.etfAmount || 0);
+
+                if (empEpf > 0) {
+                    record.empEpf += empEpf;
+                    record.employerEpf += employerEpf || (basicPay * 0.12);
+                    record.etf += etf || (basicPay * 0.03);
+                } else if (isEpfEnabled && basicPay > 0) {
+                    // If EPF is enabled but fields are missing, calculate them
+                    record.empEpf += basicPay * 0.08;
+                    record.employerEpf += basicPay * 0.12;
+                    record.etf += basicPay * 0.03;
+                }
+
+                record.totalContribution = record.empEpf + record.employerEpf + record.etf;
             });
         });
 
