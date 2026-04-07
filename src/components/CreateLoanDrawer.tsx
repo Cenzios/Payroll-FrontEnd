@@ -8,7 +8,9 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
-
+import loanTitleIcon from '../assets/images/loan-title.svg';
+import loanAmountIcon from '../assets/images/loan-amount.svg';
+import loanInstallmentIcon from '../assets/images/loan-installment.svg';
 
 interface CreateLoanDrawerProps {
   isOpen: boolean;
@@ -163,6 +165,10 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
   const handleInstallmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    if (value.includes('-') || parseInt(value) < 0) {
+      setToast({ message: 'Installment count cannot be negative', type: 'error' });
+      return;
+    }
     if (value === '') {
       setInstallmentCount('');
       return;
@@ -176,6 +182,24 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
         setInstallmentCount(num.toString());
       }
     }
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value.includes('-') || parseFloat(value) < 0) {
+      setToast({ message: 'Amount cannot be negative', type: 'error' });
+      return;
+    }
+    setAmount(value);
+  };
+
+  const handleInterestRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value.includes('-') || parseFloat(value) < 0) {
+      setToast({ message: 'Interest rate cannot be negative', type: 'error' });
+      return;
+    }
+    setInterestRate(value);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -203,7 +227,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
   return (
     <>
-      <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
+      <div className="fixed inset-0 z-50 overflow-hidden flex justify-end ">
         {/* Overlay */}
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-300"
@@ -227,14 +251,14 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
           </div>
 
           {/* Form Content */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="p-8 space-y-4">
+          <div className="flex-1 overflow-y-auto custom-scrollbar border border-gray-200 rounded-xl m-4">
+            <div className="p-4 space-y-4">
 
               {/* 1. Loan Title */}
               <div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                    <Text className="h-4 w-4 text-blue-500" />
+                    <img src={loanTitleIcon} alt="Loan Title" className="h-4 w-4 text-blue-500" />
                   </div>
                   <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
                     Loan Title <strong className="text-red-600 text-[15px]">*</strong>
@@ -277,7 +301,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                     <UserRound className="h-4 w-4 text-blue-500" />
                   </div>
                   <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                    Employee ID <strong className="text-red-600 text-[15px]">*</strong>
+                    Employee <strong className="text-red-600 text-[15px]">*</strong>
                   </label>
                 </div>
 
@@ -433,7 +457,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <PercentSquare className="h-4 w-4 text-blue-500" />
+                      <Calendar className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
                       Interest Rate Type <strong className="text-red-600 text-[15px]">*</strong>
@@ -478,8 +502,9 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                     <input
                       type="number"
                       step="0.1"
+                      min="0"
                       value={interestRate}
-                      onChange={(e) => setInterestRate(e.target.value)}
+                      onChange={handleInterestRateChange}
                       placeholder="5.0"
                       className="no-spinner w-full px-4 py-3 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                     />
@@ -495,7 +520,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <CircleDollarSign className="h-4 w-4 text-blue-500" />
+                      <img src={loanAmountIcon} alt="Loan Amount" className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
                       Amount <strong className="text-red-600 text-[15px]">*</strong>
@@ -507,8 +532,9 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                     </div>
                     <input
                       type="number"
+                      min="0"
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
+                      onChange={handleAmountChange}
                       placeholder="120000"
                       className="no-spinner w-full pl-11 pr-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                     />
@@ -519,7 +545,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <MessageSquareDiff className="h-4 w-4 text-blue-500" />
+                      <img src={loanInstallmentIcon} alt="Loan Installment" className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
                       Installment Count <strong className="text-red-600 text-[15px]">*</strong>
@@ -527,6 +553,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                   </div>
                   <input
                     type="number"
+                    min="0"
                     value={installmentCount}
                     onChange={handleInstallmentChange}
                     placeholder="12"
@@ -553,10 +580,10 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
               <div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                    <FileText className="h-4 w-4 text-blue-500" />
+                    <UploadCloud className="h-4 w-4 text-blue-500" />
                   </div>
                   <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                    Supporting Documents <strong className="text-red-600 text-[15px]">*</strong>
+                    Supporting Documents
                   </label>
                 </div>
                 <button
@@ -604,7 +631,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="flex-[1.5] py-3 px-8 text-[14px] font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-3 text-[14px] font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Loan'}
             </button>
