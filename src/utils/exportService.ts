@@ -1271,3 +1271,213 @@ export const exportAllEmployeesSummary = (
         }
     }
 };
+
+export interface BankAdviceReportData {
+    companyName: string;
+    companyAddress: string;
+    reportData: {
+        employeeCode: string;
+        fullName: string;
+        accountHolderName: string;
+        bankName: string;
+        branchName: string;
+        accountNumber: string;
+        amount: number;
+    }[];
+    month: number;
+    year: number;
+    totalAmount: number;
+}
+
+export const exportBankAdviceReport = (
+    format: "pdf" | "excel" | "csv",
+    data: BankAdviceReportData
+) => {
+    const { companyName, companyAddress, reportData, month, year, totalAmount } = data;
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+    const monthName = months[month];
+    const periodStr = `Year: ${year} • Month: ${monthName}`;
+
+    if (format === "pdf") {
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        // 1. Header (Standard Dark Blue with Circles)
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, 0, pageWidth, 50, "F");
+
+        doc.setFillColor(28, 48, 120);
+        doc.circle(150, 40, 40, "F");
+
+        doc.setFillColor(13, 26, 80);
+        doc.circle(190, 30, 40, "F");
+
+        doc.setFillColor(255, 255, 255);
+        doc.rect(0, 50, pageWidth, pageHeight - 50, "F");
+
+        // Yellow vertical line
+        doc.setFillColor(255, 184, 0);
+        doc.rect(14, 10, 1, 30, "F");
+
+        // Header Texts
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.text("CenzHRM", 19, 13);
+
+        doc.setTextColor(255, 184, 0);
+        doc.setFontSize(22);
+        doc.setFont("helvetica", "bold");
+        doc.text("Bank Advice Report", 19, 26);
+
+        doc.setTextColor(180, 180, 180);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Employee Bank Payment Details • ${periodStr}`, 19, 36);
+
+        // Right Header Texts
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        const companyLines = doc.splitTextToSize(companyName, 80);
+        doc.text(companyLines, pageWidth - 14, 20, { align: "right" });
+
+        if (companyAddress) {
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(180, 180, 180);
+            const addressLines = doc.splitTextToSize(companyAddress, 80);
+            doc.text(addressLines, pageWidth - 14, 20 + (companyLines.length * 6), { align: "right" });
+        }
+
+        // 2. Table
+        let currentY = 60;
+        doc.setFillColor(33, 60, 133);
+        doc.rect(14, currentY, pageWidth - 28, 10, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Bank Details Summary", 20, currentY + 6.5);
+        currentY += 10;
+
+        const tableBody = reportData.map(item => [
+            item.employeeCode,
+            item.fullName,
+            item.bankName,
+            item.branchName,
+            item.accountNumber,
+            `Rs ${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+        ]);
+
+        autoTable(doc, {
+            startY: currentY,
+            head: [["Employee ID", "Employee Name", "Bank Name", "Branch", "Account Number", "Total Amount"]],
+            body: tableBody,
+            theme: "plain",
+            styles: { fontSize: 8, cellPadding: 3 },
+            headStyles: { fillColor: [243, 246, 253], textColor: [23, 44, 108], fontStyle: "bold" },
+            columnStyles: {
+                0: { cellWidth: 20 },
+                1: { cellWidth: 40 },
+                2: { cellWidth: 35 },
+                3: { cellWidth: 28 },
+                4: { cellWidth: 28 },
+                5: { cellWidth: 31, halign: 'right', fontStyle: 'bold' }
+            },
+            margin: { left: 14, right: 14 }
+        });
+
+        currentY = (doc as any).lastAutoTable.finalY;
+
+        // Total Row
+        doc.setFillColor(15, 23, 42);
+        doc.rect(14, currentY, pageWidth - 28, 10, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Net Pay", 20, currentY + 6.5);
+        doc.setTextColor(255, 184, 0);
+        doc.text(`Rs. ${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - 20, currentY + 6.5, { align: "right" });
+
+        currentY += 25;
+
+        // 3. Approved By Section
+        if (currentY + 40 > pageHeight - 20) {
+            doc.addPage();
+            currentY = 30;
+        }
+
+        const boxWidth = 60;
+        const boxHeight = 35;
+        const startX = pageWidth - boxWidth - 14;
+
+        doc.setFillColor(248, 250, 255);
+        doc.rect(startX, currentY, boxWidth, boxHeight, "F");
+
+        doc.setTextColor(120, 140, 180);
+        doc.setFontSize(8);
+        doc.text("Approved By", startX + boxWidth / 2, currentY + boxHeight / 2, { align: "center" });
+
+        doc.setDrawColor(210, 220, 240);
+        doc.setLineWidth(0.2);
+        doc.line(startX + 5, currentY + boxHeight - 10, startX + boxWidth - 5, currentY + boxHeight - 10);
+
+        doc.text("Name / Designation", startX + boxWidth / 2, currentY + boxHeight - 5, { align: "center" });
+
+        // Footer
+        for (let i = 1; i <= doc.internal.getNumberOfPages(); i++) {
+            doc.setPage(i);
+            doc.setFillColor(15, 26, 40);
+            doc.rect(0, pageHeight - 15, pageWidth, 15, "F");
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(7);
+            doc.text(`Generated by CenzHRM • Product by Cenzios Pvt Ltd • Year: ${year} • Month: ${monthName}`, pageWidth / 2, pageHeight - 6, { align: "center" });
+        }
+
+        doc.save(`Bank_Advice_Report_${monthName}_${year}.pdf`);
+    } else {
+        const wsData: any[][] = [
+            ["Bank Advice Report"],
+            [periodStr],
+            [],
+            ["Employee ID", "Employee Name", "Bank Name", "Branch", "Account Number", "Amount"]
+        ];
+
+        reportData.forEach(item => {
+            wsData.push([
+                item.employeeCode,
+                item.fullName,
+                item.bankName,
+                item.branchName,
+                item.accountNumber,
+                item.amount.toString()
+            ]);
+        });
+
+        wsData.push([]);
+        wsData.push(["", "", "", "", "Net Pay", totalAmount.toString()]);
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        if (format === "excel") {
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Bank Advice");
+            XLSX.writeFile(wb, `Bank_Advice_Report_${monthName}_${year}.xlsx`);
+        } else {
+            const csv = XLSX.utils.sheet_to_csv(ws);
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Bank_Advice_Report_${monthName}_${year}.csv`);
+            link.style.visibility = "hidden";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+};
