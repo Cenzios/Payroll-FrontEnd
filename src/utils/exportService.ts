@@ -124,13 +124,17 @@ export const exportEmployeeModalReport = (data: EmployeeModalReportData) => {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // 1. Header Background (Deep Blue + Lighter Blue Curve)
-    doc.setFillColor(15, 26, 78); // #0f1a4e (Deep Blue)
+    // 1. Header Background (Base Dark Blue)
+    doc.setFillColor(15, 23, 42); // Very dark blue base (#0F172A)
     doc.rect(0, 0, pageWidth, 50, "F");
 
-    // Lighter Blue Curve on the right
-    doc.setFillColor(23, 44, 108); // #172c6c
-    doc.ellipse(pageWidth, 25, 60, 45, "F");
+    // First Circle (Medium Blue, Center-Left)
+    doc.setFillColor(28, 48, 120); // #1C3078
+    doc.circle(150, 40, 40, "F");
+
+    // Second Circle (Dark Blue, Right)
+    doc.setFillColor(13, 26, 80); // #0D1A50
+    doc.circle(190, 30, 40, "F");
 
     // Fill background color for everything below header to be super light/white
     doc.setFillColor(255, 255, 255);
