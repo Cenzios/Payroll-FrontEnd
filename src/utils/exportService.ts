@@ -66,6 +66,27 @@ export interface MonthData {
     employees: ReportEmployee[];
 }
 
+export interface EmployeeModalReportData {
+    companyName: string;
+    companyAddress: string;
+    employeeName: string;
+    employeeId: string;
+    month: number;
+    year: number;
+    basicSalary: number;
+    totalAllowances: number;
+    grossPay: number;
+    totalDeductions: number;
+    netPay: number;
+    workedDays: number;
+    salaryType: string;
+    otHours: number;
+    otAmount: number;
+    epf8: number;
+    loanDeduction: number;
+    salaryAdvance: number;
+}
+
 // --- Helper Functions ---
 
 const formatCurrency = (amount: number) => {
@@ -76,6 +97,227 @@ const formatCurrency = (amount: number) => {
 };
 
 // --- Export Functions ---
+
+export const exportEmployeeModalReport = (data: EmployeeModalReportData) => {
+    const doc = new jsPDF();
+    const {
+        companyName,
+        companyAddress,
+        employeeName,
+        employeeId,
+        month,
+        year,
+        basicSalary,
+        totalAllowances,
+        grossPay,
+        totalDeductions,
+        netPay,
+        workedDays,
+        salaryType,
+        otHours,
+        otAmount,
+        epf8,
+        loanDeduction,
+        salaryAdvance
+    } = data;
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // 1. Header Background (Deep Blue + Lighter Blue Curve)
+    doc.setFillColor(15, 26, 78); // #0f1a4e (Deep Blue)
+    doc.rect(0, 0, pageWidth, 50, "F");
+
+    // Lighter Blue Curve on the right
+    doc.setFillColor(23, 44, 108); // #172c6c
+    doc.ellipse(pageWidth, 25, 60, 45, "F");
+
+    // Fill background color for everything below header to be super light/white
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 50, pageWidth, pageHeight - 50, "F");
+
+    // Yellow vertical line
+    doc.setFillColor(255, 184, 0); // #ffb800
+    doc.rect(14, 10, 1, 30, "F");
+
+    // Left Header Texts
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text("CenzHRM", 19, 13);
+
+    doc.setTextColor(255, 184, 0); // Yellow
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("Payroll Summary Report", 19, 26);
+
+    // Format month and year as 'January 2026'
+    // month is 1-indexed from backend, so month - 1 for JS Date
+    const periodStr = new Date(year, month - 1).toLocaleString("default", { month: "long", year: "numeric" });
+
+    doc.setTextColor(180, 180, 180);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Here's your Payroll History • ${periodStr}`, 19, 36);
+
+    // Right Header Texts
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    const companyLines = doc.splitTextToSize(companyName, 80);
+    doc.text(companyLines, pageWidth - 14, 20, { align: "right" });
+
+    if (companyAddress) {
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(180, 180, 180);
+        const addressLines = doc.splitTextToSize(companyAddress, 80);
+        doc.text(addressLines, pageWidth - 14, 20 + (companyLines.length * 6), { align: "right" });
+    }
+
+    // 2. OVERVIEW BANNER (Light Blue Background)
+    let currentY = 56;
+    doc.setFillColor(243, 246, 253); // Light Blue background
+    doc.rect(14, currentY, pageWidth - 28, 12, "F");
+
+    doc.setTextColor(23, 44, 108); // Dark Blue text
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("EMPLOYEE PAYROLL OVERVIEW", 20, currentY + 8);
+
+    doc.setTextColor(60, 100, 200); // Blue text
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${employeeId} • ${employeeName}`, pageWidth - 20, currentY + 8, { align: "right" });
+
+    // 3. SUMMARY BOXES
+    currentY += 18;
+    const boxWidth = (pageWidth - 28) / 5;
+    const boxHeight = 18;
+    doc.setDrawColor(220, 225, 235); // Light Gray Border
+    doc.setLineWidth(0.3);
+
+    const summaries = [
+        { label: "Basic Salary", value: `Rs ${basicSalary.toLocaleString(undefined, { minimumFractionDigits: 0 })}` },
+        { label: "Total Allowances", value: `Rs ${totalAllowances.toLocaleString(undefined, { minimumFractionDigits: 0 })}` },
+        { label: "Gross Pay", value: `Rs ${grossPay.toLocaleString(undefined, { minimumFractionDigits: 0 })}` },
+        { label: "Total Deduction", value: `Rs ${totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 0 })}` },
+        { label: "Net Pay", value: netPay.toLocaleString(undefined, { minimumFractionDigits: 2 }) }
+    ];
+
+    summaries.forEach((summary, index) => {
+        const startX = 14 + (index * boxWidth);
+        // Draw Box
+        doc.setDrawColor(220, 225, 235);
+        if (index > 0) {
+            doc.line(startX, currentY, startX, currentY + boxHeight); // Inner vertical line
+        }
+
+        doc.rect(14, currentY, pageWidth - 28, boxHeight, "S"); // Overall outer border
+
+        // Label
+        doc.setTextColor(150, 160, 180); // Gray
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text(summary.label, startX + 4, currentY + 6);
+
+        // Value
+        doc.setTextColor(30, 30, 30); // Dark
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text(summary.value, startX + 4, currentY + 14);
+    });
+
+    // 4. PAYROLL BREAKDOWN TABLE
+    currentY += 26;
+
+    // Table Header
+    doc.setFillColor(33, 60, 133); // #213c85 Deep blue background
+    doc.rect(14, currentY, pageWidth - 28, 12, "F");
+
+    doc.setTextColor(255, 255, 255); // White text
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Payroll Breakdown", 18, currentY + 8);
+
+    currentY += 12;
+
+    // Sub-header Component | Units | Rate (Rs) | Amount (Rs)
+    doc.setFillColor(248, 250, 252); // Very light grey
+    doc.rect(14, currentY, pageWidth - 28, 10, "F");
+
+    doc.setTextColor(30, 40, 70);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("Component", 18, currentY + 6.5);
+    doc.text("Units", 100, currentY + 6.5, { align: "center" });
+    doc.text("Rate (Rs)", 140, currentY + 6.5, { align: "center" });
+    doc.text("Amount (Rs)", pageWidth - 18, currentY + 6.5, { align: "right" });
+
+    currentY += 10;
+
+    const drawRow = (component: string, units: string, rate: string, amount: string, isLast: boolean = false) => {
+        doc.setTextColor(60, 60, 60);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+
+        // Add minimal padding
+        doc.text(component, 18, currentY + 7.5);
+        doc.text(units, 100, currentY + 7.5, { align: "center" });
+        doc.text(rate, 140, currentY + 7.5, { align: "center" });
+
+        doc.setTextColor(30, 30, 30);
+        doc.setFont("helvetica", "bold");
+        doc.text(amount, pageWidth - 18, currentY + 7.5, { align: "right" });
+
+        currentY += 12;
+
+        if (!isLast) {
+            doc.setDrawColor(240, 240, 240); // Light dashed-like or solid line
+            doc.setLineWidth(0.2);
+            doc.line(14, currentY, pageWidth - 14, currentY);
+        }
+    };
+
+    // Calculate a daily rate if needed
+    const dailyRateStr = salaryType === 'MONTHLY' ? (basicSalary / (workedDays || 1)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Draw Rows based on image design
+    drawRow("Basic salary", `${workedDays} days`, dailyRateStr, basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    drawRow("Overtime", `${otHours} hrs`, (otAmount / (otHours || 1)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), otAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    drawRow("Employee EPF deduction", "8%", "0.00", epf8.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    drawRow("Loan deduction", "—", "—", loanDeduction.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    drawRow("Advance deduction", "—", "—", salaryAdvance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), true);
+
+    // Draw total table boundary
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.3);
+    doc.rect(14, currentY - (5 * 12), pageWidth - 28, (5 * 12), "S");
+
+    // 5. TOTAL ROW (Dark Blue Background)
+    doc.setFillColor(15, 26, 78); // #0f1a4e Deep blue
+    doc.rect(14, currentY, pageWidth - 28, 12, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Net Pay", 18, currentY + 8);
+
+    doc.setTextColor(255, 184, 0); // Yellow
+    doc.text(`Rs. ${netPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - 18, currentY + 8, { align: "right" });
+
+    // 6. FOOTER
+    doc.setFillColor(15, 26, 40); // Darker Blue
+    doc.rect(0, pageHeight - 16, pageWidth, 16, "F");
+
+    doc.setTextColor(120, 130, 160); // Grayish Blue
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    const footerText = `Generated by CenzHRM • Product by Cenzios Pvt Ltd • Year: ${year} • Month: ${new Date(year, month - 1).toLocaleString("default", { month: "long" })}`;
+    doc.text(footerText, pageWidth / 2, pageHeight - 6, { align: "center" });
+
+    doc.save(`Payroll_Report_${employeeId}.pdf`);
+};
 
 export const exportPayslip = (
     format: "pdf" | "excel" | "csv",

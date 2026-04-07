@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
-import { exportPayslip } from '../utils/exportService';
+import { exportEmployeeModalReport } from '../utils/exportService';
 import { useGetCompaniesQuery } from '../store/apiSlice';
 import Toast from './Toast';
 
@@ -104,42 +104,27 @@ const EmployeePayrollModal = ({
         const epf12 = row.companyEPFETF * (12 / 15);
         const etf3 = row.companyEPFETF * (3 / 15);
 
-        const payslipData = {
-            salaryType: employeeData.salaryType || 'MONTHLY',
-            basicSalary: employeeData.basicSalary,
-            workedDays: row.workedDays,
-            basicPay: row.basicPay,
-            otAmount: row.otAmount,
-            otHours: row.otHours,
-            allowances: (row.allowances || []).map(a => ({ name: a.type, amount: a.amount })),
-            isEpfEnabled: row.employeeEPF > 0,
-            epf8: row.employeeEPF,
-            loanDeduction: row.loanDeduction || 0,
-            deductions: [
-                ...(row.salaryAdvance > 0 ? [{ name: 'Salary Advance', amount: row.salaryAdvance }] : []),
-                ...(row.customDeductions || []).map(d => ({ name: d.type, amount: d.amount }))
-            ],
-            totalDeductions: row.deductions,
-            netSalary: row.netPay,
-            epf12: epf12,
-            etf3: etf3
-        };
+        const totalAllowances = (row.allowances || []).reduce((sum, a) => sum + a.amount, 0);
 
-        const empInfo = {
-            id: employeeId,
-            fullName: employeeData.employeeName,
-            employeeId: employeeData.employeeCode,
-            designation: employeeData.designation
-        };
-
-        exportPayslip('pdf', {
-            previewPayslip: payslipData as any,
-            selectedEmployee: empInfo as any,
+        exportEmployeeModalReport({
             companyName,
             companyAddress,
-            selectedMonth: month - 1, // 0-indexed for jsPDF period display
-            selectedYear: year,
-            companyWorkingDays: row.companyWorkingDays || new Date(year, month, 0).getDate()
+            employeeName: employeeData.employeeName,
+            employeeId: employeeData.employeeCode,
+            month: month,
+            year: year,
+            basicSalary: employeeData.basicSalary || row.basicPay,
+            totalAllowances: totalAllowances,
+            grossPay: row.grossPay,
+            totalDeductions: row.deductions,
+            netPay: row.netPay,
+            workedDays: row.workedDays,
+            salaryType: employeeData.salaryType || 'MONTHLY',
+            otHours: row.otHours,
+            otAmount: row.otAmount,
+            epf8: row.employeeEPF,
+            loanDeduction: row.loanDeduction || 0,
+            salaryAdvance: row.salaryAdvance || 0
         });
     };
 
