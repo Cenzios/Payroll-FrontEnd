@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, UploadCloud, Loader2, Calendar, Percent, Info, Calculator, FileText, CheckCircle2, PlusCircle, Search, User, ChevronDown, UserRound, MessageSquareQuote, PercentCircle, PercentSquare, PercentSquareIcon, Text, CircleDollarSign, MessageSquareDiff } from 'lucide-react';
+import { X, UploadCloud, Loader2, Calendar, Percent, Info, Calculator, FileText, CheckCircle2, PlusCircle, Search, User, ChevronDown, UserRound, MessageSquareQuote, PercentCircle, PercentSquare, PercentSquareIcon, Text, CircleDollarSign, MessageSquareDiff, CalendarRange } from 'lucide-react';
 import { useGetEmployeesQuery, useCreateLoanMutation, useUploadEmployeeDocumentMutation } from '../store/apiSlice';
 import { Employee } from '../types/employee.types';
 import Toast from './Toast';
@@ -11,6 +11,8 @@ import dayjs from 'dayjs';
 import loanTitleIcon from '../assets/images/loan-title.svg';
 import loanAmountIcon from '../assets/images/loan-amount.svg';
 import loanInstallmentIcon from '../assets/images/loan-installment.svg';
+import loanStartIcon from '../assets/images/loan-start.svg';
+import loanEndIcon from '../assets/images/loan-end.svg';
 
 interface CreateLoanDrawerProps {
   isOpen: boolean;
@@ -385,7 +387,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <Calendar className="h-4 w-4 text-blue-500" />
+                      <img src={loanStartIcon} alt="Start Date" className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
                       Start Date <strong className="text-red-600 text-[15px]">*</strong>
@@ -427,7 +429,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <Calendar className="h-4 w-4 text-blue-500" />
+                      <img src={loanEndIcon} alt="End Date" className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
                       End Date <strong className="text-red-600 text-[15px]">*</strong>
@@ -472,7 +474,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <Calendar className="h-4 w-4 text-blue-500" />
+                      <CalendarRange className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
                       Interest Rate Type <strong className="text-red-600 text-[15px]">*</strong>
