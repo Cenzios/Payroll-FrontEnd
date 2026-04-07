@@ -6,7 +6,7 @@ import { setAuthFromToken, setSignupEmail, setTempPlanId } from '../store/slices
 import { jwtDecode } from 'jwt-decode';
 import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
-import { PLANS } from '../constants/plans';
+import { PLANS, Plan } from '../constants/plans';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 
 interface DecodedToken {
@@ -127,9 +127,7 @@ const GetPlan = () => {
     };
   };
 
-  const professionalPlan = mergePlanDetails(PLANS.PROFESSIONAL);
   const basicPlan = mergePlanDetails(PLANS.BASIC);
-  const enterprisePlan = mergePlanDetails(PLANS.ENTERPRISE);
 
   return (
     <div className="min-h-screen relative overflow-hidden 
@@ -141,22 +139,8 @@ const GetPlan = () => {
         Choose The Plan That's Right For You
       </h1>
 
-      {/* Three Plan Cards */}
-      <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-        {/* Professional Plan (Left) */}
-        <PlanCard
-          planName={professionalPlan.name}
-          price={professionalPlan.employeePrice || professionalPlan.price}
-          registrationFee={professionalPlan.registrationFee}
-          description={professionalPlan.description}
-          features={professionalPlan.features}
-          isHighlighted={false}
-          showButton={true}
-          showPerEmployeePrice={true}
-          onSelectPlan={() => handleSelectPlan(professionalPlan.id)}
-        />
-
-        {/* Basic Plan (Center - Highlighted) */}
+      {/* Single Plan Card (Basic) */}
+      <div className="w-full max-w-lg mx-auto relative z-10 flex justify-center">
         <PlanCard
           planName={basicPlan.name}
           price={basicPlan.employeePrice || basicPlan.price}
@@ -167,19 +151,6 @@ const GetPlan = () => {
           showButton={true}
           showPerEmployeePrice={true}
           onSelectPlan={() => handleSelectPlan(basicPlan.id)}
-        />
-
-        {/* Enterprise Plan (Right) */}
-        <PlanCard
-          planName={enterprisePlan.name}
-          price={enterprisePlan.employeePrice || enterprisePlan.price}
-          registrationFee={enterprisePlan.registrationFee}
-          description={enterprisePlan.description}
-          features={enterprisePlan.features}
-          isHighlighted={false}
-          showButton={true}
-          showPerEmployeePrice={true}
-          onSelectPlan={() => handleSelectPlan(enterprisePlan.id)}
         />
       </div>
       {/* Background Wave - Bottom Right */}

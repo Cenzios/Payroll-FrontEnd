@@ -22,6 +22,9 @@ const SetCompany = () => {
   const [searchParams] = useSearchParams();
   const { isLoading, error, signupEmail, token } = useAppSelector((state) => state.auth);
 
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const phoneRegex = /^(\+94\d{9}|0\d{9})$/;
+
   const [formData, setFormData] = useState({
     companyName: '',
     // companyCount: 1,
@@ -109,10 +112,14 @@ const SetCompany = () => {
 
     if (!formData.companyEmail.trim()) {
       errors.companyEmail = 'Company email is required';
+    } else if (!emailRegex.test(formData.companyEmail.trim())) {
+      errors.companyEmail = 'Invalid email format';
     }
 
     if (!formData.companyPhone.trim()) {
       errors.companyPhone = 'Company phone is required';
+    } else if (!phoneRegex.test(formData.companyPhone.trim())) {
+      errors.companyPhone = 'Must be +94XXXXXXXXX or 0XXXXXXXXX (10 digits)';
     }
 
     if (!formData.companyAddress.trim()) {
@@ -136,8 +143,11 @@ const SetCompany = () => {
 
     let processedValue = value;
     if (name === 'companyPhone') {
-      // Only allow numbers for phone
-      processedValue = value.replace(/\D/g, '');
+      // For phone, allow + and numbers, but clean up for storage if needed
+      // Actually, let's allow typing but rely on validateForm for the final check
+      // However, user previously asked to ONLY allow numbers.
+      // If we use the regex /^(\+94\d{9}|0\d{9})$/, we should allow + and numbers.
+      processedValue = value.replace(/[^\d+]/g, '');
     }
 
     setFormData((prev) => ({
