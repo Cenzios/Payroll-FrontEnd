@@ -174,12 +174,6 @@ const EpfEtfReport = () => {
         setToast({ message: `${format.toUpperCase()} exported successfully`, type: 'success' });
     };
 
-    const months = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ];
-
-    const years = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - i);
 
     const fmt = (val: number | undefined | null) => (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 

@@ -133,9 +133,16 @@ const SetCompany = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
+    let processedValue = value;
+    if (name === 'companyPhone') {
+      // Only allow numbers for phone
+      processedValue = value.replace(/\D/g, '');
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'companyName' ? value : parseInt(value) || 0,
+      [name]: processedValue,
     }));
     setValidationErrors((prev) => ({
       ...prev,
