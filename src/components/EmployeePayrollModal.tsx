@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
+import { exportPayslip } from '../utils/exportService';
+import { useGetCompaniesQuery } from '../store/apiSlice';
 import Toast from './Toast';
 
 interface EmployeePayrollModalProps {
@@ -15,6 +17,7 @@ interface EmployeePayrollModalProps {
 interface MonthlyData {
     month: string;
     workedDays: number;
+    companyWorkingDays?: number;
     basicPay: number;
     otHours: number;
     otAmount: number;
@@ -34,6 +37,7 @@ interface EmployeeData {
     employeeName: string;
     employeeCode: string;
     designation: string;
+    salaryType?: string;
     basicSalary: number;
     joinedDate: string;
     monthlyBreakdown: MonthlyData[];
@@ -65,6 +69,7 @@ const EmployeePayrollModal = ({
     const [isLoading, setIsLoading] = useState(false);
     const [employeeData, setEmployeeData] = useState<EmployeeData | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const { data: companies } = useGetCompaniesQuery();
 
     useEffect(() => {
         if (isOpen && employeeId && companyId && month && year) {
@@ -86,6 +91,56 @@ const EmployeePayrollModal = ({
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleExport = () => {
+        if (!employeeData || !row) return;
+
+        const selectedCompany = companies?.find(c => c.id === companyId);
+        const companyName = selectedCompany?.name || 'Company Name';
+        const companyAddress = selectedCompany?.address || '';
+
+        // Standard 15% breakdown: 12% EPF, 3% ETF
+        const epf12 = row.companyEPFETF * (12 / 15);
+        const etf3 = row.companyEPFETF * (3 / 15);
+
+        const payslipData = {
+            salaryType: employeeData.salaryType || 'MONTHLY',
+            basicSalary: employeeData.basicSalary,
+            workedDays: row.workedDays,
+            basicPay: row.basicPay,
+            otAmount: row.otAmount,
+            otHours: row.otHours,
+            allowances: (row.allowances || []).map(a => ({ name: a.type, amount: a.amount })),
+            isEpfEnabled: row.employeeEPF > 0,
+            epf8: row.employeeEPF,
+            loanDeduction: row.loanDeduction || 0,
+            deductions: [
+                ...(row.salaryAdvance > 0 ? [{ name: 'Salary Advance', amount: row.salaryAdvance }] : []),
+                ...(row.customDeductions || []).map(d => ({ name: d.type, amount: d.amount }))
+            ],
+            totalDeductions: row.deductions,
+            netSalary: row.netPay,
+            epf12: epf12,
+            etf3: etf3
+        };
+
+        const empInfo = {
+            id: employeeId,
+            fullName: employeeData.employeeName,
+            employeeId: employeeData.employeeCode,
+            designation: employeeData.designation
+        };
+
+        exportPayslip('pdf', {
+            previewPayslip: payslipData as any,
+            selectedEmployee: empInfo as any,
+            companyName,
+            companyAddress,
+            selectedMonth: month - 1, // 0-indexed for jsPDF period display
+            selectedYear: year,
+            companyWorkingDays: row.companyWorkingDays || new Date(year, month, 0).getDate()
+        });
     };
 
     if (!isOpen) return null;
@@ -290,6 +345,7 @@ const EmployeePayrollModal = ({
                         <div>
                             <button
                                 disabled={!employeeData}
+                                onClick={handleExport}
                                 className="w-full py-3.5 rounded-xl border border-green-500 hover:bg-green-50 disabled:border-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed text-green-600 text-sm font-semibold transition-colors"
                             >
                                 Export Pay-slip
