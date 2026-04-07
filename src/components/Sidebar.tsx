@@ -118,15 +118,15 @@ const Sidebar = () => {
                                 <span>Payroll summary</span>
                             </NavLink>
                             <NavLink
-                                to="/reports" // Placeholder for EPF/ETF until implemented
+                                to="/epf-etf"
                                 className={({ isActive }) =>
                                     `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
-                                        ? 'text-blue-600 font-medium'
+                                        ? 'text-blue-600 font-medium font-bold bg-blue-50'
                                         : 'text-[#67696C] hover:text-gray-900'
                                     }`
                                 }
                             >
-                                <Circle className="w-2 h-2" />
+                                <Circle className={`w-2 h-2 ${location.pathname === '/epf-etf' ? 'fill-blue-600' : ''}`} />
                                 <span>EPF / ETF</span>
                             </NavLink>
                             <NavLink

@@ -23,6 +23,7 @@ import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 import RenewPlanModal from './components/RenewPlanModal';
 import SettleInvoice from './pages/SettleInvoice';
 import BankAdviceReport from './pages/BankAdviceReport';
+import EpfEtfReport from './pages/EpfEtfReport';
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { checkAccessStatus } from './store/slices/authSlice';
@@ -103,6 +104,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Reports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/epf-etf"
+          element={
+            <ProtectedRoute>
+              <EpfEtfReport />
             </ProtectedRoute>
           }
         />
