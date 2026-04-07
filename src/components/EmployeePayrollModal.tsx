@@ -287,16 +287,10 @@ const EmployeePayrollModal = ({
 
                     {/* ── Footer Buttons ── */}
                     <div className="px-7 py-5 border-t border-gray-100 mt-3">
-                        <div className="flex gap-3">
+                        <div>
                             <button
                                 disabled={!employeeData}
-                                className="flex-1 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
-                            >
-                                Generate Pay-slip
-                            </button>
-                            <button
-                                disabled={!employeeData}
-                                className="flex-1 py-3.5 rounded-xl border border-green-500 hover:bg-green-50 disabled:border-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed text-green-600 text-sm font-semibold transition-colors"
+                                className="w-full py-3.5 rounded-xl border border-green-500 hover:bg-green-50 disabled:border-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed text-green-600 text-sm font-semibold transition-colors"
                             >
                                 Export Pay-slip
                             </button>
