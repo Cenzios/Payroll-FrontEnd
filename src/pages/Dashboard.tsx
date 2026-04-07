@@ -240,7 +240,9 @@ const Dashboard = () => {
                   "
                 >
                   <Building2 className="w-4 h-4 text-gray-500" />
-                  {selectedCompany ? selectedCompany.name : 'Select Company'}
+                  {selectedCompany?.name
+                    ? selectedCompany.name.split(' ').slice(0, 2).join(' ') + ' ...'
+                    : 'Select Company'}
                   <ChevronDown className="w-4 h-4 text-gray-400" />
                 </button>
 
