@@ -10,6 +10,7 @@ import EmployeePayrollModal from '../components/EmployeePayrollModal';
 import AllEmployeesSummaryModal from '../components/AllEmployeesSummaryModal';
 import PageHeader from '../components/PageHeader';
 import { exportPayrollSummaryReport } from '../utils/exportService';
+import { useGetCompaniesQuery } from '../store/apiSlice';
 
 const Reports = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
@@ -44,6 +45,7 @@ const Reports = () => {
     const [isAllEmployeesModalOpen, setIsAllEmployeesModalOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; companyId: string; month: number; year: number } | null>(null);
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
+    const { data: companies } = useGetCompaniesQuery();
 
     // Expand/collapse state for months
     const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
@@ -178,18 +180,56 @@ const Reports = () => {
                 : monthData.employees
         }));
 
+    const getExportData = () => {
+        const filteredMonthlyData = getFilteredData();
+        const selectedCompany = companies?.find(c => c.id === selectedCompanyId);
+
+        let totalBasicPay = 0;
+        let totalGrossPay = 0;
+        let totalEmployeeEPF = 0;
+        let totalSalaryAdvance = 0;
+        let totalNetPay = 0;
+
+        filteredMonthlyData.forEach(month => {
+            month.employees.forEach((emp: any) => {
+                totalBasicPay += emp.basicPay || 0;
+                totalGrossPay += emp.grossPay || 0;
+                totalEmployeeEPF += emp.employeeEPF || 0;
+                totalSalaryAdvance += emp.salaryAdvance || 0;
+                totalNetPay += emp.netPay || 0;
+            });
+        });
+
+        return {
+            companyName: selectedCompany?.name || 'Company Name',
+            companyAddress: selectedCompany?.address || '',
+            monthlyData: filteredMonthlyData,
+            startMonth,
+            startYear,
+            endMonth,
+            endYear,
+            overallTotals: {
+                totalBasicPay,
+                totalGrossPay,
+                totalEmployeeEPF,
+                totalSalaryAdvance,
+                totalNetPay
+            }
+        };
+    };
+
     const exportPDF = () => {
-        exportPayrollSummaryReport('pdf', { monthlyData: getFilteredData(), startMonth, startYear, endMonth, endYear });
+        exportPayrollSummaryReport('pdf', getExportData());
         setToast({ message: 'PDF exported successfully', type: 'success' });
     };
 
     const exportExcel = () => {
-        exportPayrollSummaryReport('excel', { monthlyData: getFilteredData(), startMonth, startYear, endMonth, endYear });
+        exportPayrollSummaryReport('excel', getExportData() as any);
         setToast({ message: 'Excel exported successfully', type: 'success' });
     };
 
     const exportCSV = () => {
-        exportPayrollSummaryReport('csv', { monthlyData: getFilteredData(), startMonth, startYear, endMonth, endYear });
+        exportPayrollSummaryReport('csv', getExportData() as any);
         setToast({ message: 'CSV exported successfully', type: 'success' });
     };
 
