@@ -104,26 +104,31 @@ const EmployeePayrollModal = ({
             <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden">
 
-                    {/* ── Header ── */}
-                    <div className="flex items-center justify-between px-7 pt-6 pb-4">
+                    <div className="flex items-center px-7 pt-6 pb-4 relative">
+
+                        {/* Left - Name */}
                         <h2 className="text-xl font-bold text-gray-900">
                             {employeeData?.employeeName ?? '—'}
                         </h2>
-                        <div className="flex items-center gap-3">
+
+                        {/* Center - Employee + Month */}
+                        <div className="absolute left-1/2 transform -translate-x-1/2">
                             {(employeeData?.employeeCode || monthRangeLabel) && (
-                                <p className="text-sm text-blue-400">
-                                    {employeeData?.employeeCode
-                                        ? `${employeeData.employeeCode}${monthRangeLabel ? ` · ${monthRangeLabel}` : ''}`
-                                        : monthRangeLabel}
+                                <p className="text-sm text-gray-400 text-center font-medium">
+                                    {employeeData?.employeeCode && monthRangeLabel
+                                        ? `${employeeData.employeeCode} - ${monthRangeLabel}`
+                                        : employeeData?.employeeCode || monthRangeLabel}
                                 </p>
                             )}
-                            <button
-                                onClick={onClose}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                <X className="w-5 h-5 text-gray-400" />
-                            </button>
                         </div>
+
+                        {/* Right - Close Button */}
+                        <button
+                            onClick={onClose}
+                            className="ml-auto p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                            <X className="w-5 h-5 text-gray-400" />
+                        </button>
                     </div>
 
                     {/* ── Summary Pills ── */}
