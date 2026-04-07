@@ -67,7 +67,7 @@ const Loans = () => {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
+    <div className="flex h-screen overflow-hidden bg-gray-50">
       <Sidebar />
       <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
         {selectedLoan ? (
@@ -164,10 +164,10 @@ const Loans = () => {
                       />
                     </div>
 
-                    <div className="border border-[#F3F4F6] rounded-xl overflow-hidden">
+                    <div className="border-x-2 border-y-2 border-[#e1e2e4] rounded-xl overflow-hidden">
                       <table className="w-full text-left border-collapse bg-white">
                         <thead className="bg-[#FAFBFC]">
-                          <tr className="border-b border-[#F3F4F6] border-t-2">
+                          <tr className="border-b-2 border-[#e1e2e4]">
                             <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Employee</th>
                             <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Loan Title</th>
                             <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Amount</th>
@@ -177,7 +177,7 @@ const Loans = () => {
                             <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Status</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-[#F3F4F6] ">
+                        <tbody className="divide-y divide-[#e3e4e7] ">
                           {loans.map((loan: any) => (
                             <tr
                               key={loan.id}
@@ -227,7 +227,7 @@ const Loans = () => {
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         title="Changes Saved"
-        message="Loan details successfully added."
+        message="Loan Details Successfully Added."
       />
     </div>
 

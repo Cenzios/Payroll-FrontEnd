@@ -116,7 +116,7 @@ const PayslipPreview = ({
                             {/* Basic salary label */}
                             <div className="flex text-[12px]">
                                 <span className="w-56">
-                                    {previewPayslip.salaryType === "MONTHLY" ? "Monthly Basic" : "Daily Basic"}
+                                    {previewPayslip.salaryType === "MONTHLY" ? "Monthly Basic Salary" : "Daily Basic Salary"}
                                 </span>
                                 <span>: {previewPayslip.basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
@@ -141,13 +141,17 @@ const PayslipPreview = ({
                                 <span>:  {previewPayslip.workedDays ?? previewPayslip.workingDays}</span>
                             </div>
 
+
+
                             {/* Basic pay calculation */}
-                            <div className="flex text-[12px]">
-                                <span className="w-56">
-                                    Basic Salary ({previewPayslip.basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
-                                </span>
-                                <span>:  {previewPayslip.basicPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            </div>
+                            {previewPayslip.salaryType === "DAILY" && (
+                                <div className="flex text-[12px]">
+                                    <span className="w-56">
+                                        Basic Salary ({previewPayslip.basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
+                                    </span>
+                                    <span>:  {previewPayslip.basicPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                            )}
 
                             {/* OT if any */}
                             {previewPayslip.otAmount > 0 && (
