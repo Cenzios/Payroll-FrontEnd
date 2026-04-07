@@ -43,12 +43,17 @@ const Confirmation = () => {
         if (subStatus === 'ACTIVE') {
           clearInterval(pollInterval);
 
-          // Double check to ensure we don't accidentally run this logic twice if multiple fast polls happened
           const tempCompanyName = localStorage.getItem('temp_companyName');
+          const tempCompanyEmail = localStorage.getItem('temp_companyEmail');
+          const tempCompanyPhone = localStorage.getItem('temp_companyPhone');
+          const tempCompanyAddress = localStorage.getItem('temp_companyAddress');
 
           if (tempCompanyName) {
             // 🛡️ Clear immediately to prevent other racing threads from picking it up
             localStorage.removeItem('temp_companyName');
+            localStorage.removeItem('temp_companyEmail');
+            localStorage.removeItem('temp_companyPhone');
+            localStorage.removeItem('temp_companyAddress');
 
             try {
               // Get email from token since we might have refreshed
@@ -59,9 +64,9 @@ const Confirmation = () => {
 
               await axiosInstance.post('/company', {
                 name: tempCompanyName,
-                email: userEmail || 'active@user.com',
-                address: 'Not Provided',
-                contactNumber: '',
+                email: tempCompanyEmail || userEmail || 'active@user.com',
+                address: tempCompanyAddress || 'Not Provided',
+                contactNumber: tempCompanyPhone || '',
                 departments: []
               }, {
                 headers: { Authorization: `Bearer ${authToken}` }
