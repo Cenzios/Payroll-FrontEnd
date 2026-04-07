@@ -115,7 +115,31 @@ const Sidebar = () => {
                                 }
                             >
                                 <Circle className="w-2 h-2" />
-                                <span>Salary Report</span>
+                                <span>Payroll summary</span>
+                            </NavLink>
+                            <NavLink
+                                to="/reports" // Placeholder for EPF/ETF until implemented
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
+                                        ? 'text-blue-600 font-medium'
+                                        : 'text-[#67696C] hover:text-gray-900'
+                                    }`
+                                }
+                            >
+                                <Circle className="w-2 h-2" />
+                                <span>EPF / ETF</span>
+                            </NavLink>
+                            <NavLink
+                                to="/bank-advice"
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
+                                        ? 'text-blue-600 font-medium'
+                                        : 'text-[#67696C] hover:text-gray-900'
+                                    }`
+                                }
+                            >
+                                <Circle className="w-2 h-2" />
+                                <span>Bank Advice</span>
                             </NavLink>
                             <NavLink
                                 to="/c-form"
@@ -127,9 +151,8 @@ const Sidebar = () => {
                                 }
                             >
                                 <Circle className="w-2 h-2" />
-                                <span>C-Form</span>
+                                <span>C - From</span>
                             </NavLink>
-                            {/* Future reports can go here */}
                         </div>
                     )}
                 </div>

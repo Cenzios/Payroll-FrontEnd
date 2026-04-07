@@ -10,6 +10,7 @@ import EmployeePayrollModal from '../components/EmployeePayrollModal';
 import AllEmployeesSummaryModal from '../components/AllEmployeesSummaryModal';
 import PageHeader from '../components/PageHeader';
 import { exportPayrollSummaryReport } from '../utils/exportService';
+import { useGetCompaniesQuery } from '../store/apiSlice';
 
 const Reports = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
@@ -44,6 +45,7 @@ const Reports = () => {
     const [isAllEmployeesModalOpen, setIsAllEmployeesModalOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; companyId: string; month: number; year: number } | null>(null);
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
+    const { data: companies } = useGetCompaniesQuery();
 
     // Expand/collapse state for months
     const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
@@ -178,18 +180,56 @@ const Reports = () => {
                 : monthData.employees
         }));
 
+    const getExportData = () => {
+        const filteredMonthlyData = getFilteredData();
+        const selectedCompany = companies?.find(c => c.id === selectedCompanyId);
+
+        let totalBasicPay = 0;
+        let totalGrossPay = 0;
+        let totalEmployeeEPF = 0;
+        let totalSalaryAdvance = 0;
+        let totalNetPay = 0;
+
+        filteredMonthlyData.forEach(month => {
+            month.employees.forEach((emp: any) => {
+                totalBasicPay += emp.basicPay || 0;
+                totalGrossPay += emp.grossPay || 0;
+                totalEmployeeEPF += emp.employeeEPF || 0;
+                totalSalaryAdvance += emp.salaryAdvance || 0;
+                totalNetPay += emp.netPay || 0;
+            });
+        });
+
+        return {
+            companyName: selectedCompany?.name || 'Company Name',
+            companyAddress: selectedCompany?.address || '',
+            monthlyData: filteredMonthlyData,
+            startMonth,
+            startYear,
+            endMonth,
+            endYear,
+            overallTotals: {
+                totalBasicPay,
+                totalGrossPay,
+                totalEmployeeEPF,
+                totalSalaryAdvance,
+                totalNetPay
+            }
+        };
+    };
+
     const exportPDF = () => {
-        exportPayrollSummaryReport('pdf', { monthlyData: getFilteredData(), startMonth, startYear, endMonth, endYear });
+        exportPayrollSummaryReport('pdf', getExportData());
         setToast({ message: 'PDF exported successfully', type: 'success' });
     };
 
     const exportExcel = () => {
-        exportPayrollSummaryReport('excel', { monthlyData: getFilteredData(), startMonth, startYear, endMonth, endYear });
+        exportPayrollSummaryReport('excel', getExportData() as any);
         setToast({ message: 'Excel exported successfully', type: 'success' });
     };
 
     const exportCSV = () => {
-        exportPayrollSummaryReport('csv', { monthlyData: getFilteredData(), startMonth, startYear, endMonth, endYear });
+        exportPayrollSummaryReport('csv', getExportData() as any);
         setToast({ message: 'CSV exported successfully', type: 'success' });
     };
 
@@ -242,7 +282,7 @@ const Reports = () => {
                             {/* Apply */}
                             <button
                                 onClick={handleApply}
-                                className="px-5 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                                className="px-5 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
                             >
                                 Apply
                             </button>
@@ -250,7 +290,7 @@ const Reports = () => {
                             {/* Reset */}
                             <button
                                 onClick={handleReset}
-                                className="px-5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg border border-gray-300 transition-colors"
+                                className="px-5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
                             >
                                 Reset
                             </button>
@@ -259,7 +299,7 @@ const Reports = () => {
                             <div className="relative">
                                 <button
                                     onClick={() => setIsExportOpen(prev => !prev)}
-                                    className="flex items-center gap-1.5 px-5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg border border-gray-300 transition-colors"
+                                    className="flex items-center gap-1.5 px-5 py-2 bg-white hover:bg-gray-50 text-green-600 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
                                 >
                                     Export
                                     <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
@@ -271,21 +311,21 @@ const Reports = () => {
                                         <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
                                             <button
                                                 onClick={() => { exportPDF(); setIsExportOpen(false); }}
-                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-red-600 hover:bg-red-50 transition-colors"
                                             >
                                                 <FileText className="w-4 h-4" /> PDF
                                             </button>
                                             <div className="border-t border-gray-100" />
                                             <button
                                                 onClick={() => { exportExcel(); setIsExportOpen(false); }}
-                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-green-600 hover:bg-green-50 transition-colors"
+                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-green-600 hover:bg-green-50 transition-colors"
                                             >
                                                 <FileSpreadsheet className="w-4 h-4" /> Excel
                                             </button>
                                             <div className="border-t border-gray-100" />
                                             <button
                                                 onClick={() => { exportCSV(); setIsExportOpen(false); }}
-                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
+                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-blue-600 hover:bg-blue-50 transition-colors"
                                             >
                                                 <Download className="w-4 h-4" /> CSV
                                             </button>

@@ -66,6 +66,27 @@ export interface MonthData {
     employees: ReportEmployee[];
 }
 
+export interface EmployeeModalReportData {
+    companyName: string;
+    companyAddress: string;
+    employeeName: string;
+    employeeId: string;
+    month: number;
+    year: number;
+    basicSalary: number;
+    totalAllowances: number;
+    grossPay: number;
+    totalDeductions: number;
+    netPay: number;
+    workedDays: number;
+    salaryType: string;
+    otHours: number;
+    otAmount: number;
+    epf8: number;
+    loanDeduction: number;
+    salaryAdvance: number;
+}
+
 // --- Helper Functions ---
 
 const formatCurrency = (amount: number) => {
@@ -76,6 +97,231 @@ const formatCurrency = (amount: number) => {
 };
 
 // --- Export Functions ---
+
+export const exportEmployeeModalReport = (data: EmployeeModalReportData) => {
+    const doc = new jsPDF();
+    const {
+        companyName,
+        companyAddress,
+        employeeName,
+        employeeId,
+        month,
+        year,
+        basicSalary,
+        totalAllowances,
+        grossPay,
+        totalDeductions,
+        netPay,
+        workedDays,
+        salaryType,
+        otHours,
+        otAmount,
+        epf8,
+        loanDeduction,
+        salaryAdvance
+    } = data;
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // 1. Header Background (Base Dark Blue)
+    doc.setFillColor(15, 23, 42); // Very dark blue base (#0F172A)
+    doc.rect(0, 0, pageWidth, 50, "F");
+
+    // First Circle (Medium Blue, Center-Left)
+    doc.setFillColor(28, 48, 120); // #1C3078
+    doc.circle(150, 40, 40, "F");
+
+    // Second Circle (Dark Blue, Right)
+    doc.setFillColor(13, 26, 80); // #0D1A50
+    doc.circle(190, 30, 40, "F");
+
+    // Fill background color for everything below header to be super light/white
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 50, pageWidth, pageHeight - 50, "F");
+
+    // Yellow vertical line
+    doc.setFillColor(255, 184, 0); // #ffb800
+    doc.rect(14, 10, 1, 30, "F");
+
+    // Left Header Texts
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text("CenzHRM", 19, 13);
+
+    doc.setTextColor(255, 184, 0); // Yellow
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("Payroll Summary Report", 19, 26);
+
+    // Format month and year as 'January 2026'
+    // month is 1-indexed from backend, so month - 1 for JS Date
+    const periodStr = new Date(year, month - 1).toLocaleString("default", { month: "long", year: "numeric" });
+
+    doc.setTextColor(180, 180, 180);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Here's your Payroll History • ${periodStr}`, 19, 36);
+
+    // Right Header Texts
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    const companyLines = doc.splitTextToSize(companyName, 80);
+    doc.text(companyLines, pageWidth - 14, 20, { align: "right" });
+
+    if (companyAddress) {
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(180, 180, 180);
+        const addressLines = doc.splitTextToSize(companyAddress, 80);
+        doc.text(addressLines, pageWidth - 14, 20 + (companyLines.length * 6), { align: "right" });
+    }
+
+    // 2. OVERVIEW BANNER (Light Blue Background)
+    let currentY = 56;
+    doc.setFillColor(243, 246, 253); // Light Blue background
+    doc.rect(14, currentY, pageWidth - 28, 12, "F");
+
+    doc.setTextColor(23, 44, 108); // Dark Blue text
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("EMPLOYEE PAYROLL OVERVIEW", 20, currentY + 8);
+
+    doc.setTextColor(60, 100, 200); // Blue text
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${employeeId} • ${employeeName}`, pageWidth - 20, currentY + 8, { align: "right" });
+
+    // 3. SUMMARY BOXES
+    currentY += 18;
+    const boxWidth = (pageWidth - 28) / 5;
+    const boxHeight = 18;
+    doc.setDrawColor(220, 225, 235); // Light Gray Border
+    doc.setLineWidth(0.3);
+
+    const summaries = [
+        { label: "Basic Salary", value: `Rs ${basicSalary.toLocaleString(undefined, { minimumFractionDigits: 0 })}` },
+        { label: "Total Allowances", value: `Rs ${totalAllowances.toLocaleString(undefined, { minimumFractionDigits: 0 })}` },
+        { label: "Gross Pay", value: `Rs ${grossPay.toLocaleString(undefined, { minimumFractionDigits: 0 })}` },
+        { label: "Total Deduction", value: `Rs ${totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 0 })}` },
+        { label: "Net Pay", value: netPay.toLocaleString(undefined, { minimumFractionDigits: 2 }) }
+    ];
+
+    summaries.forEach((summary, index) => {
+        const startX = 14 + (index * boxWidth);
+        // Draw Box
+        doc.setDrawColor(220, 225, 235);
+        if (index > 0) {
+            doc.line(startX, currentY, startX, currentY + boxHeight); // Inner vertical line
+        }
+
+        doc.rect(14, currentY, pageWidth - 28, boxHeight, "S"); // Overall outer border
+
+        // Label
+        doc.setTextColor(150, 160, 180); // Gray
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text(summary.label, startX + 4, currentY + 6);
+
+        // Value
+        doc.setTextColor(30, 30, 30); // Dark
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text(summary.value, startX + 4, currentY + 14);
+    });
+
+    // 4. PAYROLL BREAKDOWN TABLE
+    currentY += 26;
+
+    // Table Header
+    doc.setFillColor(33, 60, 133); // #213c85 Deep blue background
+    doc.rect(14, currentY, pageWidth - 28, 12, "F");
+
+    doc.setTextColor(255, 255, 255); // White text
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Payroll Breakdown", 18, currentY + 8);
+
+    currentY += 12;
+
+    // Sub-header Component | Units | Rate (Rs) | Amount (Rs)
+    doc.setFillColor(248, 250, 252); // Very light grey
+    doc.rect(14, currentY, pageWidth - 28, 10, "F");
+
+    doc.setTextColor(30, 40, 70);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("Component", 18, currentY + 6.5);
+    doc.text("Units", 100, currentY + 6.5, { align: "center" });
+    doc.text("Rate (Rs)", 140, currentY + 6.5, { align: "center" });
+    doc.text("Amount (Rs)", pageWidth - 18, currentY + 6.5, { align: "right" });
+
+    currentY += 10;
+
+    const drawRow = (component: string, units: string, rate: string, amount: string, isLast: boolean = false) => {
+        doc.setTextColor(60, 60, 60);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+
+        // Add minimal padding
+        doc.text(component, 18, currentY + 7.5);
+        doc.text(units, 100, currentY + 7.5, { align: "center" });
+        doc.text(rate, 140, currentY + 7.5, { align: "center" });
+
+        doc.setTextColor(30, 30, 30);
+        doc.setFont("helvetica", "bold");
+        doc.text(amount, pageWidth - 18, currentY + 7.5, { align: "right" });
+
+        currentY += 12;
+
+        if (!isLast) {
+            doc.setDrawColor(240, 240, 240); // Light dashed-like or solid line
+            doc.setLineWidth(0.2);
+            doc.line(14, currentY, pageWidth - 14, currentY);
+        }
+    };
+
+    // Calculate a daily rate if needed
+    const dailyRateStr = salaryType === 'MONTHLY' ? (basicSalary / (workedDays || 1)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Draw Rows based on image design
+    drawRow("Basic salary", `${workedDays} days`, dailyRateStr, basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    drawRow("Overtime", `${otHours} hrs`, (otAmount / (otHours || 1)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), otAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    drawRow("Employee EPF deduction", "8%", "0.00", epf8.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    drawRow("Loan deduction", "—", "—", loanDeduction.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    drawRow("Advance deduction", "—", "—", salaryAdvance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }), true);
+
+    // Draw total table boundary
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.3);
+    doc.rect(14, currentY - (5 * 12), pageWidth - 28, (5 * 12), "S");
+
+    // 5. TOTAL ROW (Dark Blue Background)
+    doc.setFillColor(15, 26, 78); // #0f1a4e Deep blue
+    doc.rect(14, currentY, pageWidth - 28, 12, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("Net Pay", 18, currentY + 8);
+
+    doc.setTextColor(255, 184, 0); // Yellow
+    doc.text(`Rs. ${netPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - 18, currentY + 8, { align: "right" });
+
+    // 6. FOOTER
+    doc.setFillColor(15, 26, 40); // Darker Blue
+    doc.rect(0, pageHeight - 16, pageWidth, 16, "F");
+
+    doc.setTextColor(120, 130, 160); // Grayish Blue
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    const footerText = `Generated by CenzHRM • Product by Cenzios Pvt Ltd • Year: ${year} • Month: ${new Date(year, month - 1).toLocaleString("default", { month: "long" })}`;
+    doc.text(footerText, pageWidth / 2, pageHeight - 6, { align: "center" });
+
+    doc.save(`Payroll_Report_${employeeId}.pdf`);
+};
 
 export const exportPayslip = (
     format: "pdf" | "excel" | "csv",
@@ -382,66 +628,248 @@ export const exportPayslip = (
 export const exportPayrollSummaryReport = (
     format: "pdf" | "excel" | "csv",
     data: {
+        companyName: string;
+        companyAddress: string;
         monthlyData: MonthData[];
         startMonth: number;
         startYear: number;
         endMonth: number;
         endYear: number;
+        overallTotals: {
+            totalBasicPay: number;
+            totalGrossPay: number;
+            totalEmployeeEPF: number;
+            totalSalaryAdvance: number;
+            totalNetPay: number;
+        };
     }
 ) => {
-    const { monthlyData, startMonth, startYear, endMonth, endYear } = data;
+    const {
+        companyName,
+        companyAddress,
+        monthlyData,
+        startMonth,
+        startYear,
+        endMonth,
+        endYear,
+        overallTotals
+    } = data;
     const dateRangeText = `${new Date(startYear, startMonth).toLocaleString("default", { month: "long", year: "numeric" })} - ${new Date(endYear, endMonth).toLocaleString("default", { month: "long", year: "numeric" })} `;
 
     if (format === "pdf") {
         const doc = new jsPDF();
-        doc.text(`Payroll Summary Report`, 14, 15);
-        doc.setFontSize(10);
-        doc.text(dateRangeText, 14, 22);
+        const startPeriodStr = new Date(startYear, startMonth).toLocaleString("default", { month: "long", year: "numeric" });
+        const endPeriodStr = new Date(endYear, endMonth).toLocaleString("default", { month: "long", year: "numeric" });
+        const periodStr = `${startPeriodStr} - ${endPeriodStr}`;
 
-        let startY = 30;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        // 1. Header Background (Base Dark Blue with 2 Circles)
+        doc.setFillColor(15, 23, 42); // #0F172A
+        doc.rect(0, 0, pageWidth, 50, "F");
+
+        doc.setFillColor(28, 48, 120); // #1C3078
+        doc.circle(150, 40, 40, "F");
+
+        doc.setFillColor(13, 26, 80); // #0D1A50
+        doc.circle(190, 30, 40, "F");
+
+        doc.setFillColor(255, 255, 255);
+        doc.rect(0, 50, pageWidth, pageHeight - 50, "F");
+
+        // Yellow vertical line
+        doc.setFillColor(255, 184, 0);
+        doc.rect(14, 10, 1, 30, "F");
+
+        // Left Header Texts
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.text("CenzHRM", 19, 13);
+
+        doc.setTextColor(255, 184, 0);
+        doc.setFontSize(22);
+        doc.setFont("helvetica", "bold");
+        doc.text("Payroll Summary Report", 19, 26);
+
+        doc.setTextColor(180, 180, 180);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Here's your Payroll History • ${periodStr}`, 19, 36);
+
+        // Right Header Texts
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        const companyLines = doc.splitTextToSize(companyName, 80);
+        doc.text(companyLines, pageWidth - 14, 20, { align: "right" });
+
+        if (companyAddress) {
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(180, 180, 180);
+            const addressLines = doc.splitTextToSize(companyAddress, 80);
+            doc.text(addressLines, pageWidth - 14, 20 + (companyLines.length * 6), { align: "right" });
+        }
+
+        // 2. OVERVIEW BANNER
+        let currentY = 56;
+        doc.setFillColor(243, 246, 253);
+        doc.rect(14, currentY, pageWidth - 28, 12, "F");
+
+        doc.setTextColor(23, 44, 108);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("MULTI-MONTH PAYROLL OVERVIEW", 20, currentY + 8);
+
+        doc.setTextColor(100, 110, 140);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Period: ${periodStr}`, pageWidth - 20, currentY + 8, { align: "right" });
+
+        // 3. PERIOD SUMMARY Section
+        currentY += 18;
+        doc.setFillColor(33, 60, 133); // Deep blue
+        doc.rect(14, currentY, pageWidth - 28, 8, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        const shortMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const periodRange = startYear === endYear
+            ? `${shortMonths[startMonth]} - ${shortMonths[endMonth]} ${endYear}`
+            : `${shortMonths[startMonth]} ${startYear} - ${shortMonths[endMonth]} ${endYear}`;
+        doc.text(`Period Summary ( ${periodRange} )`, 20, currentY + 5.5);
+
+        // Summary Boxes
+        currentY += 8;
+        const boxWidth = (pageWidth - 28) / 5;
+        const boxHeight = 18;
+        const summaries = [
+            { label: "Total Basic", value: `Rs ${overallTotals.totalBasicPay.toLocaleString()}` },
+            { label: "Total Gross", value: `Rs ${overallTotals.totalGrossPay.toLocaleString()}` },
+            { label: "Total EPF (8%)", value: `Rs ${overallTotals.totalEmployeeEPF.toLocaleString()}` },
+            { label: "Total Advance", value: `Rs ${overallTotals.totalSalaryAdvance.toLocaleString()}` },
+            { label: "Total Net Pay", value: `Rs ${overallTotals.totalNetPay.toLocaleString()}`, isNet: true }
+        ];
+
+        summaries.forEach((box, i) => {
+            const startX = 14 + (i * boxWidth);
+            doc.setDrawColor(220, 225, 235);
+            doc.setLineWidth(0.3);
+            doc.rect(startX, currentY, boxWidth, boxHeight, "S");
+
+            doc.setTextColor(150, 160, 180);
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            doc.text(box.label, startX + 4, currentY + 6);
+
+            doc.setTextColor(box.isNet ? 60 : 30, box.isNet ? 100 : 30, box.isNet ? 200 : 30);
+            doc.setFontSize(box.isNet ? 11 : 10);
+            doc.setFont("helvetica", "bold");
+            doc.text(box.value, startX + 4, currentY + 13);
+        });
+
+        // 4. MONTHLY TABLES
+        currentY += 30;
         monthlyData.forEach((monthData) => {
             if (monthData.employees.length === 0) return;
 
-            doc.setFontSize(12);
-            doc.text(`${monthData.month} ${monthData.year} `, 14, startY);
-            startY += 5;
+            // Check for new page
+            if (currentY + 40 > pageHeight) {
+                doc.addPage();
+                currentY = 20;
+            }
+
+            // Month Heading
+            doc.setFillColor(33, 60, 133);
+            doc.rect(14, currentY, pageWidth - 28, 10, "F");
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${monthData.month} ${monthData.year}`, 20, currentY + 6.5);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            doc.text(`${monthData.employees.length} employees`, pageWidth - 20, currentY + 6.5, { align: "right" });
+            currentY += 10;
 
             const tableBody = monthData.employees.map((emp) => [
                 emp.employeeCode || "-",
                 emp.employeeName || "-",
                 emp.workingDays,
                 emp.basicPay.toLocaleString(),
-                emp.otAmount.toLocaleString(),
+                (emp.otAmount || 0).toLocaleString(),
                 emp.grossPay.toLocaleString(),
                 emp.employeeEPF.toLocaleString(),
-                emp.salaryAdvance.toLocaleString(),
+                (emp.salaryAdvance || 0).toLocaleString(),
                 emp.netPay.toLocaleString(),
             ]);
 
+            // Monthly Totals
+            const mTotalBasic = monthData.employees.reduce((s, e) => s + e.basicPay, 0);
+            const mTotalOT = monthData.employees.reduce((s, e) => s + (e.otAmount || 0), 0);
+            const mTotalGross = monthData.employees.reduce((s, e) => s + e.grossPay, 0);
+            const mTotalEPF = monthData.employees.reduce((s, e) => s + e.employeeEPF, 0);
+            const mTotalAdvance = monthData.employees.reduce((s, e) => s + (e.salaryAdvance || 0), 0);
+            const mTotalNet = monthData.employees.reduce((s, e) => s + e.netPay, 0);
+
+            tableBody.push([
+                "", "Monthly Total", "",
+                mTotalBasic.toLocaleString(),
+                mTotalOT.toLocaleString(),
+                mTotalGross.toLocaleString(),
+                mTotalEPF.toLocaleString(),
+                mTotalAdvance.toLocaleString(),
+                mTotalNet.toLocaleString()
+            ]);
+
             autoTable(doc, {
-                startY,
-                head: [
-                    [
-                        "Emp ID",
-                        "Name",
-                        "Days",
-                        "Basic",
-                        "OT",
-                        "Gross",
-                        "EPF (8%)",
-                        "Advance",
-                        "Net Pay",
-                    ],
-                ],
+                startY: currentY,
+                head: [["Emp ID", "Name", "Days", "Basic", "OT", "Gross", "EPF (8%)", "Advance", "Net Pay"]],
                 body: tableBody,
-                styles: { fontSize: 8 },
-                headStyles: { fillColor: [66, 133, 244] },
+                theme: "plain",
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [243, 246, 253], textColor: [23, 44, 108], fontStyle: "bold" },
+                columnStyles: {
+                    0: { cellWidth: 15 },
+                    1: { cellWidth: 45 },
+                    2: { cellWidth: 12, halign: 'center' },
+                    3: { halign: 'right' },
+                    4: { halign: 'right' },
+                    5: { halign: 'right' },
+                    6: { halign: 'right' },
+                    7: { halign: 'right' },
+                    8: { halign: 'right', fontStyle: 'bold' }
+                },
+                didParseCell: (data) => {
+                    if (data.row.index === tableBody.length - 1) {
+                        data.cell.styles.fillColor = [22, 28, 45]; // Dark background for total
+                        data.cell.styles.textColor = [255, 184, 0]; // Yellow text
+                        data.cell.styles.fontStyle = "bold";
+                        if (data.column.index === 1) {
+                            data.cell.styles.halign = 'right';
+                        }
+                    }
+                },
+                margin: { left: 14, right: 14 }
             });
 
-            startY = (doc as any).lastAutoTable.finalY + 10;
+            currentY = (doc as any).lastAutoTable.finalY + 15;
         });
 
-        doc.save("Payroll_Summary_Report.pdf");
+        // 5. FOOTER
+        const totalPages = (doc as any).internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFillColor(15, 26, 40);
+            doc.rect(0, pageHeight - 16, pageWidth, 16, "F");
+            doc.setTextColor(120, 130, 160);
+            doc.setFontSize(8);
+            doc.text(`Generated by CenzHRM • Product by Cenzios Pvt Ltd • Year: ${new Date().getFullYear()} • Month: ${new Date().toLocaleString('default', { month: 'long' })}`, pageWidth / 2, pageHeight - 6, { align: "center" });
+            doc.text(`Page ${i} / ${totalPages}`, pageWidth - 14, pageHeight - 6, { align: "right" });
+        }
+
+        doc.save(`Payroll_Summary_Report.pdf`);
     } else {
         const wsData: any[] = [["Payroll Summary Report"], [dateRangeText], []];
 
@@ -836,6 +1264,216 @@ export const exportAllEmployeesSummary = (
             const url = URL.createObjectURL(blob);
             link.setAttribute("href", url);
             link.setAttribute("download", `Selected_Employees_Summary_${metadata.datePeriod.replace(" ", "_")}.csv`);
+            link.style.visibility = "hidden";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+};
+
+export interface BankAdviceReportData {
+    companyName: string;
+    companyAddress: string;
+    reportData: {
+        employeeCode: string;
+        fullName: string;
+        accountHolderName: string;
+        bankName: string;
+        branchName: string;
+        accountNumber: string;
+        amount: number;
+    }[];
+    month: number;
+    year: number;
+    totalAmount: number;
+}
+
+export const exportBankAdviceReport = (
+    format: "pdf" | "excel" | "csv",
+    data: BankAdviceReportData
+) => {
+    const { companyName, companyAddress, reportData, month, year, totalAmount } = data;
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+    const monthName = months[month];
+    const periodStr = `Year: ${year} • Month: ${monthName}`;
+
+    if (format === "pdf") {
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        // 1. Header (Standard Dark Blue with Circles)
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, 0, pageWidth, 50, "F");
+
+        doc.setFillColor(28, 48, 120);
+        doc.circle(150, 40, 40, "F");
+
+        doc.setFillColor(13, 26, 80);
+        doc.circle(190, 30, 40, "F");
+
+        doc.setFillColor(255, 255, 255);
+        doc.rect(0, 50, pageWidth, pageHeight - 50, "F");
+
+        // Yellow vertical line
+        doc.setFillColor(255, 184, 0);
+        doc.rect(14, 10, 1, 30, "F");
+
+        // Header Texts
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.text("CenzHRM", 19, 13);
+
+        doc.setTextColor(255, 184, 0);
+        doc.setFontSize(22);
+        doc.setFont("helvetica", "bold");
+        doc.text("Bank Advice Report", 19, 26);
+
+        doc.setTextColor(180, 180, 180);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Employee Bank Payment Details • ${periodStr}`, 19, 36);
+
+        // Right Header Texts
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        const companyLines = doc.splitTextToSize(companyName, 80);
+        doc.text(companyLines, pageWidth - 14, 20, { align: "right" });
+
+        if (companyAddress) {
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(180, 180, 180);
+            const addressLines = doc.splitTextToSize(companyAddress, 80);
+            doc.text(addressLines, pageWidth - 14, 20 + (companyLines.length * 6), { align: "right" });
+        }
+
+        // 2. Table
+        let currentY = 60;
+        doc.setFillColor(33, 60, 133);
+        doc.rect(14, currentY, pageWidth - 28, 10, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Bank Details Summary", 20, currentY + 6.5);
+        currentY += 10;
+
+        const tableBody = reportData.map(item => [
+            item.employeeCode,
+            item.fullName,
+            item.bankName,
+            item.branchName,
+            item.accountNumber,
+            `Rs ${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+        ]);
+
+        autoTable(doc, {
+            startY: currentY,
+            head: [["Employee ID", "Employee Name", "Bank Name", "Branch", "Account Number", "Total Amount"]],
+            body: tableBody,
+            theme: "plain",
+            styles: { fontSize: 8, cellPadding: 3 },
+            headStyles: { fillColor: [243, 246, 253], textColor: [23, 44, 108], fontStyle: "bold" },
+            columnStyles: {
+                0: { cellWidth: 20 },
+                1: { cellWidth: 40 },
+                2: { cellWidth: 35 },
+                3: { cellWidth: 28 },
+                4: { cellWidth: 28 },
+                5: { cellWidth: 31, halign: 'right', fontStyle: 'bold' }
+            },
+            margin: { left: 14, right: 14 }
+        });
+
+        currentY = (doc as any).lastAutoTable.finalY;
+
+        // Total Row
+        doc.setFillColor(15, 23, 42);
+        doc.rect(14, currentY, pageWidth - 28, 10, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("Net Pay", 20, currentY + 6.5);
+        doc.setTextColor(255, 184, 0);
+        doc.text(`Rs. ${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - 20, currentY + 6.5, { align: "right" });
+
+        currentY += 25;
+
+        // 3. Approved By Section
+        if (currentY + 40 > pageHeight - 20) {
+            doc.addPage();
+            currentY = 30;
+        }
+
+        const boxWidth = 60;
+        const boxHeight = 35;
+        const startX = pageWidth - boxWidth - 14;
+
+        doc.setFillColor(248, 250, 255);
+        doc.rect(startX, currentY, boxWidth, boxHeight, "F");
+
+        doc.setTextColor(120, 140, 180);
+        doc.setFontSize(8);
+        doc.text("Approved By", startX + boxWidth / 2, currentY + boxHeight / 2, { align: "center" });
+
+        doc.setDrawColor(210, 220, 240);
+        doc.setLineWidth(0.2);
+        doc.line(startX + 5, currentY + boxHeight - 10, startX + boxWidth - 5, currentY + boxHeight - 10);
+
+        doc.text("Name / Designation", startX + boxWidth / 2, currentY + boxHeight - 5, { align: "center" });
+
+        // Footer
+        for (let i = 1; i <= doc.internal.getNumberOfPages(); i++) {
+            doc.setPage(i);
+            doc.setFillColor(15, 26, 40);
+            doc.rect(0, pageHeight - 15, pageWidth, 15, "F");
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(7);
+            doc.text(`Generated by CenzHRM • Product by Cenzios Pvt Ltd • Year: ${year} • Month: ${monthName}`, pageWidth / 2, pageHeight - 6, { align: "center" });
+        }
+
+        doc.save(`Bank_Advice_Report_${monthName}_${year}.pdf`);
+    } else {
+        const wsData: any[][] = [
+            ["Bank Advice Report"],
+            [periodStr],
+            [],
+            ["Employee ID", "Employee Name", "Bank Name", "Branch", "Account Number", "Amount"]
+        ];
+
+        reportData.forEach(item => {
+            wsData.push([
+                item.employeeCode,
+                item.fullName,
+                item.bankName,
+                item.branchName,
+                item.accountNumber,
+                item.amount.toString()
+            ]);
+        });
+
+        wsData.push([]);
+        wsData.push(["", "", "", "", "Net Pay", totalAmount.toString()]);
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        if (format === "excel") {
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Bank Advice");
+            XLSX.writeFile(wb, `Bank_Advice_Report_${monthName}_${year}.xlsx`);
+        } else {
+            const csv = XLSX.utils.sheet_to_csv(ws);
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Bank_Advice_Report_${monthName}_${year}.csv`);
             link.style.visibility = "hidden";
             document.body.appendChild(link);
             link.click();

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
+import { exportEmployeeModalReport } from '../utils/exportService';
+import { useGetCompaniesQuery } from '../store/apiSlice';
 import Toast from './Toast';
 
 interface EmployeePayrollModalProps {
@@ -15,6 +17,7 @@ interface EmployeePayrollModalProps {
 interface MonthlyData {
     month: string;
     workedDays: number;
+    companyWorkingDays?: number;
     basicPay: number;
     otHours: number;
     otAmount: number;
@@ -34,6 +37,7 @@ interface EmployeeData {
     employeeName: string;
     employeeCode: string;
     designation: string;
+    salaryType?: string;
     basicSalary: number;
     joinedDate: string;
     monthlyBreakdown: MonthlyData[];
@@ -65,6 +69,7 @@ const EmployeePayrollModal = ({
     const [isLoading, setIsLoading] = useState(false);
     const [employeeData, setEmployeeData] = useState<EmployeeData | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const { data: companies } = useGetCompaniesQuery();
 
     useEffect(() => {
         if (isOpen && employeeId && companyId && month && year) {
@@ -88,6 +93,41 @@ const EmployeePayrollModal = ({
         }
     };
 
+    const handleExport = () => {
+        if (!employeeData || !row) return;
+
+        const selectedCompany = companies?.find(c => c.id === companyId);
+        const companyName = selectedCompany?.name || 'Company Name';
+        const companyAddress = selectedCompany?.address || '';
+
+        // Standard 15% breakdown: 12% EPF, 3% ETF
+        const epf12 = row.companyEPFETF * (12 / 15);
+        const etf3 = row.companyEPFETF * (3 / 15);
+
+        const totalAllowances = (row.allowances || []).reduce((sum, a) => sum + a.amount, 0);
+
+        exportEmployeeModalReport({
+            companyName,
+            companyAddress,
+            employeeName: employeeData.employeeName,
+            employeeId: employeeData.employeeCode,
+            month: month,
+            year: year,
+            basicSalary: employeeData.basicSalary || row.basicPay,
+            totalAllowances: totalAllowances,
+            grossPay: row.grossPay,
+            totalDeductions: row.deductions,
+            netPay: row.netPay,
+            workedDays: row.workedDays,
+            salaryType: employeeData.salaryType || 'MONTHLY',
+            otHours: row.otHours,
+            otAmount: row.otAmount,
+            epf8: row.employeeEPF,
+            loanDeduction: row.loanDeduction || 0,
+            salaryAdvance: row.salaryAdvance || 0
+        });
+    };
+
     if (!isOpen) return null;
 
     const row: MonthlyData | undefined = employeeData?.monthlyBreakdown?.[0];
@@ -104,26 +144,31 @@ const EmployeePayrollModal = ({
             <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden">
 
-                    {/* ── Header ── */}
-                    <div className="flex items-center justify-between px-7 pt-6 pb-4">
+                    <div className="flex items-center px-7 pt-6 pb-4 relative">
+
+                        {/* Left - Name */}
                         <h2 className="text-xl font-bold text-gray-900">
                             {employeeData?.employeeName ?? '—'}
                         </h2>
-                        <div className="flex items-center gap-3">
+
+                        {/* Center - Employee + Month */}
+                        <div className="absolute left-1/2 transform -translate-x-1/2">
                             {(employeeData?.employeeCode || monthRangeLabel) && (
-                                <p className="text-sm text-blue-400">
-                                    {employeeData?.employeeCode
-                                        ? `${employeeData.employeeCode}${monthRangeLabel ? ` · ${monthRangeLabel}` : ''}`
-                                        : monthRangeLabel}
+                                <p className="text-sm text-gray-400 text-center font-medium">
+                                    {employeeData?.employeeCode && monthRangeLabel
+                                        ? `${employeeData.employeeCode} - ${monthRangeLabel}`
+                                        : employeeData?.employeeCode || monthRangeLabel}
                                 </p>
                             )}
-                            <button
-                                onClick={onClose}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                <X className="w-5 h-5 text-gray-400" />
-                            </button>
                         </div>
+
+                        {/* Right - Close Button */}
+                        <button
+                            onClick={onClose}
+                            className="ml-auto p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                            <X className="w-5 h-5 text-gray-400" />
+                        </button>
                     </div>
 
                     {/* ── Summary Pills ── */}
@@ -282,16 +327,11 @@ const EmployeePayrollModal = ({
 
                     {/* ── Footer Buttons ── */}
                     <div className="px-7 py-5 border-t border-gray-100 mt-3">
-                        <div className="flex gap-3">
+                        <div>
                             <button
                                 disabled={!employeeData}
-                                className="flex-1 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors"
-                            >
-                                Generate Pay-slip
-                            </button>
-                            <button
-                                disabled={!employeeData}
-                                className="flex-1 py-3.5 rounded-xl border border-green-500 hover:bg-green-50 disabled:border-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed text-green-600 text-sm font-semibold transition-colors"
+                                onClick={handleExport}
+                                className="w-full py-3.5 rounded-xl border border-green-500 hover:bg-green-50 disabled:border-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed text-green-600 text-sm font-semibold transition-colors"
                             >
                                 Export Pay-slip
                             </button>
