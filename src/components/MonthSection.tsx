@@ -87,7 +87,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                         </div>
 
                         {/* Status Badge */}
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${status === 'Completed'
+                        <span className={`px-3 py-1 rounded-full text-xs font-regular ${status === 'Completed'
                             ? 'bg-green-100 text-green-700'
                             : 'bg-yellow-100 text-yellow-700'
                             }`}>
@@ -167,7 +167,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                     />
                                                 </td>
-                                                <td className="px-6 py-3 font-semibold text-gray-900">{employee.employeeCode || '-'}</td>
+                                                <td className="px-6 py-3 font-regular text-gray-900">{employee.employeeCode || '-'}</td>
                                                 <td className="px-6 py-3 text-gray-700 whitespace-nowrap">{employee.employeeName || '-'}</td>
                                                 <td className="px-6 py-3 text-gray-600 text-center">{employee.workingDays}</td>
                                                 <td className="px-6 py-3 text-gray-600 font-medium">Rs {employee.basicPay?.toLocaleString()}</td>
@@ -175,10 +175,10 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                     <div className="font-medium text-green-600">Rs {employee.otAmount?.toLocaleString()}</div>
                                                     <div className="text-[10px] text-gray-400">({employee.otHours} hrs)</div>
                                                 </td>
-                                                <td className="px-6 py-3 font-semibold text-gray-900 whitespace-nowrap">Rs {employee.grossPay?.toLocaleString()}</td>
-                                                <td className="px-6 py-3 text-red-600 font-medium whitespace-nowrap">Rs {employee.employeeEPF?.toLocaleString()}</td>
-                                                <td className="px-6 py-3 text-red-600 font-medium whitespace-nowrap">Rs {employee.salaryAdvance?.toLocaleString()}</td>
-                                                <td className="px-6 py-3 font-bold text-blue-600 whitespace-nowrap underline decoration-blue-200 underline-offset-4">Rs {employee.netPay?.toLocaleString()}</td>
+                                                <td className="px-6 py-3 font-regular text-gray-900 whitespace-nowrap">Rs {employee.grossPay?.toLocaleString()}</td>
+                                                <td className="px-6 py-3 text-red-600 font-regular whitespace-nowrap">Rs {employee.employeeEPF?.toLocaleString()}</td>
+                                                <td className="px-6 py-3 text-red-600 font-regular whitespace-nowrap">Rs {employee.salaryAdvance?.toLocaleString()}</td>
+                                                <td className="px-6 py-3 font-regular text-blue-600 whitespace-nowrap underline decoration-blue-200 underline-offset-4">Rs {employee.netPay?.toLocaleString()}</td>
                                                 <td className="px-6 py-3 text-right">
                                                     <button
                                                         onClick={() => onViewEmployee(employee.employeeId, companyId)}

@@ -311,7 +311,7 @@ const Reports = () => {
                                         <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
                                             <button
                                                 onClick={() => { exportPDF(); setIsExportOpen(false); }}
-                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-red-600 hover:bg-red-50 transition-colors"
+                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-green-600 hover:bg-red-50 transition-colors"
                                             >
                                                 <FileText className="w-4 h-4" /> PDF
                                             </button>
@@ -325,7 +325,7 @@ const Reports = () => {
                                             <div className="border-t border-gray-100" />
                                             <button
                                                 onClick={() => { exportCSV(); setIsExportOpen(false); }}
-                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-blue-600 hover:bg-blue-50 transition-colors"
+                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-green-600 hover:bg-blue-50 transition-colors"
                                             >
                                                 <Download className="w-4 h-4" /> CSV
                                             </button>

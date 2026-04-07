@@ -7,6 +7,10 @@ import { useGetEmployeesQuery, useGetCompaniesQuery } from '../store/apiSlice';
 import { salaryApi } from '../api/salaryApi';
 import { exportEpfEtfReport } from '../utils/exportService';
 import Toast from '../components/Toast';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 const EpfEtfReport = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
@@ -14,12 +18,10 @@ const EpfEtfReport = () => {
     const [isExportOpen, setIsExportOpen] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-    // Date Range Filters
+    // Selected Period (Defaults to Current Month)
     const currentDate = new Date();
-    const [startMonth, setStartMonth] = useState(0);
-    const [startYear, setStartYear] = useState(currentDate.getFullYear());
-    const [endMonth, setEndMonth] = useState(currentDate.getMonth());
-    const [endYear, setEndYear] = useState(currentDate.getFullYear());
+    const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
+    const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
     const [isLoading, setIsLoading] = useState(false);
     const [rawReportData, setRawReportData] = useState<any[]>([]);
@@ -46,10 +48,10 @@ const EpfEtfReport = () => {
         try {
             const response = await salaryApi.getSalaryReport(
                 selectedCompanyId,
-                startMonth + 1,
-                startYear,
-                endMonth + 1,
-                endYear
+                selectedMonth + 1,
+                selectedYear,
+                selectedMonth + 1,
+                selectedYear
             );
 
             const monthlyData = response.data?.monthlyData || [];
@@ -146,10 +148,8 @@ const EpfEtfReport = () => {
     const handleApply = () => fetchData();
 
     const handleReset = () => {
-        setStartMonth(0);
-        setEndMonth(currentDate.getMonth());
-        setStartYear(currentDate.getFullYear());
-        setEndYear(currentDate.getFullYear());
+        setSelectedMonth(currentDate.getMonth());
+        setSelectedYear(currentDate.getFullYear());
         setSearchTerm('');
     };
 
@@ -164,10 +164,10 @@ const EpfEtfReport = () => {
             companyName: selectedCompany?.name || 'Company Name',
             companyAddress: selectedCompany?.address || '',
             reportData: filteredData,
-            startMonth,
-            startYear,
-            endMonth,
-            endYear,
+            startMonth: selectedMonth,
+            startYear: selectedYear,
+            endMonth: selectedMonth,
+            endYear: selectedYear,
             totals
         });
         setIsExportOpen(false);
@@ -211,23 +211,50 @@ const EpfEtfReport = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-                        <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Time Period</span>
-                        <div className="flex items-center gap-2">
-                            <select value={startMonth} onChange={(e) => setStartMonth(parseInt(e.target.value))} className="bg-transparent text-sm outline-none">
-                                {months.map((m, i) => <option key={m} value={i}>{m.substring(0, 3)}</option>)}
-                            </select>
-                            <select value={startYear} onChange={(e) => setStartYear(parseInt(e.target.value))} className="bg-transparent text-sm outline-none border-r border-gray-200 pr-2">
-                                {years.map(y => <option key={y} value={y}>{y}</option>)}
-                            </select>
-                            <span className="text-gray-400 text-xs">-</span>
-                            <select value={endMonth} onChange={(e) => setEndMonth(parseInt(e.target.value))} className="bg-transparent text-sm outline-none">
-                                {months.map((m, i) => <option key={m} value={i}>{m.substring(0, 3)}</option>)}
-                            </select>
-                            <select value={endYear} onChange={(e) => setEndYear(parseInt(e.target.value))} className="bg-transparent text-sm outline-none">
-                                {years.map(y => <option key={y} value={y}>{y}</option>)}
-                            </select>
-                        </div>
+                    <div className="flex flex-col min-w-[200px]">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1 ml-1">Select Period</span>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DatePicker
+                                views={['month', 'year']}
+                                value={dayjs(new Date(selectedYear, selectedMonth))}
+                                maxDate={dayjs(new Date())}
+                                onChange={(newValue) => {
+                                    if (newValue && newValue.isValid()) {
+                                        setSelectedYear(newValue.year());
+                                        setSelectedMonth(newValue.month());
+                                    }
+                                }}
+                                slotProps={{
+                                    textField: {
+                                        size: "small",
+                                        sx: {
+                                            backgroundColor: "white",
+                                            "& .MuiOutlinedInput-root": {
+                                                borderRadius: "0.75rem",
+                                                "& fieldset": {
+                                                    borderColor: "#e5e7eb",
+                                                    transition: "all 0.2s ease-in-out",
+                                                },
+                                                "&:hover fieldset": {
+                                                    borderColor: "#d1d5db",
+                                                },
+                                                "&.Mui-focused fieldset": {
+                                                    borderColor: "#3b82f6",
+                                                    borderWidth: "1px",
+                                                    boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
+                                                },
+                                            },
+                                            "& .MuiInputBase-input": {
+                                                paddingY: "9.5px",
+                                                paddingX: "14px",
+                                                fontSize: "0.875rem",
+                                                color: "#1f2937",
+                                            }
+                                        }
+                                    }
+                                }}
+                            />
+                        </LocalizationProvider>
                     </div>
 
                     <div className="flex gap-2 ml-auto">
@@ -246,13 +273,13 @@ const EpfEtfReport = () => {
                                 <>
                                     <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
                                     <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
-                                        <button onClick={() => handleExport('pdf')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+                                        <button onClick={() => handleExport('pdf')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-green-600 hover:bg-red-50 transition-colors">
                                             <FileText className="w-4 h-4" /> PDF
                                         </button>
                                         <button onClick={() => handleExport('excel')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-green-600 hover:bg-green-50 transition-colors">
                                             <FileSpreadsheet className="w-4 h-4" /> Excel
                                         </button>
-                                        <button onClick={() => handleExport('csv')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors">
+                                        <button onClick={() => handleExport('csv')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-green-600 hover:bg-blue-50 transition-colors">
                                             <Download className="w-4 h-4" /> CSV
                                         </button>
                                     </div>
