@@ -38,6 +38,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [supportingDocs, setSupportingDocs] = useState<File[]>([]);
+  const [fileTitles, setFileTitles] = useState<Record<number, string>>({});
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   const { data: employeesData } = useGetEmployeesQuery(
@@ -103,17 +104,30 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
       return;
     }
 
+    if (supportingDocs.length > 3) {
+      setToast({ message: 'Maximum 3 supporting documents are allowed', type: 'error' });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       let documentId = undefined;
 
       if (supportingDocs.length > 0) {
-        const formData = new FormData();
-        formData.append("file", supportingDocs[0]);
-        formData.append("employeeId", employeeId);
-        formData.append("documentType", "LOAN");
-        const uploadResult = await uploadEmployeeDocument(formData).unwrap();
-        documentId = uploadResult?.data?.id;
+        for (let i = 0; i < supportingDocs.length; i++) {
+          const file = supportingDocs[i];
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("employeeId", employeeId);
+          formData.append("documentType", "LOAN");
+          if (fileTitles[i]) {
+            formData.append("docTitle", fileTitles[i]);
+          }
+          const uploadResult = await uploadEmployeeDocument(formData).unwrap();
+          if (i === 0) {
+            documentId = uploadResult?.data?.id;
+          }
+        }
       }
 
       const loanIdPrefix = 'LOAN-' + Math.floor(1000 + Math.random() * 9000);
@@ -161,6 +175,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     setInstallmentCount('');
     setInterestRate('');
     setSupportingDocs([]);
+    setFileTitles({});
   };
 
   const handleInstallmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -604,10 +619,28 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                   <div className="mt-3 space-y-2">
                     {supportingDocs.map((file, idx) => (
                       <div key={idx} className="flex items-center justify-between bg-blue-50/50 border border-blue-100 px-4 py-2 rounded-xl text-[12px] text-gray-700 font-medium">
-                        <span className="truncate max-w-[85%]">{file.name}</span>
+                        <span className="truncate max-w-[85%]">
+                          {fileTitles[idx] ? `${fileTitles[idx]} (${file.name})` : file.name}
+                        </span>
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); setSupportingDocs([]); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSupportingDocs(docs => docs.filter((_, i) => i !== idx));
+                            setFileTitles(prev => {
+                              const newTitles = { ...prev };
+                              delete newTitles[idx];
+                              const reindexedTitles: Record<number, string> = {};
+                              let newIdx = 0;
+                              for (let i = 0; i < supportingDocs.length; i++) {
+                                if (i !== idx) {
+                                  if (newTitles[i]) reindexedTitles[newIdx] = newTitles[i];
+                                  newIdx++;
+                                }
+                              }
+                              return reindexedTitles;
+                            });
+                          }}
                           className="text-gray-400 hover:text-red-500 transition-colors p-1"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -644,6 +677,9 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
         onClose={() => setIsUploadModalOpen(false)}
         files={supportingDocs}
         onFilesChange={setSupportingDocs}
+        fileTitles={fileTitles}
+        onTitlesChange={setFileTitles}
+        onUpload={() => setIsUploadModalOpen(false)}
       />
 
       {toast && (

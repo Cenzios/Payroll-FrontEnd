@@ -324,8 +324,8 @@ const UniversalDrawer = ({
     if (formMode === "company") {
       switch (field) {
         case "name":
-          if (!value || value.trim().length < 3 || value.trim().length > 20)
-            error = "Name must be between 3 and 20 characters";
+          if (!value || value.trim().length < 3 || value.trim().length > 30)
+            error = "Name must be between 3 and 30 characters";
           break;
         case "email": {
           const email = value?.trim();
