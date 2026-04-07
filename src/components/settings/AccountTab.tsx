@@ -86,7 +86,7 @@ const AccountTab = () => {
         switch (field) {
             case 'name':
                 if (!value.trim()) return 'Company name is required';
-                if (value.trim().length < 3 || value.trim().length > 20) return 'Name must be between 3 and 20 characters';
+                if (value.trim().length < 3 || value.trim().length > 30) return 'Name must be between 3 and 30 characters';
                 break;
             case 'email':
                 if (!value.trim()) return 'Email is required';
