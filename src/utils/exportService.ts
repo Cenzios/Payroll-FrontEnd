@@ -1481,3 +1481,267 @@ export const exportBankAdviceReport = (
         }
     }
 };
+
+export interface EpfEtfReportData {
+    companyName: string;
+    companyAddress: string;
+    reportData: {
+        employeeId: string;
+        employeeCode: string;
+        fullName: string;
+        epfNo: string;
+        basicSalary: number;
+        empEpf: number;
+        employerEpf: number;
+        etf: number;
+        totalContribution: number;
+    }[];
+    startMonth: number;
+    startYear: number;
+    endMonth: number;
+    endYear: number;
+    totals: {
+        count: number;
+        basicSalary: number;
+        empEpf: number;
+        employerEpf: number;
+        etf: number;
+        totalContribution: number;
+    };
+}
+
+export const exportEpfEtfReport = (
+    format: "pdf" | "excel" | "csv",
+    data: EpfEtfReportData
+) => {
+    const { companyName, companyAddress, reportData, startMonth, startYear, endMonth, endYear, totals } = data;
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    let periodStr = "";
+    if (startMonth === endMonth && startYear === endYear) {
+        periodStr = `Year: ${startYear} • Month: ${months[startMonth]}`;
+    } else {
+        periodStr = `Period: ${months[startMonth]} ${startYear} - ${months[endMonth]} ${endYear}`;
+    }
+
+    if (format === "pdf") {
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        // 1. Header (Standard Dark Blue with Circles)
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, 0, pageWidth, 50, "F");
+
+        doc.setFillColor(28, 48, 120);
+        doc.circle(150, 40, 40, "F");
+
+        doc.setFillColor(13, 26, 80);
+        doc.circle(190, 30, 40, "F");
+
+        doc.setFillColor(255, 255, 255);
+        doc.rect(0, 50, pageWidth, pageHeight - 50, "F");
+
+        // Yellow vertical line
+        doc.setFillColor(255, 184, 0);
+        doc.rect(14, 10, 1, 30, "F");
+
+        // Header Texts
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.text("CenzHRM", 19, 13);
+
+        doc.setFontSize(18);
+        doc.text("EPF / ETF Summary Report", 19, 28);
+
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(200, 200, 200);
+        doc.text(`Employee Provident & Trust Fund Contributions • ${periodStr}`, 19, 36);
+
+        // Company Details (Right side)
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text(companyName, pageWidth - 14, 20, { align: "right" });
+
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(200, 200, 200);
+        if (companyAddress) {
+            const splitAddress = doc.splitTextToSize(companyAddress, 60);
+            doc.text(splitAddress, pageWidth - 14, 28, { align: "right" });
+        }
+
+        // 2. Table
+        const tableBody = reportData.map(item => [
+            item.employeeCode,
+            item.fullName,
+            item.epfNo,
+            item.basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+            item.empEpf.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+            item.employerEpf.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+            item.etf.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+            item.totalContribution.toLocaleString(undefined, { minimumFractionDigits: 2 })
+        ]);
+
+        // Add Total row to table body
+        tableBody.push([
+            "", "", "Total",
+            totals.basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+            totals.empEpf.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+            totals.employerEpf.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+            totals.etf.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+            totals.totalContribution.toLocaleString(undefined, { minimumFractionDigits: 2 })
+        ]);
+
+        autoTable(doc, {
+            startY: 60,
+            head: [["Employee ID", "Employee Name", "EPF No", "Basic Salary", "Emp EPF (8%)", "Employer EPF (12%)", "ETF (3%)", "Total Contribution"]],
+            body: tableBody,
+            styles: { fontSize: 7, cellPadding: 2 },
+            headStyles: { fillColor: [243, 246, 253], textColor: [23, 44, 108], fontStyle: "bold" },
+            columnStyles: {
+                0: { cellWidth: 20 },
+                1: { cellWidth: 35 },
+                2: { cellWidth: 25 },
+                3: { halign: "right" },
+                4: { halign: "right" },
+                5: { halign: "right" },
+                6: { halign: "right" },
+                7: { halign: "right", fontStyle: "bold", textColor: [43, 116, 255] }
+            },
+            didParseCell: (data) => {
+                if (data.row.index === tableBody.length - 1) {
+                    data.cell.styles.fillColor = [15, 23, 42];
+                    data.cell.styles.textColor = [255, 184, 0];
+                    data.cell.styles.fontStyle = "bold";
+                }
+            },
+            margin: { left: 14, right: 14 }
+        });
+
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+
+        // 3. Summary Boxes
+        const boxWidth = (pageWidth - 28 - 15) / 4;
+        const boxHeight = 20;
+
+        // Emp EPF
+        doc.setFillColor(252, 252, 252);
+        doc.setDrawColor(240, 240, 240);
+        doc.rect(14, finalY, boxWidth, boxHeight, "FD");
+        doc.setTextColor(150, 150, 150);
+        doc.setFontSize(6);
+        doc.text("EMPLOYEE EPF (8%)", 14 + boxWidth / 2, finalY + 6, { align: "center" });
+        doc.setTextColor(23, 44, 108);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Rs ${totals.empEpf.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14 + boxWidth / 2, finalY + 14, { align: "center" });
+
+        // Employer EPF
+        doc.setFillColor(252, 252, 252);
+        doc.rect(14 + boxWidth + 5, finalY, boxWidth, boxHeight, "FD");
+        doc.setTextColor(150, 150, 150);
+        doc.setFontSize(6);
+        doc.setFont("helvetica", "normal");
+        doc.text("EMPLOYER EPF (12%)", 14 + boxWidth + 5 + boxWidth / 2, finalY + 6, { align: "center" });
+        doc.setTextColor(23, 44, 108);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Rs ${totals.employerEpf.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14 + boxWidth + 5 + boxWidth / 2, finalY + 14, { align: "center" });
+
+        // ETF
+        doc.setFillColor(252, 252, 252);
+        doc.rect(14 + (boxWidth + 5) * 2, finalY, boxWidth, boxHeight, "FD");
+        doc.setTextColor(150, 150, 150);
+        doc.setFontSize(6);
+        doc.setFont("helvetica", "normal");
+        doc.text("ETF (3%)", 14 + (boxWidth + 5) * 2 + boxWidth / 2, finalY + 6, { align: "center" });
+        doc.setTextColor(23, 44, 108);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Rs ${totals.etf.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14 + (boxWidth + 5) * 2 + boxWidth / 2, finalY + 14, { align: "center" });
+
+        // Total
+        doc.setFillColor(43, 116, 255);
+        doc.rect(14 + (boxWidth + 5) * 3, finalY, boxWidth, boxHeight, "F");
+        doc.setTextColor(230, 230, 230);
+        doc.setFontSize(6);
+        doc.setFont("helvetica", "normal");
+        doc.text("TOTAL CONTRIBUTION", 14 + (boxWidth + 5) * 3 + boxWidth / 2, finalY + 6, { align: "center" });
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text(`Rs ${totals.totalContribution.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14 + (boxWidth + 5) * 3 + boxWidth / 2, finalY + 14, { align: "center" });
+
+        // 4. Approved By Box
+        const sigY = finalY + 35;
+        doc.setFillColor(248, 250, 255);
+        doc.rect(pageWidth - 64, sigY, 50, 25, "F");
+        doc.setTextColor(100, 116, 139);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text("Approved By", pageWidth - 39, sigY + 12, { align: "center" });
+
+        doc.setDrawColor(200, 200, 200);
+        doc.line(pageWidth - 64, sigY + 32, pageWidth - 14, sigY + 32);
+        doc.setFontSize(7);
+        doc.text("Name / Designation", pageWidth - 39, sigY + 36, { align: "center" });
+
+        // 5. Footer
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, pageHeight - 15, pageWidth, 15, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        const footerText = `Generated by CenzHRM • Product by Cenzios Pvt Ltd • ${periodStr}`;
+        doc.text(footerText, pageWidth / 2, pageHeight - 7, { align: "center" });
+
+        doc.save(`EPF_ETF_Report_${months[startMonth]}_${startYear}.pdf`);
+    } else {
+        // Excel/CSV implementation
+        const wsData: any[] = [
+            ["EPF / ETF Summary Report"],
+            [`Company: ${companyName}`],
+            [`Period: ${periodStr}`],
+            [],
+            ["Employee ID", "Employee Name", "EPF No", "Basic Salary", "Emp EPF (8%)", "Employer EPF (12%)", "ETF (3%)", "Total Contribution"],
+            ...reportData.map(item => [
+                item.employeeCode,
+                item.fullName,
+                item.epfNo,
+                item.basicSalary,
+                item.empEpf,
+                item.employerEpf,
+                item.etf,
+                item.totalContribution
+            ]),
+            [],
+            ["Total", "", "", totals.basicSalary, totals.empEpf, totals.employerEpf, totals.etf, totals.totalContribution]
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        if (format === "excel") {
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "EPF ETF Report");
+            XLSX.writeFile(wb, `EPF_ETF_Report_${months[startMonth]}_${startYear}.xlsx`);
+        } else {
+            const csv = XLSX.utils.sheet_to_csv(ws);
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `EPF_ETF_Report_${months[startMonth]}_${startYear}.csv`);
+            link.style.visibility = "hidden";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+};
