@@ -6,6 +6,7 @@ import { setAuthFromToken, setSignupEmail, setTempPlanId } from '../store/slices
 import { jwtDecode } from 'jwt-decode';
 import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
+import ContactModal from '../components/ContactModal';
 import { PLANS, Plan } from '../constants/plans';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 
@@ -51,6 +52,8 @@ const GetPlan = () => {
 
   const [apiPlans, setApiPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isProcessingPlan, setIsProcessingPlan] = useState(false);
 
   // Fetch plans from API
   useEffect(() => {
@@ -70,6 +73,7 @@ const GetPlan = () => {
   }, []);
 
   const handleSelectPlan = async (planId: string) => {
+    setIsProcessingPlan(true);
     try {
       // ✅ Get token for authenticated request
       const token = localStorage.getItem('token');
@@ -106,6 +110,8 @@ const GetPlan = () => {
     } catch (error: any) {
       console.error('❌ Failed to select plan:', error);
       alert(error.response?.data?.message || 'Plan selection failed. Please try again.');
+    } finally {
+      setIsProcessingPlan(false);
     }
   };
 
@@ -140,19 +146,36 @@ const GetPlan = () => {
       </h1>
 
       {/* Single Plan Card (Basic) */}
-      <div className="w-full max-w-lg mx-auto relative z-10 flex justify-center">
+      <div className="w-full max-w-lg mx-auto relative z-10 flex flex-col items-center gap-12">
         <PlanCard
-          planName={basicPlan.name}
+          planName="PROFESIONAL"
           price={basicPlan.employeePrice || basicPlan.price}
-          registrationFee={basicPlan.registrationFee}
           description={basicPlan.description}
           features={basicPlan.features}
           isHighlighted={true}
           showButton={true}
-          showPerEmployeePrice={true}
+          isLoading={isProcessingPlan}
           onSelectPlan={() => handleSelectPlan(basicPlan.id)}
         />
+
+        {/* Contact Footer Bar */}
+        <div className="bg-white/80 backdrop-blur-md rounded-3xl px-10 py-5 shadow-xl border border-white/50 flex flex-col sm:flex-row items-center gap-6 sm:gap-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <p className="text-gray-500 text-[13px] font-medium">
+            If you want a <span className="text-gray-900 font-bold">customize plan</span>, please contact us.
+          </p>
+          <button
+            onClick={() => setIsContactModalOpen(true)}
+            className="bg-[#4E8DFF] hover:bg-[#3B7BDE] text-white text-sm font-bold px-10 py-3 rounded-2xl shadow-lg shadow-blue-100 transition-all active:scale-[0.98]"
+          >
+            Contact us
+          </button>
+        </div>
       </div>
+
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+      />
       {/* Background Wave - Bottom Right */}
       <div className="absolute bottom-[-350px] right-[-200px] 
                 w-[700px] h-[700px] 
