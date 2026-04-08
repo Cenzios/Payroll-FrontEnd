@@ -211,7 +211,7 @@ const EpfEtfReport = () => {
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="Search..."
-                                    className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-44 focus:ring-2 focus:ring-blue-100 outline-none"
+                                    className="pl-9 pr-4 py-2 mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-56 focus:ring-2 focus:ring-blue-100 outline-none"
                                 />
                             </div>
                         </div>
@@ -230,16 +230,16 @@ const EpfEtfReport = () => {
                         </div>
 
                         {/* Buttons */}
-                        <div className="flex items-center gap-2 ml-auto">
+                        <div className="flex items-center gap-3 ml-auto">
                             <button
                                 onClick={handleApply}
-                                className="px-5 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
+                                className="px-9 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
                             >
                                 Apply
                             </button>
                             <button
                                 onClick={handleReset}
-                                className="px-5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
+                                className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
                             >
                                 Reset
                             </button>
@@ -247,7 +247,7 @@ const EpfEtfReport = () => {
                             <div className="relative">
                                 <button
                                     onClick={() => setIsExportOpen(!isExportOpen)}
-                                    className="flex items-center gap-1.5 px-5 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
+                                    className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
                                 >
                                     Export
                                     <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
@@ -281,26 +281,26 @@ const EpfEtfReport = () => {
                     {/* Summary Footer */}
                     <div className="flex justify-between items-center gap-2">
                         <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
-                            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Employees</p>
-                            <p className="text-lg font-bold text-gray-900">{totals.count}</p>
+                            <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Employees</p>
+                            <p className="text-lg font-bold">{totals.count}</p>
                         </div>
                         <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
-                            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Total Gross Pay</p>
+                            <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Total Gross Pay</p>
                             <p className="text-lg font-bold text-[#155390]">{fmt(totals.grossPay)}</p>
                         </div>
                         <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
                             {/* <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Employee EPF</p> */}
-                            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Total NET Pay</p>
+                            <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Total NET Pay</p>
                             <p className="text-lg font-bold text-[#155390]">{fmt(totals.empEpf)}</p>
                         </div>
                         <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
-                            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Employee EPF</p>
-                            <p className="text-lg font-bold text-gray-900">{fmt(totals.employerEpf)}</p>
+                            <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Employee EPF</p>
+                            <p className="text-lg font-bold text-[#757575]">{fmt(totals.employerEpf)}</p>
                         </div>
                         <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
                             {/* <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">ETF</p> */}
-                            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Company EPF/ETF</p>
-                            <p className="text-lg font-bold text-gray-900">{fmt(totals.etf)}</p>
+                            <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Company EPF/ETF</p>
+                            <p className="text-lg font-bold text-[#757575]">{fmt(totals.etf)}</p>
                         </div>
                         {/* <div className="pl-8 border-l border-gray-200 text-right w-full">
                             <p className="text-[10px] uppercase font-bold text-[#2b74ff] mb-1">Total Contribution</p>

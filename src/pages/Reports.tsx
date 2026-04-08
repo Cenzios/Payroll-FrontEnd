@@ -259,7 +259,7 @@ const Reports = () => {
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder="Search..."
-                                    className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-44 focus:ring-2 focus:ring-blue-100 outline-none"
+                                    className="pl-9 pr-4 py-2 mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-56 focus:ring-2 focus:ring-blue-100 outline-none"
                                 />
                             </div>
                         </div>
@@ -278,11 +278,11 @@ const Reports = () => {
                         </div>
 
                         {/* Buttons */}
-                        <div className="flex items-center gap-2 ml-auto">
+                        <div className="flex items-center gap-3 ml-auto">
                             {/* Apply */}
                             <button
                                 onClick={handleApply}
-                                className="px-5 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
+                                className="px-9 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
                             >
                                 Apply
                             </button>
@@ -290,7 +290,7 @@ const Reports = () => {
                             {/* Reset */}
                             <button
                                 onClick={handleReset}
-                                className="px-5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
+                                className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
                             >
                                 Reset
                             </button>
@@ -299,7 +299,7 @@ const Reports = () => {
                             <div className="relative">
                                 <button
                                     onClick={() => setIsExportOpen(prev => !prev)}
-                                    className="flex items-center gap-1.5 px-5 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
+                                    className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
                                 >
                                     Export
                                     <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
