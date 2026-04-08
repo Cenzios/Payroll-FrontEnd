@@ -259,7 +259,7 @@ const Reports = () => {
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder="Search..."
-                                    className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-44 focus:ring-2 focus:ring-blue-100 outline-none"
+                                    className="pl-9 pr-4 py-2 mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-56 focus:ring-2 focus:ring-blue-100 outline-none"
                                 />
                             </div>
                         </div>
@@ -278,11 +278,11 @@ const Reports = () => {
                         </div>
 
                         {/* Buttons */}
-                        <div className="flex items-center gap-2 ml-auto">
+                        <div className="flex items-center gap-3 ml-auto">
                             {/* Apply */}
                             <button
                                 onClick={handleApply}
-                                className="px-5 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
+                                className="px-9 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
                             >
                                 Apply
                             </button>
@@ -290,7 +290,7 @@ const Reports = () => {
                             {/* Reset */}
                             <button
                                 onClick={handleReset}
-                                className="px-5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
+                                className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
                             >
                                 Reset
                             </button>
@@ -299,7 +299,7 @@ const Reports = () => {
                             <div className="relative">
                                 <button
                                     onClick={() => setIsExportOpen(prev => !prev)}
-                                    className="flex items-center gap-1.5 px-5 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
+                                    className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
                                 >
                                     Export
                                     <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
@@ -337,104 +337,105 @@ const Reports = () => {
                     </div>
                 </div>
 
-                {/* Overall Totals — TOP position (shown always, even if 0) */}
-                <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-6 py-4 mb-4">
-                    <div className="grid grid-cols-5 gap-4 divide-x divide-gray-100">
-                        {/* Total Employees */}
-                        <div className="text-center">
-                            <div className="text-2xl font-regular text-gray-900">
-                                {overallTotals.totalEmployees}
+                <div className='p-4 rounded-xl bg-white border border-[#00000014]'>
+                    {/* Overall Totals — TOP position (shown always, even if 0) */}
+                    <div className="shrink-0 bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm px-6 py-4 mb-4">
+                        <div className="grid grid-cols-5 gap-4 divide-x divide-gray-100">
+                            {/* Total Employees */}
+                            <div className="text-center ">
+                                <div className="text-2xl font-regular text-gray-900">
+                                    {overallTotals.totalEmployees}
+                                </div>
+                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                    Total Employees
+                                </div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                Total Employees
-                            </div>
-                        </div>
 
-                        {/* Total Gross Pay */}
-                        <div className="text-center">
-                            <div className="text-xl font-regular text-[#1f6feb]">
-                                Rs. {overallTotals.totalGrossPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {/* Total Gross Pay */}
+                            <div className="text-center">
+                                <div className="text-xl font-regular text-[#1f6feb]">
+                                    Rs. {overallTotals.totalGrossPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </div>
+                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                    Total Gross Pay
+                                </div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                Total Gross Pay
-                            </div>
-                        </div>
 
-                        {/* Total Net Pay */}
-                        <div className="text-center">
-                            <div className="text-xl font-regular text-[#1f6feb]">
-                                Rs. {overallTotals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {/* Total Net Pay */}
+                            <div className="text-center">
+                                <div className="text-xl font-regular text-[#1f6feb]">
+                                    Rs. {overallTotals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </div>
+                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                    Total Net Pay
+                                </div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                Total Net Pay
-                            </div>
-                        </div>
 
-                        {/* Total Employee EPF */}
-                        <div className="text-center">
-                            <div className="text-xl font-regular text-[#1f6feb]">
-                                Rs. {overallTotals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {/* Total Employee EPF */}
+                            <div className="text-center">
+                                <div className="text-xl font-regular text-[#1f6feb]">
+                                    Rs. {overallTotals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </div>
+                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                    Total Employee EPF
+                                </div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                Total Employee EPF
-                            </div>
-                        </div>
 
-                        {/* Total Company EPF/ETF */}
-                        <div className="text-center">
-                            <div className="text-xl font-regular text-[#1f6feb]">
-                                Rs. {overallTotals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                            </div>
-                            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                Total Company EPF/ETF
+                            {/* Total Company EPF/ETF */}
+                            <div className="text-center">
+                                <div className="text-xl font-regular text-[#1f6feb]">
+                                    Rs. {overallTotals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </div>
+                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                    Total Company EPF/ETF
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Main Content — Scrollable */}
-                <div className="flex-1 overflow-y-auto space-y-3">
-                    {isLoading ? (
-                        <div className="flex justify-center items-center py-20">
-                            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                        </div>
-                    ) : monthlyData.length === 0 ? (
-                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-10 text-center text-gray-400 text-sm">
-                            No payroll records found for the selected period.
-                        </div>
-                    ) : (
-                        monthlyData.map((monthData) => {
-                            const monthKey = `${monthData.year}-${monthData.monthNumber}`;
-                            return (
-                                <MonthSection
-                                    key={monthKey}
-                                    year={monthData.year}
-                                    month={monthData.month}
-                                    monthNumber={monthData.monthNumber}
-                                    status={monthData.status}
-                                    employees={monthData.employees}
-                                    totals={monthData.totals}
-                                    isExpanded={expandedMonths.has(monthKey)}
-                                    onToggle={() => toggleMonth(monthKey)}
-                                    selectedEmployeeIds={selectedEmployeeIds}
-                                    onSelectEmployee={handleSelectEmployee}
-                                    onViewEmployee={(id, companyId) => {
-                                        setSelectedEmployee({
-                                            id,
-                                            companyId,
-                                            month: monthData.monthNumber,
-                                            year: monthData.year
-                                        });
-                                        setIsModalOpen(true);
-                                    }}
-                                    companyId={selectedCompanyId || ''}
-                                    searchQuery={search}
-                                />
-                            );
-                        })
-                    )}
+                    {/* Main Content — Scrollable */}
+                    <div className="flex-1 overflow-y-auto space-y-3">
+                        {isLoading ? (
+                            <div className="flex justify-center items-center py-20">
+                                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                            </div>
+                        ) : monthlyData.length === 0 ? (
+                            <div className="bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm p-10 text-center text-gray-400 text-sm">
+                                No payroll records found for the selected period.
+                            </div>
+                        ) : (
+                            monthlyData.map((monthData) => {
+                                const monthKey = `${monthData.year}-${monthData.monthNumber}`;
+                                return (
+                                    <MonthSection
+                                        key={monthKey}
+                                        year={monthData.year}
+                                        month={monthData.month}
+                                        monthNumber={monthData.monthNumber}
+                                        status={monthData.status}
+                                        employees={monthData.employees}
+                                        totals={monthData.totals}
+                                        isExpanded={expandedMonths.has(monthKey)}
+                                        onToggle={() => toggleMonth(monthKey)}
+                                        selectedEmployeeIds={selectedEmployeeIds}
+                                        onSelectEmployee={handleSelectEmployee}
+                                        onViewEmployee={(id, companyId) => {
+                                            setSelectedEmployee({
+                                                id,
+                                                companyId,
+                                                month: monthData.monthNumber,
+                                                year: monthData.year
+                                            });
+                                            setIsModalOpen(true);
+                                        }}
+                                        companyId={selectedCompanyId || ''}
+                                        searchQuery={search}
+                                    />
+                                );
+                            })
+                        )}
+                    </div>
                 </div>
-
                 {toast && (
                     <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
                 )}

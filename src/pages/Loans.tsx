@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Loader2 } from 'lucide-react';
+import { Plus, Search, Loader2, ScrollText, CreditCard } from 'lucide-react';
 import { useAppSelector } from '../store/hooks';
 import Sidebar from '../components/Sidebar';
 import PageHeader from '../components/PageHeader';
@@ -8,6 +8,8 @@ import LoanHistoryView from '../components/LoanHistoryView';
 import SuccessModal from '../components/SuccessModal';
 import { useGetLoansQuery } from '../store/apiSlice';
 import loanIcon from '../assets/images/loanicon.svg';
+import loanAmount from '../assets/images/loan-amount-icon.svg';
+import loanPayment from '../assets/images/loan-payment-icon.svg';
 import { DollarSign, HandCoins, CircleDotDashed, Shapes } from 'lucide-react';
 
 const getStatusBadge = (status: string) => {
@@ -151,14 +153,14 @@ const Loans = () => {
                       <SummaryCard
                         title="Total Amount Collected"
                         value={`Rs ${totalAmountCollected.toLocaleString()}`}
-                        icon={Shapes}
+                        icon={ScrollText}
                         iconBg="bg-purple-50"
                         iconColor="text-purple-500"
                       />
                       <SummaryCard
                         title="Pending Payment"
                         value={`Rs ${totalPendingPayment.toLocaleString()}`}
-                        icon={CircleDotDashed}
+                        icon={CreditCard}
                         iconBg="bg-rose-50"
                         iconColor="text-rose-500"
                       />
