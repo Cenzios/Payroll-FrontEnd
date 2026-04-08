@@ -7,10 +7,7 @@ import { useGetEmployeesQuery, useGetCompaniesQuery } from '../store/apiSlice';
 import { salaryApi } from '../api/salaryApi';
 import { exportEpfEtfReport } from '../utils/exportService';
 import Toast from '../components/Toast';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import dayjs from 'dayjs';
+import MonthRangePicker from '../components/MonthRangePicker';
 
 const EpfEtfReport = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
@@ -18,10 +15,11 @@ const EpfEtfReport = () => {
     const [isExportOpen, setIsExportOpen] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-    // Selected Period (Defaults to Current Month)
     const currentDate = new Date();
-    const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
-    const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+    const [startMonth, setStartMonth] = useState(currentDate.getMonth());
+    const [startYear, setStartYear] = useState(currentDate.getFullYear());
+    const [endMonth, setEndMonth] = useState(currentDate.getMonth());
+    const [endYear, setEndYear] = useState(currentDate.getFullYear());
 
     const [isLoading, setIsLoading] = useState(false);
     const [rawReportData, setRawReportData] = useState<any[]>([]);
@@ -48,10 +46,10 @@ const EpfEtfReport = () => {
         try {
             const response = await salaryApi.getSalaryReport(
                 selectedCompanyId,
-                selectedMonth + 1,
-                selectedYear,
-                selectedMonth + 1,
-                selectedYear
+                startMonth + 1,
+                startYear,
+                endMonth + 1,
+                endYear
             );
 
             const monthlyData = response.data?.monthlyData || [];
@@ -145,11 +143,22 @@ const EpfEtfReport = () => {
         }
     }, [selectedCompanyId]);
 
-    const handleApply = () => fetchData();
+    const handleApply = () => {
+        const startDate = new Date(startYear, startMonth);
+        const endDate = new Date(endYear, endMonth);
+        if (startDate > endDate) {
+            setToast({ message: 'Start date must be before or equal to end date', type: 'error' });
+            return;
+        }
+        fetchData();
+    };
 
     const handleReset = () => {
-        setSelectedMonth(currentDate.getMonth());
-        setSelectedYear(currentDate.getFullYear());
+        const currentDate = new Date();
+        setStartMonth(currentDate.getMonth());
+        setStartYear(currentDate.getFullYear());
+        setEndMonth(currentDate.getMonth());
+        setEndYear(currentDate.getFullYear());
         setSearchTerm('');
     };
 
@@ -164,10 +173,10 @@ const EpfEtfReport = () => {
             companyName: selectedCompany?.name || 'Company Name',
             companyAddress: selectedCompany?.address || '',
             reportData: filteredData,
-            startMonth: selectedMonth,
-            startYear: selectedYear,
-            endMonth: selectedMonth,
-            endYear: selectedYear,
+            startMonth,
+            startYear,
+            endMonth,
+            endYear,
             totals
         });
         setIsExportOpen(false);
@@ -190,182 +199,172 @@ const EpfEtfReport = () => {
                 </div>
 
                 {/* Filters */}
-                <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4 flex items-center gap-4">
-                    <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 w-64 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-                        <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">Search Employee</span>
-                        <div className="relative flex-1">
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Search..."
-                                className="w-full bg-transparent text-sm outline-none placeholder-gray-400 pl-6"
-                            />
-                            <Search className="w-4 h-4 text-gray-400 absolute left-0 top-1/2 -translate-y-1/2" />
+                <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                        {/* Search */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Search Employee</span>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Search..."
+                                    className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm w-44 focus:ring-2 focus:ring-blue-100 outline-none"
+                                />
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="flex flex-col min-w-[200px]">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1 ml-1">Select Period</span>
-                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <DatePicker
-                                views={['month', 'year']}
-                                value={dayjs(new Date(selectedYear, selectedMonth))}
-                                maxDate={dayjs(new Date())}
-                                onChange={(newValue) => {
-                                    if (newValue && newValue.isValid()) {
-                                        setSelectedYear(newValue.year());
-                                        setSelectedMonth(newValue.month());
-                                    }
-                                }}
-                                slotProps={{
-                                    textField: {
-                                        size: "small",
-                                        sx: {
-                                            backgroundColor: "white",
-                                            "& .MuiOutlinedInput-root": {
-                                                borderRadius: "0.75rem",
-                                                "& fieldset": {
-                                                    borderColor: "#e5e7eb",
-                                                    transition: "all 0.2s ease-in-out",
-                                                },
-                                                "&:hover fieldset": {
-                                                    borderColor: "#d1d5db",
-                                                },
-                                                "&.Mui-focused fieldset": {
-                                                    borderColor: "#3b82f6",
-                                                    borderWidth: "1px",
-                                                    boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
-                                                },
-                                            },
-                                            "& .MuiInputBase-input": {
-                                                paddingY: "9.5px",
-                                                paddingX: "14px",
-                                                fontSize: "0.875rem",
-                                                color: "#1f2937",
-                                            }
-                                        }
-                                    }
-                                }}
+                        {/* Time Period */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Time Period</span>
+                            <MonthRangePicker
+                                startMonth={startMonth}
+                                startYear={startYear}
+                                endMonth={endMonth}
+                                endYear={endYear}
+                                onStartChange={(month, year) => { setStartMonth(month); setStartYear(year); }}
+                                onEndChange={(month, year) => { setEndMonth(month); setEndYear(year); }}
                             />
-                        </LocalizationProvider>
-                    </div>
+                        </div>
 
-                    <div className="flex gap-2 ml-auto">
-                        <button onClick={handleApply} className="px-6 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">Apply</button>
-                        <button onClick={handleReset} className="px-6 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg border border-gray-300 transition-colors">Reset</button>
-
-                        <div className="relative">
+                        {/* Buttons */}
+                        <div className="flex items-center gap-2 ml-auto">
                             <button
-                                onClick={() => setIsExportOpen(!isExportOpen)}
-                                className="flex items-center gap-1.5 px-6 py-2 bg-white hover:bg-gray-50 text-green-600 text-sm font-medium rounded-lg border border-green-200 transition-colors"
+                                onClick={handleApply}
+                                className="px-5 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
                             >
-                                Export
-                                <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
+                                Apply
                             </button>
-                            {isExportOpen && (
-                                <>
-                                    <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
-                                    <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
-                                        <button onClick={() => handleExport('pdf')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-green-600 hover:bg-red-50 transition-colors">
-                                            <FileText className="w-4 h-4" /> PDF
-                                        </button>
-                                        <button onClick={() => handleExport('excel')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-green-600 hover:bg-green-50 transition-colors">
-                                            <FileSpreadsheet className="w-4 h-4" /> Excel
-                                        </button>
-                                        <button onClick={() => handleExport('csv')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-green-600 hover:bg-blue-50 transition-colors">
-                                            <Download className="w-4 h-4" /> CSV
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                            <button
+                                onClick={handleReset}
+                                className="px-5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
+                            >
+                                Reset
+                            </button>
+
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsExportOpen(!isExportOpen)}
+                                    className="flex items-center gap-1.5 px-5 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
+                                >
+                                    Export
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {isExportOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
+                                        <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
+                                            <button onClick={() => handleExport('pdf')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-red-50 transition-colors">
+                                                <FileText className="w-4 h-4" /> PDF
+                                            </button>
+                                            <div className="border-t border-gray-100" />
+                                            <button onClick={() => handleExport('excel')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-green-50 transition-colors">
+                                                <FileSpreadsheet className="w-4 h-4" /> Excel
+                                            </button>
+                                            <div className="border-t border-gray-100" />
+                                            <button onClick={() => handleExport('csv')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-blue-50 transition-colors">
+                                                <Download className="w-4 h-4" /> CSV
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Table */}
-                <div className="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-                    <div className="overflow-y-auto flex-1">
-                        <table className="w-full text-left border-collapse">
-                            <thead className="sticky top-0 bg-gray-50 z-10">
-                                <tr className="border-b border-gray-200">
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-900">Employee ID</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-900">Employee Name</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-900">EPF No</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Basic Salary</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Emp EPF (8%)</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Employer EPF (12%)</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">ETF (3%)</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-[#2b74ff] text-right">Total Contribution</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {isLoading ? (
-                                    <tr>
-                                        <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
-                                            <div className="flex justify-center items-center gap-2">
-                                                <Loader2 className="w-5 h-5 animate-spin" />
-                                                Loading report data...
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : filteredData.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
-                                            No EPF/ETF data found for the selected period.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredData.map((item) => (
-                                        <tr key={item.employeeId} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 text-sm font-medium text-[#2b74ff]">{item.employeeCode}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-700">{item.fullName}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-400">{item.epfNo}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.basicSalary)}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.empEpf)}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.employerEpf)}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.etf)}</td>
-                                            <td className="px-6 py-4 text-sm font-bold text-[#2b74ff] text-right">{fmt(item.totalContribution)}</td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                {/* Table Content Wrapper */}
+                <div className="p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 overflow-hidden">
 
                     {/* Summary Footer */}
-                    <div className="bg-gray-50 border-t border-gray-200 px-6 py-6 mt-auto">
-                        <div className="flex justify-between items-center gap-8">
-                            <div className="text-center">
-                                <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Employees</p>
-                                <p className="text-lg font-bold text-gray-900">{totals.count}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Gross Pay</p>
-                                <p className="text-lg font-bold text-gray-900">{fmt(totals.grossPay)}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Employee EPF</p>
-                                <p className="text-lg font-bold text-gray-900">{fmt(totals.empEpf)}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Employer EPF</p>
-                                <p className="text-lg font-bold text-gray-900">{fmt(totals.employerEpf)}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">ETF</p>
-                                <p className="text-lg font-bold text-gray-900">{fmt(totals.etf)}</p>
-                            </div>
-                            <div className="pl-8 border-l border-gray-200 text-right">
-                                <p className="text-[10px] uppercase font-bold text-[#2b74ff] mb-1">Total Contribution</p>
-                                <p className="text-xl font-bold text-[#2b74ff]">Rs {fmt(totals.totalContribution)}</p>
-                            </div>
+                    <div className="flex justify-between items-center gap-2">
+                        <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
+                            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Employees</p>
+                            <p className="text-lg font-bold text-gray-900">{totals.count}</p>
                         </div>
-                        <p className="text-[10px] text-gray-400 text-right mt-4 italic">All values are display in LKR</p>
+                        <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
+                            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Total Gross Pay</p>
+                            <p className="text-lg font-bold text-[#155390]">{fmt(totals.grossPay)}</p>
+                        </div>
+                        <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
+                            {/* <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Employee EPF</p> */}
+                            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Total NET Pay</p>
+                            <p className="text-lg font-bold text-[#155390]">{fmt(totals.empEpf)}</p>
+                        </div>
+                        <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
+                            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Employee EPF</p>
+                            <p className="text-lg font-bold text-gray-900">{fmt(totals.employerEpf)}</p>
+                        </div>
+                        <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
+                            {/* <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">ETF</p> */}
+                            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Company EPF/ETF</p>
+                            <p className="text-lg font-bold text-gray-900">{fmt(totals.etf)}</p>
+                        </div>
+                        {/* <div className="pl-8 border-l border-gray-200 text-right w-full">
+                            <p className="text-[10px] uppercase font-bold text-[#2b74ff] mb-1">Total Contribution</p>
+                            <p className="text-xl font-bold text-[#2b74ff]">Rs {fmt(totals.totalContribution)}</p>
+                        </div> */}
+                    </div>
+                    {/* <p className="text-[10px] text-gray-400 text-right mt-4 italic">All values are display in LKR</p> */}
+
+
+                    {/* Table */}
+                    <div className="flex-1 mt-5 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                        <div className="overflow-y-auto flex-1">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="sticky top-0 bg-gray-50 z-10">
+                                    <tr className="border-b border-gray-200">
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-900">Employee ID</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-900">Employee Name</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-900">EPF No</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Basic Salary</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Emp EPF (8%)</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Employer EPF (12%)</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">ETF (3%)</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-[#2b74ff] text-right">Total Contribution</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {isLoading ? (
+                                        <tr>
+                                            <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
+                                                <div className="flex justify-center items-center gap-2">
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                    Loading report data...
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : filteredData.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
+                                                No EPF/ETF data found for the selected period.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        filteredData.map((item) => (
+                                            <tr key={item.employeeId} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4 text-sm font-medium text-[#2b74ff]">{item.employeeCode}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-700">{item.fullName}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-400">{item.epfNo}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.basicSalary)}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.empEpf)}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.employerEpf)}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.etf)}</td>
+                                                <td className="px-6 py-4 text-sm font-bold text-[#2b74ff] text-right">{fmt(item.totalContribution)}</td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+
                     </div>
                 </div>
+                {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             </div>
-            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         </div>
     );
 };
