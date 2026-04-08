@@ -113,7 +113,7 @@ const EmployeeSalaryCard = ({
         ? generatedSalary.basicPay
         : emp.salaryType === "MONTHLY"
             ? companyWorkingDays > 0
-                ? (basicSalary / companyWorkingDays) * displayWorkedDays
+                ? (basicSalary / companyWorkingDays) * (displayWorkedDays + (emp.paidLeave || 0))
                 : 0
             : basicSalary * displayWorkedDays;
 

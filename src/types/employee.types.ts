@@ -26,6 +26,7 @@ export interface Employee {
     email?: string;
     basicSalary: number;
     salaryType?: 'DAILY' | 'MONTHLY';
+    paidLeave: number;
     otRate: number;
     epfEnabled: boolean;
     epfNumber?: string;
@@ -58,6 +59,7 @@ export interface CreateEmployeeRequest {
     email?: string;
     basicSalary: number;
     salaryType?: 'DAILY' | 'MONTHLY';
+    paidLeave?: number;
     otRate?: number;
     epfEnabled?: boolean;
     epfNumber?: string;
