@@ -1561,7 +1561,7 @@ const UniversalDrawer = ({
 
                               <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none">
-                                  <div className="bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100 text-[11px] font-bold text-gray-400">Days</div>
+                                  <div className="bg-gray-50 px-1 py-1.5 rounded-lg border border-gray-100 text-[11px] font-bold text-gray-400">Days</div>
                                 </div>
                                 <input
                                   type="text"
@@ -1576,7 +1576,8 @@ const UniversalDrawer = ({
                                   }}
                                   onBlur={() => handleBlur("paidLeave")}
                                   placeholder="0"
-                                  className={`text-[13px] w-full pl-12 pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.paidLeave && errors.paidLeave ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                  style={{ paddingLeft: "80px" }}
+                                  className={`text-[13px] w-full pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.paidLeave && errors.paidLeave ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                                 />
                               </div>
                               {touched.paidLeave && errors.paidLeave && (

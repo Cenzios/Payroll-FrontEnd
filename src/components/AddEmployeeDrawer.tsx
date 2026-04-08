@@ -718,7 +718,7 @@ const AddEmployeeDrawer = ({
                                         <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Paid Leave Count</label>
                                         <div className="relative">
                                             <div className="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none">
-                                                <div className="bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100 text-[12px] font-bold text-gray-400">Days</div>
+                                                <div className="bg-gray-50 px-1 py-1.5 rounded-lg border border-gray-100 text-[12px] font-bold text-gray-400">Days</div>
                                             </div>
                                             <input
                                                 type="text"
@@ -730,7 +730,8 @@ const AddEmployeeDrawer = ({
                                                 }}
                                                 onBlur={() => handleBlur("paidLeave")}
                                                 placeholder="0"
-                                                className={`text-[14px] w-full pl-12 pr-4 py-2.5 bg-white border rounded-xl focus:ring-2 outline-none transition-all ${touched.paidLeave && errors.paidLeave ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-blue-500/20 focus:border-blue-500"}`}
+                                                style={{ paddingLeft: "80px" }}
+                                                className={`text-[14px] w-full pr-4 py-2.5 bg-white border rounded-xl focus:ring-2 outline-none transition-all ${touched.paidLeave && errors.paidLeave ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-blue-500/20 focus:border-blue-500"}`}
                                             />
                                         </div>
                                         {touched.paidLeave && errors.paidLeave && <p className="text-red-500 text-xs mt-1">{errors.paidLeave}</p>}
