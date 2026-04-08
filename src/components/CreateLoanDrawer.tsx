@@ -409,7 +409,6 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                               "& .MuiOutlinedInput-root": {
                                 borderRadius: "0.75rem",
                                 "& fieldset": { borderColor: "#e5e7eb", transition: "all 0.2s" },
-                                "&:hover fieldset": { borderColor: "#d1d5db" },
                                 "&.Mui-focused fieldset": {
                                   borderColor: "#3b82f6",
                                   borderWidth: "1px",
@@ -417,7 +416,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                                 },
                               },
                               "& .MuiInputBase-input": {
-                                paddingY: "9.5px", paddingX: "14px", paddingLeft: "36px", fontSize: "14px", color: "#374151",
+                                paddingY: "9.5px", paddingX: "14px", paddingLeft: "36px", fontSize: "10px", color: "#374151",
                               }
                             }
                           }

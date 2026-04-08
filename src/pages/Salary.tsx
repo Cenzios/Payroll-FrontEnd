@@ -682,7 +682,7 @@ const Salary = () => {
               </div>
 
               <div className="flex flex-col max-w-xs min-w-[200px]">
-                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5 ml-1">
+                <label className="text-sm font-medium text-gray-800 mb-2">
                   Select Period
                 </label>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -704,16 +704,11 @@ const Salary = () => {
                           "& .MuiOutlinedInput-root": {
                             borderRadius: "0.75rem",
                             "& fieldset": {
-                              borderColor: "#e5e7eb",
-                              transition: "all 0.2s ease-in-out",
-                            },
-                            "&:hover fieldset": {
-                              borderColor: "#d1d5db",
+                              borderColor: "#374151",
                             },
                             "&.Mui-focused fieldset": {
-                              borderColor: "#3b82f6",
+                              borderColor: "#374151",
                               borderWidth: "1px",
-                              boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
                             },
                           },
                           "& .MuiInputBase-input": {

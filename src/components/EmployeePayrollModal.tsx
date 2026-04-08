@@ -171,24 +171,24 @@ const EmployeePayrollModal = ({
                         </button>
                     </div>
 
-                    {/* ── Summary Pills ── */}
-                    <div className="flex gap-3 px-7 pb-5">
-                        <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white flex-1">
-                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">Net Pay</span>
-                            <span className="text-sm font-bold text-blue-600 whitespace-nowrap ml-auto">
+                    {/* ── Summary Bar ── */}
+                    <div className="grid grid-cols-3 bg-[#EDF4FF] pt-2 pb-6">
+                        <div className="flex flex-col items-start ml-8">
+                            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Net Pay</span>
+                            <span className="text-[22px] font-bold text-blue-600">
                                 {totals ? fmt(totals.netPay) : '—'}
                             </span>
                         </div>
-                        <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white flex-1">
-                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">Gross Pay</span>
-                            <span className="text-sm font-bold text-gray-800 whitespace-nowrap ml-auto">
+                        <div className="flex flex-col items-end border-r border-gray-100">
+                            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Gross Pay</span>
+                            <span className="text-[22px] font-bold text-gray-900">
                                 {totals ? fmt(totals.grossPay) : '—'}
                             </span>
                         </div>
-                        <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-white flex-1">
-                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">Deductions</span>
-                            <span className="text-sm font-bold text-red-500 whitespace-nowrap ml-auto">
-                                {totals ? `– ${fmt(totals.deductions)}` : '—'}
+                        <div className="flex flex-col items-end mr-10">
+                            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Deduction</span>
+                            <span className="text-[22px] font-bold text-red-600">
+                                {totals ? `-${fmt(totals.deductions)}` : '—'}
                             </span>
                         </div>
                     </div>
@@ -204,38 +204,36 @@ const EmployeePayrollModal = ({
                         ) : (
                             <>
                                 {/* EARNINGS */}
-                                <div className="mb-5">
-                                    {/* Section header row */}
-                                    <div className="flex items-center justify-between py-2 mb-1">
-                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Earnings</span>
-                                        <span className="text-sm font-bold text-green-600">{fmt(row.grossPay)}</span>
+                                <div className="mt-4 mb-8">
+                                    <div className="flex items-center justify-between py-2 mb-2">
+                                        <span className="text-[12px] font-semibold text-gray-400 uppercase tracking-widest">Earnings</span>
+                                        <span className="text-[15px] font-semibold text-green-600">{fmt(row.grossPay)}</span>
                                     </div>
 
-                                    {/* Table rows */}
-                                    <div className="rounded-xl border border-gray-100 overflow-hidden">
+                                    <div className="space-y-0.5 ml-3">
                                         {/* Basic Salary */}
-                                        <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
-                                            <span className="text-sm font-medium text-gray-800 w-44">Basic salary</span>
-                                            <span className="text-sm text-gray-400 flex-1 text-center">
-                                                {row.workedDays} days
-                                            </span>
-                                            <span className="text-sm font-semibold text-gray-900 text-right w-36">
-                                                {fmt(row.basicPay)}
+                                        <div className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                            <div className="flex flex-col">
+                                                <span className="text-[15px] font-medium text-gray-900">Basic salary</span>
+                                                <span className="text-[13px] text-[#94A3B8] mt-0.5">
+                                                    {row.workedDays} days X {fmt(row.basicPay / (row.workedDays || 1))}/day
+                                                </span>
+                                            </div>
+                                            <span className="text-[15px] font-medium text-gray-900">
+                                                {fmt(row.basicPay || 0)}
                                             </span>
                                         </div>
 
                                         {/* Overtime */}
                                         {row.otAmount > 0 && (
-                                            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
-                                                <span className="text-sm font-medium text-gray-800 w-44">Overtime</span>
-                                                <span className="text-sm text-gray-400 flex-1 text-center">
-                                                    {row.otHours} hrs × Rs.{' '}
-                                                    {row.otHours > 0
-                                                        ? (row.otAmount / row.otHours).toLocaleString(undefined, { minimumFractionDigits: 2 })
-                                                        : '0.00'}
-                                                    /hr
-                                                </span>
-                                                <span className="text-sm font-semibold text-gray-900 text-right w-36">
+                                            <div className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[15px] font-medium text-gray-900">Overtime</span>
+                                                    <span className="text-[13px] text-[#94A3B8] mt-0.5">
+                                                        {row.otHours} hrs X {fmt((row.otAmount / (row.otHours || 1)))}/hr
+                                                    </span>
+                                                </div>
+                                                <span className="text-[15px] font-medium text-gray-900">
                                                     {fmt(row.otAmount)}
                                                 </span>
                                             </div>
@@ -243,10 +241,9 @@ const EmployeePayrollModal = ({
 
                                         {/* Custom Allowances */}
                                         {row.allowances?.map((a, i) => (
-                                            <div key={i} className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
-                                                <span className="text-sm font-medium text-gray-800 w-44">{a.type}</span>
-                                                <span className="text-sm text-gray-400 flex-1 text-center"></span>
-                                                <span className="text-sm font-semibold text-gray-900 text-right w-36">
+                                            <div key={i} className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                                <span className="text-[15px] font-medium text-gray-900">{a.type}</span>
+                                                <span className="text-[15px] font-medium text-gray-900">
                                                     {fmt(a.amount)}
                                                 </span>
                                             </div>
@@ -255,51 +252,56 @@ const EmployeePayrollModal = ({
                                 </div>
 
                                 {/* DEDUCTIONS */}
-                                <div className="mb-5">
-                                    <div className="flex items-center justify-between py-2 mb-1">
-                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Deductions</span>
-                                        <span className="text-sm font-bold text-red-500">– {fmt(row.deductions)}</span>
+                                <div className="mb-8">
+                                    <div className="flex items-center justify-between py-2 mb-2">
+                                        <span className="text-[12px] font-semibold text-gray-400 uppercase tracking-widest">Deductions</span>
+                                        <span className="text-[15px] font-semibold text-red-500">-{fmt(row.deductions)}</span>
                                     </div>
 
-                                    <div className="rounded-xl border border-gray-100 overflow-hidden">
+                                    <div className="space-y-0.5 ml-3">
                                         {/* Employee EPF */}
-                                        <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
-                                            <span className="text-sm font-medium text-gray-800 w-44">Employee EPF</span>
-                                            <span className="text-sm text-gray-400 flex-1 text-center">8% of basic salary</span>
-                                            <span className="text-sm font-semibold text-red-500 text-right w-36">
-                                                – {fmt(row.employeeEPF)}
+                                        <div className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                            <div className="flex flex-col">
+                                                <span className="text-[15px] font-medium text-gray-900">Employee EPF</span>
+                                                <span className="text-[13px] text-[#94A3B8] mt-0.5">8% of basic salary</span>
+                                            </div>
+                                            <span className="text-[15px] font-medium text-red-600">
+                                                -{fmt(row.employeeEPF)}
                                             </span>
                                         </div>
 
                                         {/* Loan Deduction */}
                                         {(row.loanDeduction ?? 0) > 0 && (
-                                            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
-                                                <span className="text-sm font-medium text-gray-800 w-44">Loan deduction</span>
-                                                <span className="text-sm text-gray-400 flex-1 text-center">Monthly instalment</span>
-                                                <span className="text-sm font-semibold text-red-500 text-right w-36">
-                                                    – {fmt(row.loanDeduction ?? 0)}
+                                            <div className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[15px] font-medium text-gray-900">Loan deduction</span>
+                                                    <span className="text-[13px] text-[#94A3B8] mt-0.5">Monthly instalment</span>
+                                                </div>
+                                                <span className="text-[15px] font-medium text-red-600">
+                                                    -{fmt(row.loanDeduction ?? 0)}
                                                 </span>
                                             </div>
                                         )}
 
                                         {/* Salary Advance */}
                                         {row.salaryAdvance > 0 && (
-                                            <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
-                                                <span className="text-sm font-medium text-gray-800 w-44">Advance deduction</span>
-                                                <span className="text-sm text-gray-400 flex-1 text-center">Salary advance recovery</span>
-                                                <span className="text-sm font-semibold text-red-500 text-right w-36">
-                                                    – {fmt(row.salaryAdvance)}
+                                            <div className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[15px] font-medium text-gray-900">Advance deduction</span>
+                                                    <span className="text-[13px] text-[#94A3B8] mt-0.5">Salary advance recovery</span>
+                                                </div>
+                                                <span className="text-[15px] font-medium text-red-600">
+                                                    -{fmt(row.salaryAdvance)}
                                                 </span>
                                             </div>
                                         )}
 
                                         {/* Custom Deductions */}
                                         {row.customDeductions?.map((d, i) => (
-                                            <div key={i} className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 last:border-0">
-                                                <span className="text-sm font-medium text-gray-800 w-44">{d.type}</span>
-                                                <span className="text-sm text-gray-400 flex-1 text-center"></span>
-                                                <span className="text-sm font-semibold text-red-500 text-right w-36">
-                                                    – {fmt(d.amount)}
+                                            <div key={i} className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                                <span className="text-[15px] font-medium text-gray-900">{d.type}</span>
+                                                <span className="text-[15px] font-medium text-red-600">
+                                                    -{fmt(d.amount)}
                                                 </span>
                                             </div>
                                         ))}
@@ -307,36 +309,28 @@ const EmployeePayrollModal = ({
                                 </div>
 
                                 {/* Company EPF/ETF note */}
-                                <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-gray-100 bg-white mb-1">
-                                    <span className="text-sm text-blue-500">
+                                <div className="flex items-center justify-between px-6 py-4 rounded-xl border border-[#D2E3FC] bg-[#F4F7FB] mb-6">
+                                    <span className="text-[13px] font-normal text-blue-600">
                                         Company EPF/ETF contribution (not deducted from employee)
                                     </span>
-                                    <span className="text-sm font-semibold text-blue-600 ml-4 whitespace-nowrap">
+                                    <span className="text-[13px] font-normal text-blue-600 ml-4 whitespace-nowrap">
                                         {fmt(row.companyEPFETF)}
                                     </span>
-                                </div>
-
-                                {/* Net Pay Row */}
-                                <div className="flex items-center justify-between px-4 py-4 rounded-xl border border-gray-200 bg-white mt-3">
-                                    <span className="text-base font-bold text-gray-800">Net pay</span>
-                                    <span className="text-lg font-bold text-blue-600">{fmt(row.netPay)}</span>
                                 </div>
                             </>
                         )}
                     </div>
 
                     {/* ── Footer Buttons ── */}
-                    <div className="px-7 py-5 border-t border-gray-100 mt-3">
-                        <div>
-                            <button
-                                disabled={!employeeData}
-                                onClick={handleExport}
-                                className="w-full py-3.5 rounded-xl border border-green-500 hover:bg-green-50 disabled:border-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed text-green-600 text-sm font-semibold transition-colors"
-                            >
-                                Export Pay-slip
-                            </button>
-                        </div>
-                        <p className="text-center text-xs text-gray-400 mt-3">All values in LKR</p>
+                    <div className="px-7 py-6 flex items-center justify-between">
+                        <p className="text-[13px] text-gray-400 font-medium">All values in LKR</p>
+                        <button
+                            disabled={!employeeData}
+                            onClick={handleExport}
+                            className="px-8 py-3 rounded-xl border border-green-500/30 hover:bg-green-50 disabled:border-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed text-green-600 text-[15px] font-normal transition-all"
+                        >
+                            Export Pay-slip
+                        </button>
                     </div>
                 </div>
             </div>
