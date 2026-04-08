@@ -44,6 +44,8 @@ const PayslipPreview = ({
         );
     }
 
+    const fmt = (val: number) => (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
     const grossEarnings =
         previewPayslip.basicPay +
         previewPayslip.otAmount +
@@ -59,236 +61,187 @@ const PayslipPreview = ({
     });
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
-            <div className="flex flex-col">
-                {/* Payslip Paper */}
-                <div className="px-4 pt-3 pb-2 font-mono text-sm">
-                    <div className="bg-white mx-auto max-w-lg">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col p-3">
 
-                        {/* Top divider */}
-                        <Divider />
+            <div className="bg-[#F3F4F6] border border-[#F3F4F6] rounded-xl">
 
-                        {/* Company Header */}
-                        <div className="text-center pl-1 mb-0.5">
-                            <p className="font-bold text-[12px] uppercase">{companyName}</p>
-                            <p className="font-bold text-[12px] uppercase">
-                                PAY SLIP – MONTH OF: {monthLabel.toUpperCase()}
-                            </p>
+                <div className="flex flex-col p-3">
+                    {/* Header */}
+                    <div className="text-center mb-5">
+                        <h1 className="text-2xl font-bold text-[#1D1F24] mt-5">{selectedEmployee.fullName}</h1>
+                        <p className="text-[11px] font-bold text-[#718096] tracking-[0.15em] mt-1 mb-5 uppercase">
+                            PAY SLIP • {monthLabel}
+                        </p>
+                        <div className="h-px bg-gray-100 flex-1"></div>
+                    </div>
+
+                    {/* Employee Profile Box */}
+                    <div className="bg-[#FDFBF7] rounded-lg p-6 flex items-center gap-5 mb-10">
+                        <div className="w-14 h-14 bg-[#F0F9FF] rounded-lg flex items-center justify-center text-[#407BFF] font-bold text-xl shadow-sm border border-[#E0F2FE]">
+                            {selectedEmployee.fullName.charAt(0)}
                         </div>
-
-                        <Divider />
-
-                        {/* Employee Details */}
-                        <div className="space-y-0.5 pl-1 mt-1 mb-1">
-                            <div className="flex text-[12px]">
-                                <span className="w-36">Employee Name</span>
-                                <span>: {selectedEmployee.fullName}</span>
-                            </div>
-                            <div className="flex text-[12px]">
-                                <span className="w-36">Employee No</span>
-                                <span>: {selectedEmployee.employeeId}</span>
-                            </div>
-                            <div className="flex text-[12px]">
-                                <span className="w-36">Designation</span>
-                                <span>: {selectedEmployee.designation}</span>
+                        <div>
+                            <h2 className="text-lg font-bold text-[#1D1F24]">{selectedEmployee.fullName}</h2>
+                            <div className="flex items-center gap-2 text-sm text-[#718096] font-light">
+                                <span>No. {selectedEmployee.employeeId}</span>
+                                <span className="w-1 h-1 bg-[#D1D5DB] rounded-full"></span>
+                                <span>{selectedEmployee.designation || "Designation —"}</span>
                             </div>
                         </div>
+                    </div>
 
-                        <Divider />
-
-                        {/* EARNINGS heading */}
-                        <div className="text-center font-bold text-[12px] uppercase my-0.5">
-                            EARNINGS
-                        </div>
-
-                        <Divider />
-
-                        {/* Earnings table header */}
-                        <div className="flex text-[12px] pl-1 mb-0.5">
-                            <span className="w-56">Description</span>
-                            <span>Amount (Rs.)</span>
-                        </div>
-
-                        <Divider />
-
-                        {/* Earnings rows */}
-                        <div className="space-y-0.5 pl-1 mb-1">
-                            {/* Basic salary label */}
-                            <div className="flex text-[12px]">
-                                <span className="w-56">
-                                    {previewPayslip.salaryType === "MONTHLY" ? "Monthly Basic Salary" : "Daily Basic Salary"}
-                                </span>
-                                <span>: {previewPayslip.basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            </div>
-
-                            {/* Allowances */}
-                            {previewPayslip.allowances?.map((a: any, i: number) => (
-                                <div key={i} className="flex text-[12px]">
-                                    <span className="w-56">{a.name}</span>
-                                    <span>: {a.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                </div>
-                            ))}
-
-                            {/* Working days */}
-                            <div className="flex text-[12px]">
-                                <span className="w-56">Working days for the month</span>
-                                <span>:  {companyWorkingDays}</span>
-                            </div>
-
-                            {/* Worked days */}
-                            <div className="flex text-[12px]">
-                                <span className="w-56">Worked Days</span>
-                                <span>:  {previewPayslip.workedDays ?? previewPayslip.workingDays}</span>
-                            </div>
-
-                            {/* Paid Leave */}
-                            {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.paidLeave || 0) > 0 && (
-                                <div className="flex text-[12px]">
-                                    <span className="w-56">Paid Leave</span>
-                                    <span>:  {previewPayslip.paidLeave}</span>
-                                </div>
-                            )}
-
-
-
-                            {/* Basic pay calculation */}
-                            {previewPayslip.salaryType === "DAILY" && (
-                                <div className="flex text-[12px]">
-                                    <span className="w-56">
-                                        Basic Salary ({previewPayslip.basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
+                    {/* Sections Container */}
+                    <div className="px-2">
+                        {/* EARNINGS */}
+                        <div className="mb-10">
+                            <h3 className="text-[11px] font-bold text-[#718096] tracking-widest uppercase mb-6 flex items-center gap-3">
+                                EARNINGS
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-[#64748B] font-medium">
+                                        {previewPayslip.salaryType === "MONTHLY" ? "Monthly basic salary" : "Daily basic salary"}
                                     </span>
-                                    <span>:  {previewPayslip.basicPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicSalary)}</span>
                                 </div>
-                            )}
 
-                            {/* OT if any */}
-                            {previewPayslip.otAmount > 0 && (
-                                <div className="flex text-[12px]">
-                                    <span className="w-56">OT ({previewPayslip.otHours} hrs)</span>
-                                    <span>:  {previewPayslip.otAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                {previewPayslip.allowances?.map((a: any, i: number) => (
+                                    <div key={i} className="flex justify-between items-center text-sm">
+                                        <span className="text-[#64748B] font-medium">{a.name}</span>
+                                        <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(a.amount)}</span>
+                                    </div>
+                                ))}
+
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-[#64748B] font-medium">Working days in month</span>
+                                    <span className="text-[#1D1F24] font-bold tracking-tight">{companyWorkingDays}</span>
                                 </div>
-                            )}
-                        </div>
 
-                        {/* Gross Earnings */}
-                        <div className="flex text-[12px] pl-1 mb-0.5">
-                            <span className="w-56">Gross Earnings</span>
-                            <span>: <strong>{grossEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
-                        </div>
-
-                        <Divider />
-
-                        {/* DEDUCTIONS heading */}
-                        <div className="text-center font-bold text-[12px] uppercase my-0.5">
-                            DEDUCTIONS
-                        </div>
-
-                        <Divider />
-
-                        {/* Deductions table header */}
-                        <div className="flex text-[12px] pl-1 mb-0.5">
-                            <span className="w-56">Description</span>
-                            <span>Amount (Rs.)</span>
-                        </div>
-
-                        <Divider />
-
-                        {/* Deductions rows */}
-                        <div className="space-y-0.5 pl-1 mb-1">
-                            {previewPayslip.isEpfEnabled && (
-                                <div className="flex text-[12px]">
-                                    <span className="w-56">EPF (8%)</span>
-                                    <span>:  {previewPayslip.epf8.toFixed(2)}</span>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-[#64748B] font-medium">Worked days</span>
+                                    <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.workedDays ?? previewPayslip.workingDays}</span>
                                 </div>
-                            )}
-                            {/* Deductions including Salary Advance & Loans */}
-                            {previewPayslip.deductions?.filter((d: any) => d.amount > 0).map((d: any, i: number) => (
-                                <div key={i} className="flex text-[12px]">
-                                    <span className="w-56">{d.name}</span>
-                                    <span>:  {d.amount.toFixed(2)}</span>
+
+                                {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.paidLeave || 0) > 0 && (
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-[#64748B] font-medium">Paid Leave</span>
+                                        <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.paidLeave}</span>
+                                    </div>
+                                )}
+
+                                {previewPayslip.salaryType === "DAILY" && (
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-[#64748B] font-medium italic">
+                                            Basic Calculation ({fmt(previewPayslip.basicSalary)} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
+                                        </span>
+                                        <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicPay)}</span>
+                                    </div>
+                                )}
+
+                                {previewPayslip.otAmount > 0 && (
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-[#64748B] font-medium">OT ({previewPayslip.otHours} hrs)</span>
+                                        <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.otAmount)}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
+                                <span className="text-[17px] font-bold text-[#1D1F24]">Gross earnings</span>
+                                <span className="text-[17px] font-bold text-[#2C7A7B]">{fmt(grossEarnings)}</span>
+                            </div>
+                        </div>
+
+                        {/* DEDUCTIONS */}
+                        <div className="mb-10">
+                            <h3 className="text-[11px] font-bold text-[#64748B] tracking-widest uppercase mb-6 flex items-center gap-3">
+                                DEDUCTIONS
+                            </h3>
+                            <div className="space-y-4">
+                                {previewPayslip.isEpfEnabled && (
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-[#64748B] font-medium">EPF (8%)</span>
+                                        <span className="text-[#E11D48] font-bold tracking-tight">{fmt(previewPayslip.epf8)}</span>
+                                    </div>
+                                )}
+                                {previewPayslip.deductions?.filter((d: any) => d.amount > 0).map((d: any, i: number) => (
+                                    <div key={i} className="flex justify-between items-center text-sm">
+                                        <span className="text-[#64748B] font-medium">{d.name}</span>
+                                        <span className="text-[#E11D48] font-bold tracking-tight">{fmt(d.amount)}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
+                                <span className="text-[17px] font-bold text-[#1D1F24]">Total deductions</span>
+                                <span className="text-[17px] font-bold text-[#E11D48]">{totalDeductions.toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        {/* NET SALARY PAYABLE BOX */}
+                        <div className="bg-[#F0F9FF] rounded-lg p-5 mb-6">
+                            <p className="text-[11px] font-bold text-[#155390] tracking-widest uppercase mb-2">NET SALARY PAYABLE</p>
+                            <h2 className="text-[26px] font-black text-[#155390] tracking-tight">Rs. {previewPayslip.netSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+
+                            <div className="flex items-end justify-end gap-5 mt-5">
+                                <div>
+                                    <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1 flex justify-end">GROSS</p>
+                                    <p className="text-base font-bold text-[#2B6CB0B2] tracking-tight">{fmt(grossEarnings)}</p>
                                 </div>
-                            ))}
+                                <div>
+                                    <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1 flex justify-end">DEDUCTIONS</p>
+                                    <p className="text-base font-bold text-[#C53030B2] tracking-tight">{fmt(totalDeductions)}</p>
+                                </div>
+                            </div>
                         </div>
 
-                        <Divider />
-
-                        {/* Total Deductions */}
-                        <div className="flex text-[12px] pl-1 mb-0.5">
-                            <span className="w-56">Total Deductions</span>
-                            <span>:  {totalDeductions.toFixed(2)}</span>
-                        </div>
-
-                        <Divider />
-
-                        {/* NET SALARY heading */}
-                        <div className="text-center font-bold text-[12px] uppercase my-0.5">
-                            NET SALARY
-                        </div>
-
-                        <Divider />
-
-                        {/* Net Salary Payable */}
-                        <div className="flex text-[12px] pl-1 mb-0.5">
-                            <span className="w-56">Net Salary Payable (Rs)</span>
-                            <span>: <strong>{previewPayslip.netSalary.toLocaleString()}</strong></span>
-                        </div>
-
-                        <Divider />
-
-                        {/* Employer Contributions (if EPF enabled) */}
+                        {/* EMPLOYER CONTRIBUTIONS */}
                         {previewPayslip.isEpfEnabled && (
-                            <>
-                                <div className="text-center font-bold text-[12px] uppercase my-0.5">
-                                    EMPLOYER CONTRIBUTIONS
-                                </div>
-                                <Divider />
-                                <div className="space-y-0.5 pl-1 mb-0.5">
-                                    <div className="flex text-[12px]">
-                                        <span className="w-56">EPF (12%)</span>
-                                        <span>:  {previewPayslip.epf12.toFixed(2)}</span>
+                            <div className="bg-[#FDFBF7] rounded-lg p-5 mb-5">
+                                <p className="text-[11px] font-bold text-[#64748B] tracking-widest uppercase mb-4">EMPLOYER CONTRIBUTIONS</p>
+                                <div className="flex gap-10">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[11px] text-[#64748B] font-medium">EPF 12%</span>
+                                        <span className="text-[14px] font-bold text-[#1D1F24] tracking-tight">{fmt(previewPayslip.epf12)}</span>
                                     </div>
-                                    <div className="flex text-[12px]">
-                                        <span className="w-56">ETF (3%)</span>
-                                        <span>:  {previewPayslip.etf3.toFixed(2)}</span>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[11px] text-[#64748B] font-medium">ETF 3%</span>
+                                        <span className="text-[14px] font-bold text-[#1D1F24] tracking-tight">{fmt(previewPayslip.etf3)}</span>
                                     </div>
                                 </div>
-                                <Divider />
-                            </>
+                            </div>
                         )}
 
-
-
                         {/* Footer */}
-                        <div className="text-center text-[11px] text-gray-500 my-0.5">
-                            {/* Powered by {companyName} */}
-                            Powered by Cenzios (PVT) LTD
-                        </div>
-
-                        <Divider />
+                        <footer className="text-center pb-2">
+                            <p className="text-[11px] text-[#94A3B8] font-normal tracking-wide">
+                                Powered by Cenzios (PVT) LTD
+                            </p>
+                        </footer>
                     </div>
                 </div>
+            </div>
 
-                {/* Action Buttons */}
-                <div className="p-4 border-t border-gray-200 bg-gray-50 space-y-3 mx-4 mb-4 rounded-lg">
-                    <button
-                        onClick={exportPDF}
-                        className="w-full bg-blue-600 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors font-medium shadow-sm"
-                    >
-                        <FileText className="w-4 h-4" /> Download Pay Slip (PDF)
-                    </button>
-                    <button
-                        onClick={exportExcel}
-                        className="w-full bg-green-600 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors font-medium shadow-sm"
-                    >
-                        <FileSpreadsheet className="w-4 h-4" /> Download Pay Slip (Excel)
-                    </button>
-                    <button
-                        onClick={exportCSV}
-                        className="w-full bg-gray-700 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors font-medium shadow-sm"
-                    >
-                        <Download className="w-4 h-4" /> Download Pay Slip (CSV)
-                    </button>
-                </div>
+            {/* Action Buttons */}
+            <div className="mt-8 grid grid-cols-1 gap-3 bg-[#FAFAFA] border border-[#E4E4E7] rounded-xl p-4">
+                <button
+                    onClick={exportPDF}
+                    className="w-full bg-[#407BFF] shadow-sm shadow-blue-100 text-white py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-600 transition-all text-[13px]"
+                >
+                    <Download className="w-4.5 h-4.5" /> Download Pay Slip (PDF)
+                </button>
+                <button
+                    onClick={exportExcel}
+                    className="w-full bg-[#16A34A] shadow-sm shadow-green-100 text-white py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-green-700 transition-all text-[13px]"
+                >
+                    <FileSpreadsheet className="w-4 h-4" /> Download Pay Slip (Excel)
+                </button>
+                <button
+                    onClick={exportCSV}
+                    className="w-full bg-[#858585] shadow-sm shadow-gray-100 text-white py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-600 transition-all text-[13px]"
+                >
+                    <FileText className="w-4 h-4" /> Download Pay Slip (CSV)
+                </button>
             </div>
         </div>
     );
