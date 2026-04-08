@@ -436,7 +436,7 @@ const Salary = () => {
     let basicPay = 0;
 
     if (emp.salaryType === "MONTHLY") {
-      basicPay = (basicSalaryForCalc / companyWorkingDays) * workedDays;
+      basicPay = (basicSalaryForCalc / companyWorkingDays) * (workedDays + (emp.paidLeave || 0));
     } else {
       basicPay = basicSalaryForCalc * workedDays;
     }
@@ -489,6 +489,7 @@ const Salary = () => {
       epf8: epfEmployee, // For display purposes
       epf12: epfEmployer, // For display purposes
       etf3: etfEmployer, // For display purposes
+      paidLeave: emp.paidLeave || 0,
       dailyRate: emp.salaryType === "MONTHLY" ? ((emp.basicSalary || 0) / companyWorkingDays) : (emp.basicSalary || 0),
       deductions: [
         { name: "Salary Advance", amount: salaryAdvance },
@@ -575,6 +576,7 @@ const Salary = () => {
         epf8: savedRecord.employeeEPF,
         epf12: savedRecord.employerEPF,
         etf3: savedRecord.etfAmount,
+        paidLeave: savedRecord.paidLeave || 0,
         dailyRate: savedRecord.salaryType === "MONTHLY" ? ((savedRecord.basicSalary || 0) / companyWorkingDays) : (savedRecord.basicSalary || 0),
         deductions: [
           ...(savedRecord.salaryAdvance > 0 ? [{ name: "Salary Advance", amount: savedRecord.salaryAdvance }] : []),
