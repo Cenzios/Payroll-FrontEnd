@@ -141,6 +141,14 @@ const PayslipPreview = ({
                                 <span>:  {previewPayslip.workedDays ?? previewPayslip.workingDays}</span>
                             </div>
 
+                            {/* Paid Leave */}
+                            {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.paidLeave || 0) > 0 && (
+                                <div className="flex text-[12px]">
+                                    <span className="w-56">Paid Leave</span>
+                                    <span>:  {previewPayslip.paidLeave}</span>
+                                </div>
+                            )}
+
 
 
                             {/* Basic pay calculation */}

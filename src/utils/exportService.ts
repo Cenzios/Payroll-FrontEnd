@@ -30,6 +30,7 @@ export interface PayslipData {
     netSalary: number;
     epf12: number;
     etf3: number;
+    paidLeave: number;
 }
 
 export interface Employee {
@@ -460,6 +461,10 @@ export const exportPayslip = (
         addRow("Worked Days", previewPayslip.workedDays.toString());
         addRow("Calculated Basic Pay", formatCurrency(previewPayslip.basicPay));
 
+        if (previewPayslip.salaryType === "MONTHLY" && previewPayslip.paidLeave > 0) {
+            addRow("Paid Leave", previewPayslip.paidLeave.toString());
+        }
+
         if (previewPayslip.otAmount > 0) {
             addRow(`OT Amount (${previewPayslip.otHours} hrs)`, formatCurrency(previewPayslip.otAmount));
         }
@@ -559,8 +564,9 @@ export const exportPayslip = (
             ["EARNINGS", "Amount (Rs.)"],
             ["Rate Type", previewPayslip.salaryType],
             ["Basic Rate", previewPayslip.basicSalary],
-            ["Working Days", companyWorkingDays],
+            ["Worked Days", companyWorkingDays],
             ["Worked Days", previewPayslip.workedDays],
+            ...(previewPayslip.salaryType === "MONTHLY" && previewPayslip.paidLeave > 0 ? [["Paid Leave", previewPayslip.paidLeave]] : []),
             ["Calculated Basic Pay", previewPayslip.basicPay],
             ...(previewPayslip.otAmount > 0
                 ? [

@@ -90,8 +90,8 @@ const AddEmployeeDrawer = ({
         designation: "",
         department: "General",
         email: "",
-        basicSalary: 0,
         salaryType: "DAILY",
+        paidLeave: 0,
         otRate: 0,
         epfEnabled: true,
         allowanceEnabled: false,
@@ -147,6 +147,7 @@ const AddEmployeeDrawer = ({
                     email: "",
                     basicSalary: 0,
                     salaryType: "DAILY",
+                    paidLeave: 0,
                     otRate: 0,
                     epfEnabled: true,
                     allowanceEnabled: false,
@@ -195,6 +196,9 @@ const AddEmployeeDrawer = ({
             case "basicSalary":
                 if (value === undefined || value === null || value === "" || isNaN(Number(value))) error = "Basic salary is required";
                 else if (Number(value) < 0) error = "Basic salary cannot be negative";
+                break;
+            case "paidLeave":
+                if (value !== undefined && value !== null && value !== "" && Number(value) < 0) error = "Paid leave cannot be negative";
                 break;
             case "joinedDate":
                 if (!value) error = "Joined date is required";
@@ -344,6 +348,7 @@ const AddEmployeeDrawer = ({
                 department: employeeData.department || "General",
                 basicSalary: parseFloat(String(employeeData.basicSalary)) || 0,
                 salaryType: employeeData.salaryType || "DAILY",
+                paidLeave: employeeData.salaryType === "MONTHLY" ? (parseInt(String(employeeData.paidLeave)) || 0) : 0,
                 otRate: parseFloat(String(employeeData.otRate)) || 0,
                 epfEnabled,
                 epfEtfAmount: epfEnabled && epfEtf ? parseFloat(epfEtf) : undefined,
@@ -708,6 +713,30 @@ const AddEmployeeDrawer = ({
                                         </select>
                                     </div>
                                 </div>
+                                {employeeData.salaryType === "MONTHLY" && (
+                                    <div>
+                                        <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">Paid Leave Count</label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none">
+                                                <div className="bg-gray-50 px-1 py-1.5 rounded-lg border border-gray-100 text-[12px] font-bold text-gray-400">Days</div>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={employeeData.paidLeave === 0 ? "" : employeeData.paidLeave || ""}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/[^0-9]/g, "");
+                                                    handleChange("paidLeave", val);
+                                                }}
+                                                onBlur={() => handleBlur("paidLeave")}
+                                                placeholder="0"
+                                                style={{ paddingLeft: "80px" }}
+                                                className={`text-[14px] w-full pr-4 py-2.5 bg-white border rounded-xl focus:ring-2 outline-none transition-all ${touched.paidLeave && errors.paidLeave ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-blue-500/20 focus:border-blue-500"}`}
+                                            />
+                                        </div>
+                                        {touched.paidLeave && errors.paidLeave && <p className="text-red-500 text-xs mt-1">{errors.paidLeave}</p>}
+                                    </div>
+                                )}
 
                                 {/* OT Rate */}
                                 <div>

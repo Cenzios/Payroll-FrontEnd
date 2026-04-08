@@ -175,6 +175,7 @@ const UniversalDrawer = ({
               email: "",
               basicSalary: 0,
               salaryType: "DAILY",
+              paidLeave: 0,
               otRate: 0,
               epfEnabled: true,
               allowanceEnabled: false,
@@ -415,6 +416,9 @@ const UniversalDrawer = ({
           )
             error = "Basic salary is required";
           else if (Number(value) < 0) error = "Basic salary cannot be negative";
+          break;
+        case "paidLeave":
+          if (value !== undefined && value !== null && value !== "" && Number(value) < 0) error = "Paid leave cannot be negative";
           break;
         case "otRate":
           if (
@@ -797,6 +801,7 @@ const UniversalDrawer = ({
           department: employeeData.department || "General",
           basicSalary: parseFloat(String(employeeData.basicSalary)) || 0,
           salaryType: employeeData.salaryType || "DAILY",
+          paidLeave: parseInt(String(employeeData.paidLeave)) || 0,
           otRate: parseFloat(String(employeeData.otRate)) || 0,
           epfEnabled,
           epfEtfAmount: epfEnabled && epfEtf ? parseFloat(epfEtf) : undefined,
@@ -1542,6 +1547,46 @@ const UniversalDrawer = ({
                               </p>
                             )}
                           </div>
+
+                          {employeeData.salaryType === "MONTHLY" && (
+                            <div>
+                              <div className="relative mt-4">
+                                <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
+                                  <Calendar className="h-4 w-4 text-blue-500" />
+                                </div>
+                                <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
+                                  Paid Leave Count
+                                </label>
+                              </div>
+
+                              <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none">
+                                  <div className="bg-gray-50 px-1 py-1.5 rounded-lg border border-gray-100 text-[11px] font-bold text-gray-400">Days</div>
+                                </div>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  value={employeeData.paidLeave === 0 ? "" : employeeData.paidLeave || ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(/[^0-9]/g, "");
+                                    handleEmployeeChange(
+                                      "paidLeave",
+                                      parseInt(val) || 0,
+                                    )
+                                  }}
+                                  onBlur={() => handleBlur("paidLeave")}
+                                  placeholder="0"
+                                  style={{ paddingLeft: "80px" }}
+                                  className={`text-[13px] w-full pr-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.paidLeave && errors.paidLeave ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                />
+                              </div>
+                              {touched.paidLeave && errors.paidLeave && (
+                                <p className="text-red-500 text-xs mt-1">
+                                  {errors.paidLeave}
+                                </p>
+                              )}
+                            </div>
+                          )}
 
 
                           {/* ── OT Rate ── */}
