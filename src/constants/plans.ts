@@ -22,7 +22,7 @@ export const PLANS: Record<string, Plan> = {
         price: 200,
         employeePrice: 200,
         registrationFee: 2500,
-        description: "Get essential payroll features with basic plan. Pay only a one-time Rs. 2,500 registration fee in the first month. From the second month, your subscription is based on the number of employees—simple, flexible, and affordable.",
+        description: "",
         features: [
             'Payroll processing for up to 0-29 employees',
             'Automatic salary & deduction calculations',

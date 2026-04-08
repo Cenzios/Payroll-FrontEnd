@@ -41,10 +41,8 @@ const PlanCard: React.FC<PlanCardProps> = ({
             </div>
 
             {/* Plan Details & Features */}
-            <div className="px-10 py-10">
-                <p className="text-gray-400 text-[13px] leading-relaxed mb-8 text-center font-medium">
-                    {description}
-                </p>
+            <div className="px-10 py-8">
+
 
                 <div className="border-t border-gray-100/60 mb-8 w-full"></div>
 
@@ -65,7 +63,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
                     <button
                         onClick={onSelectPlan}
                         disabled={isLoading}
-                        className="w-full bg-[#4683fc] hover:bg-[#327be2] text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="w-full bg-[#4683fc] hover:bg-[#327be2] text-white font-bold py-4 rounded-[2rem] shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {isLoading ? (
                             <>
