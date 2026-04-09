@@ -1,4 +1,4 @@
-import { FileText, FileSpreadsheet, Download } from "lucide-react";
+import { FileText, FileSpreadsheet, Download, ArrowBigDownIcon, ArrowDownIcon } from "lucide-react";
 import { Employee } from "../types/employee.types";
 
 interface PayslipPreviewProps {
@@ -61,169 +61,175 @@ const PayslipPreview = ({
     });
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col p-3">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
+            {/* Header */}
+            <div className="text-center mt-3">
+                <h1 className="text-sm font-bold text-[#1D1F24]">{companyName}</h1>
+                <p className="text-xs font-bold text-[#718096] tracking-[0.15em] mt-1 mb-5 uppercase">
+                    PAY SLIP • {monthLabel}
+                </p>
+            </div>
 
-            <div className="bg-[#F3F4F6] border border-[#F3F4F6] rounded-xl">
-
-                <div className="flex flex-col p-3">
-                    {/* Header */}
-                    <div className="text-center mb-5">
-                        <h1 className="text-2xl font-bold text-[#1D1F24] mt-5">{selectedEmployee.fullName}</h1>
-                        <p className="text-[11px] font-bold text-[#718096] tracking-[0.15em] mt-1 mb-5 uppercase">
-                            PAY SLIP • {monthLabel}
-                        </p>
-                        <div className="h-px bg-gray-100 flex-1"></div>
-                    </div>
-
-                    {/* Employee Profile Box */}
-                    <div className="bg-[#FDFBF7] rounded-lg p-6 flex items-center gap-5 mb-10">
-                        <div className="w-14 h-14 bg-[#F0F9FF] rounded-lg flex items-center justify-center text-[#407BFF] font-bold text-xl shadow-sm border border-[#E0F2FE]">
-                            {selectedEmployee.fullName.charAt(0)}
-                        </div>
-                        <div>
-                            <h2 className="text-lg font-bold text-[#1D1F24]">{selectedEmployee.fullName}</h2>
-                            <div className="flex items-center gap-2 text-sm text-[#718096] font-light">
-                                <span>No. {selectedEmployee.employeeId}</span>
-                                <span className="w-1 h-1 bg-[#D1D5DB] rounded-full"></span>
-                                <span>{selectedEmployee.designation || "Designation —"}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Sections Container */}
-                    <div className="px-2">
-                        {/* EARNINGS */}
-                        <div className="mb-10">
-                            <h3 className="text-[11px] font-bold text-[#718096] tracking-widest uppercase mb-6 flex items-center gap-3">
-                                EARNINGS
-                            </h3>
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-[#64748B] font-medium">
-                                        {previewPayslip.salaryType === "MONTHLY" ? "Monthly basic salary" : "Daily basic salary"}
-                                    </span>
-                                    <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicSalary)}</span>
-                                </div>
-
-                                {previewPayslip.allowances?.map((a: any, i: number) => (
-                                    <div key={i} className="flex justify-between items-center text-sm">
-                                        <span className="text-[#64748B] font-medium">{a.name}</span>
-                                        <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(a.amount)}</span>
-                                    </div>
-                                ))}
-
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-[#64748B] font-medium">Working days in month</span>
-                                    <span className="text-[#1D1F24] font-bold tracking-tight">{companyWorkingDays}</span>
-                                </div>
-
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-[#64748B] font-medium">Worked days</span>
-                                    <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.workedDays ?? previewPayslip.workingDays}</span>
-                                </div>
-
-                                {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.paidLeave || 0) > 0 && (
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-[#64748B] font-medium">Paid Leave</span>
-                                        <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.paidLeave}</span>
-                                    </div>
-                                )}
-
-                                {previewPayslip.salaryType === "DAILY" && (
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-[#64748B] font-medium italic">
-                                            Basic Calculation ({fmt(previewPayslip.basicSalary)} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
-                                        </span>
-                                        <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicPay)}</span>
-                                    </div>
-                                )}
-
-                                {previewPayslip.otAmount > 0 && (
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-[#64748B] font-medium">OT ({previewPayslip.otHours} hrs)</span>
-                                        <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.otAmount)}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
-                                <span className="text-[17px] font-bold text-[#1D1F24]">Gross earnings</span>
-                                <span className="text-[17px] font-bold text-[#2C7A7B]">{fmt(grossEarnings)}</span>
-                            </div>
-                        </div>
-
-                        {/* DEDUCTIONS */}
-                        <div className="mb-10">
-                            <h3 className="text-[11px] font-bold text-[#64748B] tracking-widest uppercase mb-6 flex items-center gap-3">
-                                DEDUCTIONS
-                            </h3>
-                            <div className="space-y-4">
-                                {previewPayslip.isEpfEnabled && (
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-[#64748B] font-medium">EPF (8%)</span>
-                                        <span className="text-[#E11D48] font-bold tracking-tight">{fmt(previewPayslip.epf8)}</span>
-                                    </div>
-                                )}
-                                {previewPayslip.deductions?.filter((d: any) => d.amount > 0).map((d: any, i: number) => (
-                                    <div key={i} className="flex justify-between items-center text-sm">
-                                        <span className="text-[#64748B] font-medium">{d.name}</span>
-                                        <span className="text-[#E11D48] font-bold tracking-tight">{fmt(d.amount)}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
-                                <span className="text-[17px] font-bold text-[#1D1F24]">Total deductions</span>
-                                <span className="text-[17px] font-bold text-[#E11D48]">{totalDeductions.toFixed(2)}</span>
-                            </div>
-                        </div>
-
-                        {/* NET SALARY PAYABLE BOX */}
-                        <div className="bg-[#F0F9FF] rounded-lg p-5 mb-6">
-                            <p className="text-[11px] font-bold text-[#155390] tracking-widest uppercase mb-2">NET SALARY PAYABLE</p>
-                            <h2 className="text-[26px] font-black text-[#155390] tracking-tight">Rs. {previewPayslip.netSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
-
-                            <div className="flex items-end justify-end gap-5 mt-5">
-                                <div>
-                                    <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1 flex justify-end">GROSS</p>
-                                    <p className="text-base font-bold text-[#2B6CB0B2] tracking-tight">{fmt(grossEarnings)}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1 flex justify-end">DEDUCTIONS</p>
-                                    <p className="text-base font-bold text-[#C53030B2] tracking-tight">{fmt(totalDeductions)}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* EMPLOYER CONTRIBUTIONS */}
-                        {previewPayslip.isEpfEnabled && (
-                            <div className="bg-[#FDFBF7] rounded-lg p-5 mb-5">
-                                <p className="text-[11px] font-bold text-[#64748B] tracking-widest uppercase mb-4">EMPLOYER CONTRIBUTIONS</p>
-                                <div className="flex gap-10">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-[11px] text-[#64748B] font-medium">EPF 12%</span>
-                                        <span className="text-[14px] font-bold text-[#1D1F24] tracking-tight">{fmt(previewPayslip.epf12)}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-[11px] text-[#64748B] font-medium">ETF 3%</span>
-                                        <span className="text-[14px] font-bold text-[#1D1F24] tracking-tight">{fmt(previewPayslip.etf3)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Footer */}
-                        <footer className="text-center pb-2">
-                            <p className="text-[11px] text-[#94A3B8] font-normal tracking-wide">
-                                Powered by Cenzios (PVT) LTD
-                            </p>
-                        </footer>
+            {/* Employee Profile Box */}
+            <div className="bg-[#F4F4EE] rounded-lg p-3 flex items-center gap-5 pl-5 mb-3">
+                <div className="w-7 h-7 bg-[#F0F9FF] rounded-lg flex items-center justify-center text-[#407BFF] font-bold text-sm shadow-sm border border-[#E0F2FE]">
+                    {selectedEmployee.fullName.charAt(0)}
+                </div>
+                <div>
+                    <h2 className="text-xs font-bold text-[#1D1F24]">{selectedEmployee.fullName}</h2>
+                    <div className="flex items-center gap-2 text-sm text-[#718096] font-light">
+                        <span>{selectedEmployee.employeeId}</span>
+                        <span className="w-1 h-1 bg-[#718096] rounded-full"></span>
+                        <span>{selectedEmployee.designation || "Designation —"}</span>
                     </div>
                 </div>
             </div>
 
+
+            {/* Sections Container */}
+            <div className="px-6">
+                {/* EARNINGS */}
+                <div className="mb-4">
+                    <h3 className="text-[10px] font-bold text-[#718096] tracking-widest uppercase mb-4 flex items-center gap-3">
+                        EARNINGS
+                    </h3>
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center text-[12px]">
+                            <span className="text-[#718096]">
+                                {previewPayslip.salaryType === "MONTHLY" ? "Monthly basic salary" : "Daily basic salary"}
+                            </span>
+                            <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicSalary)}</span>
+                        </div>
+
+                        {previewPayslip.allowances?.map((a: any, i: number) => (
+                            <div key={i} className="flex justify-between items-center text-[12px]">
+                                <span className="text-[#718096]">{a.name}</span>
+                                <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(a.amount)}</span>
+                            </div>
+                        ))}
+
+                        <div className="flex justify-between items-center text-[12px]">
+                            <span className="text-[#718096]">Working days in month</span>
+                            <span className="text-[#1D1F24] font-bold tracking-tight">{companyWorkingDays}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[12px]">
+                            <span className="text-[#718096]">Worked days</span>
+                            <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.workedDays ?? previewPayslip.workingDays}</span>
+                        </div>
+
+                        {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.paidLeave || 0) > 0 && (
+                            <div className="flex justify-between items-center text-[12px]">
+                                <span className="text-[#718096]">Paid Leave</span>
+                                <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.paidLeave}</span>
+                            </div>
+                        )}
+
+                        {previewPayslip.salaryType === "DAILY" && (
+                            <div className="flex justify-between items-center text-[12px]">
+                                <span className="text-[#718096] italic">
+                                    Basic Calculation ({fmt(previewPayslip.basicSalary)} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
+                                </span>
+                                <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicPay)}</span>
+                            </div>
+                        )}
+
+                        {previewPayslip.otAmount > 0 && (
+                            <div className="flex justify-between items-center text-[12px]">
+                                <span className="text-[#718096]">OT ({previewPayslip.otHours} hrs)</span>
+                                <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.otAmount)}</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex justify-between items-center mt-1 pt-3 border-t border-gray-100">
+                        <span className="text-[13px] font-bold text-[#1D1F24]">Gross earnings</span>
+                        <span className="text-[13px] font-bold text-[#22A103]">{fmt(grossEarnings)}</span>
+                    </div>
+                </div>
+
+                {/* DEDUCTIONS */}
+                <div className="mb-4">
+                    <h3 className="text-[10px] font-bold text-[#64748B] tracking-widest uppercase mb-4 mt-6">
+                        DEDUCTIONS
+                    </h3>
+                    <div className="space-y-2">
+                        {previewPayslip.isEpfEnabled && (
+                            <div className="flex justify-between items-center text-[12px]">
+                                <span className="text-[#718096]">EPF (8%)</span>
+                                <span className="text-[#E11D48] font-bold tracking-tight">{fmt(previewPayslip.epf8)}</span>
+                            </div>
+                        )}
+                        {previewPayslip.deductions?.filter((d: any) => d.amount > 0).map((d: any, i: number) => (
+                            <div key={i} className="flex justify-between items-center text-[12px]">
+                                <span className="text-[#718096]">{d.name}</span>
+                                <span className="text-[#E11D48] font-bold tracking-tight">{fmt(d.amount)}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex justify-between items-center mt-1 pt-3 border-t border-gray-100">
+                        <span className="text-[13px] font-bold text-[#1D1F24]">Total deductions</span>
+                        <span className="text-[13px] font-bold text-[#E11D48]">{totalDeductions.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* NET SALARY PAYABLE BOX */}
+            <div className="bg-[#EBF8FF] p-4">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <p className="text-[10px] font-bold text-[#407BFF] tracking-widest uppercase mb-1">NET SALARY PAYABLE</p>
+                        <h2 className="text-[16px] font-bold text-[#407BFF] tracking-tight">Rs. {previewPayslip.netSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="text-right">
+                            <p className="text-[10px] font-bold text-[#718096] uppercase tracking-wider mb-1">GROSS</p>
+                            <p className="text-[10px] font-bold text-[#407BFF] tracking-tight">{fmt(grossEarnings)}</p>
+                        </div>
+                        <div className="h-10 w-px bg-gray-200"></div>
+                        <div className="text-right">
+                            <p className="text-[10px] font-bold text-[#718096] uppercase tracking-wider mb-1">DEDUCTIONS</p>
+                            <p className="text-[10px] font-bold text-[#E11D48] tracking-tight">{fmt(totalDeductions)}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* EMPLOYER CONTRIBUTIONS */}
+            {previewPayslip.isEpfEnabled && (
+                <div className="bg-[#FDFBF7] px-6 py-4 flex items-center justify-between mb-6">
+                    <p className="text-[8px] font-bold text-[#1D1F24] tracking-widest uppercase">EMPLOYER CONTRIBUTIONS</p>
+                    <div className="flex gap-8">
+                        <div className="flex items-center gap-3">
+                            <span className="text-[8px] text-[#718096] font-bold uppercase">EPF 12%</span>
+                            <span className="text-[8px] font-bold text-[#1D1F24] tracking-tight">{fmt(previewPayslip.epf12)}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="text-[8px] text-[#718096] font-bold uppercase">ETF 3%</span>
+                            <span className="text-[8px] font-bold text-[#1D1F24] tracking-tight">{fmt(previewPayslip.etf3)}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Footer */}
+            <footer className="flex items-center justify-between px-6 pb-2">
+                <p className="text-[8px] tracking-wide">
+                    Powered by Cenzios (PVT) LTD
+                </p>
+
+                <button
+                    onClick={exportPDF}
+                    className="flex items-center gap-2 px-8 py-2.5 bg-[#407BFF] text-white text-sm font-bold rounded-xl hover:bg-blue-600 transition-all shadow-sm"
+                >
+                    <ArrowDownIcon className="w-4 h-4" /> Download
+                </button>
+            </footer>
+
+
             {/* Action Buttons */}
-            <div className="mt-8 grid grid-cols-1 gap-3 bg-[#FAFAFA] border border-[#E4E4E7] rounded-xl p-4">
+            {/* <div className="mt-8 grid grid-cols-1 gap-3 bg-[#FAFAFA] border border-[#E4E4E7] rounded-xl p-4">
                 <button
                     onClick={exportPDF}
                     className="w-full bg-[#407BFF] shadow-sm shadow-blue-100 text-white py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-600 transition-all text-[13px]"
@@ -242,7 +248,7 @@ const PayslipPreview = ({
                 >
                     <FileText className="w-4 h-4" /> Download Pay Slip (CSV)
                 </button>
-            </div>
+            </div> */}
         </div>
     );
 };
