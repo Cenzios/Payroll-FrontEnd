@@ -436,7 +436,10 @@ const Salary = () => {
     let basicPay = 0;
 
     if (emp.salaryType === "MONTHLY") {
-      basicPay = (basicSalaryForCalc / companyWorkingDays) * (workedDays + (emp.paidLeave || 0));
+      const absentDays = Math.max(0, companyWorkingDays - workedDays);
+      const applicablePaidLeaves = Math.min(emp.paidLeave || 0, absentDays);
+      const payableDays = workedDays + applicablePaidLeaves;
+      basicPay = (basicSalaryForCalc / companyWorkingDays) * payableDays;
     } else {
       basicPay = basicSalaryForCalc * workedDays;
     }

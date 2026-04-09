@@ -113,7 +113,12 @@ const EmployeeSalaryCard = ({
         ? generatedSalary.basicPay
         : emp.salaryType === "MONTHLY"
             ? companyWorkingDays > 0
-                ? (basicSalary / companyWorkingDays) * (displayWorkedDays + (emp.paidLeave || 0))
+                ? (() => {
+                    const absentDays = Math.max(0, companyWorkingDays - displayWorkedDays);
+                    const applicablePaidLeaves = Math.min(emp.paidLeave || 0, absentDays);
+                    const payableDays = displayWorkedDays + applicablePaidLeaves;
+                    return (basicSalary / companyWorkingDays) * payableDays;
+                })()
                 : 0
             : basicSalary * displayWorkedDays;
 
