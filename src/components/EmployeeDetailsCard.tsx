@@ -374,6 +374,19 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                             </div>
 
+                            {/* Paid Leave */}
+                            <div className="flex items-center">
+                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                    <Calendar className="w-[14px] h-[14px]" />
+                                    <span>Paid Leave</span>
+                                </div>
+                                <div className="text-[13px] font-medium text-gray-800">
+                                    {selectedEmployee.paidLeave && selectedEmployee.paidLeave > 0
+                                        ? selectedEmployee.paidLeave
+                                        : "N/A"}
+                                </div>
+                            </div>
+
                             {/* Allowances */}
                             <div>
                                 <div className="flex items-center mb-2">

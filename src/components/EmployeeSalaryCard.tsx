@@ -28,6 +28,8 @@ interface EmployeeSalaryCardProps {
     isSaving: boolean;
     hasAnyError: (emp: Employee) => boolean;
     setTouchedFields: React.Dispatch<React.SetStateAction<any>>;
+    selectedMonth: number;
+    selectedYear: number;
 }
 
 const fmt = (val: number) =>
@@ -85,6 +87,8 @@ const EmployeeSalaryCard = ({
     isSaving,
     hasAnyError,
     setTouchedFields,
+    selectedMonth,
+    selectedYear,
 }: EmployeeSalaryCardProps) => {
     const isSelected = selectedEmployee?.id === emp.id;
     const isLocked = !!generatedSalary;
@@ -142,7 +146,7 @@ const EmployeeSalaryCard = ({
     const netSalary = isLocked ? generatedSalary.netSalary : totalEarnings - totalDeductions;
 
     // Current period label
-    const periodLabel = new Date().toLocaleString("default", { month: "short", year: "numeric" });
+    const periodLabel = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "short", year: "numeric" });
 
     // const periodLabel = new Date(selectedYear, selectedMonth).toLocaleString("default", {
     //     month: "long",
