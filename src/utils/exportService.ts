@@ -647,6 +647,8 @@ export const exportPayrollSummaryReport = (
             totalEmployeeEPF: number;
             totalSalaryAdvance: number;
             totalNetPay: number;
+            totalAllowance?: number;
+            totalDeduction?: number;
         };
     }
 ) => {
@@ -778,7 +780,7 @@ export const exportPayrollSummaryReport = (
 
         // 4. MONTHLY TABLES
         currentY += 30;
-        monthlyData.forEach((monthData) => {
+        monthlyData.forEach((monthData: MonthData) => {
             if (monthData.employees.length === 0) return;
 
             // Check for new page
@@ -799,7 +801,7 @@ export const exportPayrollSummaryReport = (
             doc.text(`${monthData.employees.length} employees`, pageWidth - 20, currentY + 6.5, { align: "right" });
             currentY += 10;
 
-            const tableBody = monthData.employees.map((emp) => [
+            const tableBody = monthData.employees.map((emp: ReportEmployee) => [
                 emp.employeeCode || "-",
                 emp.employeeName || "-",
                 emp.workingDays,
@@ -812,12 +814,12 @@ export const exportPayrollSummaryReport = (
             ]);
 
             // Monthly Totals
-            const mTotalBasic = monthData.employees.reduce((s, e) => s + e.basicPay, 0);
-            const mTotalOT = monthData.employees.reduce((s, e) => s + (e.otAmount || 0), 0);
-            const mTotalGross = monthData.employees.reduce((s, e) => s + e.grossPay, 0);
-            const mTotalEPF = monthData.employees.reduce((s, e) => s + e.employeeEPF, 0);
-            const mTotalAdvance = monthData.employees.reduce((s, e) => s + (e.salaryAdvance || 0), 0);
-            const mTotalNet = monthData.employees.reduce((s, e) => s + e.netPay, 0);
+            const mTotalBasic = monthData.employees.reduce((s: number, e: ReportEmployee) => s + e.basicPay, 0);
+            const mTotalOT = monthData.employees.reduce((s: number, e: ReportEmployee) => s + (e.otAmount || 0), 0);
+            const mTotalGross = monthData.employees.reduce((s: number, e: ReportEmployee) => s + e.grossPay, 0);
+            const mTotalEPF = monthData.employees.reduce((s: number, e: ReportEmployee) => s + e.employeeEPF, 0);
+            const mTotalAdvance = monthData.employees.reduce((s: number, e: ReportEmployee) => s + (e.salaryAdvance || 0), 0);
+            const mTotalNet = monthData.employees.reduce((s: number, e: ReportEmployee) => s + e.netPay, 0);
 
             tableBody.push([
                 "", "Monthly Total", "",
@@ -879,7 +881,7 @@ export const exportPayrollSummaryReport = (
     } else {
         const wsData: any[] = [["Payroll Summary Report"], [dateRangeText], []];
 
-        monthlyData.forEach((monthData) => {
+        monthlyData.forEach((monthData: MonthData) => {
             if (monthData.employees.length === 0) return;
 
             wsData.push([`${monthData.month} ${monthData.year} `]);
@@ -895,7 +897,7 @@ export const exportPayrollSummaryReport = (
                 "Net Pay",
             ]);
 
-            monthData.employees.forEach((emp) => {
+            monthData.employees.forEach((emp: ReportEmployee) => {
                 wsData.push([
                     emp.employeeCode || "-",
                     emp.employeeName || "-",

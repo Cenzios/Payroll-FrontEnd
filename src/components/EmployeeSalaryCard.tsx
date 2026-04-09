@@ -28,6 +28,8 @@ interface EmployeeSalaryCardProps {
     isSaving: boolean;
     hasAnyError: (emp: Employee) => boolean;
     setTouchedFields: React.Dispatch<React.SetStateAction<any>>;
+    selectedMonth: number;
+    selectedYear: number;
 }
 
 const fmt = (val: number) =>
@@ -85,6 +87,8 @@ const EmployeeSalaryCard = ({
     isSaving,
     hasAnyError,
     setTouchedFields,
+    selectedMonth,
+    selectedYear,
 }: EmployeeSalaryCardProps) => {
     const isSelected = selectedEmployee?.id === emp.id;
     const isLocked = !!generatedSalary;
@@ -113,7 +117,12 @@ const EmployeeSalaryCard = ({
         ? generatedSalary.basicPay
         : emp.salaryType === "MONTHLY"
             ? companyWorkingDays > 0
-                ? (basicSalary / companyWorkingDays) * (displayWorkedDays + (emp.paidLeave || 0))
+                ? (() => {
+                    const absentDays = Math.max(0, companyWorkingDays - displayWorkedDays);
+                    const applicablePaidLeaves = Math.min(emp.paidLeave || 0, absentDays);
+                    const payableDays = displayWorkedDays + applicablePaidLeaves;
+                    return (basicSalary / companyWorkingDays) * payableDays;
+                })()
                 : 0
             : basicSalary * displayWorkedDays;
 
@@ -137,7 +146,7 @@ const EmployeeSalaryCard = ({
     const netSalary = isLocked ? generatedSalary.netSalary : totalEarnings - totalDeductions;
 
     // Current period label
-    const periodLabel = new Date().toLocaleString("default", { month: "short", year: "numeric" });
+    const periodLabel = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "short", year: "numeric" });
 
     // const periodLabel = new Date(selectedYear, selectedMonth).toLocaleString("default", {
     //     month: "long",
@@ -335,19 +344,17 @@ const EmployeeSalaryCard = ({
                         )}
 
                         {/* Advance */}
-                        {emp.otRate > 0 && (
-                            <div className="px-6 w-40 border-r border-gray-200">
-                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Advance</p>
-                                <input
-                                    type="number"
-                                    value={displaySalaryAdvance === 0 ? "" : displaySalaryAdvance}
-                                    onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
-                                    className={inputClass(isLocked)}
-                                    min="0"
-                                    disabled={isLocked}
-                                />
-                            </div>
-                        )}
+                        <div className="px-6 w-40 border-r border-gray-200">
+                            <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Advance</p>
+                            <input
+                                type="number"
+                                value={displaySalaryAdvance === 0 ? "" : displaySalaryAdvance}
+                                onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
+                                className={inputClass(isLocked)}
+                                min="0"
+                                disabled={isLocked}
+                            />
+                        </div>
 
                         {/* Loan */}
                         <div className="px-6 w-44 border-r border-gray-200">

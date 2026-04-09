@@ -14,6 +14,9 @@ interface EmployeePayrollData {
     employeeEPF: number;
     salaryAdvance: number;
     companyEPFETF: number;
+    allowanceTotal?: number;
+    deductionTotal?: number;
+    deductions?: number;
 }
 
 interface MonthTotals {
@@ -150,8 +153,8 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                             <th className="px-6 py-3 text-gray-900 font-bold border-b border-gray-200">Basic Salary</th>
                                             <th className="px-6 py-3 text-gray-900 font-bold border-b border-gray-200">OT</th>
                                             <th className="px-6 py-3 text-gray-900 font-bold border-b border-gray-200">Gross</th>
-                                            <th className="px-6 py-3 text-gray-900 font-bold border-b border-gray-200">EPF (8%)</th>
-                                            <th className="px-6 py-3 text-gray-900 font-bold border-b border-gray-200">Advance</th>
+                                            <th className="px-6 py-3 text-gray-900 font-bold border-b border-gray-200">Allowance</th>
+                                            <th className="px-6 py-3 text-gray-900 font-bold border-b border-gray-200">Deduction</th>
                                             <th className="px-6 py-3 text-blue-600 font-bold border-b border-gray-200 ">Net Salary</th>
                                             <th className="px-6 py-3 text-gray-900 font-bold border-b border-gray-200">Action</th>
                                         </tr>
@@ -176,8 +179,8 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                     {/* <div className="text-[10px] text-gray-400">({employee.otHours} hrs)</div> */}
                                                 </td>
                                                 <td className="px-6 py-3 font-regular text-gray-500 whitespace-nowrap text-end">{employee.grossPay?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-6 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{employee.employeeEPF?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-6 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{employee.salaryAdvance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                <td className="px-6 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{(employee.allowanceTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                <td className="px-6 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{(employee.deductionTotal ?? employee.deductions ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                                 <td className="px-6 py-3 font-regular text-blue-600 whitespace-nowrap text-end">{employee.netPay?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                                 <td className="px-6 py-3 text-end">
                                                     <button
