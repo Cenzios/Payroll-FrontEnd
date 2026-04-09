@@ -143,15 +143,6 @@ const EpfEtfReport = () => {
         }
     }, [selectedCompanyId]);
 
-    const handleApply = () => {
-        const startDate = new Date(startYear, startMonth);
-        const endDate = new Date(endYear, endMonth);
-        if (startDate > endDate) {
-            setToast({ message: 'Start date must be before or equal to end date', type: 'error' });
-            return;
-        }
-        fetchData();
-    };
 
     const handleReset = () => {
         const currentDate = new Date();
@@ -226,17 +217,12 @@ const EpfEtfReport = () => {
                                 endYear={endYear}
                                 onStartChange={(month, year) => { setStartMonth(month); setStartYear(year); }}
                                 onEndChange={(month, year) => { setEndMonth(month); setEndYear(year); }}
+                                onApply={fetchData}
                             />
                         </div>
 
                         {/* Buttons */}
                         <div className="flex items-center gap-3 ml-auto">
-                            <button
-                                onClick={handleApply}
-                                className="px-9 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
-                            >
-                                Apply
-                            </button>
                             <button
                                 onClick={handleReset}
                                 className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
