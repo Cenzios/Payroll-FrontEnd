@@ -1,9 +1,10 @@
-import { ExternalLink, Calendar, CheckCircle2, CalendarDays, ArrowLeft, Loader2, Coins, PieChart } from 'lucide-react';
+import { ExternalLink, Calendar, CheckCircle2, CalendarDays, ArrowLeft, Loader2, Coins, PieChart, Eye, FileText } from 'lucide-react';
 import PageHeader from './PageHeader';
 import { useGetLoanByIdQuery, useUploadEmployeeDocumentMutation } from '../store/apiSlice';
 import { useAppSelector } from '../store/hooks';
 import { useRef, useState } from 'react';
 import FileUploadModal from './FileUploadModal';
+import DocumentViewerModal from './DocumentViewerModal';
 
 interface LoanHistoryViewProps {
     loan: any;
@@ -46,6 +47,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
     );
     const [uploadDocument, { isLoading: isUploading }] = useUploadEmployeeDocumentMutation();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
     const handleUploadClick = () => {
@@ -158,28 +160,22 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={handleUploadClick}
-                        disabled={isUploading}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50"
+                        onClick={() => setIsViewModalOpen(true)}
+                        disabled={!loan?.supportingDoc}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95 shadow-blue-500/10 
+                            ${!loan?.supportingDoc
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white font-semibold'}`}
                     >
-                        {isUploading ? (
-                            <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Uploading...
-                            </>
-                        ) : (
-                            'Updated Documents'
-                        )}
+                        <Eye className={`w-4 h-4 ${!loan?.supportingDoc ? 'text-gray-300' : 'text-white'}`} />
+                        {loan?.supportingDoc ? 'View Document' : 'No Document'}
                     </button>
                     {getLoanStatusBadge(loan.status)}
 
-                    <FileUploadModal
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
-                        files={selectedFiles}
-                        onFilesChange={setSelectedFiles}
-                        onUpload={handleUploadSubmit}
-                        isUploading={isUploading}
+                    <DocumentViewerModal
+                        isOpen={isViewModalOpen}
+                        onClose={() => setIsViewModalOpen(false)}
+                        doc={loan?.supportingDoc || null}
                     />
                 </div>
             </div>
