@@ -35,7 +35,9 @@ const Reports = () => {
         totalGrossPay: 0,
         totalNetPay: 0,
         totalEmployeeEPF: 0,
-        totalCompanyEPFETF: 0
+        totalCompanyEPFETF: 0,
+        totalAllowance: 0,
+        totalDeduction: 0
     });
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -79,7 +81,9 @@ const Reports = () => {
                 totalGrossPay: 0,
                 totalNetPay: 0,
                 totalEmployeeEPF: 0,
-                totalCompanyEPFETF: 0
+                totalCompanyEPFETF: 0,
+                totalAllowance: 0,
+                totalDeduction: 0
             });
 
         } catch (error: any) {
@@ -97,7 +101,9 @@ const Reports = () => {
                     totalGrossPay: 0,
                     totalNetPay: 0,
                     totalEmployeeEPF: 0,
-                    totalCompanyEPFETF: 0
+                    totalCompanyEPFETF: 0,
+                    totalAllowance: 0,
+                    totalDeduction: 0
                 });
             } else {
                 setToast({
