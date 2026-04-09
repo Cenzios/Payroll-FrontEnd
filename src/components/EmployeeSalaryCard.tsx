@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Loader2, ChevronRight, Eye, Lock, ArrowBigDown, ArrowDown, Loader, ChevronDown } from "lucide-react";
+import { Loader2, ChevronRight, Eye, Lock, ArrowBigDown, ArrowDown, Loader, ChevronDown, ArrowUpRight, LockKeyhole } from "lucide-react";
 import { Employee } from "../types/employee.types";
 
 interface EmployeeSalaryCardProps {
@@ -160,19 +160,20 @@ const EmployeeSalaryCard = ({
                     : "border-[#407BFF] border-l-4 border-l-[#407BFF] "
                 }`}
         >
-            {/* Lock Pill Overlay */}
-            {isLocked && (
-                <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center pointer-events-none">
-                    <div className="border border-yellow-500/90 rounded-full px-5 py-1.5 bg-[#FFEA001A]/10 shadow-md">
-                        <span className="text-[13px] font-medium text-[#FFEA00] text-center">
-                            Pay-Slip Already Generated and Locked – Cannot be Edited.
-                        </span>
-                    </div>
+            {/* Full Card Overlay (when not selected) */}
+            {isLocked && !isSelected && (
+                <div className="absolute inset-0 z-[60] flex items-center justify-center transition-all duration-300 pointer-events-none rounded-2xl">
+                    {/* <div className="bg-white/90 border border-white/50 rounded-2xl px-6 py-3 flex items-center gap-3 shadow-xl backdrop-blur-md">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                            <Lock className="w-4 h-4 text-gray-600" strokeWidth={2.5} />
+                        </div>
+                        <span className="text-[15px] font-bold text-gray-800">Pay-slip Locked</span>
+                    </div> */}
+
                 </div>
             )}
 
             <div className="relative">
-                {isLocked && <div className="absolute inset-0 z-10 bg-[#1D1F24]/50 pointer-events-none" />}
 
                 {/* ── ROW 1: Employee info + pill badges ── */}
                 <div className="flex items-center justify-between px-5 py-4 bg-[#F9FCFF] border-b border-blue-100/70">
@@ -273,7 +274,31 @@ const EmployeeSalaryCard = ({
             {/* ── EXPANDED BODY ── */}
             {isSelected && (
                 <div onClick={(e) => e.stopPropagation()} className="animate-in fade-in slide-in-from-top-1 duration-200 relative">
-                    {isLocked && <div className="absolute inset-0 z-10 bg-[#1D1F24]/50 pointer-events-none" />}
+                    {/* Badge Overlay for Locked State */}
+                    {isLocked && (
+                        <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#00000099]/40 backdrop-blur-[2px] rounded-b-2xl">
+                            <div className="bg-[#FFFFFF66] border border-gray-600 rounded-2xl flex items-center shadow-2xl overflow-hidden">
+                                <div className="flex items-center gap-4 px-6 py-4 border-r border-gray-400/50">
+                                    <div>
+                                        <LockKeyhole className="w-5 h-5 text-gray-700" strokeWidth={2.5} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-[15px] font-bold text-gray-900 leading-tight">Pay-slip locked</h4>
+                                        <p className="text-[12px] font-medium text-gray-600">Generated - no further edits allowed</p>
+                                    </div>
+                                </div>
+                                <div className="px-6 py-4 h-full flex items-center">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleGeneratePayslip(emp); }}
+                                        className="flex items-center gap-2 bg-white text-gray-900 px-5 py-2.5 rounded-lg font-bold text-[14px]"
+                                    >
+                                        <ArrowUpRight className="w-4 h-4" strokeWidth={2.5} />
+                                        View Pay-slip
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* ── ROW 3: Input fields ── */}
                     <div className="flex items-center gap-2 px-5 py-3 border-b border-blue-100/70 bg-white">
@@ -410,12 +435,8 @@ const EmployeeSalaryCard = ({
                 </div>
             )}
 
-            {/* Click to Calculate */}
             {!isSelected && (
                 <div className="relative">
-                    {isLocked &&
-                        <div className="absolute inset-0 z-10 bg-[#1D1F24]/50 pointer-events-none" />
-                    }
                     <div className="flex justify-center items-center gap-10 px-5 py-3 text-[12px] bg-[#F8F9FE] text-gray-400 italic">
                         <div className="flex">
                             <Loader className="w-5 h-5 rounded-full p-[2.5px] bg-[#5C81FE] text-white mr-2" />
