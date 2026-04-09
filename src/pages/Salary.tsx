@@ -798,6 +798,8 @@ const Salary = () => {
                       isSaving={isSaving}
                       hasAnyError={hasAnyError}
                       setTouchedFields={setTouchedFields}
+                      selectedMonth={selectedMonth}
+                      selectedYear={selectedYear}
                     />
                   );
                 })
