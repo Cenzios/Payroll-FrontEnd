@@ -120,15 +120,6 @@ const Reports = () => {
         checkAndUpdateData();
     }, [selectedCompanyId]);
 
-    const handleApply = () => {
-        const startDate = new Date(startYear, startMonth);
-        const endDate = new Date(endYear, endMonth);
-        if (startDate > endDate) {
-            setToast({ message: 'Start date must be before or equal to end date', type: 'error' });
-            return;
-        }
-        checkAndUpdateData();
-    };
 
     useEffect(() => {
         if (monthlyData.length === 0) return;
@@ -278,18 +269,12 @@ const Reports = () => {
                                 endYear={endYear}
                                 onStartChange={(month, year) => { setStartMonth(month); setStartYear(year); }}
                                 onEndChange={(month, year) => { setEndMonth(month); setEndYear(year); }}
+                                onApply={checkAndUpdateData}
                             />
                         </div>
 
                         {/* Buttons */}
                         <div className="flex items-center gap-3 ml-auto">
-                            {/* Apply */}
-                            <button
-                                onClick={handleApply}
-                                className="px-9 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
-                            >
-                                Apply
-                            </button>
 
                             {/* Reset */}
                             <button
