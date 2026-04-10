@@ -405,6 +405,10 @@ doc.rect(0, 45, 210, 252, "F");
         doc.setFont("helvetica", "bold");
         doc.text("EMPLOYEE DETAILS", 14, 60);
 
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.2);
+        doc.line(14, 65, 196, 65);
+
         // Details Grid
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
@@ -431,17 +435,25 @@ doc.rect(0, 45, 210, 252, "F");
         doc.setFont("helvetica", "bold");
         doc.text("EARNINGS", 14, 92);
 
-        let currentY = 100;
+        let currentY = 97;
+
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.2);
+        doc.line(14, currentY, 196, currentY);
+        currentY += 6;
+
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(0, 0, 0);
         doc.text("Description", 14, currentY);
         doc.text("Amount (Rs.)", 196, currentY, { align: "right" });
+        
         currentY += 4;
-
         doc.setLineWidth(0.2);
         doc.setDrawColor(200, 200, 200);
+        doc.setLineDash([0.8, 0.8], 0);
         doc.line(14, currentY, 196, currentY);
+        doc.setLineDash([], 0);
         currentY += 8;
 
         const addRow = (desc: string, val: string, isBold: boolean = false) => {
@@ -479,30 +491,42 @@ doc.rect(0, 45, 210, 252, "F");
         // Gross Earnings End Line
         currentY += 1;
         doc.setDrawColor(0, 0, 0);
-        doc.setLineWidth(0.6);
+        doc.setLineWidth(0.2);
         doc.line(14, currentY, 196, currentY);
         currentY += 6;
 
         let gross = previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum, a) => sum + a.amount, 0);
         addRow("Gross Earnings", formatCurrency(gross), true);
 
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.6);
+        doc.line(14, currentY, 196, currentY);
+
         // 4. DEDUCTIONS SECTION
-        currentY += 8;
+        currentY += 10;
         doc.setTextColor(100, 100, 100);
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
         doc.text("DEDUCTIONS", 14, currentY);
-        currentY += 8;
+
+        currentY += 4;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.2);
+        doc.line(14, currentY, 196, currentY);
+        currentY += 6;
 
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(0, 0, 0);
         doc.text("Description", 14, currentY);
         doc.text("Amount (Rs.)", 196, currentY, { align: "right" });
+
         currentY += 4;
-        doc.setDrawColor(200, 200, 200);
         doc.setLineWidth(0.2);
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineDash([0.8, 0.8], 0);
         doc.line(14, currentY, 196, currentY);
+        doc.setLineDash([], 0);
         currentY += 8;
 
         if (previewPayslip.isEpfEnabled) {
@@ -519,10 +543,14 @@ doc.rect(0, 45, 210, 252, "F");
 
         currentY += 1;
         doc.setDrawColor(0, 0, 0);
-        doc.setLineWidth(0.6);
+        doc.setLineWidth(0.2);
         doc.line(14, currentY, 196, currentY);
         currentY += 6;
         addRow("Total Deductions", formatCurrency(previewPayslip.totalDeductions), true);
+
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.6);
+        doc.line(14, currentY, 196, currentY);
 
         // 5. NET SALARY BOX
         currentY += 12;
