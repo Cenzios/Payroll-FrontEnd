@@ -1,4 +1,6 @@
+import { useState, useRef } from "react";
 import { FileText, FileSpreadsheet, Download, ArrowBigDownIcon, ArrowDownIcon } from "lucide-react";
+import PortalDropdown from "./PortalDropdown";
 import { Employee } from "../types/employee.types";
 
 interface PayslipPreviewProps {
@@ -30,6 +32,9 @@ const PayslipPreview = ({
     exportExcel,
     exportCSV,
 }: PayslipPreviewProps) => {
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const downloadBtnRef = useRef<HTMLButtonElement>(null);
+
     if (!previewPayslip || !selectedEmployee) {
         return (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col flex-1 items-center justify-center text-gray-400 p-8 text-center min-h-[400px]">
@@ -71,7 +76,7 @@ const PayslipPreview = ({
             </div>
 
             {/* Employee Profile Box */}
-            <div className="bg-[#F4F4EE] rounded-lg p-3 flex items-center gap-5 pl-5 mb-3">
+            <div className="bg-[#F4F4EE] p-3 flex items-center gap-5 pl-5 mb-3">
                 <div className="w-7 h-7 bg-[#F0F9FF] rounded-lg flex items-center justify-center text-[#407BFF] font-bold text-sm shadow-sm border border-[#E0F2FE]">
                     {selectedEmployee.fullName.charAt(0)}
                 </div>
@@ -176,7 +181,7 @@ const PayslipPreview = ({
             </div>
 
             {/* NET SALARY PAYABLE BOX */}
-            <div className="bg-[#EBF8FF] p-4">
+            <div className="bg-[#EBF8FF] p-4 border border-[#0000000A]">
                 <div className="flex justify-between items-center">
                     <div>
                         <p className="text-[10px] font-bold text-[#407BFF] tracking-widest uppercase mb-1">NET SALARY PAYABLE</p>
@@ -198,7 +203,7 @@ const PayslipPreview = ({
 
             {/* EMPLOYER CONTRIBUTIONS */}
             {previewPayslip.isEpfEnabled && (
-                <div className="bg-[#FDFBF7] px-6 py-4 flex items-center justify-between mb-6">
+                <div className="bg-[#FDFBF7] px-6 py-4 flex items-center justify-between mb-6 border border-[#0000000A]">
                     <p className="text-[8px] font-bold text-[#1D1F24] tracking-widest uppercase">EMPLOYER CONTRIBUTIONS</p>
                     <div className="flex gap-8">
                         <div className="flex items-center gap-3">
@@ -220,35 +225,50 @@ const PayslipPreview = ({
                 </p>
 
                 <button
-                    onClick={exportPDF}
-                    className="flex items-center gap-2 px-8 py-2.5 bg-[#407BFF] text-white text-sm font-bold rounded-xl hover:bg-blue-600 transition-all shadow-sm"
+                    ref={downloadBtnRef}
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center gap-2 px-8 py-2.5 bg-[#407BFF] text-white text-sm font-bold rounded-xl hover:bg-blue-600 transition-all shadow-sm active:scale-95"
                 >
-                    <ArrowDownIcon className="w-4 h-4" /> Download
+                    <ArrowDownIcon className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} /> Download
                 </button>
+
+                <PortalDropdown
+                    anchorEl={downloadBtnRef.current}
+                    open={isDropdownOpen}
+                    onClose={() => setIsDropdownOpen(false)}
+                >
+                    <div className="flex flex-col">
+                        <button
+                            onClick={() => {
+                                exportPDF();
+                                setIsDropdownOpen(false);
+                            }}
+                            className="flex items-center justify-center py-2.5 text-[13px] font-medium text-blue-400 hover:bg-blue-50 hover:text-blue-500 rounded-lg transition-colors group"
+                        >
+                            <span>PDF</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                exportExcel();
+                                setIsDropdownOpen(false);
+                            }}
+                            className="flex items-center justify-center py-2.5 text-[13px] font-medium text-green-500 hover:bg-green-50 hover:text-green-600 rounded-lg transition-colors group"
+                        >
+                            <span>Excel</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                exportCSV();
+                                setIsDropdownOpen(false);
+                            }}
+                            className="flex items-center justify-center py-2.5 text-[13px] font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-700 rounded-lg transition-colors group"
+                        >
+                            <span>CSV</span>
+                        </button>
+                    </div>
+                </PortalDropdown>
             </footer>
 
-
-            {/* Action Buttons */}
-            {/* <div className="mt-8 grid grid-cols-1 gap-3 bg-[#FAFAFA] border border-[#E4E4E7] rounded-xl p-4">
-                <button
-                    onClick={exportPDF}
-                    className="w-full bg-[#407BFF] shadow-sm shadow-blue-100 text-white py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-600 transition-all text-[13px]"
-                >
-                    <Download className="w-4.5 h-4.5" /> Download Pay Slip (PDF)
-                </button>
-                <button
-                    onClick={exportExcel}
-                    className="w-full bg-[#16A34A] shadow-sm shadow-green-100 text-white py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-green-700 transition-all text-[13px]"
-                >
-                    <FileSpreadsheet className="w-4 h-4" /> Download Pay Slip (Excel)
-                </button>
-                <button
-                    onClick={exportCSV}
-                    className="w-full bg-[#858585] shadow-sm shadow-gray-100 text-white py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-600 transition-all text-[13px]"
-                >
-                    <FileText className="w-4 h-4" /> Download Pay Slip (CSV)
-                </button>
-            </div> */}
         </div>
     );
 };
