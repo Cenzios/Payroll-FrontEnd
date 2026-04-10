@@ -421,6 +421,8 @@ const Reports = () => {
                         })
                     )}
                     </div>
+                    <p className="text-end text-gray-400 text-[13px] mt-2 mr-4">All values are display in LKR</p>
+
                 </div>
                 {toast && (
                     <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />

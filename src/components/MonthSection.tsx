@@ -71,7 +71,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
             {/* Month Header */}
             <div
                 onClick={onToggle}
-                className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 cursor-pointer hover:from-blue-100 hover:to-indigo-100 transition-all"
+                className="bg-gradient-to-r rounded-xl from-blue-50 to-indigo-50 px-6 py-4 cursor-pointer hover:from-blue-100 hover:to-indigo-100 transition-all"
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -99,14 +99,16 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                     </div>
 
                     {/* Summary Info */}
-                    <div className="flex items-center gap-8">
-                        <div className="text-center">
+                    <div className="flex flex-col ml-[39rem]">
+                        <div className="flex flex-col items-center">
                             <div className="text-sm text-gray-500">Employees</div>
                             <div className="text-lg font-medium text-gray-900">{totals.totalEmployees}</div>
                         </div>
-                        <div className="text-center">
+                    </div>
+                    <div className="flex flex-col">
+                        <div className="flex flex-col items-center">
                             <div className="text-sm text-gray-500">Total Net Pay</div>
-                            <div className="text-lg font-medium text-blue-600 text-end">Rs {totals.totalNetPay.toLocaleString()}</div>
+                            <div className="text-lg font-medium text-blue-600">Rs {totals.totalNetPay.toLocaleString()}</div>
                         </div>
                     </div>
                 </div>
@@ -122,10 +124,10 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                     ) : (
                         <>
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
+                                <table className="w-full text-center text-sm">
                                     <thead className="bg-gray-50 text-gray-600 font-semibold">
                                         <tr>
-                                            <th className="px-4 py-3 border-b border-gray-200">
+                                            {/* <th className="px-4 py-3 border-b border-gray-200">
                                                 <input
                                                     type="checkbox"
                                                     checked={filteredEmployees.length > 0 && filteredEmployees.every(emp => selectedEmployeeIds.includes(`${emp.employeeId}-${year}-${monthNumber}`))}
@@ -146,8 +148,8 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                     }}
                                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                 />
-                                            </th>
-                                            <th className="px-4 py-3 text-gray-900 font-bold text-sm border-b border-gray-200">Employee ID</th>
+                                            </th> */}
+                                            <th className="px-6 py-3 text-gray-900 font-bold text-sm border-b border-gray-200">Employee ID</th>
                                             <th className="px-4 py-3 text-gray-900 font-bold text-sm border-b border-gray-200 whitespace-nowrap">Employee Name</th>
                                             <th className="px-4 py-3 text-gray-900 font-bold text-sm border-b border-gray-200">Worked Days</th>
                                             <th className="px-4 py-3 text-gray-900 font-bold text-sm border-b border-gray-200">Basic Salary</th>
@@ -162,16 +164,16 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                     <tbody className="divide-y divide-gray-100">
                                         {filteredEmployees.map((employee, index) => (
                                             <tr key={index} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-4 py-3">
+                                                {/* <td className="px-4 py-3">
                                                     <input
                                                         type="checkbox"
                                                         checked={selectedEmployeeIds.includes(`${employee.employeeId}-${year}-${monthNumber}`)}
                                                         onChange={() => onSelectEmployee(employee.employeeId, monthNumber, year)}
                                                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                     />
-                                                </td>
-                                                <td className="px-4 py-3 font-regular text-gray-900">{employee.employeeCode || '-'}</td>
-                                                <td className="px-4 py-3 text-gray-900 whitespace-nowrap">{employee.employeeName || '-'}</td>
+                                                </td> */}
+                                                <td className="px-8 py-3 font-regular text-gray-900 text-left">{employee.employeeCode || '-'}</td>
+                                                <td className="px-6 py-3 text-gray-900 whitespace-nowrap text-left">{employee.employeeName || '-'}</td>
                                                 <td className="px-4 py-3 text-gray-500 text-center">{employee.workingDays}</td>
                                                 <td className="px-4 py-3 text-gray-500 font-medium text-end">{employee.basicPay?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                                 <td className="px-4 py-3 text-gray-500">
