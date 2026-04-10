@@ -351,13 +351,13 @@ export const exportPayslip = (
         const periodStr = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" });
 
         // 1. Header Background (Dark Rect at top)
-        doc.setFillColor(45, 45, 45); // #2d2d2d
+        doc.setFillColor(16, 24, 54); // #101836
         doc.rect(0, 0, 210, 45, "F");
 
         // Simulated curves in header
-        doc.setFillColor(60, 60, 60);
+        doc.setFillColor(23, 42, 106);
         doc.circle(210, 10, 70, "F");
-        doc.setFillColor(15, 15, 15);
+        doc.setFillColor(7, 27, 80);
         doc.circle(240, 20, 65, "F");
 
         // Vertical accent line
@@ -373,13 +373,14 @@ export const exportPayslip = (
         doc.setFont("helvetica", "bold");
         doc.text("CenzHRM", 18, 13);
 
+        doc.setTextColor(252, 163, 17);
         doc.setFontSize(26);
         doc.text("Pay Slip", 18, 25);
 
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(180, 180, 180);
-        doc.text(`Here's your Payroll History • Period: ${periodStr}`, 18, 33);
+        doc.text(`• Period: ${periodStr}`, 18, 33);
 
         // Header Texts - Right
         doc.setTextColor(255, 255, 255);
@@ -523,7 +524,7 @@ export const exportPayslip = (
 
         // 5. NET SALARY BOX
         currentY += 12;
-        doc.setFillColor(85, 80, 85); // Dark banner
+        doc.setFillColor(19, 32, 74); // Dark banner
         doc.rect(14, currentY, 182, 14, "F");
 
         doc.setTextColor(255, 255, 255);
@@ -534,7 +535,7 @@ export const exportPayslip = (
 
         // 6. BOTTOM FOOTER
         const pageHeight = doc.internal.pageSize.getHeight();
-        doc.setFillColor(10, 10, 10);
+        doc.setFillColor(16, 24, 54);
         doc.rect(0, pageHeight - 15, 210, 15, "F");
 
         doc.setTextColor(120, 120, 120);
