@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Loader2, ChevronRight, Eye, Lock, ArrowBigDown, ArrowDown, Loader, ChevronDown, ArrowUpRight, LockKeyhole } from "lucide-react";
 import { Employee } from "../types/employee.types";
+import { useAppSelector } from "../store/hooks";
 
 interface EmployeeSalaryCardProps {
     emp: Employee;
@@ -90,6 +91,7 @@ const EmployeeSalaryCard = ({
     selectedMonth,
     selectedYear,
 }: EmployeeSalaryCardProps) => {
+    const { accessStatus } = useAppSelector((state) => state.auth);
     const isSelected = selectedEmployee?.id === emp.id;
     const isLocked = !!generatedSalary;
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -160,9 +162,18 @@ const EmployeeSalaryCard = ({
             : "bg-white border-gray-200 text-gray-800 hover:border-blue-300"
         }`;
 
+    const handleCardClick = () => {
+        if (accessStatus === 'BLOCKED') {
+            window.dispatchEvent(new CustomEvent('open-renew-modal'));
+            return;
+        }
+        handleSelectEmployee(emp);
+    };
+
     return (
         <div
-            onClick={() => handleSelectEmployee(emp)}
+            onClick={handleCardClick}
+
             className={`relative bg-[#f0f5ff] rounded-2xl border cursor-pointer transition-all duration-200 overflow-hidden
         ${isSelected
                     ? "border-[#407BFF] shadow-lg ring-1 ring-blue-200"
@@ -207,7 +218,14 @@ const EmployeeSalaryCard = ({
 
                         {/* Allowances pill */}
                         <button
-                            onClick={(e) => { e.stopPropagation(); openManageModal("allowance", emp); }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (accessStatus === 'BLOCKED') {
+                                    window.dispatchEvent(new CustomEvent('open-renew-modal'));
+                                    return;
+                                }
+                                openManageModal("allowance", emp);
+                            }}
                             disabled={isLocked}
                             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[13px] font-semibold transition-all
               ${isLocked
@@ -221,7 +239,14 @@ const EmployeeSalaryCard = ({
 
                         {/* Deductions pill */}
                         <button
-                            onClick={(e) => { e.stopPropagation(); openManageModal("deduction", emp); }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (accessStatus === 'BLOCKED') {
+                                    window.dispatchEvent(new CustomEvent('open-renew-modal'));
+                                    return;
+                                }
+                                openManageModal("deduction", emp);
+                            }}
                             disabled={isLocked}
                             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[13px] font-semibold transition-all
               ${isLocked
@@ -271,7 +296,13 @@ const EmployeeSalaryCard = ({
                             <span className="text-[13px] font-semibold text-gray-500">EPF / ETF</span>
                             <Toggle
                                 enabled={isEpfEnabled}
-                                onToggle={() => handleToggleEpfEtf(emp.id)}
+                                onToggle={() => {
+                                    if (accessStatus === 'BLOCKED') {
+                                        window.dispatchEvent(new CustomEvent('open-renew-modal'));
+                                        return;
+                                    }
+                                    handleToggleEpfEtf(emp.id);
+                                }}
                                 disabled={isLocked}
                             />
                             <span className="text-[16px] font-bold text-red-500">{fmt(isEpfEnabled ? epfAmount : 0)}</span>
