@@ -138,11 +138,11 @@ const GetPlan = () => {
   return (
     <div className="min-h-screen relative overflow-hidden 
   bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
-  flex flex-col items-center justify-center px-4 py-10">
+  flex flex-col items-center justify-center px-4 py-8">
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
 
-      <div className="text-center mb-12 relative z-10">
+      <div className="text-center mb-10 relative z-10">
         <h1 className="text-4xl font-bold text-center text-[#0E1D44] mb-3 relative z-10">
           Choose The Plan That's Right For You
         </h1>
@@ -153,7 +153,7 @@ const GetPlan = () => {
 
       <div className="grid md:grid-cols-2 gap-10 w-full max-w-5xl relative z-10">
         {/* Single Plan Card (Basic) */}
-        <div className="w-full max-w-sm mx-auto relative z-10 flex flex-col items-center gap-12">
+        <div className="w-full max-w-[400px] mx-auto relative z-10 flex flex-col items-center">
           <PlanCard
             planName="PROFESIONAL"
             price={basicPlan.employeePrice || basicPlan.price}
@@ -180,18 +180,18 @@ const GetPlan = () => {
         </div>
 
         <div>
-          {/* Header with Pricing */}
-          <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300 max-w-sm">
-            <div className="bg-gradient-to-r from-[#2563EB] to-[#0E1D44] text-white p-8 py-11">
+          {/*cutom plan */}
+          <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300 max-w-[400px]">
+            <div className="bg-gradient-to-r from-[#2563EB] to-[#0E1D44] text-white p-8 py-8">
               <p className="text-xs tracking-widest opacity-80">CUSTOM PLAN</p>
-              <h2 className="text-[50px] font-bold mt-3">Let's talk</h2>
+              <h2 className="text-[50px] font-bold mt-6">Let's talk</h2>
               <p className="text-xs font-light flex items-start text-white mt-2">
                 Tailored pricing for your business size & needs
               </p>
             </div>
 
-            <div className="p-8 space-y-4 text-sm text-[#334155]">
-              <p className="text-sm mt-2 opacity-90">
+            <div className="px-9 pt-7 pb-5 space-y-4 text-[13px] text-[#334155]">
+              <p className="text-[13px] opacity-90">
                 Everything in the Professional plan, plus features
                 built around your specific requirements:
               </p>
@@ -214,7 +214,7 @@ const GetPlan = () => {
 
               <button
                 onClick={() => setIsContactModalOpen(true)}
-                className="w-full bg-gradient-to-r from-[#2348AA] to-[#0E1D44] mb-5 text-white font-bold py-3 rounded-[2rem] shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full text-[15px] bg-gradient-to-r from-[#2348AA] to-[#0E1D44] mb-5 text-white font-bold py-3 rounded-[2rem] shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 Contact Us
               </button>
