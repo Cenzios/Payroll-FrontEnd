@@ -130,10 +130,10 @@ export const loginUser = createAsyncThunk(
         '/auth/login',
         credentials
       );
-      const { user, token, hasActivePlan } = response.data.data;
+      const { user, token, hasActivePlan, hasCompany } = response.data.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      return { user, token, hasActivePlan };
+      return { user, token, hasActivePlan, hasCompany };
     } catch (error: any) {
       const message =
         error.response?.data?.message || error.message || 'Login failed';

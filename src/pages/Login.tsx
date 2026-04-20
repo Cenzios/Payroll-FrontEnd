@@ -87,19 +87,26 @@ const Login = () => {
 
       // Check if login was successful
       if (loginUser.fulfilled.match(result)) {
-        const { hasActivePlan } = result.payload;
+        const { hasActivePlan, hasCompany } = result.payload;
 
         console.log('🔍 Login result:', {
           hasActivePlan,
+          hasCompany,
           payload: result.payload
         });
 
-        // Route based on subscription status
         if (hasActivePlan) {
+          // User has an active subscription → go to dashboard
           console.log('✅ Has subscription → Redirecting to Dashboard');
           navigate('/dashboard');
+        } else if (hasCompany) {
+          // User has company (and employee data) but no active subscription
+          // → skip SetCompany, go straight to GetPlan
+          console.log('🏢 Has company but no subscription → Redirecting to GetPlan');
+          navigate('/get-plan');
         } else {
-          console.log('❌ No subscription → Redirecting to SetCompany');
+          // Brand new user — no company, no subscription → start setup flow
+          console.log('🆕 No company, no subscription → Redirecting to SetCompany');
           navigate('/set-company');
         }
       }
