@@ -182,7 +182,7 @@ const GetPlan = () => {
         <div>
           {/*cutom plan */}
           <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300 max-w-[400px]">
-            <div className="bg-gradient-to-r from-[#2563EB] to-[#0E1D44] text-white p-8 py-8">
+            <div className="bg-gradient-to-r from-[#2563EB] to-[#153885] text-white p-8 py-8">
               <p className="text-xs tracking-widest opacity-80">CUSTOM PLAN</p>
               <h2 className="text-[50px] font-bold mt-6">Let's talk</h2>
               <p className="text-xs font-light flex items-start text-white mt-2">
@@ -214,7 +214,7 @@ const GetPlan = () => {
 
               <button
                 onClick={() => setIsContactModalOpen(true)}
-                className="w-full text-[15px] bg-gradient-to-r from-[#2348AA] to-[#0E1D44] mb-5 text-white font-bold py-3 rounded-[2rem] shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full text-[15px] bg-gradient-to-r from-[#2348AA] to-[#153885] mb-5 text-white font-bold py-3 rounded-[2rem] shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 Contact Us
               </button>
