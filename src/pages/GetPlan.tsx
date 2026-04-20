@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { useAppDispatch } from '../store/hooks';
 import { setAuthFromToken, setSignupEmail, setTempPlanId } from '../store/slices/authSlice';
 import { jwtDecode } from 'jwt-decode';
@@ -138,28 +138,35 @@ const GetPlan = () => {
   return (
     <div className="min-h-screen relative overflow-hidden 
   bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
-  flex flex-col items-center justify-center px-4 py-16">
+  flex flex-col items-center justify-center px-4 py-10">
+
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
 
-      <h1 className="text-4xl font-bold text-center text-gray-900 mb-12 relative z-10">
-        Choose The Plan That's Right For You
-      </h1>
+      <div className="text-center mb-12 relative z-10">
+        <h1 className="text-4xl font-bold text-center text-[#0E1D44] mb-3 relative z-10">
+          Choose The Plan That's Right For You
+        </h1>
+        <p className="text-[#53616A] mt-3 text-sm md:text-base">
+          Simple, transparent pricing — one fixed plan or fully tailored to your needs.
+        </p>
+      </div>
 
-      {/* Single Plan Card (Basic) */}
-      <div className="w-full max-w-lg mx-auto relative z-10 flex flex-col items-center gap-12">
-        <PlanCard
-          planName="PROFESIONAL"
-          price={basicPlan.employeePrice || basicPlan.price}
-          description={basicPlan.description}
-          features={basicPlan.features}
-          isHighlighted={true}
-          showButton={true}
-          isLoading={isProcessingPlan}
-          onSelectPlan={() => handleSelectPlan(basicPlan.id)}
-        />
+      <div className="grid md:grid-cols-2 gap-10 w-full max-w-5xl relative z-10">
+        {/* Single Plan Card (Basic) */}
+        <div className="w-full max-w-sm mx-auto relative z-10 flex flex-col items-center gap-12">
+          <PlanCard
+            planName="PROFESIONAL"
+            price={basicPlan.employeePrice || basicPlan.price}
+            description={basicPlan.description}
+            features={basicPlan.features}
+            isHighlighted={true}
+            showButton={true}
+            isLoading={isProcessingPlan}
+            onSelectPlan={() => handleSelectPlan(basicPlan.id)}
+          />
 
-        {/* Contact Footer Bar */}
-        <div className="bg-white/80 backdrop-blur-md rounded-3xl px-10 py-5 shadow-xl border border-white/50 flex flex-col sm:flex-row items-center gap-6 sm:gap-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          {/* Contact Footer Bar */}
+          {/* <div className="bg-white/80 backdrop-blur-md rounded-3xl px-10 py-5 shadow-xl border border-white/50 flex flex-col sm:flex-row items-center gap-6 sm:gap-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <p className="text-gray-500 text-[13px] font-medium">
             If you want a <span className="text-gray-900 font-bold">customize plan</span>, please contact us.
           </p>
@@ -169,15 +176,59 @@ const GetPlan = () => {
           >
             Contact us
           </button>
+        </div> */}
+        </div>
+
+        <div>
+          {/* Header with Pricing */}
+          <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300 max-w-sm">
+            <div className="bg-gradient-to-r from-[#2563EB] to-[#0E1D44] text-white p-8 py-11">
+              <p className="text-xs tracking-widest opacity-80">CUSTOM PLAN</p>
+              <h2 className="text-[50px] font-bold mt-3">Let's talk</h2>
+              <p className="text-xs font-light flex items-start text-white mt-2">
+                Tailored pricing for your business size & needs
+              </p>
+            </div>
+
+            <div className="p-8 space-y-4 text-sm text-[#334155]">
+              <p className="text-sm mt-2 opacity-90">
+                Everything in the Professional plan, plus features
+                built around your specific requirements:
+              </p>
+
+              {[
+                "Unlimited employees",
+                "Custom integration",
+                "Dedicated support",
+                "SLA guarantee",
+                "Custom reports",
+                "On-boarding assistance",
+              ].map((feature, index) => (
+                <div key={index} className="flex items-center gap-4 group">
+                  <div className="w-4 h-4 rounded-full bg-[#255DAD] flex items-center justify-center shrink-0 shadow-lg shadow-blue-100 transition-transform group-hover:scale-110">
+                    <Check className="w-3 h-3 text-white" strokeWidth={4} />
+                  </div>
+                  <span className="text-[#334155] text-[13px] font-medium leading-tight">{feature}</span>
+                </div>
+              ))}
+
+              <button
+                onClick={() => setIsContactModalOpen(true)}
+                className="w-full bg-gradient-to-r from-[#2348AA] to-[#0E1D44] mb-5 text-white font-bold py-3 rounded-[2rem] shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                Contact Us
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-
       <ContactModal
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
       />
+
       {/* Background Wave - Bottom Right */}
-      <div className="absolute bottom-[-350px] right-[-200px] 
+      {/* <div className="absolute bottom-[-350px] right-[-200px] 
                 w-[700px] h-[700px] 
                 z-0 pointer-events-none">
         <img
@@ -185,7 +236,7 @@ const GetPlan = () => {
           alt="Background Wave"
           className="w-full h-full object-contain rotate-0"
         />
-      </div>
+      </div> */}
     </div>
   );
 };
