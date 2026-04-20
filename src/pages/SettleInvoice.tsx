@@ -119,22 +119,22 @@ const SettleInvoice = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-8 items-stretch">
                         {/* Left Column: Redesigned Overdue Summary */}
                         {invoice && (
-                            <div className="bg-white rounded-[2rem] shadow-xl border border-blue-50/50 p-10 flex flex-col space-y-8 h-full">
+                            <div className="bg-white rounded-[2rem] shadow-xl border border-blue-50/50 p-10 flex flex-col space-y-8 h-fit">
                                 {/* Overdue Pill */}
                                 <div>
-                                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-50 text-red-500 text-sm font-bold border border-red-100/50">
-                                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-50 text-[#B91C1C] text-sm font-bold border border-[#B91C1C]/20">
+                                        <span className="w-2 h-2 rounded-full bg-[#B91C1C]"></span>
                                         Overdue – Action Required
                                     </span>
                                 </div>
 
                                 {/* Header with Alert Icon */}
                                 <div className="flex gap-5">
-                                    <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center shadow-sm">
-                                        <AlertTriangle className="text-red-600 w-7 h-7" />
+                                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-red-50 border border-[#B91C1C]/20 flex items-center justify-center shadow-sm">
+                                        <AlertTriangle className="text-[#B91C1C] w-6 h-6" />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl font-bold text-[#8B2222] leading-tight">
+                                        <h2 className="text-lg font-bold text-[#7F1D1D] leading-tight">
                                             Payment Overdue – Immediate Action Required
                                         </h2>
                                         <p className="text-gray-500 mt-3 leading-relaxed text-[15px]">
@@ -144,25 +144,26 @@ const SettleInvoice = () => {
                                 </div>
 
                                 {/* Balance Info Block */}
-                                <div className="bg-[#FFF8F8] rounded-[1.5rem] p-8 flex justify-between items-end border border-red-50/50 shadow-sm">
+                                <div className="bg-[#FFF8F8] rounded-[1.5rem] p-8 flex justify-between items-end shadow-sm">
                                     <div className="space-y-1">
-                                        <p className="text-gray-400 font-bold uppercase text-[11px] tracking-wider mb-2">Total Outstanding Balance</p>
-                                        <p className="text-4xl font-extrabold text-[#EF4444] tracking-tight">
+                                        <p className="text-[#64748B] text-[15px] mb-2">Total Outstanding Balance</p>
+                                        <p className="text-[28px] font-semibold text-[#EF4444]">
                                             Rs. {invoice.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </p>
-                                        <p className="text-gray-400 text-[13px] mt-4 font-medium">
-                                            Includes platform fees + {invoice.employeeCount} active members
+                                        <p className="text-[#64748B] text-[14px] mt-4">
+                                            {/* Includes platform fees + {invoice.employeeCount} active members */}
+                                            Includes principal + Interest + Late fee
                                         </p>
                                     </div>
                                     <div className="text-right flex flex-col items-end">
-                                        <p className="text-gray-400 font-bold uppercase text-[11px] tracking-wider mb-1">Due date</p>
-                                        <p className="text-lg font-bold text-[#8B2222]">{formattedDueDate}</p>
-                                        <p className="text-[#EF4444] text-[13px] font-bold mt-2 bg-red-100/50 px-3 py-1 rounded-md">{overdueDays} days overdue</p>
+                                        <p className="text-[#64748B] text-[15px] mb-2">Due Date</p>
+                                        <p className="text-base font-semibold text-[#8B2222]">{formattedDueDate}</p>
+                                        <p className="text-[#DC2626] text-[14px] mt-2">{overdueDays} days overdue</p>
                                     </div>
                                 </div>
 
                                 {/* Footer Button */}
-                                <button className="w-full py-4.5 rounded-2xl border border-blue-200 text-blue-600 font-bold hover:bg-blue-50 transition-all mt-auto active:scale-[0.98]">
+                                <button className="w-full py-5 rounded-2xl border border-blue-100 text-blue-500 font-normal hover:bg-blue-50 transition-all mt-auto active:scale-[0.98]">
                                     Contact Support
                                 </button>
                             </div>
