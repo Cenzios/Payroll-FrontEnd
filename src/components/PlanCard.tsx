@@ -28,7 +28,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
             } ${isHighlighted ? 'ring-1 ring-blue-100' : ''} ${className} w-full max-w-md`}>
 
             {/* Header with Pricing */}
-            <div className={`relative px-10 py-10 text-center text-white overflow-hidden bg-gradient-to-br from-[#2348AA] to-[#0E1D44]`}>
+            <div className={`relative px-10 py-8 text-center text-white overflow-hidden bg-gradient-to-br from-[#2348AA] to-[#0E1D44]`}>
 
                 <p className="text-xs tracking-widest opacity-80 flex items-start">{planName} PLAN</p>
                 <div className="flex items-baseline gap-1 mt-3">
@@ -47,7 +47,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
                 <div className="border-t border-gray-100/60 mb-8 w-full"></div>
 
                 {/* Features List */}
-                <div className="space-y-6 mb-8">
+                <div className="space-y-4 mb-9">
                     {features.map((feature, index) => (
                         <div key={index} className="flex items-center gap-4 group">
                             <div className="w-4 h-4 rounded-full bg-[#255DAD] flex items-center justify-center shrink-0 shadow-lg shadow-blue-100 transition-transform group-hover:scale-110">
