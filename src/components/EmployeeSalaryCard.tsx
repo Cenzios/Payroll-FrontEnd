@@ -494,59 +494,100 @@ const EmployeeSalaryCard = ({
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="bg-white rounded-[24px] p-6 w-full max-w-[480px] shadow-2xl animate-in zoom-in duration-200">
-                        {/* Header */}
-                        <div className="flex items-start gap-3.5 mb-5">
-                            <div className="w-11 h-11 rounded-xl bg-[#e6f5ea] border border-[#d3ecd8] flex items-center justify-center shrink-0">
-                                <Lock className="w-5 h-5 text-[#2ca653]" strokeWidth={2.5} />
+                    <div className="bg-white rounded-[26px] p-6 w-full max-w-[460px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] animate-in zoom-in duration-200">
+
+                        {/* HEADER */}
+                        <div className="flex items-start gap-3 mb-5">
+                            <div className="w-11 h-11 rounded-xl bg-green-600 flex items-center justify-center">
+                                <Lock className="w-5 h-5 text-white" strokeWidth={2.5} />
                             </div>
+
                             <div>
-                                <h3 className="text-[17px] font-bold text-gray-900 leading-tight">Confirm & Lock Payslip</h3>
-                                <p className="text-[13px] text-gray-500 mt-1">Once locked, the pay-slip cannot be edited.</p>
+                                <h3 className="text-[18px] font-bold text-gray-900">
+                                    Confirm & Lock Payslip
+                                </h3>
+                                <p className="text-[12.5px] text-gray-500 mt-1 leading-snug">
+                                    Once locked, this payslip cannot be edited or reversed. <br />
+                                    Please review carefully before proceeding.
+                                </p>
                             </div>
                         </div>
 
-                        {/* Info Card */}
-                        <div className="bg-[#f4f7fe] border border-[#d6e2fa] rounded-2xl p-4 mb-5 space-y-3">
-                            <div className="flex justify-between items-center text-[13px]">
-                                <span className="text-gray-700">Employee</span>
-                                <span className="text-gray-900">{emp.fullName} ({emp.employeeId})</span>
+                        {/* INFO CARD */}
+                        <div className="bg-[#f6f9ff] border border-[#b9cdf7] rounded-2xl p-4 mb-5">
+
+                            {/* Top row */}
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <p className="text-[14px] font-semibold text-gray-900">
+                                        {emp.fullName}
+                                    </p>
+                                    <p className="text-[12px] text-gray-500">
+                                        ID: {emp.employeeId}
+                                    </p>
+                                </div>
+
+                                <div className="text-right">
+                                    <p className="text-[11px] text-gray-400">PAY PERIOD</p>
+                                    <p className="text-[13px] font-semibold text-gray-900">
+                                        {periodLabel}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="flex justify-between items-center text-[13px]">
-                                <span className="text-gray-700">Period</span>
-                                <span className="text-gray-900">
-                                    {emp.salaryType === "MONTHLY" ? "Monthly" : "Daily"} &ndash; {periodLabel}
+
+                            {/* Divider */}
+                            <div className="border-t border-[#b9cdf7] my-3"></div>
+
+                            {/* Earnings / Deductions */}
+                            <div className="flex justify-between text-[13px] mb-3">
+                                <div>
+                                    <p className="text-gray-500">Earnings</p>
+                                    <p className="text-green-600 font-semibold">
+                                        {fmt(totalEarnings)}
+                                    </p>
+                                </div>
+
+                                <div className="text-right">
+                                    <p className="text-gray-500">Deductions</p>
+                                    <p className="text-red-500 font-semibold">
+                                        - {fmt(totalDeductions)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* NET SALARY BAR */}
+                            <div className="bg-blue-600 text-white rounded-xl px-4 py-3 flex justify-between items-center shadow-inner">
+                                <span className="text-[13px] font-semibold tracking-wide">
+                                    NET SALARY
+                                </span>
+                                <span className="text-[15px] font-bold">
+                                    {fmt(netSalary)}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-center text-[13px]">
-                                <span className="text-gray-700">Total Earnings</span>
-                                <span className="text-[#2ca653] font-medium">{fmt(totalEarnings)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-[13px]">
-                                <span className="text-gray-700">Total Deductions</span>
-                                <span className="text-[#ef4444] font-medium">{fmt(totalDeductions)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-[14px] pt-1.5 border-t border-[#d6e2fa]">
-                                <span className="text-gray-800">Net Salary</span>
-                                <span className="font-bold text-gray-900">{fmt(netSalary)}</span>
-                            </div>
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-3">
+                        {/* WARNING */}
+                        <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-5">
+                            <span className="text-red-500 text-lg leading-none">⚠</span>
+                            <p className="text-[12px] text-red-500 leading-snug">
+                                This action is permanent. The payslip will be locked and distributed to the employee.
+                            </p>
+                        </div>
+
+                        {/* ACTIONS */}
+                        <div className="flex gap-3 text-sm">
                             <button
                                 onClick={() => setIsConfirmModalOpen(false)}
-                                className="flex-[0.4] py-3 px-4 rounded-[14px] text-[14px] font-bold text-gray-900 bg-[#dbeafe] hover:bg-[#bfdbfe] transition-colors"
-                            >
+                                className="flex-1 py-3 rounded-xl font-semibold text-white bg-blue-600">
                                 Cancel
                             </button>
+
                             <button
                                 onClick={() => {
                                     handleConfirmPayslip(emp);
                                     setIsConfirmModalOpen(false);
                                 }}
-                                className="flex-[0.6] py-3 px-4 rounded-[14px] text-[14px] font-bold text-white bg-[#3b82f6] hover:bg-[#2563eb] transition-colors shadow-sm"
-                            >
+                                className="flex-1 py-3 rounded-xl font-semibold text-white bg-green-600">
                                 Yes Confirm & Lock
                             </button>
                         </div>
