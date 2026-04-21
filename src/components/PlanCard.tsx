@@ -30,7 +30,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
             {/* Header with Pricing */}
             <div className={`relative px-10 py-8 text-center text-white overflow-hidden bg-gradient-to-br from-[#2348AA] to-[#0E1D44]`}>
 
-                <p className="text-xs tracking-widest opacity-80 flex items-start">{planName} PLAN</p>
+                <p className="text-xs tracking-widest opacity-80 flex items-start">PROFESSIONAL PLAN</p>
                 <div className="flex items-baseline gap-1 mt-3">
                     <p className="text-xl text-white font-semibold">RS:</p>
                     <span className="text-5xl text-white font-bold"> {price}</span>
