@@ -56,6 +56,14 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
         );
     }
 
+    // file types
+    const fileTypes = {
+        pdf: { label: "PDF", style: "bg-red-100 text-red-500" },
+        png: { label: "PNG", style: "bg-blue-100 text-blue-500" },
+        jpg: { label: "JPG", style: "bg-green-100 text-green-500" },
+        jpeg: { label: "JPEG", style: "bg-green-100 text-green-500" },
+    };
+
     return (
         <div className="flex-1 bg-[#FBFBFF] rounded-2xl shadow-sm border border-[#E4E4E7] p-6 h-full overflow-hidden">
             <div className="max-w-2xl h-full flex flex-col">
@@ -261,6 +269,14 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                             )
                                             .map((doc) => {
                                                 const isPdf = doc.fileType === "application/pdf";
+
+                                                const ext = doc.fileName?.split(".").pop().toLowerCase();
+
+                                                const fileType = fileTypes[ext] || {
+                                                    label: "FILE",
+                                                    style: "bg-gray-100 text-gray-500",
+                                                };
+
                                                 return (
                                                     <div
                                                         key={doc.id}
@@ -275,13 +291,19 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                                     >
                                                         {/* Left: badge + filename */}
                                                         <div className="flex items-center gap-3">
-                                                            <span
+                                                            {/* <span
                                                                 className={`text-[11px] font-bold px-2 py-1 rounded-md ${isPdf
                                                                     ? "bg-red-100 text-red-500"
                                                                     : "bg-blue-100 text-blue-500"
                                                                     }`}
                                                             >
                                                                 {isPdf ? "PDF" : "PNG"}
+                                                            </span> */}
+
+                                                            <span
+                                                                className={`text-[11px] font-bold px-2 py-1 rounded-md ${fileType.style}`}
+                                                            >
+                                                                {fileType.label}
                                                             </span>
                                                             <div className="flex flex-col">
                                                                 <span className="text-[13px] font-medium text-gray-800 line-clamp-1">

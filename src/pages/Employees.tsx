@@ -460,7 +460,7 @@ const Employees = () => {
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
                 title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
               >
-                Add Employee
+                Add New Employee
                 <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center ml-1">
                   <Plus className="w-4 h-4" />
                 </div>
@@ -520,15 +520,15 @@ const Employees = () => {
                         key={emp.id}
                         onClick={() => setSelectedEmployee(emp)}
                         className={` flex items-center justify-between cursor-pointer transition-all duration-200 rounded-[30px] ${selectedEmployee?.id === emp.id
-                          ? "bg-[#F1F1FF]"
+                          ? "bg-blue-200/40"
                           : "hover:bg-gray-50/80"
                           }`}
                       >
                         {/* Left side: Avatar + Name */}
-                        <div className="flex items-center gap-4 w-[30%] min-w-[150px]">
+                        <div className="flex items-center gap-4 w-[30%] min-w-[250px]">
                           {/* Avatar */}
-                          <div className="w-12 h-12 rounded-full bg-[#E5E9FF] flex items-center justify-center shrink-0">
-                            <span className="font-semibold text-sm text-[#4E61AD]">
+                          <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center shrink-0">
+                            <span className="font-semibold text-sm text-blue-700">
                               {emp.fullName.charAt(0).toUpperCase()}
                             </span>
                           </div>
@@ -538,7 +538,7 @@ const Employees = () => {
                         </div>
 
                         {/* Middle: Email */}
-                        <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[180px]">
+                        <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[220px]">
                           <Mail className="w-4 h-4 text-gray-400 shrink-0" />
                           <span className="truncate">
                             {emp.email || "No email provided"}
@@ -547,8 +547,9 @@ const Employees = () => {
 
                         {/* Right: Phone + Menu */}
                         <div className="flex items-center gap-6 shrink-0">
-                          <div className="flex items-center gap-2 text-[14px] text-gray-500">
-                            <Phone className="w-4 h-4 text-gray-400" />
+                          {/* Phone Section */}
+                          <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[100px]">
+                            <Phone className="w-4 h-4 text-gray-400 shrink-0" />
                             <span>{emp.contactNumber}</span>
                           </div>
                           <button

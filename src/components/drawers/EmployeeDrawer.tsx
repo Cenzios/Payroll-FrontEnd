@@ -490,7 +490,9 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="mt-3 space-y-2">
                                                         {employeeFiles.map((file, idx) => (
                                                             <div key={idx} className="flex items-center justify-between bg-blue-50/50 border border-blue-100 px-4 py-2 rounded-xl text-[12px] text-gray-700 font-medium">
-                                                                <span className="truncate max-w-[85%]">{file.name}</span>
+                                                                <span className="truncate max-w-[85%]">
+                                                                    {employeeFileTitles[idx] ? employeeFileTitles[idx] : file.name}
+                                                                </span>
                                                                 <button type="button" onClick={() => {
                                                                     const newFiles = employeeFiles.filter((_, i) => i !== idx);
                                                                     setEmployeeFiles(newFiles);
@@ -515,6 +517,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     fileTitles={employeeFileTitles}
                                                     onTitlesChange={setEmployeeFileTitles}
                                                     maxFiles={3 - (initialData?.documents?.length || 0)}
+                                                    onUpload={() => setIsUploadModalOpen(false)}
                                                 />
                                             </div>
                                             <input type="hidden" value={employeeData.department} />
