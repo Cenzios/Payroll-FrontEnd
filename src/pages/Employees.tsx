@@ -520,15 +520,15 @@ const Employees = () => {
                         key={emp.id}
                         onClick={() => setSelectedEmployee(emp)}
                         className={` flex items-center justify-between cursor-pointer transition-all duration-200 rounded-[30px] ${selectedEmployee?.id === emp.id
-                          ? "bg-[#F1F1FF]"
+                          ? "bg-blue-200/40"
                           : "hover:bg-gray-50/80"
                           }`}
                       >
                         {/* Left side: Avatar + Name */}
                         <div className="flex items-center gap-4 w-[30%] min-w-[250px]">
                           {/* Avatar */}
-                          <div className="w-12 h-12 rounded-full bg-[#E5E9FF] flex items-center justify-center shrink-0">
-                            <span className="font-semibold text-sm text-[#4E61AD]">
+                          <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center shrink-0">
+                            <span className="font-semibold text-sm text-blue-700">
                               {emp.fullName.charAt(0).toUpperCase()}
                             </span>
                           </div>

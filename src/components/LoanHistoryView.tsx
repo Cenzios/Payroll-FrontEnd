@@ -131,13 +131,14 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
             {/* Top Employee Card */}
             <div className="bg-[#407BFF1A] rounded-2xl p-6 flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-blue-200 flex items-center justify-center shrink-0 overflow-hidden">
+                    <div className="w-14 h-14 rounded-full bg-blue-200 text-blue-700 font-extrabold flex items-center justify-center shrink-0 overflow-hidden">
                         <img
                             src={`https://ui-avatars.com/api/?name=${encodeURIComponent(loan.employee?.fullName || 'E')}&background=BFDBFE&color=2563EB`}
                             alt={loan.employee?.fullName}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cove"
                         />
                     </div>
+
                     <div>
                         <h2 className="text-xl font-bold text-[#141B3B] mb-2">{loan.employee?.fullName}</h2>
                         <div className="flex items-center gap-4 text-[13px] font-medium text-gray-500">
