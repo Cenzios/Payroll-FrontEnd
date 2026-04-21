@@ -525,7 +525,7 @@ const Employees = () => {
                           }`}
                       >
                         {/* Left side: Avatar + Name */}
-                        <div className="flex items-center gap-4 w-[30%] min-w-[150px]">
+                        <div className="flex items-center gap-4 w-[30%] min-w-[250px]">
                           {/* Avatar */}
                           <div className="w-12 h-12 rounded-full bg-[#E5E9FF] flex items-center justify-center shrink-0">
                             <span className="font-semibold text-sm text-[#4E61AD]">
@@ -538,7 +538,7 @@ const Employees = () => {
                         </div>
 
                         {/* Middle: Email */}
-                        <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[180px]">
+                        <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[220px]">
                           <Mail className="w-4 h-4 text-gray-400 shrink-0" />
                           <span className="truncate">
                             {emp.email || "No email provided"}
@@ -547,8 +547,9 @@ const Employees = () => {
 
                         {/* Right: Phone + Menu */}
                         <div className="flex items-center gap-6 shrink-0">
-                          <div className="flex items-center gap-2 text-[14px] text-gray-500">
-                            <Phone className="w-4 h-4 text-gray-400" />
+                          {/* Phone Section */}
+                          <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[100px]">
+                            <Phone className="w-4 h-4 text-gray-400 shrink-0" />
                             <span>{emp.contactNumber}</span>
                           </div>
                           <button
