@@ -19,9 +19,10 @@ import {
 
 const Sidebar = () => {
     const location = useLocation();
-    const [isReportsOpen, setIsReportsOpen] = useState(
-        location.pathname.startsWith('/reports') || location.pathname === '/c-form'
-    );
+    const reportPaths = ['/reports', '/epf-etf', '/bank-advice', '/c-form'];
+    const isReportActive = reportPaths.some(path => location.pathname === path);
+
+    const [isReportsOpen, setIsReportsOpen] = useState(isReportActive);
 
     const navItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -41,8 +42,20 @@ const Sidebar = () => {
         setIsReportsOpen(!isReportsOpen);
     };
 
+    const getItemClass = (isActive: boolean) =>
+        `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${isActive
+            ? 'bg-white/10 backdrop-blur-md text-white'
+            : 'text-gray-400 hover:bg-white/5 hover:text-white'
+        }`;
+
+    const getSubItemClass = (isActive: boolean) =>
+        `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
+            ? 'bg-white/10 text-white font-semibold'
+            : 'text-gray-400 hover:bg-white/5 hover:text-white'
+        }`;
+
     return (
-        <div className="w-64 bg-[#000827] h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 overflow-y-auto">
+        <div className="w-64 bg-[#000827] h-screen flex flex-col border-r border-white/10 fixed left-0 top-0 overflow-y-auto">
             {/* Logo Section */}
             <div className="p-6 flex items-center justify-center">
                 <NavLink to="/dashboard" className="cursor-pointer">
@@ -60,28 +73,9 @@ const Sidebar = () => {
                     <NavLink
                         key={item.path}
                         to={item.path}
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${isActive
-                                ? 'bg-white/10 backdrop-blur-md text-white '
-                                : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
-                            }`
-                        }
+                        className={({ isActive }) => getItemClass(isActive)}
                     >
                         <item.icon className="w-5 h-5" />
-
-                        {/* {item.icon ? (
-                            <item.icon className="w-5 h-5" />
-                        ) : (
-                            <img
-                                src={item.img}
-                                alt={item.name}
-                                className={`w-5 h-5 object-contain 
-                                    ${location.pathname === item.path
-                                        ? "text-blue-700"
-                                        : "opacity-60"
-                                    }`}
-                            />)} */}
-
                         <span>{item.name}</span>
                     </NavLink>
                 ))}
@@ -90,10 +84,8 @@ const Sidebar = () => {
                 <div>
                     <button
                         onClick={toggleReports}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${(location.pathname.startsWith('/reports') || location.pathname === '/c-form')
-                            ? 'bg-blue-50 text-blue-600 font-medium'
-                            : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
-                            }`}
+                        className={getItemClass(isReportActive)}
+                        style={{ width: '100%', justifyContent: 'space-between' }}
                     >
                         <div className="flex items-center gap-3">
                             <FileText className="w-5 h-5" />
@@ -103,55 +95,35 @@ const Sidebar = () => {
                     </button>
 
                     {isReportsOpen && (
-                        <div className="mt-1 ml-4 space-y-1 pl-4 border-l-2 border-gray-100">
+                        <div className="mt-1 ml-4 space-y-1 pl-4 border-l-2 border-white/10">
                             <NavLink
                                 to="/reports"
                                 end
-                                className={({ isActive }) =>
-                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
-                                        ? 'text-blue-600 font-medium'
-                                        : 'text-[#67696C] hover:text-gray-900'
-                                    }`
-                                }
+                                className={({ isActive }) => getSubItemClass(isActive)}
                             >
-                                <Circle className="w-2 h-2" />
+                                <Circle className={`w-2 h-2 ${location.pathname === '/reports' ? 'fill-white' : ''}`} />
                                 <span>Payroll summary</span>
                             </NavLink>
                             <NavLink
                                 to="/epf-etf"
-                                className={({ isActive }) =>
-                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
-                                        ? 'text-blue-600 font-medium font-bold bg-blue-50'
-                                        : 'text-[#67696C] hover:text-gray-900'
-                                    }`
-                                }
+                                className={({ isActive }) => getSubItemClass(isActive)}
                             >
-                                <Circle className={`w-2 h-2 ${location.pathname === '/epf-etf' ? 'fill-blue-600' : ''}`} />
+                                <Circle className={`w-2 h-2 ${location.pathname === '/epf-etf' ? 'fill-white' : ''}`} />
                                 <span>EPF / ETF</span>
                             </NavLink>
                             <NavLink
                                 to="/bank-advice"
-                                className={({ isActive }) =>
-                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
-                                        ? 'text-blue-600 font-medium'
-                                        : 'text-[#67696C] hover:text-gray-900'
-                                    }`
-                                }
+                                className={({ isActive }) => getSubItemClass(isActive)}
                             >
-                                <Circle className="w-2 h-2" />
+                                <Circle className={`w-2 h-2 ${location.pathname === '/bank-advice' ? 'fill-white' : ''}`} />
                                 <span>Bank Advice</span>
                             </NavLink>
                             <NavLink
                                 to="/c-form"
-                                className={({ isActive }) =>
-                                    `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
-                                        ? 'text-blue-600 font-medium'
-                                        : 'text-[#67696C] hover:text-gray-900'
-                                    }`
-                                }
+                                className={({ isActive }) => getSubItemClass(isActive)}
                             >
-                                <Circle className="w-2 h-2" />
-                                <span>C - From</span>
+                                <Circle className={`w-2 h-2 ${location.pathname === '/c-form' ? 'fill-white' : ''}`} />
+                                <span>C-Form</span>
                             </NavLink>
                         </div>
                     )}
@@ -160,15 +132,10 @@ const Sidebar = () => {
             </nav>
 
             {/* Settings at Bottom */}
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 border-t border-white/10">
                 <NavLink
                     to="/settings"
-                    className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] ${isActive
-                            ? 'bg-blue-50 text-blue-600 font-medium'
-                            : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
-                        }`
-                    }
+                    className={({ isActive }) => getItemClass(isActive)}
                 >
                     <Settings className="w-5 h-5" />
                     <span>Settings</span>
