@@ -522,6 +522,8 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                       value={interestRate}
                       onChange={handleInterestRateChange}
                       placeholder="5.0"
+                      onWheel={(e) => e.currentTarget.blur()}
+                      onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
                       className="no-spinner w-full px-4 py-3 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                     />
                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -552,6 +554,8 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                       value={amount}
                       onChange={handleAmountChange}
                       placeholder="120000"
+                      onWheel={(e) => e.currentTarget.blur()}
+                      onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
                       className="no-spinner w-full pl-11 pr-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                     />
                   </div>
@@ -573,6 +577,8 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                     value={installmentCount}
                     onChange={handleInstallmentChange}
                     placeholder="12"
+                    onWheel={(e) => e.currentTarget.blur()}
+                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
                     className="no-spinner w-full px-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                   />
                   <p className="text-[11px] text-gray-400 mt-1">Maximum 15 installments</p>

@@ -351,6 +351,8 @@ const EmployeeSalaryCard = ({
                                 value={displayWorkedDays === 0 ? "" : displayWorkedDays}
                                 onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
                                 onBlur={() => setTouchedFields((prev: any) => ({ ...prev, employeeDays: { ...prev.employeeDays, [emp.id]: true } }))}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
                                 className={inputClass(isLocked)}
                                 min="0"
                                 max={companyWorkingDays}
@@ -367,6 +369,8 @@ const EmployeeSalaryCard = ({
                                     step="0.5"
                                     value={displayOtHours === 0 ? "" : displayOtHours}
                                     onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
+                                    onWheel={(e) => e.currentTarget.blur()}
+                                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
                                     className={inputClass(isLocked)}
                                     min="0"
                                     disabled={isLocked || emp.otRate <= 0}
@@ -381,6 +385,8 @@ const EmployeeSalaryCard = ({
                                 type="number"
                                 value={displaySalaryAdvance === 0 ? "" : displaySalaryAdvance}
                                 onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
                                 className={inputClass(isLocked)}
                                 min="0"
                                 disabled={isLocked}
