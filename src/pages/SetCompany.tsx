@@ -16,14 +16,14 @@ interface DecodedToken {
   exp: number;
 }
 
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const phoneRegex = /^\+94\s?\d{9}$/;
+
 const SetCompany = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
   const { isLoading, error, signupEmail, token } = useAppSelector((state) => state.auth);
-
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  const phoneRegex = /^(\+94\d{9}|0\d{9})$/;
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -96,43 +96,54 @@ const SetCompany = () => {
     };
   }, [dispatch]);
 
-  const validateForm = () => {
+  const validateField = (field: string, value: string): string => {
+    switch (field) {
+      case 'companyName': {
+        const trimmed = value.trim();
+        if (!trimmed || trimmed.length < 3 || trimmed.length > 30)
+          return 'Company name must be between 3 and 30 characters';
+        return '';
+      }
+      case 'companyEmail': {
+        const email = value.trim();
+        if (!email)
+          return 'Company email is required';
+        if (email.length > 100)
+          return 'Email must be less than 100 characters';
+        if (!emailRegex.test(email))
+          return 'Invalid email format';
+        if (email.includes('..'))
+          return 'Email cannot contain consecutive dots';
+        if (email.startsWith('.') || email.endsWith('.'))
+          return 'Email cannot start or end with a dot';
+        if (email.split('@')[1]?.startsWith('-') || email.split('@')[1]?.endsWith('-'))
+          return 'Invalid domain format';
+        return '';
+      }
+      case 'companyPhone': {
+        if (!value.trim())
+          return 'Company phone is required';
+        if (!phoneRegex.test(value.trim()))
+          return 'Must be +94 followed by 9 digits';
+        return '';
+      }
+      case 'companyAddress': {
+        if (!value.trim())
+          return 'Company address is required';
+        return '';
+      }
+      default:
+        return '';
+    }
+  };
+
+  const validateForm = (): boolean => {
     const errors = {
-      companyName: '',
-      // companyCount: '',
-      // numberOfPeople: '',
-      companyEmail: '',
-      companyPhone: '',
-      companyAddress: '',
+      companyName: validateField('companyName', formData.companyName),
+      companyEmail: validateField('companyEmail', formData.companyEmail),
+      companyPhone: validateField('companyPhone', formData.companyPhone),
+      companyAddress: validateField('companyAddress', formData.companyAddress),
     };
-
-    if (!formData.companyName.trim()) {
-      errors.companyName = 'Company name is required';
-    }
-
-    if (!formData.companyEmail.trim()) {
-      errors.companyEmail = 'Company email is required';
-    } else if (!emailRegex.test(formData.companyEmail.trim())) {
-      errors.companyEmail = 'Invalid email format';
-    }
-
-    if (!formData.companyPhone.trim()) {
-      errors.companyPhone = 'Company phone is required';
-    } else if (!phoneRegex.test(formData.companyPhone.trim())) {
-      errors.companyPhone = 'Must be +94XXXXXXXXX or 0XXXXXXXXX (10 digits)';
-    }
-
-    if (!formData.companyAddress.trim()) {
-      errors.companyAddress = 'Company address is required';
-    }
-    // if (formData.companyCount < 1) {
-    //   errors.companyCount = 'Must be at least 1';
-    // }
-
-    // if (formData.numberOfPeople < 1) {
-    //   errors.numberOfPeople = 'Must be at least 1';
-    // }
-
     setValidationErrors(errors);
     // return !errors.companyName && !errors.companyCount && !errors.numberOfPeople;
     return !errors.companyName && !errors.companyEmail && !errors.companyPhone && !errors.companyAddress;
@@ -156,7 +167,7 @@ const SetCompany = () => {
     }));
     setValidationErrors((prev) => ({
       ...prev,
-      [name]: '',
+      [name]: validateField(name, processedValue),
     }));
   };
 
