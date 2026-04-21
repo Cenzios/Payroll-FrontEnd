@@ -93,29 +93,40 @@ const EmployeeSalaryCard = ({
 }: EmployeeSalaryCardProps) => {
     const { accessStatus } = useAppSelector((state) => state.auth);
     const isSelected = selectedEmployee?.id === emp.id;
-    const isLocked = !!generatedSalary;
+
+    // const isLocked = !!generatedSalary;
+    const [isLockedLocal, setIsLockedLocal] = useState(!!generatedSalary);
+    const isLocked = isLockedLocal || !!generatedSalary;
+
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
     // Derived calculations
-    const displayWorkedDays = isLocked ? generatedSalary.workingDays : workedDays;
-    const displayOtHours = isLocked ? generatedSalary.otHours : otHours;
-    const displaySalaryAdvance = isLocked ? generatedSalary.salaryAdvance : salaryAdvance;
+    // const displayWorkedDays = isLocked ? generatedSalary.workingDays : workedDays;
+    // const displayOtHours = isLocked ? generatedSalary.otHours : otHours;
+    // const displaySalaryAdvance = isLocked ? generatedSalary.salaryAdvance : salaryAdvance;
+    const displayWorkedDays = isLocked && generatedSalary ? generatedSalary.workingDays : workedDays;
+    const displayOtHours = isLocked && generatedSalary ? generatedSalary.otHours : otHours;
+    const displaySalaryAdvance = isLocked && generatedSalary ? generatedSalary.salaryAdvance : salaryAdvance;
 
     const basicSalary = emp.basicSalary || 0;
     const otRate = emp.otRate || 0;
-    const otAmount = isLocked ? generatedSalary.otAmount : displayOtHours * otRate;
+    // const otAmount = isLocked ? generatedSalary.otAmount : displayOtHours * otRate;
+    const otAmount = isLocked && generatedSalary ? generatedSalary.otAmount : displayOtHours * otRate;
 
     const currentAllowances = salaryAllowances[emp.id] || emp.recurringAllowances || [];
-    const totalAllowances = isLocked
+    // const totalAllowances = isLocked
+    const totalAllowances = isLocked && generatedSalary
         ? generatedSalary.allowanceTotal
         : currentAllowances.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
     const currentDeductions = salaryDeductions[emp.id] || emp.recurringDeductions || [];
-    const totalDeductions_custom = isLocked
+    // const totalDeductions_custom = isLocked
+    const totalDeductions_custom = isLocked && generatedSalary
         ? generatedSalary.deductionTotal - (generatedSalary.loanDeduction || 0)
         : currentDeductions.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
-    const basicPay = isLocked
+    // const basicPay = isLocked
+    const basicPay = isLocked && generatedSalary
         ? generatedSalary.basicPay
         : emp.salaryType === "MONTHLY"
             ? companyWorkingDays > 0
@@ -128,24 +139,29 @@ const EmployeeSalaryCard = ({
                 : 0
             : basicSalary * displayWorkedDays;
 
-    const epfAmount = isLocked
+    // const epfAmount = isLocked
+    const epfAmount = isLocked && generatedSalary
         ? generatedSalary.employeeEPF
         : emp.epfEnabled && isEpfEnabled
             ? basicPay * 0.08
             : 0;
 
-    const totalEarnings = isLocked
+    //   const totalEarnings = isLocked
+    const totalEarnings = isLocked && generatedSalary
         ? generatedSalary.grossSalary
         : basicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances;
 
-    const totalDeductions = isLocked
+    // const totalDeductions = isLocked
+    const totalDeductions = isLocked && generatedSalary
         ? generatedSalary.totalDeduction
         : displaySalaryAdvance +
         epfAmount +
         (hasLoanInstallment && isLoanEnabled ? loanDeduction : 0) +
         totalDeductions_custom;
 
-    const netSalary = isLocked ? generatedSalary.netSalary : totalEarnings - totalDeductions;
+    //    const netSalary = isLocked ? generatedSalary.netSalary : totalEarnings - totalDeductions;
+    const netSalary = isLocked && generatedSalary
+        ? generatedSalary.netSalary : totalEarnings - totalDeductions;
 
     // Current period label
     const periodLabel = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "short", year: "numeric" });
@@ -589,9 +605,14 @@ const EmployeeSalaryCard = ({
                             </button>
 
                             <button
+                                // onClick={() => {
+                                //     handleConfirmPayslip(emp);
+                                //     setIsConfirmModalOpen(false);
+                                // }}
                                 onClick={() => {
                                     handleConfirmPayslip(emp);
                                     setIsConfirmModalOpen(false);
+                                    setIsLockedLocal(true);
                                 }}
                                 className="flex-1 py-3 rounded-xl font-semibold text-white bg-green-600">
                                 Yes Confirm & Lock

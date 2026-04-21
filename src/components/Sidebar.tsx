@@ -123,7 +123,7 @@ const Sidebar = () => {
                                 className={({ isActive }) => getSubItemClass(isActive)}
                             >
                                 <Circle className={`w-2 h-2 ${location.pathname === '/c-form' ? 'fill-white' : ''}`} />
-                                <span>C-Form</span>
+                                <span>C-Form </span>
                             </NavLink>
                         </div>
                     )}
