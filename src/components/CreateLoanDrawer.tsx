@@ -621,7 +621,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                     {supportingDocs.map((file, idx) => (
                       <div key={idx} className="flex items-center justify-between bg-blue-50/50 border border-blue-100 px-4 py-2 rounded-xl text-[12px] text-gray-700 font-medium">
                         <span className="truncate max-w-[85%]">
-                          {fileTitles[idx] ? `${fileTitles[idx]} (${file.name})` : file.name}
+                          {fileTitles[idx] ? `${fileTitles[idx]}` : file.name}
                         </span>
                         <button
                           type="button"

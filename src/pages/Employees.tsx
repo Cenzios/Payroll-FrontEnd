@@ -460,7 +460,7 @@ const Employees = () => {
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
                 title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
               >
-                Add Employee
+                Add New Employee
                 <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center ml-1">
                   <Plus className="w-4 h-4" />
                 </div>
