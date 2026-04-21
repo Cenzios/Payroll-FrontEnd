@@ -51,15 +51,19 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
         const handleClickOutside = (event: MouseEvent) => {
             if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
                 // Validate and apply the range
-                const startDate = tempStartYear * 12 + tempStartMonth;
-                const endDate = tempEndYear * 12 + tempEndMonth;
+                // const startDate = tempStartYear * 12 + tempStartMonth;
+                // const endDate = tempEndYear * 12 + tempEndMonth;
+                const startDate = startPanelYear * 12 + tempStartMonth;
+                const endDate = endPanelYear * 12 + tempEndMonth;
                 const currentDateValue = currentYear * 12 + currentMonth;
 
                 // Check if range is valid
                 if (startDate <= endDate && endDate <= currentDateValue) {
                     // Apply the changes
-                    onStartChange(tempStartMonth, tempStartYear);
-                    onEndChange(tempEndMonth, tempEndYear);
+                    // onStartChange(tempStartMonth, tempStartYear);
+                    // onEndChange(tempEndMonth, tempEndYear);
+                    onStartChange(tempStartMonth, startPanelYear);
+                    onEndChange(tempEndMonth, endPanelYear);
                 }
                 // Close popup regardless
                 setIsOpen(false);
@@ -93,17 +97,19 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
 
     const handleStartMonthClick = (monthIndex: number) => {
         setTempStartMonth(monthIndex);
-        setTempStartYear(startPanelYear);
+        // setTempStartYear(startPanelYear);
     };
 
     const handleEndMonthClick = (monthIndex: number) => {
         setTempEndMonth(monthIndex);
-        setTempEndYear(endPanelYear);
+        // setTempEndYear(endPanelYear);
     };
 
     const handleApplyClick = () => {
-        const startDate = tempStartYear * 12 + tempStartMonth;
-        const endDate = tempEndYear * 12 + tempEndMonth;
+        // const startDate = tempStartYear * 12 + tempStartMonth;
+        // const endDate = tempEndYear * 12 + tempEndMonth;
+        const startDate = startPanelYear * 12 + tempStartMonth;
+        const endDate = endPanelYear * 12 + tempEndMonth;
         const currentDateValue = currentYear * 12 + currentMonth;
 
         if (startDate > endDate) {
@@ -114,29 +120,37 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
             alert("Cannot select future months");
             return;
         }
-        onStartChange(tempStartMonth, tempStartYear);
-        onEndChange(tempEndMonth, tempEndYear);
+        // onStartChange(tempStartMonth, tempStartYear);
+        // onEndChange(tempEndMonth, tempEndYear);
+        onStartChange(tempStartMonth, startPanelYear);
+        onEndChange(tempEndMonth, endPanelYear);
 
-        if (onApply) {
-            onApply();
-        }
+        // if (onApply) {
+        //     onApply();
+        // }
+        // // Close popup
+        // setIsOpen(false);
 
-        // Close popup
+        if (onApply) onApply();
         setIsOpen(false);
     };
 
     const isMonthSelected = (monthIndex: number, year: number, isStart: boolean) => {
         if (isStart) {
-            return monthIndex === tempStartMonth && year === tempStartYear;
+            // return monthIndex === tempStartMonth && year === tempStartYear;
+            return monthIndex === tempStartMonth && year === startPanelYear;
         } else {
-            return monthIndex === tempEndMonth && year === tempEndYear;
+            // return monthIndex === tempEndMonth && year === tempEndYear;
+            return monthIndex === tempEndMonth && year === endPanelYear;
         }
     };
 
     const isMonthInRange = (monthIndex: number, year: number) => {
         const currentDate = year * 12 + monthIndex;
-        const startDate = tempStartYear * 12 + tempStartMonth;
-        const endDate = tempEndYear * 12 + tempEndMonth;
+        // const startDate = tempStartYear * 12 + tempStartMonth;
+        // const endDate = tempEndYear * 12 + tempEndMonth;
+        const startDate = startPanelYear * 12 + tempStartMonth;
+        const endDate = endPanelYear * 12 + tempEndMonth;
         return currentDate >= startDate && currentDate <= endDate;
     };
 
@@ -256,7 +270,8 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
                         <div>
                             <div className="text-xs text-blue-600 font-medium mb-1">Selected Range</div>
                             <div className="text-sm text-blue-900 font-semibold">
-                                {monthsFull[tempStartMonth]} {tempStartYear} – {monthsFull[tempEndMonth]} {tempEndYear}
+                                {/* {monthsFull[tempStartMonth]} {tempStartYear} – {monthsFull[tempEndMonth]} {tempEndYear} */}
+                                {monthsFull[tempStartMonth]} {startPanelYear} – {monthsFull[tempEndMonth]} {endPanelYear}
                             </div>
                         </div>
                         <div>
