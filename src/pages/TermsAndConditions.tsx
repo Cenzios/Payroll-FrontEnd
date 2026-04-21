@@ -57,7 +57,7 @@ const TermsAndConditions = () => {
 
                                 {/* System Info */}
                                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                                    <p className="text-sm text-gray-900"><strong>System Name:</strong> Payroll</p>
+                                    <p className="text-sm text-gray-900"><strong>System Name:</strong> CenzHRM</p>
                                     <p className="text-sm text-gray-900"><strong>Company:</strong> Cenzios (Pvt) Ltd</p>
                                     <p className="text-sm text-gray-900"><strong>Operating Regions:</strong> Sri Lanka & Global</p>
                                 </div>
@@ -66,8 +66,8 @@ const TermsAndConditions = () => {
                                 <section>
                                     <h3 className="text-lg font-bold text-gray-900 mb-2">1. Introduction</h3>
                                     <p className="text-sm leading-relaxed text-gray-600">
-                                        These Terms & Conditions govern the use of the Payroll system operated by Cenzios (Pvt) Ltd.
-                                        By registering for, accessing, or using the system, you agree to comply with and be legally bound by these Terms.
+                                        These Terms & Conditions govern the use of the CenzHRM system operated by Cenzios (Pvt) Ltd.
+                                        By registering for, accessing or using the system, you agree to comply with and be legally bound by these Terms.
                                     </p>
                                 </section>
                             </div>
@@ -76,7 +76,7 @@ const TermsAndConditions = () => {
                             <section>
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">2. Nature of the Service</h3>
                                 <p className="text-sm leading-relaxed text-gray-600">
-                                    Payroll is a Business-to-Business (B2B) payroll management system designed exclusively for company owners
+                                    CenzHRM is a Business-to-Business (B2B) payroll management system designed exclusively for company owners
                                     and authorized company representatives. The system enables businesses to manage employee payroll-related processes digitally.
                                 </p>
                             </section>
@@ -171,7 +171,7 @@ const TermsAndConditions = () => {
                                 <p className="text-sm leading-relaxed mb-2 text-gray-600">Cenzios (Pvt) Ltd shall not be liable for:</p>
                                 <ul className="list-disc list-inside space-y-1 text-sm leading-relaxed text-gray-600">
                                     <li>Indirect or consequential losses</li>
-                                    <li>Payroll errors caused by incorrect user inputs</li>
+                                    <li>CenzHRM errors caused by incorrect user inputs</li>
                                     <li>Service interruptions beyond reasonable control</li>
                                 </ul>
                             </section>
