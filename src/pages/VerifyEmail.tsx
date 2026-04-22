@@ -39,21 +39,25 @@ const VerifyEmail = () => {
       hasVerified.current = true;
 
       try {
+        console.log('Initiating email verification with token:', token);
         const result = await dispatch(verifyEmail(token));
 
         if (verifyEmail.fulfilled.match(result)) {
+          console.log('Verification successful:', result.payload);
           setStatus('success');
           setMessage(result.payload.message || 'Email verified successfully!');
 
-          // Redirect after 2 seconds
+          // Redirect after 1.2 seconds
           setTimeout(() => {
             navigate('/set-password', { replace: true });
           }, 1200);
         } else {
+          console.error('Verification failed:', result.payload);
           setStatus('error');
           setMessage(result.payload as string || 'Email verification failed or link expired.');
         }
       } catch (error) {
+        console.error('Unexpected error during verification:', error);
         setStatus('error');
         setMessage('An unexpected error occurred during verification.');
       }

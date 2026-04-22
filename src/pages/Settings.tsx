@@ -1,49 +1,45 @@
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
+import PageHeader from '../components/PageHeader';
 import AccountTab from '../components/settings/AccountTab';
-import PaymentTab from '../components/settings/PaymentTab';
+import SubscriptionSection from '../components/settings/SubscriptionSection';
 
 const Settings = () => {
     const [activeTab, setActiveTab] = useState<'account' | 'payment'>('account');
 
+    const tabs = [
+        { key: 'account' as const, label: 'Account' },
+        { key: 'payment' as const, label: 'Payment Details' },
+    ];
+
     return (
         <div className="flex bg-gray-50 min-h-screen">
             <Sidebar />
-            <div className="flex-1 ml-64 flex flex-col">
-                <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-                    <div className="px-8 py-4">
-                        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-                        <p className="text-sm text-gray-500 mt-1">Manage your account and preferences</p>
+            <div className="flex-1 ml-64 p-6 flex flex-col h-screen overflow-hidden">
+                <div className="shrink-0">
+                    <PageHeader title="Settings" subtitle="" />
+                    {/* Tabs */}
+                    <div className="flex gap-6 border-b border-gray-200 mb-4">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.key}
+                                onClick={() => setActiveTab(tab.key)}
+                                className={`pb-3 text-[14px] font-medium transition-all border-b-2 ${
+                                    activeTab === tab.key
+                                        ? 'text-gray-900 border-blue-600'
+                                        : 'text-gray-400 border-transparent hover:text-gray-600'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
                     </div>
-                </header>
-                <main className="p-8">
-                    <div className="max-w-4xl">
-                        {/* Tabs Navigation */}
-                        <div className="flex border-b border-gray-200 mb-8">
-                            <button
-                                onClick={() => setActiveTab('account')}
-                                className={`px-6 py-3 font-medium transition-colors border-b-2 ${activeTab === 'account'
-                                    ? 'border-blue-600 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                                    }`}
-                            >
-                                Account
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('payment')}
-                                className={`px-6 py-3 font-medium transition-colors border-b-2 ${activeTab === 'payment'
-                                    ? 'border-blue-600 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                                    }`}
-                            >
-                                Payment Details
-                            </button>
-                        </div>
+                </div>
 
-                        {/* Tab Content */}
-                        <div className="space-y-8 animate-in fade-in duration-500">
-                            {activeTab === 'account' ? <AccountTab /> : <PaymentTab />}
-                        </div>
+                <main className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    <div className="max-w-5xl animate-in fade-in duration-500">
+                        {activeTab === 'account' && <AccountTab />}
+                        {activeTab === 'payment' && <SubscriptionSection />}
                     </div>
                 </main>
             </div>

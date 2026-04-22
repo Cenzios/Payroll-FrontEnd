@@ -1,5 +1,9 @@
 import { ReactNode } from 'react';
-import logo from '../assets/images/logo.svg';
+import logo from '../assets/images/logo-login.svg';
+import illustrationAsset from '../assets/images/Ilustration-Asset.svg';
+import mainImage from '../assets/images/Image.svg';
+import kit2 from '../assets/images/Kit 2.svg';
+import bgIllustration from '../assets/images/Background-illustration.svg';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -8,76 +12,108 @@ interface AuthLayoutProps {
   illustration?: string;
 }
 
-const AuthLayout = ({ children, title, subtitle, illustration }: AuthLayoutProps) => {
+const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
   return (
-    <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-b from-[#3A8BFF] to-[#1E6EF7] relative overflow-hidden">
-        <div className="absolute top-20 right-20 w-60 h-60 border-[30px] border-white/15 rounded-full translate-x-32 -translate-y-32 animate-[float_6s_ease-in-out_infinite]"></div>
+    <div className="min-h-screen flex font-sans">
+      {/* Left Side - Grey Background with Illustrations */}
 
-        <div className="absolute top-55 -left-20 w-64 h-64 border-[30px] border-white/15 rounded-full animate-[float_8s_ease-in-out_infinite_1s]"></div>
-        <div className="absolute bottom-[-60px] -left-10 w-80 h-80 border-[30px] border-white/10 rounded-full animate-[float_10s_ease-in-out_infinite_2s]"></div>
+      <div className="hidden lg:flex lg:w-1/2 bg-[#F8F9FA] relative items-center justify-center p-12 overflow-hidden">
+        {/* Logo */}
+        <div className="absolute top-12 left-12">
+          <div className="flex items-center gap-2">
+            <img src={logo} alt="Payroll Logo" className="h-8 md:h-10" />
 
-        <div className="absolute bottom-[-20px] -left-28 w-40 h-40 bg-white/15 rounded-full translate-x-80 transition-all duration-300 ease-in-out animate-[pulse_4s_ease-in-out_infinite]"></div>
-        <div className="absolute bottom-[60px] -left-60 w-28 h-28 rounded-full translate-x-80 transition-all duration-300 ease-in-out bg-gradient-to-br from-white/50 via-white/20 to-transparent blur-[0.5px] animate-[pulse_3s_ease-in-out_infinite_1s]"></div>
-
-        <div className="absolute bottom-10 right-16 grid grid-cols-10 gap-3 opacity-20">
-          {[...Array(100)].map((_, i) => (
-            <div key={i} className="w-1.5 h-1.5 bg-white rounded-full"></div>
-          ))}
+          </div>
         </div>
 
-        <div className="relative z-10 flex flex-col justify-center px-16 text-white animate-[fadeInLeft_0.8s_ease-out]">
-          <div className="flex items-center gap-3 mb-16">
+        {/* Center Composition */}
+        <div className="relative w-full max-w-lg aspect-square flex items-center justify-center">
+          {/* We position these absolutely relative to this container to create the layered effect */}
+          {/* Bottom layer - Kit 2 */}
+          <div
+            className="absolute bottom-[-120px] right-[-60px]
+  -translate-x-1/2 -translate-y-1/2 z-10"
+          >
             <img
-              src={logo}
-              alt="Cenzios Logo"
-              className="w-36 h-36 object-contain"
+              src={kit2}
+              alt="Dashboard UI"
+              className="w-[30] h-auto object-contain
+    animate-[float_4s_ease-in-out_infinite]"
             />
-            
           </div>
 
-          <h2 className="text-4xl font-semibold mb-4 leading-tight">
-            Automated. Accurate. On Time.
-          </h2>
-          <p className="text-2xl text-white/100 font-light">
-            Welcome to Payroll.
-          </p>
+          {/* Middle layer - Illustration Asset */}
+          <div
+            className="absolute top-[190px] left-1/2
+  -translate-x-1/2 -translate-y-1/2
+  w-full h-full z-0"
+          >
+            <img
+              src={illustrationAsset}
+              alt="Background Elements"
+              className="w-full h-full object-contain
+    animate-[float-slow_10s_ease-in-out_infinite]"
+            />
+          </div>
+
+          {/* Top layer - Main Image */}
+          <div
+            className="absolute top-30 left-[80px]
+  -translate-x-1/2 -translate-y-1/2 z-60"
+          >
+            <img
+              src={mainImage}
+              alt="User Profile"
+              className="w-[80] h-auto object-contain
+    animate-[float_3.5s_ease-in-out_infinite]"
+            />
+          </div>
+        </div>
+        {/* Background Waves - Bottom Left (Stable on all screens) */}
+        <div className="absolute bottom-[-290px] -left-40 w-[520px] h-[520px] 
+  z-0 pointer-events-none">
+          <img
+            src={bgIllustration}
+            alt="Background Wave"
+            className="w-full h-full object-contain"
+          />
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-12 bg-white">
-        <div className="w-full max-w-md animate-[fadeInUp_0.6s_ease-out]">
+      {/* Right Side - White Background with Form */}
+      <div className="flex-1 flex flex-col justify-center px-4 py-12 bg-white relative overflow-hidden">
 
-          {(illustration || title || subtitle) && (
-            <div className="mb-10 text-center">
-              {illustration && (
-                <div className="mb-6 animate-[scaleIn_0.5s_ease-out]">
-                  <img
-                    src={illustration}
-                    alt="Illustration"
-                    className="w-40 h-40 mx-auto object-contain"
-                  />
-                </div>
-              )}
+        {/* Background Waves - Top Right */}
+        <div className="absolute -top-60 -right-28 w-96 h-96 z-0 opacity-100 pointer-events-none">
+          <img src={bgIllustration} alt="Background Wave" className="w-full h-full object-contain rotate-180" />
+        </div>
 
-              {title && (
-                <h2 className="text-3xl font-bold text-gray-900">
-                  {title}
-                </h2>
-              )}
 
-              {subtitle && (
-                <p className="text-gray-600 mt-2">
-                  {subtitle}
-                </p>
-              )}
+
+        <div className="w-full max-w-md mx-auto relative z-10 animate-[fadeInUp_0.6s_ease-out]">
+          <div className="mb-8">
+            {/* Mobile Logo (visible only on small screens) */}
+            <div className="lg:hidden flex items-center gap-2 mb-8">
+              <img src={logo} alt="Payroll Logo" className="h-8" />
+              <span className="text-[#3A8BFF] text-[28px] font-medium">ayroll</span>
             </div>
-          )}
 
-          <div className="animate-[fadeIn_0.6s_ease-out_0.4s_both]">
-            {children}
+            {title && (
+              <h2 className="text-[28px] font-medium text-gray-900 leading-tight">
+                {title}
+              </h2>
+            )}
+
+            {subtitle && (
+              <p className="text-gray-500 mt-3 text-[16px] font-normal leading-[1.7]">
+                {subtitle}
+              </p>
+            )}
           </div>
 
+          <div className="animate-[fadeIn_0.6s_ease-out_0.2s_both]">
+            {children}
+          </div>
         </div>
       </div>
     </div>
