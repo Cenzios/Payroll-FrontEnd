@@ -7,7 +7,7 @@ import { useGetEmployeesQuery, useGetCompaniesQuery } from '../store/apiSlice';
 import { salaryApi } from '../api/salaryApi';
 import { exportEpfEtfReport } from '../utils/exportService';
 import Toast from '../components/Toast';
-import MonthRangePicker from '../components/MonthRangePicker';
+import SingleMonthPicker from '../components/SingleMonthPicker';
 
 const EpfEtfReport = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
@@ -16,10 +16,8 @@ const EpfEtfReport = () => {
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     const currentDate = new Date();
-    const [startMonth, setStartMonth] = useState(currentDate.getMonth());
-    const [startYear, setStartYear] = useState(currentDate.getFullYear());
-    const [endMonth, setEndMonth] = useState(currentDate.getMonth());
-    const [endYear, setEndYear] = useState(currentDate.getFullYear());
+    const [month, setMonth] = useState(currentDate.getMonth());
+    const [year, setYear] = useState(currentDate.getFullYear());
 
     const [isLoading, setIsLoading] = useState(false);
     const [rawReportData, setRawReportData] = useState<any[]>([]);
@@ -40,16 +38,20 @@ const EpfEtfReport = () => {
         limit: 1000
     });
 
-    const fetchData = async () => {
+    const fetchData = async (m?: number, y?: number) => {
         if (!selectedCompanyId) return;
         setIsLoading(true);
+
+        const targetMonth = m !== undefined ? m : month;
+        const targetYear = y !== undefined ? y : year;
+
         try {
             const response = await salaryApi.getSalaryReport(
                 selectedCompanyId,
-                startMonth + 1,
-                startYear,
-                endMonth + 1,
-                endYear
+                targetMonth + 1,
+                targetYear,
+                targetMonth + 1,
+                targetYear
             );
 
             const monthlyData = response.data?.monthlyData || [];
@@ -146,10 +148,8 @@ const EpfEtfReport = () => {
 
     const handleReset = () => {
         const currentDate = new Date();
-        setStartMonth(currentDate.getMonth());
-        setStartYear(currentDate.getFullYear());
-        setEndMonth(currentDate.getMonth());
-        setEndYear(currentDate.getFullYear());
+        setMonth(currentDate.getMonth());
+        setYear(currentDate.getFullYear());
         setSearchTerm('');
     };
 
@@ -164,10 +164,10 @@ const EpfEtfReport = () => {
             companyName: selectedCompany?.name || 'Company Name',
             companyAddress: selectedCompany?.address || '',
             reportData: filteredData,
-            startMonth,
-            startYear,
-            endMonth,
-            endYear,
+            startMonth: month,
+            startYear: year,
+            endMonth: month,
+            endYear: year,
             totals
         });
         setIsExportOpen(false);
@@ -210,14 +210,11 @@ const EpfEtfReport = () => {
                         {/* Time Period */}
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Time Period</span>
-                            <MonthRangePicker
-                                startMonth={startMonth}
-                                startYear={startYear}
-                                endMonth={endMonth}
-                                endYear={endYear}
-                                onStartChange={(month, year) => { setStartMonth(month); setStartYear(year); }}
-                                onEndChange={(month, year) => { setEndMonth(month); setEndYear(year); }}
-                                onApply={fetchData}
+                            <SingleMonthPicker
+                                selectedMonth={month}
+                                selectedYear={year}
+                                onMonthChange={(m, y) => { setMonth(m); setYear(y); }}
+                                onApply={(m, y) => fetchData(m, y)}
                             />
                         </div>
 

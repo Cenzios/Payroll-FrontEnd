@@ -52,23 +52,33 @@ const Reports = () => {
     // Expand/collapse state for months
     const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
-    const checkAndUpdateData = async () => {
+    const checkAndUpdateData = async (sM?: number, sY?: number, eM?: number, eY?: number) => {
         if (!selectedCompanyId) return;
         setIsLoading(true);
+
+        const currentStartMonth = sM !== undefined ? sM : startMonth;
+        const currentStartYear = sY !== undefined ? sY : startYear;
+        const currentEndMonth = eM !== undefined ? eM : endMonth;
+        const currentEndYear = eY !== undefined ? eY : endYear;
 
         console.group('📊 Reports Page - Fetching Data');
         console.log('Selected Company ID:', selectedCompanyId);
         console.log('Date Range (UI State):', { startMonth, startYear, endMonth, endYear });
-        console.log('Date Range (API Call):', { startMonth: startMonth + 1, startYear, endMonth: endMonth + 1, endYear });
+        console.log('Date Range (API Call):', {
+            startMonth: currentStartMonth + 1,
+            startYear: currentStartYear,
+            endMonth: currentEndMonth + 1,
+            endYear: currentEndYear
+        });
         console.groupEnd();
 
         try {
             const response = await salaryApi.getSalaryReport(
                 selectedCompanyId,
-                startMonth + 1,
-                startYear,
-                endMonth + 1,
-                endYear
+                currentStartMonth + 1,
+                currentStartYear,
+                currentEndMonth + 1,
+                currentEndYear
             );
 
             const reportData = response.data;
@@ -269,7 +279,7 @@ const Reports = () => {
                                 endYear={endYear}
                                 onStartChange={(month, year) => { setStartMonth(month); setStartYear(year); }}
                                 onEndChange={(month, year) => { setEndMonth(month); setEndYear(year); }}
-                                onApply={checkAndUpdateData}
+                                onApply={(sM, sY, eM, eY) => checkAndUpdateData(sM, sY, eM, eY)}
                             />
                         </div>
 
