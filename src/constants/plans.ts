@@ -18,7 +18,7 @@ export interface Plan {
 export const PLANS: Record<string, Plan> = {
     BASIC: {
         id: PLAN_IDS.BASIC,
-        name: "Basic",
+        name: "BASIC",
         price: 200,
         employeePrice: 200,
         registrationFee: 2500,
