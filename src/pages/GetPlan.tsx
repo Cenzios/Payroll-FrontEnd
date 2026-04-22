@@ -155,7 +155,7 @@ const GetPlan = () => {
         {/* Single Plan Card (Basic) */}
         <div className="w-full max-w-[400px] mx-auto relative z-10 flex flex-col items-center">
           <PlanCard
-            planName="PROFESSIONAL"
+            planName={basicPlan.name}
             price={basicPlan.employeePrice || basicPlan.price}
             description={basicPlan.description}
             features={basicPlan.features}
