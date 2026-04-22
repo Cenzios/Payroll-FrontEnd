@@ -483,7 +483,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     <span>Bank Name</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
-                                    {selectedEmployee.bankName || "Bank of Ceylon"}
+                                    {selectedEmployee.bankName || "N/A"}
                                 </div>
                             </div>
                             <div className="flex items-center">
@@ -492,7 +492,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     <span>Branch</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
-                                    {selectedEmployee.branchName || "Kandy"}
+                                    {selectedEmployee.branchName || "N/A"}
                                 </div>
                             </div>
                             <div className="flex items-center pt-1">
@@ -501,7 +501,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     <span>Account Number</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
-                                    {selectedEmployee.accountNumber || "5585154"}
+                                    {selectedEmployee.accountNumber || "N/A"}
                                 </div>
                             </div>
                             <div className="flex items-center pt-1">
@@ -510,7 +510,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     <span>Account Name</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
-                                    {selectedEmployee.accountHolderName || selectedEmployee.fullName}
+                                    {selectedEmployee.accountHolderName || "N/A"}
                                 </div>
                             </div>
                         </div>
