@@ -203,29 +203,36 @@ const TermsAndConditions = () => {
                     </div>
 
                     {/* Footer Actions */}
-                    {!hasScrolledToBottom && (
-                        <p className="text-sm text-gray-500">
-                            Please scroll to the bottom to enable agreement
-                        </p>
-                    )}
-                    <div className="px-8 py-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-4">
-                        <button
-                            onClick={handleCancel}
-                            className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleAccept}
-                            disabled={!hasScrolledToBottom}
-                            className={`px-6 py-2.5 font-semibold rounded-lg transition-all
-    ${hasScrolledToBottom
-                                    ? 'bg-[#3A8BFF] text-white hover:bg-[#337AEB] focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                }`}
-                        >
-                            Agree and Continue
-                        </button>
+                    <div className="px-8 py-6 bg-gray-50 border-t border-gray-200 flex flex-col gap-4">
+                        {/* Row 1: Centered Message */}
+                        {!hasScrolledToBottom && (
+                            <div className="text-center w-full">
+                                <p className="text-sm text-gray-500">
+                                    Please scroll to the bottom to enable agreement
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Row 2: Right-aligned Buttons */}
+                        <div className="flex items-center justify-end gap-4 w-full">
+                            <button
+                                onClick={handleCancel}
+                                className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors whitespace-nowrap"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAccept}
+                                disabled={!hasScrolledToBottom}
+                                className={`px-6 py-2.5 font-semibold rounded-lg transition-all whitespace-nowrap
+                                    ${hasScrolledToBottom
+                                        ? 'bg-[#3A8BFF] text-white hover:bg-[#337AEB] focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    }`}
+                            >
+                                Agree and Continue
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
