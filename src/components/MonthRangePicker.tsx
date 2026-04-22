@@ -8,7 +8,7 @@ interface MonthRangePickerProps {
     endYear: number;
     onStartChange: (month: number, year: number) => void;
     onEndChange: (month: number, year: number) => void;
-    onApply?: () => void;
+    onApply?: (startMonth: number, startYear: number, endMonth: number, endYear: number) => void;
     className?: string;
 }
 
@@ -24,9 +24,7 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [tempStartMonth, setTempStartMonth] = useState(startMonth);
-    const [tempStartYear, setTempStartYear] = useState(startYear);
     const [tempEndMonth, setTempEndMonth] = useState(endMonth);
-    const [tempEndYear, setTempEndYear] = useState(endYear);
     const [startPanelYear, setStartPanelYear] = useState(startYear);
     const [endPanelYear, setEndPanelYear] = useState(endYear);
     const popupRef = useRef<HTMLDivElement>(null);
@@ -77,7 +75,7 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isOpen, tempStartMonth, tempStartYear, tempEndMonth, tempEndYear, onStartChange, onEndChange, currentMonth, currentYear]);
+    }, [isOpen, tempStartMonth, tempEndMonth, startPanelYear, endPanelYear, onStartChange, onEndChange, currentMonth, currentYear]);
 
     const formatDateRange = () => {
         const startMonthName = String(startMonth + 1).padStart(2, '0');
@@ -87,9 +85,7 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
 
     const handleOpen = () => {
         setTempStartMonth(startMonth);
-        setTempStartYear(startYear);
         setTempEndMonth(endMonth);
-        setTempEndYear(endYear);
         setStartPanelYear(startYear);
         setEndPanelYear(endYear);
         setIsOpen(true);
@@ -120,18 +116,12 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
             alert("Cannot select future months");
             return;
         }
-        // onStartChange(tempStartMonth, tempStartYear);
-        // onEndChange(tempEndMonth, tempEndYear);
         onStartChange(tempStartMonth, startPanelYear);
         onEndChange(tempEndMonth, endPanelYear);
 
-        // if (onApply) {
-        //     onApply();
-        // }
-        // // Close popup
-        // setIsOpen(false);
-
-        if (onApply) onApply();
+        if (onApply) {
+            onApply(tempStartMonth, startPanelYear, tempEndMonth, endPanelYear);
+        }
         setIsOpen(false);
     };
 

@@ -7,7 +7,7 @@ import { logout } from '../../store/slices/authSlice';
 import PaymentPlanSkeleton from '../../components/skeletons/PaymentPlanSkeleton';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import Toast from '../../components/Toast';
-import logo from '../../assets/images/logo.svg';
+import logo from '../../assets/images/logo-login.svg';
 
 const SubscriptionSection = () => {
     const navigate = useNavigate();
