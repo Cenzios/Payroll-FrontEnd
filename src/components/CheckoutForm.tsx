@@ -41,13 +41,13 @@ const CheckoutForm = ({ amount, currency }: CheckoutFormProps) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <form onSubmit={handleSubmit} className="space-y-2">
+            <div className="bg-white p-2 rounded-lg border border-gray-200">
                 <PaymentElement />
             </div>
 
             {errorMessage && (
-                <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
+                <div className="text-red-600 text-sm bg-red-50 p-2 rounded-md">
                     {errorMessage}
                 </div>
             )}
