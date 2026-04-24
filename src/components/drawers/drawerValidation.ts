@@ -8,8 +8,8 @@ export const validateCompanyField = (field: string, value: any): string => {
     let error = "";
     switch (field) {
         case "name":
-            if (!value || value.trim().length < 3 || value.trim().length > 30)
-                error = "Name must be between 3 and 30 characters";
+            if (!value || value.trim().length < 3 || value.trim().length > 50)
+                error = "Name must be between 3 and 50 characters";
             break;
         case "email": {
             const email = value?.trim();
