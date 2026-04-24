@@ -14,7 +14,7 @@ function GoogleAuthSuccess() {
     useEffect(() => {
         const token = searchParams.get('token');
         const isNewUserParam = searchParams.get('new'); // 'true' or null
-
+        const hasCompanyParam = searchParams.get('hasCompany'); // 'true' or 'false'
 
         if (!token) {
             console.error('No token found in Google OAuth redirect');
@@ -29,15 +29,18 @@ function GoogleAuthSuccess() {
         // Update Redux store with user data from token
         dispatch(setAuthFromToken(token));
 
-        // Determine redirect based on whether user is new or lacks subscription
-        const shouldRedirectToGetPlan = isNewUserParam === 'true';
-
-        if (shouldRedirectToGetPlan) {
-            console.log('Google user is new or has no active subscription → Redirecting to /get-plan');
-            navigate('/get-plan', { replace: true });
-        } else {
+        if (!isNewUserParam || isNewUserParam !== 'true') {
+            // Has active subscription → go to dashboard
             console.log('Google user has active subscription → Redirecting to /dashboard');
             navigate('/dashboard', { replace: true });
+        } else if (hasCompanyParam === 'true') {
+            // Has company but no subscription → skip company setup, go straight to plan selection
+            console.log('Google user has company but no subscription → Redirecting to /get-plan');
+            navigate('/get-plan', { replace: true });
+        } else {
+            // Brand new user — no company, no subscription → start full setup
+            console.log('Google user is brand new → Redirecting to /set-company');
+            navigate('/set-company', { replace: true });
         }
     }, [searchParams, navigate, dispatch]);
 

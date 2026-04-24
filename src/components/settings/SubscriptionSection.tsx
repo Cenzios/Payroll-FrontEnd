@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Crown, ShieldCheck, Users, Calendar, ExternalLink, RefreshCcw } from 'lucide-react';
+import { Crown, ShieldCheck, Users, Calendar, RefreshCcw } from 'lucide-react';
 import { useGetSubscriptionQuery, useCancelSubscriptionMutation } from '../../store/apiSlice';
+import { useAppDispatch } from '../../store/hooks';
+import { logout } from '../../store/slices/authSlice';
 import PaymentPlanSkeleton from '../../components/skeletons/PaymentPlanSkeleton';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import Toast from '../../components/Toast';
-import logo from '../../assets/images/logo.svg';
+import logo from '../../assets/images/logo-login.svg';
 
 const SubscriptionSection = () => {
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
     const { data: subscription, isLoading: loading } = useGetSubscriptionQuery();
     const [cancelSubscription, { isLoading: isCancelling }] = useCancelSubscriptionMutation();
 
@@ -18,8 +21,10 @@ const SubscriptionSection = () => {
     const handleCancelPlan = async () => {
         try {
             await cancelSubscription().unwrap();
-            setToast({ message: 'Subscription cancelled successfully', type: 'success' });
             setShowCancelModal(false);
+            // Automatically log out and redirect to signup after cancellation
+            dispatch(logout());
+            navigate('/signup', { replace: true });
         } catch (error: any) {
             setToast({ message: error?.data?.message || 'Failed to cancel subscription', type: 'error' });
             setShowCancelModal(false);
@@ -126,12 +131,6 @@ const SubscriptionSection = () => {
                                     className="px-6 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-all order-2 sm:order-1 capitalize whitespace-nowrap disabled:opacity-50"
                                 >
                                     {isCancelling ? 'Cancelling...' : 'Cancel plan'}
-                                </button>
-                                <button
-                                    onClick={() => navigate('/get-plan?isPlanChange=true')}
-                                    className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 order-1 sm:order-2 shadow-lg shadow-blue-100 whitespace-nowrap"
-                                >
-                                    Change Plan <ExternalLink className="h-4 w-4" />
                                 </button>
                             </div>
                         </div>

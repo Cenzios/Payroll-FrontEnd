@@ -1,10 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout, setAuthFromToken, setSelectedCompanyId } from '../store/slices/authSlice';
 import {
-  LogOut,
   Users,
   DollarSign,
   FileText,
@@ -12,16 +11,19 @@ import {
   BarChart3,
   CreditCard,
   Plus,
+  PieChart,
   ChevronDown,
-  Building2,
-  Bell,
-  PieChart
+  Building2
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import QuickAction from '../components/QuickAction';
 import SalaryPaidSummary from '../components/SalaryPaidSummary';
 import UniversalDrawer from '../components/UniversalDrawer';
+
+// import SuccessModal from '../components/SuccessModal';
+// import Employees from './Employees';
+
 import ConfirmationModal from '../components/ConfirmationModal';
 import AddonModal from '../components/AddonModal';
 import Toast from '../components/Toast';
@@ -31,17 +33,11 @@ import {
   useGetDashboardSummaryQuery,
   useGetCompaniesQuery,
   useCreateCompanyMutation,
-  useCreateEmployeeMutation,
-  useGetNotificationsQuery,
-  useMarkNotificationAsReadMutation,
-  useDeleteNotificationMutation,
-  useDeleteAllNotificationsMutation,
-  apiSlice
+  useCreateEmployeeMutation
 } from '../store/apiSlice';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
-import NotificationDropdown, { Notification } from '../components/NotificationDropdown';
-import NotificationModal from '../components/NotificationModal';
 import CompanySwitcher from '../components/CompanySwitcher';
+import PageHeader from '../components/PageHeader';
 import { salaryApi } from '../api/salaryApi';
 
 const Dashboard = () => {
@@ -52,13 +48,19 @@ const Dashboard = () => {
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerMode, setDrawerMode] = useState<'company' | 'employee'>('company');
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
-  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
-  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
-  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<'company' | 'employee'>('company');
+
+  // company pop up related
+  // const [showSuccessModal, setShowSuccessModal] = useState(false);
+  // const [modalTitle, setModalTitle] = useState("");
+  // const [modalMessage, setModalMessage] = useState("");
+
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error'
+  } | null>(null);
+  const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
 
   const urlToken = searchParams.get('token');
   const isTokenPending = !!urlToken && urlToken !== token;
@@ -95,14 +97,6 @@ const Dashboard = () => {
   const [createCompany] = useCreateCompanyMutation();
   const [createEmployee] = useCreateEmployeeMutation();
 
-  const { data: dbNotifications = [] } = useGetNotificationsQuery(undefined, {
-    skip: !user || isTokenPending
-  });
-
-  const [markAsRead] = useMarkNotificationAsReadMutation();
-  const [deleteNotification] = useDeleteNotificationMutation();
-  const [deleteAllNotifications] = useDeleteAllNotificationsMutation();
-
   // Derived state
   const selectedCompany = companies.find(c => c.id === selectedCompanyId) || null;
 
@@ -128,52 +122,9 @@ const Dashboard = () => {
     }
   }, [companies, selectedCompanyId, dispatch]);
 
-  // Map DB notifications to UI notifications
-  const uiNotifications: Notification[] = dbNotifications.map(n => ({
-    id: n.id,
-    type: n.type === 'ERROR' ? 'warning' : n.type.toLowerCase() as 'info' | 'warning',
-    message: n.message,
-    timestamp: new Date(n.createdAt).toLocaleDateString(),
-    read: n.isRead
-  }));
 
-  const unreadCount = uiNotifications.filter(n => !n.read).length;
 
-  const handleMarkAsRead = useCallback(async () => {
-    const unreadIds = dbNotifications.filter(n => !n.isRead).map(n => n.id);
-    if (unreadIds.length === 0) return;
 
-    for (const id of unreadIds) {
-      await markAsRead(id);
-    }
-  }, [dbNotifications, markAsRead]);
-
-  const handleDeleteNotification = async (id: string) => {
-    try {
-      await deleteNotification(id).unwrap();
-      setIsNotificationModalOpen(false);
-      setSelectedNotification(null);
-      setToast({ message: 'Notification deleted', type: 'success' });
-    } catch (error) {
-      setToast({ message: 'Failed to delete notification', type: 'error' });
-    }
-  };
-
-  const handleClearAll = async () => {
-    try {
-      await deleteAllNotifications().unwrap();
-      setIsNotificationDropdownOpen(false);
-      setToast({ message: 'All notifications cleared', type: 'success' });
-    } catch (error) {
-      setToast({ message: 'Failed to clear notifications', type: 'error' });
-    }
-  };
-
-  const handleLogout = () => {
-    dispatch(logout());
-    dispatch(apiSlice.util.resetApiState());
-    navigate('/login');
-  };
 
   const [confirmation, setConfirmation] = useState<{
     isOpen: boolean;
@@ -213,13 +164,26 @@ const Dashboard = () => {
       if (drawerMode === 'company') {
         await createCompany(data as CreateCompanyRequest).unwrap();
         setToast({ message: 'Company created successfully!', type: 'success' });
+
+        // setModalTitle("Company Created");
+        // setModalMessage(
+        //   "You have successfully created a company.",
+        // );
+        // setShowSuccessModal(true);
+
       } else {
         await createEmployee(data as CreateEmployeeRequest).unwrap();
         setToast({ message: 'Employee created successfully!', type: 'success' });
       }
       setIsDrawerOpen(false);
     } catch (error: any) {
-      const errorMsg = error?.data?.message || 'Operation failed';
+      let errorMsg = error?.data?.message || 'Operation failed';
+
+      // Specifically handle duplicate NIC error for shorter message
+      if (errorMsg === "Employee with this NIC already exists in this company") {
+        errorMsg = "NIC already exists in this company";
+      }
+
       if (errorMsg.includes('limit reached')) {
         openLimitModal(drawerMode);
       } else {
@@ -244,49 +208,41 @@ const Dashboard = () => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 font-sans">
+    <div className="flex h-screen overflow-hidden bg-gray-50 font-sans">
       <Sidebar />
 
       {/* Main Content */}
-      <div className="flex-1 ml-64">
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-          <div className="px-8 py-4 flex items-center justify-between">
-
-            {/* LEFT */}
-            <div>
-              <h1 className="text-[28px] font-medium text-gray-900 leading-tight">
-                {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'}
-              </h1>
-              <p className="text-[16px] font-normal text-gray-500 leading-[1.7]">
-                Here's your dashboard overview
-              </p>
-            </div>
-
-            {/* RIGHT */}
-            <div className="flex items-center gap-3">
-
+      <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
+        <PageHeader
+          title={`${getGreeting()}, ${user?.fullName?.split(' ')[0] || 'User'}`}
+          subtitle="Here's Your Dashboard Overview"
+          showLogout={true}
+          actionElement={
+            <>
               {/* Company Switcher */}
               <div className="relative">
                 <button
                   onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
                   className="
-            flex items-center gap-2
-            px-4 py-2
-            rounded-xl
-            border border-gray-200
-            bg-white
-            hover:bg-gray-50
-            text-sm font-medium text-gray-700
-          "
+                    flex items-center gap-2
+                    px-4 py-2
+                    rounded-xl
+                    border border-gray-200
+                    bg-white
+                    hover:bg-gray-50
+                    text-sm font-medium text-gray-700
+                  "
                 >
                   <Building2 className="w-4 h-4 text-gray-500" />
-                  {selectedCompany ? selectedCompany.name : 'Select Company'}
+                  {selectedCompany?.name
+                    ? selectedCompany.name.split(' ').slice(0, 2).join(' ') + ' ...'
+                    : 'Select Company'}
                   <ChevronDown className="w-4 h-4 text-gray-400" />
                 </button>
 
@@ -303,128 +259,99 @@ const Dashboard = () => {
                 />
               </div>
 
+              {/* add employee button */}
+              <button
+                onClick={() => {
+                  if (!selectedCompanyId) {
+                    setToast({
+                      message: "Please select a company from the Dashboard first.",
+                      type: "error",
+                    });
+                    return;
+                  }
+                  openAddEmployee();
+                }}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
+              >
+                <span className="hidden sm:inline whitespace-nowrap">Add New Employee</span>
+                <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                  <Plus className="w-4 h-4" />
+                </div>
+              </button>
+
+              {/* add company button */}
               <button
                 onClick={openAddCompany}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm"
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                title="Add New Company"
               >
-                <Plus className="w-4 h-4" />
-                Add New Company
+                <span className="hidden sm:inline whitespace-nowrap">Add New Company</span>
+                <span className="sm:hidden whitespace-nowrap">Add</span>
+                <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                  <Plus className="w-4 h-4" />
+                </div>
               </button>
 
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    const nextState = !isNotificationDropdownOpen;
-                    setIsNotificationDropdownOpen(nextState);
-                    if (nextState) {
-                      handleMarkAsRead();
-                    }
-                  }}
-                  className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center relative transition-colors"
-                >
-                  <Bell className="w-5 h-5 text-gray-600" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
-                  )}
-                </button>
-                <NotificationDropdown
-                  isOpen={isNotificationDropdownOpen}
-                  onClose={() => setIsNotificationDropdownOpen(false)}
-                  notifications={uiNotifications}
-                  onClearAll={handleClearAll}
-                  onNotificationClick={async (notification) => {
-                    setSelectedNotification(notification);
-                    setIsNotificationModalOpen(true);
-                    setIsNotificationDropdownOpen(false);
-                    // Automatically mark as read when opened if not already read
-                    if (!notification.read) {
-                      try {
-                        await markAsRead(notification.id).unwrap();
-                      } catch (err) {
-                        console.error("Failed to auto-mark notification as read:", err);
-                      }
-                    }
-                  }}
-                />
-              </div>
 
-              <NotificationModal
-                isOpen={isNotificationModalOpen}
-                onClose={() => setIsNotificationModalOpen(false)}
-                notification={selectedNotification}
-                onDelete={handleDeleteNotification}
-              />
+            </>
+          }
+        />
 
-              <div className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-xl">
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-                  {user?.fullName?.charAt(0) || 'U'}
-                </div>
-                <div className="leading-tight">
-                  <div className="text-sm font-medium text-gray-900">{user?.fullName}</div>
-                  <div className="text-xs text-gray-500">{user?.role || 'Admin'}</div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                className="w-10 h-10 rounded-xl hover:bg-gray-100 flex items-center justify-center"
-              >
-                <LogOut className="w-5 h-5 text-gray-600" />
-              </button>
-
-            </div>
-          </div>
-        </header>
-
-
-        <main className="p-8">
+        <main className="flex-1">
           {isDashboardLoading ? <DashboardSkeleton /> : (
             <>
               {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <StatCard
                   icon={Users}
-                  title="Total Employees"
+                  title="Total Active Employees"
                   value={dashboardData?.totalEmployees?.toString() || '0'}
+                  colorTheme="blue"
+                  showLastMonth={true}
                 />
                 <StatCard
                   icon={DollarSign}
-                  title="Last Month Salary Paid"
+                  title="Total Salary Paid"
                   value={`Rs ${lastMonthSalary.toLocaleString()}`}
+                  colorTheme="green"
                   showLastMonth={true}
                 />
                 <StatCard
                   icon={Plus}
                   title="Company EPF/ETF Amount"
                   value={`Rs ${((dashboardData?.totalCompanyEPF || 0) + (dashboardData?.totalCompanyETF || 0)).toLocaleString()}`}
+                  colorTheme="purple"
+                  showLastMonth={false}
                 />
                 <StatCard
                   icon={PieChart}
                   title="Total Employee EPF"
                   value={`Rs ${dashboardData?.totalEmployeeEPF?.toLocaleString() || '0'}`}
+                  colorTheme="orange"
+                  showLastMonth={false}
                 />
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start flex-1 overflow-hidden">
                 {/* Left (2/3) – Salary Paid Summary Chart */}
-                <div className="">
+                <div className="lg:col-span-2 h-full flex flex-col">
                   <SalaryPaidSummary companyId={selectedCompanyId || ''} />
                 </div>
 
                 {/* Right (1/3) – Quick Actions */}
-                <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-                  <h2 className="text-[20px] font-bold text-gray-900 mb-6">
+                <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col h-full">
+                  <h2 className="text-[15px] font-semibold text-gray-900 mb-4">
                     Quick Actions
                   </h2>
 
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-4">
                     <QuickAction
                       icon={FileText}
                       title="Generate Payslips"
                       description="Create monthly payslips"
-                      bgColor="bg-[#4182F9]"
+                      bgColor="text-[#4182F9]"
                       lightBgColor="bg-[#EBF2FF]"
-                      actionText="Generate Pay-slip"
                       onClick={() => navigate('/salary')}
                     />
 
@@ -432,9 +359,8 @@ const Dashboard = () => {
                       icon={UserPlus}
                       title="Add Employee"
                       description="Register new staff member"
-                      bgColor="bg-[#00C292]"
-                      lightBgColor="bg-[#E6FAF5]"
-                      actionText="Add Employee"
+                      bgColor="text-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
                       onClick={openAddEmployee}
                     />
 
@@ -442,21 +368,19 @@ const Dashboard = () => {
                       icon={BarChart3}
                       title="View Reports"
                       description="Access detailed analytics"
-                      bgColor="bg-[#FFB13A]"
-                      lightBgColor="bg-[#FFF5E9]"
-                      actionText="View Reports"
+                      bgColor="text-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
                       onClick={() => navigate('/reports')}
                     />
 
-                    <QuickAction
+                    {/* <QuickAction
                       icon={CreditCard}
                       title="Change Plan"
                       description="Change subscription plan"
-                      bgColor="bg-[#9B8AFB]"
-                      lightBgColor="bg-[#F1EFFF]"
-                      actionText="Change Plan"
+                      bgColor="text-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
                       onClick={() => setIsAddonModalOpen(true)}
-                    />
+                    /> */}
                   </div>
                 </div>
               </div>
@@ -480,6 +404,14 @@ const Dashboard = () => {
           onClose={() => setToast(null)}
         />
       )}
+
+      {/* Success Modal */}
+      {/* <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title={modalTitle}
+        message={modalMessage}
+      /> */}
 
       <ConfirmationModal
         isOpen={confirmation.isOpen}

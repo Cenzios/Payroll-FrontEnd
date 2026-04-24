@@ -8,6 +8,7 @@ interface MonthRangePickerProps {
     endYear: number;
     onStartChange: (month: number, year: number) => void;
     onEndChange: (month: number, year: number) => void;
+    onApply?: (startMonth: number, startYear: number, endMonth: number, endYear: number) => void;
     className?: string;
 }
 
@@ -18,13 +19,12 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
     endYear,
     onStartChange,
     onEndChange,
+    onApply,
     className = ''
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [tempStartMonth, setTempStartMonth] = useState(startMonth);
-    const [tempStartYear, setTempStartYear] = useState(startYear);
     const [tempEndMonth, setTempEndMonth] = useState(endMonth);
-    const [tempEndYear, setTempEndYear] = useState(endYear);
     const [startPanelYear, setStartPanelYear] = useState(startYear);
     const [endPanelYear, setEndPanelYear] = useState(endYear);
     const popupRef = useRef<HTMLDivElement>(null);
@@ -49,15 +49,19 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
         const handleClickOutside = (event: MouseEvent) => {
             if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
                 // Validate and apply the range
-                const startDate = tempStartYear * 12 + tempStartMonth;
-                const endDate = tempEndYear * 12 + tempEndMonth;
+                // const startDate = tempStartYear * 12 + tempStartMonth;
+                // const endDate = tempEndYear * 12 + tempEndMonth;
+                const startDate = startPanelYear * 12 + tempStartMonth;
+                const endDate = endPanelYear * 12 + tempEndMonth;
                 const currentDateValue = currentYear * 12 + currentMonth;
 
                 // Check if range is valid
                 if (startDate <= endDate && endDate <= currentDateValue) {
                     // Apply the changes
-                    onStartChange(tempStartMonth, tempStartYear);
-                    onEndChange(tempEndMonth, tempEndYear);
+                    // onStartChange(tempStartMonth, tempStartYear);
+                    // onEndChange(tempEndMonth, tempEndYear);
+                    onStartChange(tempStartMonth, startPanelYear);
+                    onEndChange(tempEndMonth, endPanelYear);
                 }
                 // Close popup regardless
                 setIsOpen(false);
@@ -71,7 +75,7 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isOpen, tempStartMonth, tempStartYear, tempEndMonth, tempEndYear, onStartChange, onEndChange, currentMonth, currentYear]);
+    }, [isOpen, tempStartMonth, tempEndMonth, startPanelYear, endPanelYear, onStartChange, onEndChange, currentMonth, currentYear]);
 
     const formatDateRange = () => {
         const startMonthName = String(startMonth + 1).padStart(2, '0');
@@ -81,9 +85,7 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
 
     const handleOpen = () => {
         setTempStartMonth(startMonth);
-        setTempStartYear(startYear);
         setTempEndMonth(endMonth);
-        setTempEndYear(endYear);
         setStartPanelYear(startYear);
         setEndPanelYear(endYear);
         setIsOpen(true);
@@ -91,26 +93,54 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
 
     const handleStartMonthClick = (monthIndex: number) => {
         setTempStartMonth(monthIndex);
-        setTempStartYear(startPanelYear);
+        // setTempStartYear(startPanelYear);
     };
 
     const handleEndMonthClick = (monthIndex: number) => {
         setTempEndMonth(monthIndex);
-        setTempEndYear(endPanelYear);
+        // setTempEndYear(endPanelYear);
+    };
+
+    const handleApplyClick = () => {
+        // const startDate = tempStartYear * 12 + tempStartMonth;
+        // const endDate = tempEndYear * 12 + tempEndMonth;
+        const startDate = startPanelYear * 12 + tempStartMonth;
+        const endDate = endPanelYear * 12 + tempEndMonth;
+        const currentDateValue = currentYear * 12 + currentMonth;
+
+        if (startDate > endDate) {
+            alert("Start date must be before end date");
+            return;
+        }
+        if (endDate > currentDateValue) {
+            alert("Cannot select future months");
+            return;
+        }
+        onStartChange(tempStartMonth, startPanelYear);
+        onEndChange(tempEndMonth, endPanelYear);
+
+        if (onApply) {
+            onApply(tempStartMonth, startPanelYear, tempEndMonth, endPanelYear);
+        }
+        setIsOpen(false);
     };
 
     const isMonthSelected = (monthIndex: number, year: number, isStart: boolean) => {
         if (isStart) {
-            return monthIndex === tempStartMonth && year === tempStartYear;
+            // return monthIndex === tempStartMonth && year === tempStartYear;
+            return monthIndex === tempStartMonth && year === startPanelYear;
         } else {
-            return monthIndex === tempEndMonth && year === tempEndYear;
+            // return monthIndex === tempEndMonth && year === tempEndYear;
+            return monthIndex === tempEndMonth && year === endPanelYear;
         }
     };
 
     const isMonthInRange = (monthIndex: number, year: number) => {
         const currentDate = year * 12 + monthIndex;
-        const startDate = tempStartYear * 12 + tempStartMonth;
-        const endDate = tempEndYear * 12 + tempEndMonth;
+        // const startDate = tempStartYear * 12 + tempStartMonth;
+        // const endDate = tempEndYear * 12 + tempEndMonth;
+        const startDate = startPanelYear * 12 + tempStartMonth;
+        const endDate = endPanelYear * 12 + tempEndMonth;
         return currentDate >= startDate && currentDate <= endDate;
     };
 
@@ -165,12 +195,12 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
                                             onClick={() => !disabled && handleStartMonthClick(index)}
                                             disabled={disabled}
                                             className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${disabled
-                                                    ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                                                    : selected
-                                                        ? 'bg-blue-600 text-white shadow-md'
-                                                        : inRange
-                                                            ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                                                : selected
+                                                    ? 'bg-blue-600 text-white shadow-md'
+                                                    : inRange
+                                                        ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                                                 }`}
                                         >
                                             {month}
@@ -209,12 +239,12 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
                                             onClick={() => !disabled && handleEndMonthClick(index)}
                                             disabled={disabled}
                                             className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${disabled
-                                                    ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                                                    : selected
-                                                        ? 'bg-blue-600 text-white shadow-md'
-                                                        : inRange
-                                                            ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                                                : selected
+                                                    ? 'bg-blue-600 text-white shadow-md'
+                                                    : inRange
+                                                        ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                                                 }`}
                                         >
                                             {month}
@@ -226,12 +256,22 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
                     </div>
 
                     {/* Selected Range Display */}
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-                        <div className="text-xs text-blue-600 font-medium mb-1">Selected Range</div>
-                        <div className="text-sm text-blue-900 font-semibold">
-                            {monthsFull[tempStartMonth]} {tempStartYear} – {monthsFull[tempEndMonth]} {tempEndYear}
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 flex gap-64">
+                        <div>
+                            <div className="text-xs text-blue-600 font-medium mb-1">Selected Range</div>
+                            <div className="text-sm text-blue-900 font-semibold">
+                                {/* {monthsFull[tempStartMonth]} {tempStartYear} – {monthsFull[tempEndMonth]} {tempEndYear} */}
+                                {monthsFull[tempStartMonth]} {startPanelYear} – {monthsFull[tempEndMonth]} {endPanelYear}
+                            </div>
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">Click outside to apply</div>
+                        <div>
+                            <button
+                                onClick={handleApplyClick}
+                                className="flex px-9 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
+                            >
+                                Apply
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

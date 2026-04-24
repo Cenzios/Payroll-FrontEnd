@@ -4,9 +4,8 @@ interface QuickActionProps {
     icon: LucideIcon;
     title: string;
     description: string;
-    bgColor: string; // This will now be the icon/button color
-    lightBgColor: string; // This will be the card background color
-    actionText: string;
+    bgColor: string; // The icon text color e.g. text-blue-500
+    lightBgColor: string; // The icon background color e.g. bg-blue-50
     onClick?: () => void;
 }
 
@@ -16,36 +15,30 @@ const QuickAction = ({
     description,
     bgColor,
     lightBgColor,
-    actionText,
     onClick
 }: QuickActionProps) => {
     return (
-        <div className={`${lightBgColor} p-6 rounded-2xl flex flex-col h-full border border-transparent shadow-sm transition-all hover:shadow-md`}>
-            <div className="flex items-start gap-4 mb-6">
-                <div className={`${bgColor} p-3 rounded-xl shadow-sm flex-shrink-0`}>
-                    <Icon className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1">
-                    <h3 className="text-[17px] font-bold text-gray-900 leading-tight">
-                        {title}
-                    </h3>
-                    <p className="text-[14px] text-gray-500 mt-1.5 leading-relaxed">
-                        {description}
-                    </p>
-                </div>
+        <button
+            onClick={onClick}
+            className={`
+                w-full text-left bg-[#F4F9FF] p-3 rounded-2xl flex items-center gap-5 
+                border border-[#2563EB1A] hover:border-gray-200 transition-all 
+                hover:shadow-sm group
+            `}
+        >
+            <div className={`bg-white p-3.5 rounded-full shrink-0 transition-transform group-hover:scale-105`}>
+                <Icon className={`w-4 h-4 ${bgColor}`} />
             </div>
 
-            <button
-                onClick={onClick}
-                className={`
-                    w-full py-2.5 rounded-xl text-white font-semibold text-sm
-                    ${bgColor} hover:opacity-90 transition-all active:scale-[0.98]
-                    shadow-sm mt-auto
-                `}
-            >
-                {actionText}
-            </button>
-        </div>
+            <div className="flex-1">
+                <h3 className="text-[12px] font-bold text-gray-900 leading-tight">
+                    {title}
+                </h3>
+                <p className="text-[10px] text-gray-500 mt-1 leading-snug">
+                    {description}
+                </p>
+            </div>
+        </button>
     );
 };
 

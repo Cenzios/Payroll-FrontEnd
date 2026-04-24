@@ -13,6 +13,7 @@ interface SalaryDetails {
     otHours: number;
     otAmount: number;
     salaryAdvance: number;
+    loanDeduction: number;
     deductions: { name: string; amount: number }[];
 }
 
@@ -27,18 +28,20 @@ interface SalaryState {
     employeeSalaryAdvance: Record<string, number>;
     // Toggle state helper
     employeeEpfEtf: Record<string, boolean>; // Defaults to true
+    employeeLoanEnabled: Record<string, boolean>; // Defaults to true
     // Preview data
     previewPayslip: SalaryDetails | null;
 }
 
 const initialState: SalaryState = {
-    companyWorkingDays: 30, // Default to 30 as per requirements
+    companyWorkingDays: new Date().getDate(),
     selectedMonth: new Date().getMonth(),
     selectedYear: new Date().getFullYear(),
     employeeWorkedDays: {},
     employeeOtHours: {},
     employeeSalaryAdvance: {},
     employeeEpfEtf: {},
+    employeeLoanEnabled: {},
     previewPayslip: null,
 };
 
@@ -56,6 +59,9 @@ const salarySlice = createSlice({
         },
         toggleEpfEtf: (state, action: PayloadAction<{ id: string; value: boolean }>) => {
             state.employeeEpfEtf[action.payload.id] = action.payload.value;
+        },
+        toggleLoanEnabled: (state, action: PayloadAction<{ id: string; value: boolean }>) => {
+            state.employeeLoanEnabled[action.payload.id] = action.payload.value;
         },
         setEmployeeOtHours: (state, action: PayloadAction<{ id: string; hours: number }>) => {
             state.employeeOtHours[action.payload.id] = action.payload.hours;
@@ -90,6 +96,7 @@ export const {
     setEmployeeOtHours,
     setEmployeeSalaryAdvance,
     toggleEpfEtf,
+    toggleLoanEnabled,
     setMonth,
     setYear,
     setPreviewPayslip,

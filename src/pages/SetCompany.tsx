@@ -16,6 +16,9 @@ interface DecodedToken {
   exp: number;
 }
 
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const phoneRegex = /^\+94\s?\d{9}$/;
+
 const SetCompany = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -24,14 +27,20 @@ const SetCompany = () => {
 
   const [formData, setFormData] = useState({
     companyName: '',
-    companyCount: 1,
-    numberOfPeople: 1,
+    // companyCount: 1,
+    // numberOfPeople: 1,
+    companyEmail: '',
+    companyPhone: '',
+    companyAddress: '',
   });
 
   const [validationErrors, setValidationErrors] = useState({
     companyName: '',
-    companyCount: '',
-    numberOfPeople: '',
+    // companyCount: '',
+    // numberOfPeople: '',
+    companyEmail: '',
+    companyPhone: '',
+    companyAddress: '',
   });
 
   // Handle Google OAuth callback
@@ -87,53 +96,96 @@ const SetCompany = () => {
     };
   }, [dispatch]);
 
-  const validateForm = () => {
+  const validateField = (field: string, value: string): string => {
+    switch (field) {
+      case 'companyName': {
+        const trimmed = value.trim();
+        if (!trimmed || trimmed.length < 3 || trimmed.length > 30)
+          return 'Company name must be between 3 and 30 characters';
+        return '';
+      }
+      case 'companyEmail': {
+        const email = value.trim();
+        if (!email)
+          return 'Company email is required';
+        if (email.length > 100)
+          return 'Email must be less than 100 characters';
+        if (!emailRegex.test(email))
+          return 'Invalid email format';
+        if (email.includes('..'))
+          return 'Email cannot contain consecutive dots';
+        if (email.startsWith('.') || email.endsWith('.'))
+          return 'Email cannot start or end with a dot';
+        if (email.split('@')[1]?.startsWith('-') || email.split('@')[1]?.endsWith('-'))
+          return 'Invalid domain format';
+        return '';
+      }
+      case 'companyPhone': {
+        if (!value.trim())
+          return 'Company phone is required';
+        if (!phoneRegex.test(value.trim()))
+          return 'Must be +94 followed by 9 digits';
+        return '';
+      }
+      case 'companyAddress': {
+        if (!value.trim())
+          return 'Company address is required';
+        return '';
+      }
+      default:
+        return '';
+    }
+  };
+
+  const validateForm = (): boolean => {
     const errors = {
-      companyName: '',
-      companyCount: '',
-      numberOfPeople: '',
+      companyName: validateField('companyName', formData.companyName),
+      companyEmail: validateField('companyEmail', formData.companyEmail),
+      companyPhone: validateField('companyPhone', formData.companyPhone),
+      companyAddress: validateField('companyAddress', formData.companyAddress),
     };
-
-    if (!formData.companyName.trim()) {
-      errors.companyName = 'Company name is required';
-    }
-
-    if (formData.companyCount < 1) {
-      errors.companyCount = 'Must be at least 1';
-    }
-
-    if (formData.numberOfPeople < 1) {
-      errors.numberOfPeople = 'Must be at least 1';
-    }
-
     setValidationErrors(errors);
-    return !errors.companyName && !errors.companyCount && !errors.numberOfPeople;
+    // return !errors.companyName && !errors.companyCount && !errors.numberOfPeople;
+    return !errors.companyName && !errors.companyEmail && !errors.companyPhone && !errors.companyAddress;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
+    let processedValue = value;
+    if (name === 'companyPhone') {
+      // For phone, allow + and numbers, but clean up for storage if needed
+      // Actually, let's allow typing but rely on validateForm for the final check
+      // However, user previously asked to ONLY allow numbers.
+      // If we use the regex /^(\+94\d{9}|0\d{9})$/, we should allow + and numbers.
+      processedValue = value.replace(/[^\d+]/g, '');
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'companyName' ? value : parseInt(value) || 0,
+      [name]: processedValue,
     }));
     setValidationErrors((prev) => ({
       ...prev,
-      [name]: '',
+      [name]: validateField(name, processedValue),
     }));
   };
 
-  const handleNumberChange = (field: 'companyCount' | 'numberOfPeople', delta: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: Math.max(1, prev[field] + delta),
-    }));
-  };
+  // const handleNumberChange = (field: 'companyCount' | 'numberOfPeople', delta: number) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     [field]: Math.max(1, prev[field] + delta),
+  //   }));
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
       // ✅ Save company name temporarily for creation after payment
       localStorage.setItem('temp_companyName', formData.companyName);
+      localStorage.setItem('temp_companyEmail', formData.companyEmail);
+      localStorage.setItem('temp_companyPhone', formData.companyPhone);
+      localStorage.setItem('temp_companyAddress', formData.companyAddress);
       navigate('/get-plan');
     }
   };
@@ -145,7 +197,8 @@ const SetCompany = () => {
   return (
     <AuthLayout
       illustration={companyIllustration}
-      title="Tell Us About Your Company"
+      title="About Your Company"
+      subtitle="Tell us about your company"
     >
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -154,6 +207,7 @@ const SetCompany = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Company Name */}
         <div>
           <label
             htmlFor="companyName"
@@ -168,7 +222,7 @@ const SetCompany = () => {
               name="companyName"
               value={formData.companyName}
               onChange={handleChange}
-              className={`block w-full px-4 py-3 border ${validationErrors.companyName
+              className={`block w-full px-4 py-2 border ${validationErrors.companyName
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                 } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 transition-colors`}
@@ -182,7 +236,93 @@ const SetCompany = () => {
           )}
         </div>
 
+        {/* Company Email Address */}
         <div>
+          <label
+            htmlFor="companyEmail"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Company Email Address <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              id="companyEmail"
+              name="companyEmail"
+              value={formData.companyEmail}
+              onChange={handleChange}
+              className={`block w-full px-4 py-2 border ${validationErrors.companyEmail
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 transition-colors`}
+              placeholder="cenzios@gmail.com"
+            />
+          </div>
+          {validationErrors.companyEmail && (
+            <p className="mt-1 text-sm text-red-600">
+              {validationErrors.companyEmail}
+            </p>
+          )}
+        </div>
+        {/* Company Phone Number */}
+        <div>
+          <label
+            htmlFor="companyPhone"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Company Phone Number <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              id="companyPhone"
+              name="companyPhone"
+              value={formData.companyPhone}
+              onChange={handleChange}
+              className={`block w-full px-4 py-2 border ${validationErrors.companyPhone
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 transition-colors`}
+              placeholder="+94 77 123 4567"
+            />
+          </div>
+          {validationErrors.companyPhone && (
+            <p className="mt-1 text-sm text-red-600">
+              {validationErrors.companyPhone}
+            </p>
+          )}
+        </div>
+
+        {/* Company  Address */}
+        <div>
+          <label
+            htmlFor="companyAddress"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Company Address <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              id="companyAddress"
+              name="companyAddress"
+              value={formData.companyAddress}
+              onChange={handleChange}
+              className={`block w-full px-4 py-2 border ${validationErrors.companyAddress
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 transition-colors`}
+              placeholder="No 05, Colombo Rd, Baththaramulla"
+            />
+          </div>
+          {validationErrors.companyAddress && (
+            <p className="mt-1 text-sm text-red-600">
+              {validationErrors.companyAddress}
+            </p>
+          )}
+        </div>
+
+        {/* <div>
           <label
             htmlFor="companyCount"
             className="block text-sm font-medium text-gray-700 mb-2"
@@ -270,7 +410,7 @@ const SetCompany = () => {
               {validationErrors.numberOfPeople}
             </p>
           )}
-        </div>
+        </div> */}
 
         <button
           type="submit"

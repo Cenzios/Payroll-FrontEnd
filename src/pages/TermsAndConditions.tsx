@@ -57,7 +57,7 @@ const TermsAndConditions = () => {
 
                                 {/* System Info */}
                                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                                    <p className="text-sm text-gray-900"><strong>System Name:</strong> Payroll</p>
+                                    <p className="text-sm text-gray-900"><strong>System Name:</strong> CenzHRM</p>
                                     <p className="text-sm text-gray-900"><strong>Company:</strong> Cenzios (Pvt) Ltd</p>
                                     <p className="text-sm text-gray-900"><strong>Operating Regions:</strong> Sri Lanka & Global</p>
                                 </div>
@@ -66,8 +66,8 @@ const TermsAndConditions = () => {
                                 <section>
                                     <h3 className="text-lg font-bold text-gray-900 mb-2">1. Introduction</h3>
                                     <p className="text-sm leading-relaxed text-gray-600">
-                                        These Terms & Conditions govern the use of the Payroll system operated by Cenzios (Pvt) Ltd.
-                                        By registering for, accessing, or using the system, you agree to comply with and be legally bound by these Terms.
+                                        These Terms & Conditions govern the use of the CenzHRM system operated by Cenzios (Pvt) Ltd.
+                                        By registering for, accessing or using the system, you agree to comply with and be legally bound by these Terms.
                                     </p>
                                 </section>
                             </div>
@@ -76,7 +76,7 @@ const TermsAndConditions = () => {
                             <section>
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">2. Nature of the Service</h3>
                                 <p className="text-sm leading-relaxed text-gray-600">
-                                    Payroll is a Business-to-Business (B2B) payroll management system designed exclusively for company owners
+                                    CenzHRM is a Business-to-Business (B2B) payroll management system designed exclusively for company owners
                                     and authorized company representatives. The system enables businesses to manage employee payroll-related processes digitally.
                                 </p>
                             </section>
@@ -171,7 +171,7 @@ const TermsAndConditions = () => {
                                 <p className="text-sm leading-relaxed mb-2 text-gray-600">Cenzios (Pvt) Ltd shall not be liable for:</p>
                                 <ul className="list-disc list-inside space-y-1 text-sm leading-relaxed text-gray-600">
                                     <li>Indirect or consequential losses</li>
-                                    <li>Payroll errors caused by incorrect user inputs</li>
+                                    <li>CenzHRM errors caused by incorrect user inputs</li>
                                     <li>Service interruptions beyond reasonable control</li>
                                 </ul>
                             </section>
@@ -203,29 +203,36 @@ const TermsAndConditions = () => {
                     </div>
 
                     {/* Footer Actions */}
-                    {!hasScrolledToBottom && (
-                        <p className="text-sm text-gray-500">
-                            Please scroll to the bottom to enable agreement
-                        </p>
-                    )}
-                    <div className="px-8 py-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-4">
-                        <button
-                            onClick={handleCancel}
-                            className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleAccept}
-                            disabled={!hasScrolledToBottom}
-                            className={`px-6 py-2.5 font-semibold rounded-lg transition-all
-    ${hasScrolledToBottom
-                                    ? 'bg-[#3A8BFF] text-white hover:bg-[#337AEB] focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                }`}
-                        >
-                            Agree and Continue
-                        </button>
+                    <div className="px-8 py-6 bg-gray-50 border-t border-gray-200 flex flex-col gap-4">
+                        {/* Row 1: Centered Message */}
+                        {!hasScrolledToBottom && (
+                            <div className="text-center w-full">
+                                <p className="text-sm text-gray-500">
+                                    Please scroll to the bottom to enable agreement
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Row 2: Right-aligned Buttons */}
+                        <div className="flex items-center justify-end gap-4 w-full">
+                            <button
+                                onClick={handleCancel}
+                                className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors whitespace-nowrap"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAccept}
+                                disabled={!hasScrolledToBottom}
+                                className={`px-6 py-2.5 font-semibold rounded-lg transition-all whitespace-nowrap
+                                    ${hasScrolledToBottom
+                                        ? 'bg-[#3A8BFF] text-white hover:bg-[#337AEB] focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    }`}
+                            >
+                                Agree and Continue
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

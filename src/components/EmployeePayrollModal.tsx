@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
-import { X, Loader2, FileText, FileSpreadsheet, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Loader2 } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
+import { exportEmployeeModalReport } from '../utils/exportService';
+import { useGetCompaniesQuery } from '../store/apiSlice';
 import Toast from './Toast';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 
 interface EmployeePayrollModalProps {
     isOpen: boolean;
@@ -18,6 +17,7 @@ interface EmployeePayrollModalProps {
 interface MonthlyData {
     month: string;
     workedDays: number;
+    companyWorkingDays?: number;
     basicPay: number;
     otHours: number;
     otAmount: number;
@@ -28,13 +28,17 @@ interface MonthlyData {
     deductions: number;
     employeeEPF: number;
     companyEPFETF: number;
+    loanDeduction?: number;
+    allowances?: { type: string; amount: number }[];
+    customDeductions?: { type: string; amount: number }[];
 }
 
 interface EmployeeData {
     employeeName: string;
     employeeCode: string;
     designation: string;
-    dailyRate: number;
+    salaryType?: string;
+    basicSalary: number;
     joinedDate: string;
     monthlyBreakdown: MonthlyData[];
     annualTotals: {
@@ -51,10 +55,21 @@ interface EmployeeData {
     };
 }
 
-const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, year }: EmployeePayrollModalProps) => {
+const fmt = (val: number) =>
+    `Rs. ${val.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+
+const EmployeePayrollModal = ({
+    isOpen,
+    onClose,
+    employeeId,
+    companyId,
+    month,
+    year,
+}: EmployeePayrollModalProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const [employeeData, setEmployeeData] = useState<EmployeeData | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const { data: companies } = useGetCompaniesQuery();
 
     useEffect(() => {
         if (isOpen && employeeId && companyId && month && year) {
@@ -65,363 +80,264 @@ const EmployeePayrollModal = ({ isOpen, onClose, employeeId, companyId, month, y
     const fetchEmployeeData = async () => {
         setIsLoading(true);
         try {
-            console.log('Fetching data for:', { employeeId, companyId, month, year });
             const response = await reportApi.getEmployeePayrollSummary(employeeId, companyId, month, year);
-            console.log('API Response:', response);
-
-            // The API returns { success, message, data: {...} }
-            // The reportApi.getEmployeePayrollSummary already returns response.data from axios
-            // So we need to access response.data to get the actual employee data
             const actualData = response.data || response;
-            console.log('Setting employee data:', actualData);
             setEmployeeData(actualData);
         } catch (error: any) {
-            console.error('Error fetching employee data:', error);
             setToast({
                 message: error.response?.data?.message || 'Failed to fetch employee data',
-                type: 'error'
+                type: 'error',
             });
         } finally {
             setIsLoading(false);
         }
     };
 
-    const exportPDF = () => {
-        if (!employeeData) return;
+    const handleExport = () => {
+        if (!employeeData || !row) return;
 
-        const doc = new jsPDF();
+        const selectedCompany = companies?.find(c => c.id === companyId);
+        const companyName = selectedCompany?.name || 'Company Name';
+        const companyAddress = selectedCompany?.address || '';
 
-        // Title
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text('PAYROLL SUMMARY REPORT', 14, 15);
+        // Standard 15% breakdown: 12% EPF, 3% ETF
+        const epf12 = row.companyEPFETF * (12 / 15);
+        const etf3 = row.companyEPFETF * (3 / 15);
 
-        // Employee Information
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        let yPos = 30;
+        const totalAllowances = (row.allowances || []).reduce((sum, a) => sum + a.amount, 0);
 
-        doc.text(`Employee Name: ${employeeData.employeeName}`, 14, yPos);
-        doc.text(`Employee ID: ${employeeData.employeeCode}`, 120, yPos);
-        yPos += 7;
-
-        doc.text(`Position: ${employeeData.designation}`, 14, yPos);
-        doc.text(`Daily Rate: RS ${employeeData.dailyRate.toLocaleString()}`, 120, yPos);
-        yPos += 7;
-
-        doc.text(`Joined Date: ${employeeData.joinedDate}`, 14, yPos);
-        yPos += 10;
-
-        // Monthly Breakdown Table
-        const tableData = employeeData.monthlyBreakdown.map(row => [
-            row.month,
-            row.workedDays.toString(),
-            `RS ${row.basicPay.toLocaleString()}`,
-            `RS ${row.otAmount.toLocaleString()} (${row.otHours}h)`,
-            `RS ${row.grossPay.toLocaleString()}`,
-            `RS ${row.netPay.toLocaleString()}`,
-            `RS ${row.tax.toLocaleString()}`,
-            `RS ${row.salaryAdvance.toLocaleString()}`,
-            `RS ${row.deductions.toLocaleString()}`,
-            `RS ${row.employeeEPF.toLocaleString()}`,
-            `RS ${row.companyEPFETF.toLocaleString()}`
-        ]);
-
-        // Add totals row
-        tableData.push([
-            'SELECTED MONTH TOTALS',
-            employeeData.annualTotals.workedDays.toString(),
-            `RS ${employeeData.annualTotals.basicPay.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.otAmount.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.grossPay.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.netPay.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.tax.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.salaryAdvance.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.deductions.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.employeeEPF.toLocaleString()}`,
-            `RS ${employeeData.annualTotals.companyEPFETF.toLocaleString()}`
-        ]);
-
-        autoTable(doc, {
-            startY: yPos,
-            head: [['Month', 'Days', 'Basic', 'OT', 'Gross', 'Net', 'Tax', 'Advance', 'Total Ded.', 'EPF 8%', 'EPF/ETF Comp']],
-            body: tableData,
-            styles: { fontSize: 7 },
-            headStyles: { fillColor: [37, 99, 235], fontStyle: 'bold' },
-            footStyles: { fillColor: [59, 130, 246], fontStyle: 'bold' },
-            didParseCell: (data) => {
-                if (data.row.index === tableData.length - 1) {
-                    data.cell.styles.fillColor = [59, 130, 246];
-                    data.cell.styles.textColor = [255, 255, 255];
-                    data.cell.styles.fontStyle = 'bold';
-                }
-            }
+        exportEmployeeModalReport({
+            companyName,
+            companyAddress,
+            employeeName: employeeData.employeeName,
+            employeeId: employeeData.employeeCode,
+            month: month,
+            year: year,
+            basicSalary: employeeData.basicSalary || row.basicPay,
+            totalAllowances: totalAllowances,
+            grossPay: row.grossPay,
+            totalDeductions: row.deductions,
+            netPay: row.netPay,
+            workedDays: row.workedDays,
+            salaryType: employeeData.salaryType || 'MONTHLY',
+            otHours: row.otHours,
+            otAmount: row.otAmount,
+            epf8: row.employeeEPF,
+            loanDeduction: row.loanDeduction || 0,
+            salaryAdvance: row.salaryAdvance || 0
         });
-
-        doc.save(`${employeeData.employeeCode}_Payroll_Summary.pdf`);
-        setToast({ message: 'PDF exported successfully', type: 'success' });
-    };
-
-    const exportExcel = () => {
-        if (!employeeData) return;
-
-        const wsData: any[][] = [
-            ['PAYROLL SUMMARY REPORT'],
-            [],
-            ['Employee Name:', employeeData.employeeName, '', 'Employee ID:', employeeData.employeeCode],
-            ['Position:', employeeData.designation, '', 'Daily Rate:', `RS ${employeeData.dailyRate.toLocaleString()}`],
-            ['Joined Date:', employeeData.joinedDate],
-            [],
-            ['Monthly Breakdown'],
-            ['Month', 'Days', 'Basic', 'OT', 'Gross', 'Net', 'Tax', 'Advance', 'Total Ded.', 'EPF 8%', 'EPF/ETF Comp'],
-            ...employeeData.monthlyBreakdown.map(row => [
-                row.month,
-                row.workedDays,
-                row.basicPay,
-                row.otAmount,
-                row.grossPay,
-                row.netPay,
-                row.tax,
-                row.salaryAdvance,
-                row.deductions,
-                row.employeeEPF,
-                row.companyEPFETF
-            ]),
-            [
-                'TOTALS',
-                employeeData.annualTotals.workedDays,
-                employeeData.annualTotals.basicPay,
-                employeeData.annualTotals.otAmount,
-                employeeData.annualTotals.grossPay,
-                employeeData.annualTotals.netPay,
-                employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF, // Tax approx
-                '',
-                employeeData.annualTotals.deductions,
-                employeeData.annualTotals.employeeEPF,
-                employeeData.annualTotals.companyEPFETF
-            ]
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Payroll Summary");
-        XLSX.writeFile(wb, `${employeeData.employeeCode}_Payroll_Summary.xlsx`);
-        setToast({ message: 'Excel exported successfully', type: 'success' });
-    };
-
-    const exportCSV = () => {
-        if (!employeeData) return;
-
-        const wsData: any[][] = [
-            ['PAYROLL SUMMARY REPORT'],
-            [],
-            ['Employee Name:', employeeData.employeeName, '', 'Employee ID:', employeeData.employeeCode],
-            ['Position:', employeeData.designation, '', 'Daily Rate:', `RS ${employeeData.dailyRate.toLocaleString()}`],
-            ['Joined Date:', employeeData.joinedDate],
-            [],
-            ['Monthly Breakdown'],
-            ['Month', 'Days', 'Basic', 'OT', 'Gross', 'Net', 'Tax', 'Advance', 'Total Ded.', 'EPF 8%', 'EPF/ETF Comp'],
-            ...employeeData.monthlyBreakdown.map(row => [
-                row.month,
-                row.workedDays,
-                row.basicPay,
-                row.otAmount,
-                row.grossPay,
-                row.netPay,
-                row.tax,
-                row.salaryAdvance,
-                row.deductions,
-                row.employeeEPF,
-                row.companyEPFETF
-            ]),
-            [
-                'TOTALS',
-                employeeData.annualTotals.workedDays,
-                '',
-                '',
-                employeeData.annualTotals.grossPay,
-                employeeData.annualTotals.netPay,
-                employeeData.annualTotals.deductions - employeeData.annualTotals.employeeEPF, // Tax approx
-                '',
-                employeeData.annualTotals.deductions,
-                employeeData.annualTotals.employeeEPF,
-                employeeData.annualTotals.companyEPFETF
-            ]
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const csv = XLSX.utils.sheet_to_csv(ws);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `${employeeData.employeeCode}_Payroll_Summary.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setToast({ message: 'CSV exported successfully', type: 'success' });
     };
 
     if (!isOpen) return null;
 
+    const row: MonthlyData | undefined = employeeData?.monthlyBreakdown?.[0];
+    const totals = employeeData?.annualTotals;
+
+    const monthLabels = employeeData?.monthlyBreakdown?.map(m => m.month) ?? [];
+    const monthRangeLabel =
+        monthLabels.length > 1
+            ? `${monthLabels[0]} – ${monthLabels[monthLabels.length - 1]}`
+            : monthLabels[0] ?? '';
+
     return (
         <>
             <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-                    {/* Header */}
-                    <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-gray-50">
-                        <h2 className="text-xl font-bold text-gray-900">PAYROLL SUMMARY REPORT</h2>
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden">
+
+                    <div className="flex items-center px-7 pt-6 pb-4 relative">
+
+                        {/* Left - Name */}
+                        <h2 className="text-xl font-bold text-gray-900">
+                            {employeeData?.employeeName ?? '—'}
+                        </h2>
+
+                        {/* Center - Employee + Month */}
+                        <div className="absolute left-1/2 transform -translate-x-1/2">
+                            {(employeeData?.employeeCode || monthRangeLabel) && (
+                                <p className="text-sm text-gray-400 text-center font-medium">
+                                    {employeeData?.employeeCode && monthRangeLabel
+                                        ? `${employeeData.employeeCode} - ${monthRangeLabel}`
+                                        : employeeData?.employeeCode || monthRangeLabel}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Right - Close Button */}
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                            className="ml-auto p-2 hover:bg-gray-100 rounded-lg transition-colors"
                         >
-                            <X className="w-5 h-5 text-gray-600" />
+                            <X className="w-5 h-5 text-gray-400" />
                         </button>
                     </div>
 
-                    {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-6">
+                    {/* ── Summary Bar ── */}
+                    <div className="grid grid-cols-3 bg-[#EDF4FF] pt-2 pb-6">
+                        <div className="flex flex-col items-start ml-8">
+                            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Net Pay</span>
+                            <span className="text-[22px] font-bold text-blue-600">
+                                {totals ? fmt(totals.netPay) : '—'}
+                            </span>
+                        </div>
+                        <div className="flex flex-col items-end border-r border-gray-100">
+                            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Gross Pay</span>
+                            <span className="text-[22px] font-bold text-gray-900">
+                                {totals ? fmt(totals.grossPay) : '—'}
+                            </span>
+                        </div>
+                        <div className="flex flex-col items-end mr-10">
+                            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Deduction</span>
+                            <span className="text-[22px] font-bold text-red-600">
+                                {totals ? `-${fmt(totals.deductions)}` : '—'}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* ── Body ── */}
+                    <div className="flex-1 overflow-y-auto px-7 pb-2 max-h-[60vh]">
                         {isLoading ? (
-                            <div className="flex justify-center items-center h-32">
+                            <div className="flex justify-center items-center py-16">
                                 <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
                             </div>
-                        ) : employeeData ? (
+                        ) : !employeeData || !row ? (
+                            <div className="text-center py-16 text-gray-400 text-sm">No data available</div>
+                        ) : (
                             <>
-                                {/* Employee Information */}
-                                <div className="bg-gray-50 rounded-lg p-1 mb-3">
-                                    <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Employee Name:</span>
-                                            <span className="text-base font-medium text-gray-900">{employeeData.employeeName}</span>
-                                        </div>
+                                {/* EARNINGS */}
+                                <div className="mt-4 mb-8">
+                                    <div className="flex items-center justify-between py-2 mb-2">
+                                        <span className="text-[12px] font-semibold text-gray-400 uppercase tracking-widest">Earnings</span>
+                                        <span className="text-[15px] font-semibold text-green-600">{fmt(row.grossPay)}</span>
+                                    </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Employee ID:</span>
-                                            <span className="text-base font-medium text-gray-900">{employeeData.employeeCode}</span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Position:</span>
-                                            <span className="text-base font-medium text-gray-900">{employeeData.designation}</span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Daily Rate:</span>
-                                            <span className="text-base font-medium text-gray-900">
-                                                RS: {employeeData.dailyRate.toLocaleString()}
+                                    <div className="space-y-0.5 ml-3">
+                                        {/* Basic Salary */}
+                                        <div className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                            <div className="flex flex-col">
+                                                <span className="text-[15px] font-medium text-gray-900">Basic salary</span>
+                                                <span className="text-[13px] text-[#94A3B8] mt-0.5">
+                                                    {row.workedDays} days X {fmt(row.basicPay / (row.workedDays || 1))}/day
+                                                </span>
+                                            </div>
+                                            <span className="text-[15px] font-medium text-gray-900">
+                                                {fmt(row.basicPay || 0)}
                                             </span>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Joined Date:</span>
-                                            <span className="text-base font-medium text-gray-900">{employeeData.joinedDate}</span>
-                                        </div>
-                                    </div>
+                                        {/* Overtime */}
+                                        {row.otAmount > 0 && (
+                                            <div className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[15px] font-medium text-gray-900">Overtime</span>
+                                                    <span className="text-[13px] text-[#94A3B8] mt-0.5">
+                                                        {row.otHours} hrs X {fmt((row.otAmount / (row.otHours || 1)))}/hr
+                                                    </span>
+                                                </div>
+                                                <span className="text-[15px] font-medium text-gray-900">
+                                                    {fmt(row.otAmount)}
+                                                </span>
+                                            </div>
+                                        )}
 
+                                        {/* Custom Allowances */}
+                                        {row.allowances?.map((a, i) => (
+                                            <div key={i} className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                                <span className="text-[15px] font-medium text-gray-900">{a.type}</span>
+                                                <span className="text-[15px] font-medium text-gray-900">
+                                                    {fmt(a.amount)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
-                                {/* Monthly Breakdown Table */}
-                                <div className="bg-white rounded-lg border border-gray-200">
-                                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                                        <h3 className="text-sm font-bold text-gray-800">Monthly Breakdown</h3>
+                                {/* DEDUCTIONS */}
+                                <div className="mb-8">
+                                    <div className="flex items-center justify-between py-2 mb-2">
+                                        <span className="text-[12px] font-semibold text-gray-400 uppercase tracking-widest">Deductions</span>
+                                        <span className="text-[15px] font-semibold text-red-500">-{fmt(row.deductions)}</span>
                                     </div>
 
-                                    {employeeData.monthlyBreakdown.length === 0 ? (
-                                        <div className="px-6 py-12 text-center text-gray-500">
-                                            No salary data available
+                                    <div className="space-y-0.5 ml-3">
+                                        {/* Employee EPF */}
+                                        <div className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                            <div className="flex flex-col">
+                                                <span className="text-[15px] font-medium text-gray-900">Employee EPF</span>
+                                                <span className="text-[13px] text-[#94A3B8] mt-0.5">8% of basic salary</span>
+                                            </div>
+                                            <span className="text-[15px] font-medium text-red-600">
+                                                -{fmt(row.employeeEPF)}
+                                            </span>
                                         </div>
-                                    ) : (
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full text-sm">
-                                                <thead className="bg-gray-800 text-white">
-                                                    <tr>
-                                                        <th className="px-4 py-3 text-left font-semibold">Month</th>
-                                                        <th className="px-4 py-3 text-center font-semibold">Days</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Basic</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">OT</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Gross</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Net</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Tax</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Advance</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">Total Ded.</th>
-                                                        <th className="px-4 py-3 text-right font-semibold">EPF 8%</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-100">
-                                                    {employeeData.monthlyBreakdown.map((row, index) => (
-                                                        <tr key={index} className="hover:bg-gray-50 border-b border-gray-100">
-                                                            <td className="px-4 py-3 font-medium text-gray-900">{row.month}</td>
-                                                            <td className="px-4 py-3 text-center text-gray-700">{row.workedDays}</td>
-                                                            <td className="px-4 py-3 text-right text-gray-900 font-medium">RS: {row.basicPay.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-green-600 font-medium">RS: {row.otAmount.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-gray-900 font-bold">RS: {row.grossPay.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-blue-600 font-bold">RS: {row.netPay.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-red-600">RS: {row.tax.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-red-600">RS: {row.salaryAdvance.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-red-700 font-medium">RS: {row.deductions.toLocaleString()}</td>
-                                                            <td className="px-4 py-3 text-right text-gray-900">RS: {row.employeeEPF.toLocaleString()}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                                {/* Annual Totals Footer */}
-                                                <tfoot className="bg-blue-600 text-white font-bold">
-                                                    <tr>
-                                                        <td className="px-4 py-3 text-left">SELECTED MONTH TOTALS</td>
-                                                        <td className="px-4 py-3 text-center">{employeeData.annualTotals.workedDays}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.basicPay.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.otAmount.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.grossPay.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.netPay.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.tax.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.salaryAdvance.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.deductions.toLocaleString()}</td>
-                                                        <td className="px-4 py-3 text-right">RS: {employeeData.annualTotals.employeeEPF.toLocaleString()}</td>
-                                                    </tr>
-                                                </tfoot>
-                                            </table>
-                                        </div>
-                                    )}
+
+                                        {/* Loan Deduction */}
+                                        {(row.loanDeduction ?? 0) > 0 && (
+                                            <div className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[15px] font-medium text-gray-900">Loan deduction</span>
+                                                    <span className="text-[13px] text-[#94A3B8] mt-0.5">Monthly instalment</span>
+                                                </div>
+                                                <span className="text-[15px] font-medium text-red-600">
+                                                    -{fmt(row.loanDeduction ?? 0)}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Salary Advance */}
+                                        {row.salaryAdvance > 0 && (
+                                            <div className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[15px] font-medium text-gray-900">Advance deduction</span>
+                                                    <span className="text-[13px] text-[#94A3B8] mt-0.5">Salary advance recovery</span>
+                                                </div>
+                                                <span className="text-[15px] font-medium text-red-600">
+                                                    -{fmt(row.salaryAdvance)}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Custom Deductions */}
+                                        {row.customDeductions?.map((d, i) => (
+                                            <div key={i} className="flex items-start justify-between py-3.5 border-b border-gray-200 last:border-0">
+                                                <span className="text-[15px] font-medium text-gray-900">{d.type}</span>
+                                                <span className="text-[15px] font-medium text-red-600">
+                                                    -{fmt(d.amount)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Company EPF/ETF note */}
+                                <div className="flex items-center justify-between px-6 py-4 rounded-xl border border-[#D2E3FC] bg-[#F4F7FB] mb-6">
+                                    <span className="text-[13px] font-normal text-blue-600">
+                                        Company EPF/ETF contribution (not deducted from employee)
+                                    </span>
+                                    <span className="text-[13px] font-normal text-blue-600 ml-4 whitespace-nowrap">
+                                        {fmt(row.companyEPFETF)}
+                                    </span>
                                 </div>
                             </>
-                        ) : (
-                            <div className="flex justify-center items-center h-64 text-gray-500">
-                                No data available
-                            </div>
                         )}
                     </div>
 
-                    {/* Footer - Export Buttons */}
-                    <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+                    {/* ── Footer Buttons ── */}
+                    <div className="px-7 py-6 flex items-center justify-between">
+                        <p className="text-[13px] text-gray-400 font-medium">All values in LKR</p>
                         <button
-                            onClick={exportPDF}
-                            disabled={!employeeData || employeeData.monthlyBreakdown.length === 0}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                            disabled={!employeeData}
+                            onClick={handleExport}
+                            className="px-8 py-3 rounded-xl border border-green-500/30 hover:bg-green-50 disabled:border-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed text-green-600 text-[15px] font-normal transition-all"
                         >
-                            <FileText className="w-4 h-4" />
-                            Export PDF
-                        </button>
-                        <button
-                            onClick={exportExcel}
-                            disabled={!employeeData || employeeData.monthlyBreakdown.length === 0}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                        >
-                            <FileSpreadsheet className="w-4 h-4" />
-                            Export Excel
-                        </button>
-                        <button
-                            onClick={exportCSV}
-                            disabled={!employeeData || employeeData.monthlyBreakdown.length === 0}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                        >
-                            <Download className="w-4 h-4" />
-                            Export CSV
+                            Export Pay-slip
                         </button>
                     </div>
                 </div>
             </div>
 
-            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+            {toast && (
+                <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+            )}
         </>
     );
 };
