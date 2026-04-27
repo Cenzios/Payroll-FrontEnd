@@ -4,6 +4,7 @@ import { useAppSelector } from '../store/hooks';
 import { Loader2 } from 'lucide-react';
 import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
+import PlanOption from '../components/PlanOption';
 import { PLANS, getPlanById } from '../constants/plans';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 
@@ -23,6 +24,8 @@ const BuyPlan = () => {
 
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
   const [isFetchingSub, setIsFetchingSub] = useState(true);
+
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "manual">("card");
 
   // Stripe State
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -131,7 +134,7 @@ const BuyPlan = () => {
             <p className="text-gray-600 font-medium">Preparing secure payment...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
+          <div className="grid grid-cols-[1fr_1fr] gap-10">
             {/* Dynamic Plan Card - Shows Selected Plan */}
             <PlanCard
               planName={activeSubscription?.planName || selectedPlan.name}
@@ -144,16 +147,21 @@ const BuyPlan = () => {
               showButton={false}
             />
 
-            <div className="bg-white rounded-2xl shadow-xl p-4 flex flex-col">
+            <PlanOption
+              value={paymentMethod}
+              onChange={setPaymentMethod}
+            />
+
+            {/* <div className="bg-white rounded-[2.5rem] shadow-xl p-4 flex flex-col">
               <div className="mb-4 text-center space-y-2">
                 <h2 className="text-xl font-semibold text-gray-900">Secure Payment via Stripe</h2>
                 <p className="text-gray-600 text-sm">
                   Enter your card details to subscribe.
                 </p>
-              </div>
+              </div> */}
 
-              {/* Stripe Elements Provider */}
-              {clientSecret && (
+            {/* Stripe Elements Provider */}
+            {/* {clientSecret && (
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
                   <CheckoutForm
                     amount={activeSubscription?.registrationFee || selectedPlan.registrationFee}
@@ -161,7 +169,7 @@ const BuyPlan = () => {
                   />
                 </Elements>
               )}
-            </div>
+            </div> */}
           </div>
         )}
       </div>

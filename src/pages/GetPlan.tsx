@@ -190,7 +190,7 @@ const GetPlan = () => {
               </p>
             </div>
 
-            <div className="px-9 pt-7 pb-5 space-y-4 text-[13px] text-[#334155]">
+            <div className="px-9 pt-7 pb-7 space-y-4 text-[13px] text-[#334155]">
               <p className="text-[13px] opacity-90">
                 Everything in the Basic plan, plus features
                 built around your specific requirements:
@@ -214,7 +214,7 @@ const GetPlan = () => {
 
               <button
                 onClick={() => setIsContactModalOpen(true)}
-                className="w-full text-[15px] bg-gradient-to-r from-[#2348AA] to-[#153885] mb-5 text-white font-bold py-3 rounded-[2rem] shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full text-[15px] bg-[#0C3080] text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 Contact Us
               </button>
