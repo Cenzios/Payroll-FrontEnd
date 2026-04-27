@@ -1,4 +1,5 @@
-import { Check, Loader2 } from 'lucide-react';
+import { ArrowBigLeft, ArrowLeft, Check, Loader2, MoveRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface PlanCardProps {
     planName: string;
@@ -23,6 +24,8 @@ const PlanCard: React.FC<PlanCardProps> = ({
     onSelectPlan,
     className = ''
 }) => {
+
+    const navigate = useNavigate();
     return (
         <div className={` bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300 ${showButton ? 'hover:shadow-3xl hover:-translate-y-1' : ''
             } ${isHighlighted ? 'ring-1 ring-blue-100' : ''} ${className} w-full max-w-md`}>
@@ -58,23 +61,36 @@ const PlanCard: React.FC<PlanCardProps> = ({
                     ))}
                 </div>
 
-                {/* Get the Plan Button */}
-                {showButton && (
-                    <button
-                        onClick={onSelectPlan}
-                        disabled={isLoading}
-                        className="w-full bg-gradient-to-r from-[#2348AA] to-[#0E1D44] mb-5 text-white font-bold py-3 rounded-[2rem] shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                                Processing...
-                            </>
-                        ) : (
-                            'Get the plan'
-                        )}
-                    </button>
-                )}
+                <div className='flex gap-4 text-sm'>
+                    {/* Get the Plan Button */}
+                    {showButton && (
+                        <button
+                            onClick={onSelectPlan}
+                            disabled={isLoading}
+                            className="w-full bg-[#0C3080] mb-5 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                                    Processing...
+                                </>
+                            ) : (
+                                'Get the plan'
+                            )}
+                        </button>
+                    )}
+
+                    {/* Start Free Trial Button */}
+                    {showButton && (
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="w-full bg-white mb-5 text-[#0C3080] border border-[#0C3080] font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed">
+                            Start free trial
+                            <MoveRight className="w-4 h-4 ml-2" />
+                        </button>
+                    )}
+                </div>
+
             </div>
         </div>
     );
