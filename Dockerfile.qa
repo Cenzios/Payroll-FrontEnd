@@ -13,7 +13,7 @@ RUN npm run build
 # Nginx stage
 FROM nginx:alpine
 
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY nginx.qa.conf /etc/nginx/nginx.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
 ENV NGINX_PORT=6080
