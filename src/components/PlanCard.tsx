@@ -24,7 +24,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
     className = ''
 }) => {
     return (
-        <div className={`bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300 ${showButton ? 'hover:shadow-3xl hover:-translate-y-1' : ''
+        <div className={` bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300 ${showButton ? 'hover:shadow-3xl hover:-translate-y-1' : ''
             } ${isHighlighted ? 'ring-1 ring-blue-100' : ''} ${className} w-full max-w-md`}>
 
             {/* Header with Pricing */}
@@ -36,7 +36,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
                     <span className="text-5xl text-white font-bold"> {price}</span>
                     <span className="text-sm text-white opacity-80 lowercase tracking-wider ml-1">/ employee / mo</span>
                 </div>
-                <p className="text-xs font-light flex items-start text-white mt-2">For teams up to 29 employees</p>
+                <p className="text-xs font-light flex items-start text-white mt-2">No employee limit - scales as your team grows</p>
                 <p className="text-[10px] font-medium flex items-start text-white mt-3 bg-white/20 px-5 py-1 rounded-full w-fit border border-white/30">MOST POPULAR</p>
             </div>
 

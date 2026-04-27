@@ -109,9 +109,8 @@ const BuyPlan = () => {
 
   return (
     <div
-      className="min-h-screen relative overflow-hidden
-  bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
-  flex items-center justify-center px-4 py-12"
+      className="relative min-h-screen overflow-y-auto  bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
+  flex items-center justify-center px-4 py-10 scroll-smooth"
     >
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
@@ -127,7 +126,7 @@ const BuyPlan = () => {
         )}
 
         {isFetchingSub || isLoadingSecret ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-xl">
+          <div className="flex flex-col items-center justify-center py-10 bg-white rounded-2xl shadow-xl">
             <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
             <p className="text-gray-600 font-medium">Preparing secure payment...</p>
           </div>
@@ -145,8 +144,8 @@ const BuyPlan = () => {
               showButton={false}
             />
 
-            <div className="bg-white rounded-2xl shadow-xl p-8 flex flex-col">
-              <div className="mb-8 text-center space-y-4">
+            <div className="bg-white rounded-2xl shadow-xl p-4 flex flex-col">
+              <div className="mb-4 text-center space-y-2">
                 <h2 className="text-xl font-semibold text-gray-900">Secure Payment via Stripe</h2>
                 <p className="text-gray-600 text-sm">
                   Enter your card details to subscribe.
@@ -168,17 +167,13 @@ const BuyPlan = () => {
       </div>
 
       {/* Background Wave - Bottom Right */}
-      <div
-        className="absolute bottom-[-350px] right-[-200px]
-  w-[700px] h-[700px]
-  z-0 pointer-events-none"
-      >
+      {/* <div className="absolute bottom-[-350px] right-[-200px] w-[700px] h-[700px] z-0 pointer-events-none">
         <img
           src={bgIllustration}
           alt="Background Wave"
           className="w-full h-full object-contain"
         />
-      </div>
+      </div> */}
     </div>
   );
 };

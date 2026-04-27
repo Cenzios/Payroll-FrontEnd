@@ -192,7 +192,7 @@ const GetPlan = () => {
 
             <div className="px-9 pt-7 pb-5 space-y-4 text-[13px] text-[#334155]">
               <p className="text-[13px] opacity-90">
-                Everything in the Professional plan, plus features
+                Everything in the Basic plan, plus features
                 built around your specific requirements:
               </p>
 
