@@ -31,16 +31,36 @@ const PlanCard: React.FC<PlanCardProps> = ({
             } ${isHighlighted ? 'ring-1 ring-blue-100' : ''} ${className} w-full max-w-md`}>
 
             {/* Header with Pricing */}
-            <div className={`relative px-10 py-8 text-center text-white overflow-hidden bg-gradient-to-br from-[#2348AA] to-[#0E1D44]`}>
+            {/* <div className={`relative px-10 py-8 text-center text-white overflow-hidden bg-gradient-to-br from-[#2348AA] to-[#0E1D44]`}> */}
+            <div
+                className="relative px-10 py-8 text-center text-white overflow-hidden"
+                style={{
+                    background: `linear-gradient(
+                        305deg,
+                        #1E3C72 23%,
+                        #1E3C72 28%,
+                        #1E3C72 32%,
+                        #1E3C72 40%,
+                        #1E3C72 40%,
+                        #1E3C72 42%,
+                        #203F77 48%,
+                        #234581 61%,
+                        #1E3C72 62%,
+                        #2A5298 72%
+                    )`
+                }}
+            >
 
-                <p className="text-xs tracking-widest opacity-80 flex items-start uppercase">{planName}</p>
-                <div className="flex items-baseline gap-1 mt-3">
+                <p className="text-xs tracking-widest opacity-80 flex items-start uppercase">{planName} Plan</p>
+                <p className="text-xs font-light flex items-start text-white mt-[22px]">No employee limit - scales as your team grows</p>
+
+                <p className="text-[10px] font-medium flex items-start text-white mt-3 bg-white/20 px-5 py-1 rounded-full w-fit border border-white/30">MOST POPULAR</p>
+
+                <div className="flex items-baseline gap-1 mt-1">
                     <p className="text-xl text-white font-semibold">RS:</p>
                     <span className="text-5xl text-white font-bold"> {price}</span>
-                    <span className="text-sm text-white opacity-80 lowercase tracking-wider ml-1">/ employee / mo</span>
+                    <span className="text-[13px] text-white opacity-80 lowercase font-light ml-1">/ employee / mo</span>
                 </div>
-                <p className="text-xs font-light flex items-start text-white mt-2">No employee limit - scales as your team grows</p>
-                <p className="text-[10px] font-medium flex items-start text-white mt-3 bg-white/20 px-5 py-1 rounded-full w-fit border border-white/30">MOST POPULAR</p>
             </div>
 
             {/* Plan Details & Features */}
