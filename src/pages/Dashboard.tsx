@@ -13,7 +13,8 @@ import {
   Plus,
   PieChart,
   ChevronDown,
-  Building2
+  Building2,
+  AlertTriangle
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
@@ -214,22 +215,39 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 font-sans">
-      <Sidebar />
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
+      <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
+        <AlertTriangle className="w-5 h-5" />
+        <p className="text-white">Heads Up! Your trial ends in
+          <span className="font-bold p-[2px] rounded-[4px] bg-orange-400 mx-2"> 7 </span>
+          Days</p>
+        <span className='text-gray-700 text-2xl'> | </span>
+        <p>
+          <span
+            className='font-extrabold underline cursor-pointer'>
+            Upgrade Now</span>
+          to keep your account active!</p>
+      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
-        <PageHeader
-          title={`${getGreeting()}, ${user?.fullName?.split(' ')[0] || 'User'}`}
-          subtitle="Here's Your Dashboard Overview"
-          showLogout={true}
-          actionElement={
-            <>
-              {/* Company Switcher */}
-              <div className="relative">
-                <button
-                  onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
-                  className="
+      {/* Margin bottom gap after the banner */}
+      <div className="-mb-4 shrink-0"></div>
+
+      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
+        <Sidebar />
+
+        {/* Main Content */}
+        <div className="flex-1 ml-64 p-6 h-full overflow-hidden flex flex-col">
+          <PageHeader
+            title={`${getGreeting()}, ${user?.fullName?.split(' ')[0] || 'User'}`}
+            subtitle="Here's Your Dashboard Overview"
+            showLogout={true}
+            actionElement={
+              <>
+                {/* Company Switcher */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                    className="
                     flex items-center gap-2
                     px-4 py-2
                     rounded-xl
@@ -238,142 +256,142 @@ const Dashboard = () => {
                     hover:bg-gray-50
                     text-sm font-medium text-gray-700
                   "
+                  >
+                    <Building2 className="w-4 h-4 text-gray-500" />
+                    {selectedCompany?.name
+                      ? selectedCompany.name.split(' ').slice(0, 2).join(' ') + ' ...'
+                      : 'Select Company'}
+                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                  </button>
+
+                  <CompanySwitcher
+                    isOpen={isCompanyDropdownOpen}
+                    onClose={() => setIsCompanyDropdownOpen(false)}
+                    companies={companies}
+                    selectedCompanyId={selectedCompanyId}
+                    onSelectCompany={(id) => dispatch(setSelectedCompanyId(id))}
+                    onAddNew={() => {
+                      setIsCompanyDropdownOpen(false);
+                      openAddCompany();
+                    }}
+                  />
+                </div>
+
+                {/* add employee button */}
+                <button
+                  onClick={() => {
+                    if (!selectedCompanyId) {
+                      setToast({
+                        message: "Please select a company from the Dashboard first.",
+                        type: "error",
+                      });
+                      return;
+                    }
+                    openAddEmployee();
+                  }}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                  title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
                 >
-                  <Building2 className="w-4 h-4 text-gray-500" />
-                  {selectedCompany?.name
-                    ? selectedCompany.name.split(' ').slice(0, 2).join(' ') + ' ...'
-                    : 'Select Company'}
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                  <span className="hidden sm:inline whitespace-nowrap">Add New Employee</span>
+                  <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                    <Plus className="w-4 h-4" />
+                  </div>
                 </button>
 
-                <CompanySwitcher
-                  isOpen={isCompanyDropdownOpen}
-                  onClose={() => setIsCompanyDropdownOpen(false)}
-                  companies={companies}
-                  selectedCompanyId={selectedCompanyId}
-                  onSelectCompany={(id) => dispatch(setSelectedCompanyId(id))}
-                  onAddNew={() => {
-                    setIsCompanyDropdownOpen(false);
-                    openAddCompany();
-                  }}
-                />
-              </div>
-
-              {/* add employee button */}
-              <button
-                onClick={() => {
-                  if (!selectedCompanyId) {
-                    setToast({
-                      message: "Please select a company from the Dashboard first.",
-                      type: "error",
-                    });
-                    return;
-                  }
-                  openAddEmployee();
-                }}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
-                title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
-              >
-                <span className="hidden sm:inline whitespace-nowrap">Add New Employee</span>
-                <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
-                  <Plus className="w-4 h-4" />
-                </div>
-              </button>
-
-              {/* add company button */}
-              <button
-                onClick={openAddCompany}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
-                title="Add New Company"
-              >
-                <span className="hidden sm:inline whitespace-nowrap">Add New Company</span>
-                <span className="sm:hidden whitespace-nowrap">Add</span>
-                <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
-                  <Plus className="w-4 h-4" />
-                </div>
-              </button>
+                {/* add company button */}
+                <button
+                  onClick={openAddCompany}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                  title="Add New Company"
+                >
+                  <span className="hidden sm:inline whitespace-nowrap">Add New Company</span>
+                  <span className="sm:hidden whitespace-nowrap">Add</span>
+                  <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                    <Plus className="w-4 h-4" />
+                  </div>
+                </button>
 
 
-            </>
-          }
-        />
+              </>
+            }
+          />
 
-        <main className="flex-1">
-          {isDashboardLoading ? <DashboardSkeleton /> : (
-            <>
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <StatCard
-                  icon={Users}
-                  title="Total Active Employees"
-                  value={dashboardData?.totalEmployees?.toString() || '0'}
-                  colorTheme="blue"
-                  showLastMonth={true}
-                />
-                <StatCard
-                  icon={DollarSign}
-                  title="Total Salary Paid"
-                  value={`Rs ${lastMonthSalary.toLocaleString()}`}
-                  colorTheme="green"
-                  showLastMonth={true}
-                />
-                <StatCard
-                  icon={Plus}
-                  title="Company EPF/ETF Amount"
-                  value={`Rs ${((dashboardData?.totalCompanyEPF || 0) + (dashboardData?.totalCompanyETF || 0)).toLocaleString()}`}
-                  colorTheme="purple"
-                  showLastMonth={false}
-                />
-                <StatCard
-                  icon={PieChart}
-                  title="Total Employee EPF"
-                  value={`Rs ${dashboardData?.totalEmployeeEPF?.toLocaleString() || '0'}`}
-                  colorTheme="orange"
-                  showLastMonth={false}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start flex-1 overflow-hidden">
-                {/* Left (2/3) – Salary Paid Summary Chart */}
-                <div className="lg:col-span-2 h-full flex flex-col">
-                  <SalaryPaidSummary companyId={selectedCompanyId || ''} />
+          <main className="flex-1">
+            {isDashboardLoading ? <DashboardSkeleton /> : (
+              <>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                  <StatCard
+                    icon={Users}
+                    title="Total Active Employees"
+                    value={dashboardData?.totalEmployees?.toString() || '0'}
+                    colorTheme="blue"
+                    showLastMonth={true}
+                  />
+                  <StatCard
+                    icon={DollarSign}
+                    title="Total Salary Paid"
+                    value={`Rs ${lastMonthSalary.toLocaleString()}`}
+                    colorTheme="green"
+                    showLastMonth={true}
+                  />
+                  <StatCard
+                    icon={Plus}
+                    title="Company EPF/ETF Amount"
+                    value={`Rs ${((dashboardData?.totalCompanyEPF || 0) + (dashboardData?.totalCompanyETF || 0)).toLocaleString()}`}
+                    colorTheme="purple"
+                    showLastMonth={false}
+                  />
+                  <StatCard
+                    icon={PieChart}
+                    title="Total Employee EPF"
+                    value={`Rs ${dashboardData?.totalEmployeeEPF?.toLocaleString() || '0'}`}
+                    colorTheme="orange"
+                    showLastMonth={false}
+                  />
                 </div>
 
-                {/* Right (1/3) – Quick Actions */}
-                <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col h-full">
-                  <h2 className="text-[15px] font-semibold text-gray-900 mb-4">
-                    Quick Actions
-                  </h2>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start flex-1 overflow-hidden">
+                  {/* Left (2/3) – Salary Paid Summary Chart */}
+                  <div className="lg:col-span-2 h-full flex flex-col">
+                    <SalaryPaidSummary companyId={selectedCompanyId || ''} />
+                  </div>
 
-                  <div className="flex flex-col gap-4">
-                    <QuickAction
-                      icon={FileText}
-                      title="Generate Payslips"
-                      description="Create monthly payslips"
-                      bgColor="text-[#4182F9]"
-                      lightBgColor="bg-[#EBF2FF]"
-                      onClick={() => navigate('/salary')}
-                    />
+                  {/* Right (1/3) – Quick Actions */}
+                  <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col h-full">
+                    <h2 className="text-[15px] font-semibold text-gray-900 mb-4">
+                      Quick Actions
+                    </h2>
 
-                    <QuickAction
-                      icon={UserPlus}
-                      title="Add Employee"
-                      description="Register new staff member"
-                      bgColor="text-[#4182F9]"
-                      lightBgColor="bg-[#EBF2FF]"
-                      onClick={openAddEmployee}
-                    />
+                    <div className="flex flex-col gap-4">
+                      <QuickAction
+                        icon={FileText}
+                        title="Generate Payslips"
+                        description="Create monthly payslips"
+                        bgColor="text-[#4182F9]"
+                        lightBgColor="bg-[#EBF2FF]"
+                        onClick={() => navigate('/salary')}
+                      />
 
-                    <QuickAction
-                      icon={BarChart3}
-                      title="View Reports"
-                      description="Access detailed analytics"
-                      bgColor="text-[#4182F9]"
-                      lightBgColor="bg-[#EBF2FF]"
-                      onClick={() => navigate('/reports')}
-                    />
+                      <QuickAction
+                        icon={UserPlus}
+                        title="Add Employee"
+                        description="Register new staff member"
+                        bgColor="text-[#4182F9]"
+                        lightBgColor="bg-[#EBF2FF]"
+                        onClick={openAddEmployee}
+                      />
 
-                    {/* <QuickAction
+                      <QuickAction
+                        icon={BarChart3}
+                        title="View Reports"
+                        description="Access detailed analytics"
+                        bgColor="text-[#4182F9]"
+                        lightBgColor="bg-[#EBF2FF]"
+                        onClick={() => navigate('/reports')}
+                      />
+
+                      {/* <QuickAction
                       icon={CreditCard}
                       title="Change Plan"
                       description="Change subscription plan"
@@ -381,12 +399,13 @@ const Dashboard = () => {
                       lightBgColor="bg-[#EBF2FF]"
                       onClick={() => setIsAddonModalOpen(true)}
                     /> */}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
-        </main>
+              </>
+            )}
+          </main>
+        </div>
       </div>
 
       <UniversalDrawer
