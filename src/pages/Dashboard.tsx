@@ -9,7 +9,6 @@ import {
   FileText,
   UserPlus,
   BarChart3,
-  CreditCard,
   Plus,
   PieChart,
   ChevronDown,
@@ -221,12 +220,12 @@ const Dashboard = () => {
         <p className="text-white">Heads Up! Your trial ends in
           <span className="font-bold p-[2px] rounded-[4px] bg-orange-400 mx-2"> 7 </span>
           Days</p>
-        <span className='text-gray-700 text-2xl'> | </span>
+        <span className='text-gray-600 text-2xl'> | </span>
         <p>
-          <span
+          <button
+            onClick={() => navigate('/get-plan?isUpgrade=true')}
             className='font-extrabold underline cursor-pointer'>
-            Upgrade Now</span>
-          to keep your account active!</p>
+            Upgrade Now</button> to keep your account active!</p>
       </div>
 
       {/* Margin bottom gap after the banner */}

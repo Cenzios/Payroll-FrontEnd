@@ -67,12 +67,12 @@ const PlanVerify = () => {
             {/* Buttons */}
             <div className="flex gap-3 mt-6">
 
-                <button
+                {/* <button
                     onClick={() => navigate('/dashboard')}
                     className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-3 text-sm text-gray-600 hover:bg-gray-50">
                     <ArrowLeft className="w-4 h-4" />
                     Back to Dashboard
-                </button>
+                </button> */}
 
                 <button
                     onClick={() => setIsContactModalOpen(true)}

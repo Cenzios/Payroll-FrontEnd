@@ -10,6 +10,7 @@ interface PlanCardProps {
     showButton?: boolean;
     isLoading?: boolean;
     onSelectPlan?: () => void;
+    showFreeTrial?: boolean;
     className?: string;
 }
 
@@ -22,6 +23,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
     showButton = true,
     isLoading = false,
     onSelectPlan,
+    showFreeTrial = true,
     className = ''
 }) => {
 
@@ -52,7 +54,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
             >
 
                 <p className="text-xs tracking-widest opacity-80 flex items-start uppercase">{planName} Plan</p>
-                <p className="text-xs font-light flex items-start text-white mt-[22px]">No employee limit - scales as your team grows</p>
+                <p className="text-xs font-light flex items-start text-white mt-[18px]">No employee limit - scales as your team grows</p>
 
                 <p className="text-[10px] font-medium flex items-start text-white mt-3 bg-white/20 px-5 py-1 rounded-full w-fit border border-white/30">MOST POPULAR</p>
 
@@ -95,17 +97,17 @@ const PlanCard: React.FC<PlanCardProps> = ({
                                     Processing...
                                 </>
                             ) : (
-                                'Get the plan'
+                                'Get the Plan'
                             )}
                         </button>
                     )}
 
                     {/* Start Free Trial Button */}
-                    {showButton && (
+                    {showButton && showFreeTrial && (
                         <button
                             onClick={() => navigate('/dashboard')}
                             className="w-full bg-white mb-5 text-[#0C3080] border border-[#0C3080] font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed">
-                            Start free trial
+                            Start Free Trial
                             <MoveRight className="w-4 h-4 ml-2" />
                         </button>
                     )}
