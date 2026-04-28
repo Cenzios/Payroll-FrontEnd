@@ -138,7 +138,7 @@ const GetPlan = () => {
   return (
     <div className="min-h-screen relative overflow-hidden 
   bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
-  flex flex-col items-center justify-center px-4 py-8">
+  flex flex-col items-center justify-center px-4 py-7">
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
 
@@ -161,6 +161,7 @@ const GetPlan = () => {
             features={basicPlan.features}
             isHighlighted={true}
             showButton={true}
+            showFreeTrial={searchParams.get('isUpgrade') !== 'true'}
             isLoading={isProcessingPlan}
             onSelectPlan={() => handleSelectPlan(basicPlan.id)}
           />
@@ -181,7 +182,8 @@ const GetPlan = () => {
 
         <div>
           {/*cutom plan */}
-          <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300 max-w-[400px]">
+          <div className={` bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300  max-w-[400px] hover:shadow-3xl hover:-translate-y-1`}>
+
             <div className="bg-gradient-to-r from-[#2563EB] to-[#153885] text-white p-8 py-8">
               <p className="text-xs tracking-widest opacity-80">CUSTOM PLAN</p>
               <h2 className="text-[50px] font-bold mt-6">Let's talk</h2>
