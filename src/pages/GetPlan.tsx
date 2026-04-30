@@ -155,6 +155,7 @@ const GetPlan = () => {
         {/* Single Plan Card (Basic) */}
         <div className="w-full max-w-[400px] mx-auto relative z-10 flex flex-col items-center">
           <PlanCard
+            planId={basicPlan.id} // ✅ PASSING PLAN ID
             planName={basicPlan.name}
             price={basicPlan.employeePrice || basicPlan.price}
             description={basicPlan.description}
