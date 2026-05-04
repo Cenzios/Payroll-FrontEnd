@@ -7,20 +7,20 @@ import { useAppSelector } from "../store/hooks";
 
 const AlertBar = () => {
     const navigate = useNavigate();
-    const { user, selectedCompanyId, token } = useAppSelector((state) => state.auth);
+    const { user, token } = useAppSelector((state) => state.auth);
 
-    const [activeSubscription, setActiveSubscription] = useState<any>(null);
     const [remainingDays, setRemainingDays] = useState(7);
     const [isTrial, setIsTrial] = useState(false);
+    const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
 
-    // ✅ 2. Robust Trial Status & Banner Logic
+    // ✅ Robust Trial Status & Banner Logic
     useEffect(() => {
         const checkTrialStatus = async () => {
             try {
                 const { data } = await axiosInstance.get('/subscription/current');
                 if (data?.data) {
-                    setActiveSubscription(data.data);
                     const isTrialUser = data.data.isTrialUser;
+                    setSubscriptionStatus(data.data.status ?? null);
 
                     if (isTrialUser) {
                         setIsTrial(true);
@@ -47,10 +47,8 @@ const AlertBar = () => {
         };
 
         const handleTrialFallback = () => {
-            // Fallback to User model's isTrialUser and createdAt
             if (user?.isTrialUser) {
                 setIsTrial(true);
-                // Use user.createdAt if available (from DB), otherwise assume just started
                 const signupDate = (user as any).createdAt ? new Date((user as any).createdAt) : new Date();
                 const now = new Date();
                 const diffTime = now.getTime() - signupDate.getTime();
@@ -69,24 +67,34 @@ const AlertBar = () => {
         if (token) checkTrialStatus();
     }, [token, navigate, user]);
 
+    // ✅ Handle Upgrade Now click:
+    // If subscription is PENDING_ACTIVATION → user already submitted payment, show PlanVerify
+    // Otherwise → go to plan selection flow
+    const handleUpgradeNow = () => {
+        if (subscriptionStatus === 'PENDING_ACTIVATION') {
+            navigate('/plan-verify');
+        } else {
+            navigate('/get-plan?isUpgrade=true');
+        }
+    };
+
     return (
         <div>
             {isTrial && (
                 <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
-                    {/* <AlertTriangle className="w-5 h-5" /> */}
                     <p className="text-white">Heads Up! Your trial ends in
                         <span className="font-bold p-[2px] rounded-[4px] bg-orange-400 mx-2"> {remainingDays > 0 ? remainingDays : 0} </span>
                         Days</p>
-                    <span className='text-gray-600 text-2xl'> | </span>
+                    <span className='text-gray-600 text-2xl'>| </span>
                     <button
-                        onClick={() => navigate('/get-plan?isUpgrade=true')}
+                        onClick={handleUpgradeNow}
                         className='font-extrabold underline cursor-pointer'>
                         Upgrade Now</button>
                 </div>
             )}
         </div>
-
     );
 }
 
 export default AlertBar;
+
