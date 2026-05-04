@@ -154,7 +154,7 @@ const CFormReport = () => {
                 <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
                     {/* Header */}
                     <div className="shrink-0">
-                        <PageHeader title="C-Form Report" subtitle="Here's your C-Form History." />
+                        <PageHeader title="C-Form Report" subtitle="Here's Your C-Form History." />
 
                         {/* Filter Section */}
                         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">

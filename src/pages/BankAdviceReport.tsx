@@ -110,7 +110,7 @@ const BankAdviceReport = () => {
                     <div className="shrink-0 mb-4">
                         <PageHeader
                             title="Bank Advice Report"
-                            subtitle="Here's your Bank Advice Report."
+                            subtitle="Here's Your Bank Advice Report."
                         />
                     </div>
 

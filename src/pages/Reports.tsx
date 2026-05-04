@@ -254,7 +254,7 @@ const Reports = () => {
                     <div className="shrink-0 mb-4">
                         <PageHeader
                             title="Summary Report"
-                            subtitle="Here's your Payroll History."
+                            subtitle="Here's Your Payroll History."
                         />
                     </div>
 
