@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import logo from '../assets/images/logo.svg';
+import logo from '../assets/images/logo-login.svg';
 // import dashboard from '../assets/images/navbar-dashboard.svg';
 // import salary from '../assets/images/navbar-salary.svg';
 // import loan from '../assets/images/navbar-loan.svg';
@@ -44,18 +44,18 @@ const Sidebar = () => {
 
     const getItemClass = (isActive: boolean) =>
         `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${isActive
-            ? 'bg-white/10 backdrop-blur-md text-white'
-            : 'text-gray-400 hover:bg-white/5 hover:text-white'
+            ? 'bg-gradient from-[2054C8] to-[#2054C8] text-white font-semibold'
+            : 'text-[#67696C] hover:bg-white/5 hover:text-white'
         }`;
 
     const getSubItemClass = (isActive: boolean) =>
         `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
-            ? 'bg-white/10 text-white font-semibold'
-            : 'text-gray-400 hover:bg-white/5 hover:text-white'
+            ? 'bg-gradient from-[2054C8] to-[#2054C8] text-white font-semibold'
+            : 'text-[#67696C] hover:bg-white/5 hover:text-white'
         }`;
 
     return (
-        <div className="w-64 bg-[#F7F8FB] h-screen flex flex-col border-r border-white/10 fixed left-0 top-0 overflow-y-auto">
+        <div className="w-64 bg-[#DCEAF7] h-screen flex flex-col border-r border-white/10 fixed left-0 top-0 overflow-y-auto">
             {/* Logo Section */}
             <div className="p-6 flex items-center justify-center">
                 <NavLink to="/dashboard" className="cursor-pointer">
