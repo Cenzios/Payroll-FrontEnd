@@ -132,7 +132,7 @@ const Sidebar = () => {
             </nav>
 
             {/* Settings at Bottom */}
-            <div className="p-4 border-t border-white/10">
+            <div className="p-4 border-t border-white/10 mb-3">
                 <NavLink
                     to="/settings"
                     className={({ isActive }) => getItemClass(isActive)}

@@ -40,6 +40,7 @@ import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import CompanySwitcher from '../components/CompanySwitcher';
 import PageHeader from '../components/PageHeader';
 import { salaryApi } from '../api/salaryApi';
+import AlertBar from '../components/AlertBar';
 
 const Dashboard = () => {
   const navigate = useNavigate();

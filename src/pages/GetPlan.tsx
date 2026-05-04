@@ -217,7 +217,7 @@ const GetPlan = () => {
 
               <button
                 onClick={() => setIsContactModalOpen(true)}
-                className="w-full text-[15px] bg-[#0C3080] text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full bg-[#0C3080] mb-5 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 Contact Us
               </button>

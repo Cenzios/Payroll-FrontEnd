@@ -11,6 +11,7 @@ import AllEmployeesSummaryModal from '../components/AllEmployeesSummaryModal';
 import PageHeader from '../components/PageHeader';
 import { exportPayrollSummaryReport } from '../utils/exportService';
 import { useGetCompaniesQuery } from '../store/apiSlice';
+import AlertBar from '../components/AlertBar';
 
 const Reports = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
@@ -241,230 +242,237 @@ const Reports = () => {
     };
 
     return (
-        <div className="flex h-screen  bg-gray-50">
-            <Sidebar />
-            <div className="flex-1 ml-64 p-6 h-full flex flex-col overflow-hidden">                {/* Header — keeps notification + profile via PageHeader */}
-                <div className="shrink-0 mb-4">
-                    <PageHeader
-                        title="Summary Report"
-                        subtitle="Here's your Payroll History."
-                    />
-                </div>
+        <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
+            <AlertBar />
 
-                {/* Filter Bar */}
-                <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
-                    <div className="flex items-center gap-4 flex-wrap">
-                        {/* Search */}
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Search Employee</span>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Search..."
-                                    className="pl-9 pr-4 py-2 mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-56 focus:ring-2 focus:ring-blue-100 outline-none"
+            {/* Margin bottom gap after the banner */}
+            <div className="-mb-4 shrink-0"></div>
+
+            <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
+                <Sidebar />
+                <div className="flex-1 ml-64 p-6 h-full flex flex-col overflow-hidden">                {/* Header — keeps notification + profile via PageHeader */}
+                    <div className="shrink-0 mb-4">
+                        <PageHeader
+                            title="Summary Report"
+                            subtitle="Here's your Payroll History."
+                        />
+                    </div>
+
+                    {/* Filter Bar */}
+                    <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
+                        <div className="flex items-center gap-4 flex-wrap">
+                            {/* Search */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Search Employee</span>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        placeholder="Search..."
+                                        className="pl-9 pr-4 py-2 mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-56 focus:ring-2 focus:ring-blue-100 outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Time Period */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Time Period</span>
+                                <MonthRangePicker
+                                    startMonth={startMonth}
+                                    startYear={startYear}
+                                    endMonth={endMonth}
+                                    endYear={endYear}
+                                    onStartChange={(month, year) => { setStartMonth(month); setStartYear(year); }}
+                                    onEndChange={(month, year) => { setEndMonth(month); setEndYear(year); }}
+                                    onApply={(sM, sY, eM, eY) => checkAndUpdateData(sM, sY, eM, eY)}
                                 />
                             </div>
-                        </div>
 
-                        {/* Time Period */}
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Time Period</span>
-                            <MonthRangePicker
-                                startMonth={startMonth}
-                                startYear={startYear}
-                                endMonth={endMonth}
-                                endYear={endYear}
-                                onStartChange={(month, year) => { setStartMonth(month); setStartYear(year); }}
-                                onEndChange={(month, year) => { setEndMonth(month); setEndYear(year); }}
-                                onApply={(sM, sY, eM, eY) => checkAndUpdateData(sM, sY, eM, eY)}
-                            />
-                        </div>
+                            {/* Buttons */}
+                            <div className="flex items-center gap-3 ml-auto">
 
-                        {/* Buttons */}
-                        <div className="flex items-center gap-3 ml-auto">
-
-                            {/* Reset */}
-                            <button
-                                onClick={handleReset}
-                                className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
-                            >
-                                Reset
-                            </button>
-
-                            {/* Export Dropdown */}
-                            <div className="relative">
+                                {/* Reset */}
                                 <button
-                                    onClick={() => setIsExportOpen(prev => !prev)}
-                                    className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
+                                    onClick={handleReset}
+                                    className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
                                 >
-                                    Export
-                                    <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
+                                    Reset
                                 </button>
 
-                                {isExportOpen && (
-                                    <>
-                                        <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
-                                        <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
-                                            <button
-                                                onClick={() => { exportPDF(); setIsExportOpen(false); }}
-                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-red-50 transition-colors"
-                                            >
-                                                <FileText className="w-4 h-4" /> PDF
-                                            </button>
-                                            <div className="border-t border-gray-100" />
-                                            <button
-                                                onClick={() => { exportExcel(); setIsExportOpen(false); }}
-                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-green-50 transition-colors"
-                                            >
-                                                <FileSpreadsheet className="w-4 h-4" /> Excel
-                                            </button>
-                                            <div className="border-t border-gray-100" />
-                                            <button
-                                                onClick={() => { exportCSV(); setIsExportOpen(false); }}
-                                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-blue-50 transition-colors"
-                                            >
-                                                <Download className="w-4 h-4" /> CSV
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
+                                {/* Export Dropdown */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsExportOpen(prev => !prev)}
+                                        className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
+                                    >
+                                        Export
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {isExportOpen && (
+                                        <>
+                                            <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
+                                            <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
+                                                <button
+                                                    onClick={() => { exportPDF(); setIsExportOpen(false); }}
+                                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-red-50 transition-colors"
+                                                >
+                                                    <FileText className="w-4 h-4" /> PDF
+                                                </button>
+                                                <div className="border-t border-gray-100" />
+                                                <button
+                                                    onClick={() => { exportExcel(); setIsExportOpen(false); }}
+                                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-green-50 transition-colors"
+                                                >
+                                                    <FileSpreadsheet className="w-4 h-4" /> Excel
+                                                </button>
+                                                <div className="border-t border-gray-100" />
+                                                <button
+                                                    onClick={() => { exportCSV(); setIsExportOpen(false); }}
+                                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-blue-50 transition-colors"
+                                                >
+                                                    <Download className="w-4 h-4" /> CSV
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div className='p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 min-h-0 overflow-hidden'>                    <div className="shrink-0 bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm px-6 py-4 mb-4">
-                    <div className="grid grid-cols-5 gap-4 divide-x divide-gray-100">
-                        {/* Total Employees */}
-                        <div className="text-center ">
-                            <div className="text-2xl font-regular text-gray-900">
-                                {overallTotals.totalEmployees}
+                    <div className='p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 min-h-0 overflow-hidden'>                    <div className="shrink-0 bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm px-6 py-4 mb-4">
+                        <div className="grid grid-cols-5 gap-4 divide-x divide-gray-100">
+                            {/* Total Employees */}
+                            <div className="text-center ">
+                                <div className="text-2xl font-regular text-gray-900">
+                                    {overallTotals.totalEmployees}
+                                </div>
+                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                    Total Employees
+                                </div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                Total Employees
-                            </div>
-                        </div>
 
-                        {/* Total Gross Pay */}
-                        <div className="text-center">
-                            <div className="text-xl font-regular text-[#1f6feb]">
-                                Rs. {overallTotals.totalGrossPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {/* Total Gross Pay */}
+                            <div className="text-center">
+                                <div className="text-xl font-regular text-[#1f6feb]">
+                                    Rs. {overallTotals.totalGrossPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </div>
+                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                    Total Gross Pay
+                                </div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                Total Gross Pay
-                            </div>
-                        </div>
 
-                        {/* Total Net Pay */}
-                        <div className="text-center">
-                            <div className="text-xl font-regular text-[#1f6feb]">
-                                Rs. {overallTotals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {/* Total Net Pay */}
+                            <div className="text-center">
+                                <div className="text-xl font-regular text-[#1f6feb]">
+                                    Rs. {overallTotals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </div>
+                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                    Total Net Pay
+                                </div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                Total Net Pay
-                            </div>
-                        </div>
 
-                        {/* Total Employee EPF */}
-                        <div className="text-center">
-                            <div className="text-xl font-regular text-[#1f6feb]">
-                                Rs. {overallTotals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            {/* Total Employee EPF */}
+                            <div className="text-center">
+                                <div className="text-xl font-regular text-[#1f6feb]">
+                                    Rs. {overallTotals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </div>
+                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                    Total Employee EPF
+                                </div>
                             </div>
-                            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                Total Employee EPF
-                            </div>
-                        </div>
 
-                        {/* Total Company EPF/ETF */}
-                        <div className="text-center">
-                            <div className="text-xl font-regular text-[#1f6feb]">
-                                Rs. {overallTotals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                            </div>
-                            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                Total Company EPF/ETF
+                            {/* Total Company EPF/ETF */}
+                            <div className="text-center">
+                                <div className="text-xl font-regular text-[#1f6feb]">
+                                    Rs. {overallTotals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </div>
+                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                    Total Company EPF/ETF
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                    {/* Main Content — Scrollable */}
-                    <div className="flex-1 overflow-y-auto space-y-3">                        {isLoading ? (
-                        <div className="flex justify-center items-center py-20">
-                            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                        {/* Main Content — Scrollable */}
+                        <div className="flex-1 overflow-y-auto space-y-3">                        {isLoading ? (
+                            <div className="flex justify-center items-center py-20">
+                                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                            </div>
+                        ) : monthlyData.length === 0 ? (
+                            <div className="bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm p-10 text-center text-gray-400 text-sm">
+                                No payroll records found for the selected period.
+                            </div>
+                        ) : (
+                            monthlyData.map((monthData) => {
+                                const monthKey = `${monthData.year}-${monthData.monthNumber}`;
+                                return (
+                                    <MonthSection
+                                        key={monthKey}
+                                        year={monthData.year}
+                                        month={monthData.month}
+                                        monthNumber={monthData.monthNumber}
+                                        status={monthData.status}
+                                        employees={monthData.employees}
+                                        totals={monthData.totals}
+                                        isExpanded={expandedMonths.has(monthKey)}
+                                        onToggle={() => toggleMonth(monthKey)}
+                                        selectedEmployeeIds={selectedEmployeeIds}
+                                        onSelectEmployee={handleSelectEmployee}
+                                        onViewEmployee={(id, companyId) => {
+                                            setSelectedEmployee({
+                                                id,
+                                                companyId,
+                                                month: monthData.monthNumber,
+                                                year: monthData.year
+                                            });
+                                            setIsModalOpen(true);
+                                        }}
+                                        companyId={selectedCompanyId || ''}
+                                        searchQuery={search}
+                                    />
+                                );
+                            })
+                        )}
                         </div>
-                    ) : monthlyData.length === 0 ? (
-                        <div className="bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm p-10 text-center text-gray-400 text-sm">
-                            No payroll records found for the selected period.
-                        </div>
-                    ) : (
-                        monthlyData.map((monthData) => {
-                            const monthKey = `${monthData.year}-${monthData.monthNumber}`;
-                            return (
-                                <MonthSection
-                                    key={monthKey}
-                                    year={monthData.year}
-                                    month={monthData.month}
-                                    monthNumber={monthData.monthNumber}
-                                    status={monthData.status}
-                                    employees={monthData.employees}
-                                    totals={monthData.totals}
-                                    isExpanded={expandedMonths.has(monthKey)}
-                                    onToggle={() => toggleMonth(monthKey)}
-                                    selectedEmployeeIds={selectedEmployeeIds}
-                                    onSelectEmployee={handleSelectEmployee}
-                                    onViewEmployee={(id, companyId) => {
-                                        setSelectedEmployee({
-                                            id,
-                                            companyId,
-                                            month: monthData.monthNumber,
-                                            year: monthData.year
-                                        });
-                                        setIsModalOpen(true);
-                                    }}
-                                    companyId={selectedCompanyId || ''}
-                                    searchQuery={search}
-                                />
-                            );
-                        })
+                        <p className="text-end text-gray-400 text-[13px] mt-2 mr-4">All values are display in LKR</p>
+
+                    </div>
+                    {toast && (
+                        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
                     )}
-                    </div>
-                    <p className="text-end text-gray-400 text-[13px] mt-2 mr-4">All values are display in LKR</p>
-
                 </div>
-                {toast && (
-                    <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+
+                {/* Employee Payroll Modal */}
+                {isModalOpen && selectedEmployee && (
+                    <EmployeePayrollModal
+                        isOpen={isModalOpen}
+                        onClose={() => {
+                            setIsModalOpen(false);
+                            setSelectedEmployee(null);
+                        }}
+                        employeeId={selectedEmployee.id}
+                        companyId={selectedEmployee.companyId}
+                        month={selectedEmployee.month}
+                        year={selectedEmployee.year}
+                    />
+                )}
+
+                {/* All Employees Summary Modal */}
+                {isAllEmployeesModalOpen && (
+                    <AllEmployeesSummaryModal
+                        isOpen={isAllEmployeesModalOpen}
+                        onClose={() => setIsAllEmployeesModalOpen(false)}
+                        selectedEmployeeIds={selectedEmployeeIds}
+                        companyId={selectedCompanyId || ''}
+                        month={startMonth + 1}
+                        year={startYear}
+                    />
                 )}
             </div>
-
-            {/* Employee Payroll Modal */}
-            {isModalOpen && selectedEmployee && (
-                <EmployeePayrollModal
-                    isOpen={isModalOpen}
-                    onClose={() => {
-                        setIsModalOpen(false);
-                        setSelectedEmployee(null);
-                    }}
-                    employeeId={selectedEmployee.id}
-                    companyId={selectedEmployee.companyId}
-                    month={selectedEmployee.month}
-                    year={selectedEmployee.year}
-                />
-            )}
-
-            {/* All Employees Summary Modal */}
-            {isAllEmployeesModalOpen && (
-                <AllEmployeesSummaryModal
-                    isOpen={isAllEmployeesModalOpen}
-                    onClose={() => setIsAllEmployeesModalOpen(false)}
-                    selectedEmployeeIds={selectedEmployeeIds}
-                    companyId={selectedCompanyId || ''}
-                    month={startMonth + 1}
-                    year={startYear}
-                />
-            )}
         </div>
     );
 };
