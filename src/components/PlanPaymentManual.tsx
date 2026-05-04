@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UploadCloud, Copy, Loader2 } from "lucide-react";
 import PlanVerify from "./PlanVerify";
 import axiosInstance from "../api/axios";
@@ -10,6 +10,23 @@ const PlanPaymentManual = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const accountNumber = "1234567890";
+
+    // ✅ Check for existing pending docs on mount
+    useEffect(() => {
+        const fetchExistingDocs = async () => {
+            try {
+                const { data } = await axiosInstance.get("/user-documents");
+                const pendingDoc = data.data.find((doc: any) => doc.status === "PENDING");
+                if (pendingDoc) {
+                    setReference(pendingDoc.referenceId || "");
+                    setIsSubmitted(true);
+                }
+            } catch (err) {
+                console.warn("Failed to fetch existing user documents", err);
+            }
+        };
+        fetchExistingDocs();
+    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {

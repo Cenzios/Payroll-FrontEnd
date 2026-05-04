@@ -31,6 +31,7 @@ const BuyPlan = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoadingSecret, setIsLoadingSecret] = useState(false);
   const [intentError, setIntentError] = useState<string | null>(null);
+  const [isManualPending, setIsManualPending] = useState(false);
 
   // ✅ Get selected plan dynamically
   const selectedPlanId = localStorage.getItem('reg_planId') || PLANS.BASIC.id;
@@ -58,6 +59,23 @@ const BuyPlan = () => {
     };
 
     fetchSubscription();
+  }, []);
+
+  // ✅ Check for pending manual payments
+  useEffect(() => {
+    const checkManualPending = async () => {
+      try {
+        const { data } = await axiosInstance.get('/user-documents');
+        const hasPending = data.data.some((doc: any) => doc.status === 'PENDING');
+        if (hasPending) {
+          setIsManualPending(true);
+          setPaymentMethod('manual');
+        }
+      } catch (err) {
+        console.warn('Failed to check manual payment status:', err);
+      }
+    };
+    checkManualPending();
   }, []);
 
   // ✅ Enforce Terms Acceptance
@@ -150,6 +168,7 @@ const BuyPlan = () => {
             <PlanOption
               value={paymentMethod}
               onChange={setPaymentMethod}
+              initialStep={isManualPending ? 'pay' : 'select'}
             />
 
             {/* <div className="bg-white rounded-[2.5rem] shadow-xl p-4 flex flex-col">
