@@ -310,7 +310,7 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
-      {isTrial && (
+      {/* {isTrial && (
         <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
           <AlertTriangle className="w-5 h-5" />
           <p className="text-white">Heads Up! Your trial ends in
@@ -323,7 +323,9 @@ const Dashboard = () => {
               className='font-extrabold underline cursor-pointer'>
               Upgrade Now</button> to keep your account active!</p>
         </div>
-      )}
+      )} */}
+
+      <AlertBar />
 
       {/* Margin bottom gap after the banner */}
       <div className="-mb-4 shrink-0"></div>
