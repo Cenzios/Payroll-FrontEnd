@@ -72,7 +72,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
                 <div className="border-t border-gray-100/60 mb-8 w-full"></div>
 
                 {/* Features List */}
-                <div className="space-y-4 mb-9">
+                <div className="space-y-4 mb-8">
                     {features.map((feature, index) => (
                         <div key={index} className="flex items-center gap-4 group">
                             <div className="w-4 h-4 rounded-full bg-[#255DAD] flex items-center justify-center shrink-0 shadow-lg shadow-blue-100 transition-transform group-hover:scale-110">
@@ -83,13 +83,13 @@ const PlanCard: React.FC<PlanCardProps> = ({
                     ))}
                 </div>
 
-                <div className='flex gap-4 text-sm'>
+                <div className='flex gap-4 text-sm mb-2'>
                     {/* Get the Plan Button */}
                     {showButton && (
                         <button
                             onClick={onSelectPlan}
                             disabled={isLoading}
-                            className="w-full bg-[#0C3080] mb-5 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full bg-[#0C3080] mb-5 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {isLoading ? (
                                 <>
@@ -106,7 +106,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
                     {showButton && showFreeTrial && (
                         <button
                             onClick={() => navigate('/dashboard')}
-                            className="w-full bg-white mb-5 text-[#0C3080] border border-[#0C3080] font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed">
+                            className="w-full bg-white mb-5 text-[#0C3080] border border-[#0C3080] font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed">
                             Start Free Trial
                             <MoveRight className="w-4 h-4 ml-2" />
                         </button>
