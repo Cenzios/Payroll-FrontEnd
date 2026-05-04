@@ -44,14 +44,14 @@ const Sidebar = () => {
 
     const getItemClass = (isActive: boolean) =>
         `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${isActive
-            ? 'bg-gradient from-[2054C8] to-[#2054C8] text-white font-semibold'
-            : 'text-[#67696C] hover:bg-white/5 hover:text-white'
+            ? 'bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white font-semibold'
+            : 'text-[#67696C] hover:text-gray-700'
         }`;
 
     const getSubItemClass = (isActive: boolean) =>
         `flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] transition-all duration-200 ${isActive
-            ? 'bg-gradient from-[2054C8] to-[#2054C8] text-white font-semibold'
-            : 'text-[#67696C] hover:bg-white/5 hover:text-white'
+            ? 'bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white font-semibold'
+            : 'text-[#67696C] hover:font-bold'
         }`;
 
     return (
@@ -102,7 +102,7 @@ const Sidebar = () => {
                                 className={({ isActive }) => getSubItemClass(isActive)}
                             >
                                 <Circle className={`w-2 h-2 ${location.pathname === '/reports' ? 'fill-white' : ''}`} />
-                                <span>Payroll summary</span>
+                                <span>Payroll Summary</span>
                             </NavLink>
                             <NavLink
                                 to="/epf-etf"
@@ -132,7 +132,7 @@ const Sidebar = () => {
             </nav>
 
             {/* Settings at Bottom */}
-            <div className="p-4 border-t border-white/10 mb-3">
+            <div className="p-4 border-t border-white/10 mb-2">
                 <NavLink
                     to="/settings"
                     className={({ isActive }) => getItemClass(isActive)}
