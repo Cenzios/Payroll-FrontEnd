@@ -21,6 +21,7 @@ import PageHeader from '../components/PageHeader';
 import Toast from "../components/Toast";
 import TableSkeleton from "../components/skeletons/TableSkeleton";
 import PortalDropdown from "../components/PortalDropdown";
+import AlertBar from "../components/AlertBar";
 
 const Employees = () => {
   const { selectedCompanyId } = useAppSelector((state) => state.auth);
@@ -436,147 +437,154 @@ const Employees = () => {
   const activeMenuEmployee = employees.find((e) => e.id === activeMenuId);
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
-      <Sidebar />
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
+      <AlertBar />
 
-      <div className="flex-1 ml-64 p-6 h-screen flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="shrink-0">
-          <PageHeader
-            title="Employees"
-            subtitle="Here's Your Employees Overview"
-            actionElement={
-              <button
-                onClick={() => {
-                  if (!selectedCompanyId) {
-                    setToast({
-                      message: "Please select a company from the Dashboard first.",
-                      type: "error",
-                    });
-                    return;
-                  }
-                  openAddDrawer();
-                }}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
-                title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
-              >
-                Add New Employee
-                <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center ml-1">
-                  <Plus className="w-4 h-4" />
-                </div>
-              </button>
-            }
-          />
-        </div>
+      {/* Margin bottom gap after the banner */}
+      <div className="-mb-4 shrink-0"></div>
 
-        {/* Table Container */}  {/* Main Content */}
-        {!selectedCompanyId ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                No Company Selected
-              </h3>
-              <p className="text-gray-500">
-                Please go to the Dashboard and select a company to view
-                employees.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex gap-6 flex-1 overflow-hidden pb-4">
-            {/* Left Column - Employee List */}
-            <div className="w-[60%] flex flex-col pr-6 h-full">
-              {/* Search */}
-              <div className="pb-6 shrink-0">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search users by name"
-                    className="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#F2F4FF] focus:border-blue-400 outline-none transition-all placeholder-gray-400"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <Search className="w-4 h-4 text-gray-400" />
+      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
+        <Sidebar />
+
+        <div className="flex-1 ml-64 p-6 h-screen flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="shrink-0">
+            <PageHeader
+              title="Employees"
+              subtitle="Here's Your Employees Overview"
+              actionElement={
+                <button
+                  onClick={() => {
+                    if (!selectedCompanyId) {
+                      setToast({
+                        message: "Please select a company from the Dashboard first.",
+                        type: "error",
+                      });
+                      return;
+                    }
+                    openAddDrawer();
+                  }}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                  title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
+                >
+                  Add New Employee
+                  <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center ml-1">
+                    <Plus className="w-4 h-4" />
                   </div>
-                </div>
-              </div>
-
-              {/* List */}
-              <div className="flex-1 overflow-y-auto pr-2">
-                {isLoading ? (
-                  <div className="py-4">
-                    <TableSkeleton rows={5} />
-                  </div>
-                ) : employees.length === 0 ? (
-                  <div className="py-8 text-center text-gray-500 text-sm">
-                    No employees found.
-                  </div>
-                ) : (
-                  <div className="space-y-5 pb-20">
-                    {employees.map((emp) => (
-                      <div
-                        key={emp.id}
-                        onClick={() => setSelectedEmployee(emp)}
-                        className={` flex items-center justify-between cursor-pointer transition-all duration-200 rounded-[30px] ${selectedEmployee?.id === emp.id
-                          ? "bg-blue-200/40"
-                          : "hover:bg-gray-50/80"
-                          }`}
-                      >
-                        {/* Left side: Avatar + Name */}
-                        <div className="flex items-center gap-4 w-[30%] min-w-[250px]">
-                          {/* Avatar */}
-                          <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center shrink-0">
-                            <span className="font-semibold text-sm text-blue-700">
-                              {emp.fullName.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <h4 className="text-[14px] font-normal text-gray-800 truncate">
-                            {emp.fullName}
-                          </h4>
-                        </div>
-
-                        {/* Middle: Email */}
-                        <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[220px]">
-                          <Mail className="w-4 h-4 text-gray-400 shrink-0" />
-                          <span className="truncate">
-                            {emp.email || "No email provided"}
-                          </span>
-                        </div>
-
-                        {/* Right: Phone + Menu */}
-                        <div className="flex items-center gap-6 shrink-0">
-                          {/* Phone Section */}
-                          <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[100px]">
-                            <Phone className="w-4 h-4 text-gray-400 shrink-0" />
-                            <span>{emp.contactNumber}</span>
-                          </div>
-                          <button
-                            onClick={(e) => handleMenuClick(e, emp.id)}
-                            className="text-gray-500 hover:text-gray-900 p-1 rounded-full transition-colors"
-                          >
-                            <MoreVertical className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Right Column - Employee Details */}
-            <EmployeeDetailsCard
-              selectedEmployee={selectedEmployee}
-              setPreviewImage={setPreviewImage}
-              onAddFileClick={() => setIsFileModalOpen(true)}
-              onDeleteFileClick={handleDeleteFileClick}
-              onEditClick={() => selectedEmployee && handleEdit(selectedEmployee)}
-              isAddFileDisabled={(selectedEmployee?.documents?.length || 0) >= 3}
+                </button>
+              }
             />
           </div>
-        )}
+
+          {/* Table Container */}  {/* Main Content */}
+          {!selectedCompanyId ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  No Company Selected
+                </h3>
+                <p className="text-gray-500">
+                  Please go to the Dashboard and select a company to view
+                  employees.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-6 flex-1 overflow-hidden pb-4">
+              {/* Left Column - Employee List */}
+              <div className="w-[60%] flex flex-col pr-6 h-full">
+                {/* Search */}
+                <div className="pb-6 shrink-0">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search users by name"
+                      className="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#F2F4FF] focus:border-blue-400 outline-none transition-all placeholder-gray-400"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Search className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* List */}
+                <div className="flex-1 overflow-y-auto pr-2">
+                  {isLoading ? (
+                    <div className="py-4">
+                      <TableSkeleton rows={5} />
+                    </div>
+                  ) : employees.length === 0 ? (
+                    <div className="py-8 text-center text-gray-500 text-sm">
+                      No employees found.
+                    </div>
+                  ) : (
+                    <div className="space-y-5 pb-20">
+                      {employees.map((emp) => (
+                        <div
+                          key={emp.id}
+                          onClick={() => setSelectedEmployee(emp)}
+                          className={` flex items-center justify-between cursor-pointer transition-all duration-200 rounded-[30px] ${selectedEmployee?.id === emp.id
+                            ? "bg-blue-200/40"
+                            : "hover:bg-gray-50/80"
+                            }`}
+                        >
+                          {/* Left side: Avatar + Name */}
+                          <div className="flex items-center gap-4 w-[30%] min-w-[250px]">
+                            {/* Avatar */}
+                            <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center shrink-0">
+                              <span className="font-semibold text-sm text-blue-700">
+                                {emp.fullName.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <h4 className="text-[14px] font-normal text-gray-800 truncate">
+                              {emp.fullName}
+                            </h4>
+                          </div>
+
+                          {/* Middle: Email */}
+                          <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[220px]">
+                            <Mail className="w-4 h-4 text-gray-400 shrink-0" />
+                            <span className="truncate">
+                              {emp.email || "No email provided"}
+                            </span>
+                          </div>
+
+                          {/* Right: Phone + Menu */}
+                          <div className="flex items-center gap-6 shrink-0">
+                            {/* Phone Section */}
+                            <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[100px]">
+                              <Phone className="w-4 h-4 text-gray-400 shrink-0" />
+                              <span>{emp.contactNumber}</span>
+                            </div>
+                            <button
+                              onClick={(e) => handleMenuClick(e, emp.id)}
+                              className="text-gray-500 hover:text-gray-900 p-1 rounded-full transition-colors"
+                            >
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column - Employee Details */}
+              <EmployeeDetailsCard
+                selectedEmployee={selectedEmployee}
+                setPreviewImage={setPreviewImage}
+                onAddFileClick={() => setIsFileModalOpen(true)}
+                onDeleteFileClick={handleDeleteFileClick}
+                onEditClick={() => selectedEmployee && handleEdit(selectedEmployee)}
+                isAddFileDisabled={(selectedEmployee?.documents?.length || 0) >= 3}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Universal Drawer (Add/Edit) */}

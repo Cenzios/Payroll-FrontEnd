@@ -37,6 +37,7 @@ import {
 import EmployeeSalaryCard from "../components/EmployeeSalaryCard";
 import PayslipPreview from "../components/PayslipPreview";
 import ManageSalaryModal from "../components/ManageSalaryModal";
+import AlertBar from "../components/AlertBar";
 
 const Salary = () => {
   const dispatch = useAppDispatch();
@@ -648,200 +649,207 @@ const Salary = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
-      <Sidebar />
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
+      <AlertBar />
 
-      <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="shrink-0">
-          <PageHeader
-            title="Salary"
-            subtitle="View and Calculate Employee Salaries"
-          />
-        </div>
+      {/* Margin bottom gap after the banner */}
+      <div className="-mb-4 shrink-0"></div>
 
-        {/* MAIN CONTENT */}
-        <div className="flex gap-6 flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
+        <Sidebar />
 
-          {/* LEFT SIDE */}
-          <div className="w-10/12 flex flex-col overflow-hidden">
-
-            {/* FILTER BOX */}
-            <div className="bg-white gap-14 p-7 w-full rounded-xl mb-6 flex flex-row border border-gray-200">
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-800 mb-2">
-                  Search Employee
-                </label>
-                <div className="relative">
-                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search by Name or ID"
-                    className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none w-80"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col max-w-xs min-w-[200px]">
-                <label className="text-sm font-medium text-gray-800 mb-2">
-                  Select Period
-                </label>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    views={['month', 'year']}
-                    value={dayjs(new Date(selectedYear, selectedMonth))}
-                    maxDate={dayjs(new Date())}
-                    onChange={(newValue) => {
-                      if (newValue && newValue.isValid()) {
-                        handleYearChange(newValue.year());
-                        handleMonthChange(newValue.month());
-                      }
-                    }}
-                    slotProps={{
-                      textField: {
-                        size: "small",
-                        sx: {
-                          backgroundColor: "white",
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: "0.75rem",
-                            "& fieldset": {
-                              borderColor: "#374151",
-                            },
-                            "&.Mui-focused fieldset": {
-                              borderColor: "#374151",
-                              borderWidth: "1px",
-                            },
-                          },
-                          "& .MuiInputBase-input": {
-                            paddingY: "9.5px",
-                            paddingX: "14px",
-                            fontSize: "0.875rem",
-                            color: "#1f2937",
-                          }
-                        }
-                      }
-                    }}
-                  />
-                </LocalizationProvider>
-              </div>
-
-              {/* Working Days */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-800 mb-2">
-                  Working Days
-                </label>
-                <div className="relative flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-300">
-                  <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                  <input
-                    type="number"
-                    min="1"
-                    max={maxAllowedCompanyDays}
-                    value={companyWorkingDays}
-                    onChange={(e) =>
-                      handleCompanyWorkingDaysChange(
-                        parseInt(e.target.value) || 0
-                      )
-                    }
-                    className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center text-sm font-medium text-gray-700"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* EMPLOYEE LIST */}
-            <div className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {isLoading ? (
-                <SalaryListSkeleton />
-              ) : validEmployees.length === 0 ? (
-                <div className="text-center p-12 text-gray-500">
-                  No employees found.
-                </div>
-              ) : (
-                validEmployees.map((emp) => {
-                  const {
-                    workedDays,
-                    isEpfEnabled,
-                    isLoanEnabled,
-                    otHours,
-                    salaryAdvance,
-                    loanDeduction,
-                    hasLoanInstallment,
-                  } = getEmployeeValues(emp.id);
-
-                  return (
-                    <EmployeeSalaryCard
-                      key={emp.id}
-                      emp={emp}
-                      generatedSalary={generatedSalaries[emp.id]}
-                      selectedEmployee={selectedEmployee}
-                      handleSelectEmployee={handleSelectEmployee}
-                      workedDays={workedDays}
-                      isEpfEnabled={isEpfEnabled}
-                      isLoanEnabled={isLoanEnabled}
-                      otHours={otHours}
-                      salaryAdvance={salaryAdvance}
-                      loanDeduction={loanDeduction}
-                      companyWorkingDays={companyWorkingDays}
-                      hasLoanInstallment={hasLoanInstallment}
-                      handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
-                      handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
-                      handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}
-                      handleToggleLoan={handleToggleLoan}
-                      handleToggleEpfEtf={handleToggleEpfEtf}
-                      handleGeneratePayslip={handleGeneratePayslip}
-                      handleConfirmPayslip={handleConfirmPayslip}
-                      openManageModal={openManageModal}
-                      salaryAllowances={salaryAllowances}
-                      salaryDeductions={salaryDeductions}
-                      isSaving={isSaving}
-                      hasAnyError={hasAnyError}
-                      setTouchedFields={setTouchedFields}
-                      selectedMonth={selectedMonth}
-                      selectedYear={selectedYear}
-                    />
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {/* RIGHT SIDE */}
-          <div className="w-5/12 flex flex-col overflow-y-auto">
-            <PayslipPreview
-              previewPayslip={previewPayslip}
-              selectedEmployee={selectedEmployee}
-              companyName={companyName}
-              selectedYear={selectedYear}
-              selectedMonth={selectedMonth}
-              companyWorkingDays={companyWorkingDays}
-              exportPDF={exportPDF}
-              exportExcel={exportExcel}
-              exportCSV={exportCSV}
+        <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="shrink-0">
+            <PageHeader
+              title="Salary"
+              subtitle="View and Calculate Employee Salaries"
             />
           </div>
-        </div>
 
-        {/* MODAL */}
-        <ManageSalaryModal
-          manageModal={manageModal}
-          modalEntries={modalEntries}
-          setModalEntries={setModalEntries}
-          onSave={handleModalSave}
-          onCancel={handleModalCancel}
-        />
+          {/* MAIN CONTENT */}
+          <div className="flex gap-6 flex-1 overflow-hidden">
 
-        {/* TOAST */}
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
+            {/* LEFT SIDE */}
+            <div className="w-10/12 flex flex-col overflow-hidden">
+
+              {/* FILTER BOX */}
+              <div className="bg-white gap-14 p-7 w-full rounded-xl mb-6 flex flex-row border border-gray-200">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-800 mb-2">
+                    Search Employee
+                  </label>
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search by Name or ID"
+                      className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none w-80"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col max-w-xs min-w-[200px]">
+                  <label className="text-sm font-medium text-gray-800 mb-2">
+                    Select Period
+                  </label>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      views={['month', 'year']}
+                      value={dayjs(new Date(selectedYear, selectedMonth))}
+                      maxDate={dayjs(new Date())}
+                      onChange={(newValue) => {
+                        if (newValue && newValue.isValid()) {
+                          handleYearChange(newValue.year());
+                          handleMonthChange(newValue.month());
+                        }
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: "small",
+                          sx: {
+                            backgroundColor: "white",
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "0.75rem",
+                              "& fieldset": {
+                                borderColor: "#374151",
+                              },
+                              "&.Mui-focused fieldset": {
+                                borderColor: "#374151",
+                                borderWidth: "1px",
+                              },
+                            },
+                            "& .MuiInputBase-input": {
+                              paddingY: "9.5px",
+                              paddingX: "14px",
+                              fontSize: "0.875rem",
+                              color: "#1f2937",
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </LocalizationProvider>
+                </div>
+
+                {/* Working Days */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-800 mb-2">
+                    Working Days
+                  </label>
+                  <div className="relative flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-300">
+                    <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                    <input
+                      type="number"
+                      min="1"
+                      max={maxAllowedCompanyDays}
+                      value={companyWorkingDays}
+                      onChange={(e) =>
+                        handleCompanyWorkingDaysChange(
+                          parseInt(e.target.value) || 0
+                        )
+                      }
+                      className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center text-sm font-medium text-gray-700"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* EMPLOYEE LIST */}
+              <div className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {isLoading ? (
+                  <SalaryListSkeleton />
+                ) : validEmployees.length === 0 ? (
+                  <div className="text-center p-12 text-gray-500">
+                    No employees found.
+                  </div>
+                ) : (
+                  validEmployees.map((emp) => {
+                    const {
+                      workedDays,
+                      isEpfEnabled,
+                      isLoanEnabled,
+                      otHours,
+                      salaryAdvance,
+                      loanDeduction,
+                      hasLoanInstallment,
+                    } = getEmployeeValues(emp.id);
+
+                    return (
+                      <EmployeeSalaryCard
+                        key={emp.id}
+                        emp={emp}
+                        generatedSalary={generatedSalaries[emp.id]}
+                        selectedEmployee={selectedEmployee}
+                        handleSelectEmployee={handleSelectEmployee}
+                        workedDays={workedDays}
+                        isEpfEnabled={isEpfEnabled}
+                        isLoanEnabled={isLoanEnabled}
+                        otHours={otHours}
+                        salaryAdvance={salaryAdvance}
+                        loanDeduction={loanDeduction}
+                        companyWorkingDays={companyWorkingDays}
+                        hasLoanInstallment={hasLoanInstallment}
+                        handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
+                        handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
+                        handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}
+                        handleToggleLoan={handleToggleLoan}
+                        handleToggleEpfEtf={handleToggleEpfEtf}
+                        handleGeneratePayslip={handleGeneratePayslip}
+                        handleConfirmPayslip={handleConfirmPayslip}
+                        openManageModal={openManageModal}
+                        salaryAllowances={salaryAllowances}
+                        salaryDeductions={salaryDeductions}
+                        isSaving={isSaving}
+                        hasAnyError={hasAnyError}
+                        setTouchedFields={setTouchedFields}
+                        selectedMonth={selectedMonth}
+                        selectedYear={selectedYear}
+                      />
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT SIDE */}
+            <div className="w-5/12 flex flex-col overflow-y-auto">
+              <PayslipPreview
+                previewPayslip={previewPayslip}
+                selectedEmployee={selectedEmployee}
+                companyName={companyName}
+                selectedYear={selectedYear}
+                selectedMonth={selectedMonth}
+                companyWorkingDays={companyWorkingDays}
+                exportPDF={exportPDF}
+                exportExcel={exportExcel}
+                exportCSV={exportCSV}
+              />
+            </div>
+          </div>
+
+          {/* MODAL */}
+          <ManageSalaryModal
+            manageModal={manageModal}
+            modalEntries={modalEntries}
+            setModalEntries={setModalEntries}
+            onSave={handleModalSave}
+            onCancel={handleModalCancel}
           />
-        )}
-      </div>
-    </div >
+
+          {/* TOAST */}
+          {toast && (
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => setToast(null)}
+            />
+          )}
+        </div>
+      </div >
+    </div>
   );
 };
 
