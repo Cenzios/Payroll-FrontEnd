@@ -6,13 +6,15 @@ import { useState } from "react";
 interface PaymentMethodSelectorProps {
     value: "card" | "manual";
     onChange: (method: "card" | "manual") => void;
+    initialStep?: "select" | "pay";
 }
 
 const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
     value,
     onChange,
+    initialStep = "select",
 }) => {
-    const [step, setStep] = useState<"select" | "pay">("select");
+    const [step, setStep] = useState<"select" | "pay">(initialStep);
 
     const options = [
         {

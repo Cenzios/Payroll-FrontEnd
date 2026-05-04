@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ContactModal from "./ContactModal";
 import { useState } from "react";
 
-const PlanVerify = () => {
+const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
     const navigate = useNavigate();
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
@@ -54,7 +54,7 @@ const PlanVerify = () => {
 
                     <div className="flex justify-between">
                         <span className="text-gray-500">Reference ID</span>
-                        <span className="font-normal">TRX-8923-AB</span>
+                        <span className="font-normal">{referenceId || "TRX-8923-AB"}</span>
                     </div>
 
                     <div className="flex justify-between">

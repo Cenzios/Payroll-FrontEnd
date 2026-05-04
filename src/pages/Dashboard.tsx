@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout, setAuthFromToken, setSelectedCompanyId } from '../store/slices/authSlice';
+import axiosInstance from '../api/axios';
 import {
   Users,
   DollarSign,
@@ -62,12 +63,16 @@ const Dashboard = () => {
     type: 'success' | 'error'
   } | null>(null);
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
+  const [activeSubscription, setActiveSubscription] = useState<any>(null);
+  const [remainingDays, setRemainingDays] = useState(7);
+  const [isTrial, setIsTrial] = useState(false);
 
   const urlToken = searchParams.get('token');
   const isTokenPending = !!urlToken && urlToken !== token;
 
   // RTK Query hooks
-  const { data: companies = [] } = useGetCompaniesQuery(undefined, {
+  const [createCompanyMutation] = useCreateCompanyMutation(); // ✅ Hook for mutation
+  const { data: companies = [], refetch: refetchCompanies } = useGetCompaniesQuery(undefined, {
     skip: !user || isTokenPending
   });
 
@@ -95,7 +100,6 @@ const Dashboard = () => {
     enabled: !!selectedCompanyId,
   });
 
-  const [createCompany] = useCreateCompanyMutation();
   const [createEmployee] = useCreateEmployeeMutation();
 
   // Derived state
@@ -113,6 +117,96 @@ const Dashboard = () => {
       }
     }
   }, [searchParams, dispatch]);
+
+  // ✅ 1. Automatic Company Creation for Trial Users
+  useEffect(() => {
+    const createPendingCompany = async () => {
+      const tempName = localStorage.getItem('temp_companyName');
+      if (tempName && token && user) {
+        try {
+          console.log('🏢 Transitioning Trial User: Creating company detected in localStorage...');
+          const companyData = {
+            name: tempName,
+            email: localStorage.getItem('temp_companyEmail') || user.email,
+            address: localStorage.getItem('temp_companyAddress') || 'Not Provided',
+            contactNumber: localStorage.getItem('temp_companyPhone') || '',
+            departments: [], // ✅ Use empty array
+          };
+
+          await createCompanyMutation(companyData).unwrap();
+          console.log('✅ Trial company created successfully via Mutation');
+
+          // Refresh companies list manually to be absolutely sure
+          refetchCompanies();
+
+          // Clear storage
+          localStorage.removeItem('temp_companyName');
+          localStorage.removeItem('temp_companyEmail');
+          localStorage.removeItem('temp_companyAddress');
+          localStorage.removeItem('temp_companyPhone');
+        } catch (err) {
+          console.error('❌ Failed to create trial company:', err);
+        }
+      }
+    };
+    if (token && user) createPendingCompany();
+  }, [token, user, createCompanyMutation, refetchCompanies]);
+
+  // ✅ 2. Robust Trial Status & Banner Logic
+  useEffect(() => {
+    const checkTrialStatus = async () => {
+      try {
+        const { data } = await axiosInstance.get('/subscription/current');
+        if (data?.data) {
+          setActiveSubscription(data.data);
+          const isTrialUser = data.data.isTrialUser;
+
+          if (isTrialUser) {
+            setIsTrial(true);
+            const createdDate = new Date(data.data.createdAt);
+            const now = new Date();
+            const diffTime = now.getTime() - createdDate.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const remDays = 7 - diffDays;
+            setRemainingDays(remDays > 0 ? remDays : 0);
+
+            if (remDays <= 0) {
+              navigate('/buy-plan?isUpgrade=true');
+            }
+          } else {
+            setIsTrial(false);
+          }
+        } else {
+          handleTrialFallback();
+        }
+      } catch (err) {
+        console.warn('Subscription fetch failed, falling back to User-based trial logic');
+        handleTrialFallback();
+      }
+    };
+
+    const handleTrialFallback = () => {
+      // Fallback to User model's isTrialUser and createdAt
+      if (user?.isTrialUser) {
+        setIsTrial(true);
+        // Use user.createdAt if available (from DB), otherwise assume just started
+        const signupDate = (user as any).createdAt ? new Date((user as any).createdAt) : new Date();
+        const now = new Date();
+        const diffTime = now.getTime() - signupDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const remDays = 7 - diffDays;
+        setRemainingDays(remDays > 0 ? remDays : 0);
+
+        if (remDays <= 0) {
+          navigate('/buy-plan?isUpgrade=true');
+        }
+      } else {
+        setIsTrial(false);
+      }
+    };
+
+    if (token) checkTrialStatus();
+  }, [token, navigate, user]);
 
   // Effect to set default selected company
   useEffect(() => {
@@ -216,7 +310,20 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
-      <AlertBar />
+      {isTrial && (
+        <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
+          <AlertTriangle className="w-5 h-5" />
+          <p className="text-white">Heads Up! Your trial ends in
+            <span className="font-bold p-[2px] rounded-[4px] bg-orange-400 mx-2"> {remainingDays > 0 ? remainingDays : 0} </span>
+            Days</p>
+          <span className='text-gray-600 text-2xl'> | </span>
+          <p>
+            <button
+              onClick={() => navigate('/get-plan?isUpgrade=true')}
+              className='font-extrabold underline cursor-pointer'>
+              Upgrade Now</button> to keep your account active!</p>
+        </div>
+      )}
 
       {/* Margin bottom gap after the banner */}
       <div className="-mb-4 shrink-0"></div>

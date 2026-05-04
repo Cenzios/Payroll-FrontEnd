@@ -1,13 +1,32 @@
-import { useState } from "react";
-import { UploadCloud, Copy } from "lucide-react";
+import { useState, useEffect } from "react";
+import { UploadCloud, Copy, Loader2 } from "lucide-react";
 import PlanVerify from "./PlanVerify";
+import axiosInstance from "../api/axios";
 
 const PlanPaymentManual = () => {
     const [file, setFile] = useState<File | null>(null);
     const [reference, setReference] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const accountNumber = "1234567890";
+
+    // ✅ Check for existing pending docs on mount
+    useEffect(() => {
+        const fetchExistingDocs = async () => {
+            try {
+                const { data } = await axiosInstance.get("/user-documents");
+                const pendingDoc = data.data.find((doc: any) => doc.status === "PENDING");
+                if (pendingDoc) {
+                    setReference(pendingDoc.referenceId || "");
+                    setIsSubmitted(true);
+                }
+            } catch (err) {
+                console.warn("Failed to fetch existing user documents", err);
+            }
+        };
+        fetchExistingDocs();
+    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -19,15 +38,34 @@ const PlanPaymentManual = () => {
         navigator.clipboard.writeText(accountNumber);
     };
 
-    const handleSubmit = () => {
-        console.log("File:", file);
-        console.log("Reference:", reference);
+    const handleSubmit = async () => {
+        if (!file) return;
 
-        setIsSubmitted(true);
+        setIsSubmitting(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            if (reference) {
+                formData.append("referenceId", reference);
+            }
+
+            await axiosInstance.post("/user-documents", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                }
+            });
+
+            setIsSubmitted(true);
+        } catch (error) {
+            console.error("Failed to upload manual payment doc", error);
+            alert("Upload failed. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (isSubmitted) {
-        return <PlanVerify />;
+        return <PlanVerify referenceId={reference || "N/A"} />;
     }
 
     return (
@@ -110,9 +148,10 @@ const PlanPaymentManual = () => {
             {/* Submit Button */}
             <button
                 onClick={handleSubmit}
-                className="w-full bg-[#367AFF] text-white font-semibold py-3 rounded-xl shadow-md hover:opacity-90 transition"
+                disabled={isSubmitting || !file}
+                className="w-full bg-[#367AFF] text-white font-semibold py-3 flex justify-center items-center rounded-xl shadow-md hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                Submit Bank Slip & Activate
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Submit Bank Slip & Activate"}
             </button>
 
             {/* Footer Note */}

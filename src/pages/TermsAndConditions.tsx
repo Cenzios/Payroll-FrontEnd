@@ -1,14 +1,18 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import bgIllustration from '../assets/images/Background-illustration.svg';
+import axiosInstance from '../api/axios'; // ✅ ADDED
 
 
 const TermsAndConditions = () => {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams(); // ✅ Get query params
-    const isPlanChange = searchParams.get('isPlanChange') === 'true'; // ✅ Check flag
+    const [searchParams] = useSearchParams();
+    const isPlanChange = searchParams.get('isPlanChange') === 'true';
+    const isTrial = searchParams.get('isTrial') === 'true';
+    const planId = searchParams.get('planId'); // ✅ GET PLAN ID
 
     const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false); // ✅ ADDED
     const contentRef = useRef<HTMLDivElement | null>(null);
 
     const handleScroll = () => {
@@ -23,10 +27,24 @@ const TermsAndConditions = () => {
         }
     };
 
-    const handleAccept = () => {
+    const handleAccept = async () => {
         localStorage.setItem('termsAccepted', 'true');
-        // ✅ Propagate flag to BuyPlan
-        navigate(`/buy-plan?isPlanChange=${isPlanChange}`);
+
+        if (isTrial) {
+            try {
+                setIsProcessing(true);
+                console.log('🚀 Starting formal trial for plan:', planId);
+                await axiosInstance.post('/subscription/start-trial', { planId });
+                navigate('/dashboard');
+            } catch (error) {
+                console.error('❌ Failed to start trial:', error);
+                alert('Failed to start trial. Please try again.');
+            } finally {
+                setIsProcessing(false);
+            }
+        } else {
+            navigate(`/buy-plan?isPlanChange=${isPlanChange}`);
+        }
     };
 
     const handleCancel = () => {
@@ -216,21 +234,30 @@ const TermsAndConditions = () => {
                         {/* Row 2: Right-aligned Buttons */}
                         <div className="flex items-center justify-end gap-4 w-full">
                             <button
+                                type="button"
                                 onClick={handleCancel}
                                 className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors whitespace-nowrap"
                             >
                                 Cancel
                             </button>
                             <button
+                                type="button"
                                 onClick={handleAccept}
-                                disabled={!hasScrolledToBottom}
-                                className={`px-6 py-2.5 font-semibold rounded-lg transition-all whitespace-nowrap
-                                    ${hasScrolledToBottom
+                                disabled={!hasScrolledToBottom || isProcessing}
+                                className={`px-6 py-2.5 font-semibold rounded-lg transition-all whitespace-nowrap flex items-center gap-2
+                                    ${hasScrolledToBottom && !isProcessing
                                         ? 'bg-[#3A8BFF] text-white hover:bg-[#337AEB] focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                             >
-                                Agree and Continue
+                                {isProcessing ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        Processing...
+                                    </>
+                                ) : (
+                                    'Agree and Continue'
+                                )}
                             </button>
                         </div>
                     </div>
@@ -249,7 +276,7 @@ const TermsAndConditions = () => {
                 />
             </div>
 
-        </div>
+        </div >
     );
 };
 

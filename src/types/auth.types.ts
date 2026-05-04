@@ -3,6 +3,8 @@ export interface User {
   fullName: string;
   email: string;
   role: string;
+  isTrialUser?: boolean;
+  createdAt?: string; // ✅ ADDED
 }
 
 export interface StartSignupRequest {
@@ -43,6 +45,8 @@ export interface LoginResponse {
   data: {
     user: User;
     token: string;
+    hasActivePlan: boolean; // ✅ ADDED
+    hasCompany: boolean;     // ✅ ADDED
   };
 }
 
