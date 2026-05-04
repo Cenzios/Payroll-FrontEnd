@@ -55,7 +55,7 @@ const Sidebar = () => {
         }`;
 
     return (
-        <div className="w-64 bg-[#000827] h-screen flex flex-col border-r border-white/10 fixed left-0 top-0 overflow-y-auto">
+        <div className="w-64 bg-[#F7F8FB] h-screen flex flex-col border-r border-white/10 fixed left-0 top-0 overflow-y-auto">
             {/* Logo Section */}
             <div className="p-6 flex items-center justify-center">
                 <NavLink to="/dashboard" className="cursor-pointer">
