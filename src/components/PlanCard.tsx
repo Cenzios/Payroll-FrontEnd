@@ -91,11 +91,11 @@ const PlanCard: React.FC<PlanCardProps> = ({
                         <button
                             onClick={onSelectPlan}
                             disabled={isLoading}
-                            className="w-full bg-[#0C3080] mb-5 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full bg-[#0C3080] mb-5 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {isLoading ? (
                                 <>
-                                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
                                     Processing...
                                 </>
                             ) : (
@@ -109,6 +109,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
                         <button
                             onClick={() => navigate(`/terms-and-conditions?isTrial=true&planId=${planId}`)}
                             className="w-full bg-white mb-5 text-[#0C3080] border border-[#0C3080] font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed">
+
                             Start Free Trial
                             <MoveRight className="w-4 h-4 ml-2" />
                         </button>
