@@ -4,7 +4,7 @@ import PlanPaymentManual from "./PlanPaymentManual";
 import { useState } from "react";
 
 interface PaymentMethodSelectorProps {
-    value: "card" | "manual";
+    value: "card" | "manual" | null;
     onChange: (method: "card" | "manual") => void;
     initialStep?: "select" | "pay";
 }
@@ -109,7 +109,9 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
 
                         <button
                             onClick={() => setStep("pay")}
-                            className="w-full bg-[#3B82F6] font-semibold text-white mt-4 py-3 rounded-xl flex items-center justify-center gap-2"
+                            disabled={!value}
+                            className={`w-full font-semibold text-white mt-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-all
+                                ${!value ? "bg-gray-300 cursor-not-allowed" : "bg-[#3B82F6] hover:bg-blue-600 active:scale-[0.98]"}`}
                         >
                             Proceed to Pay
                             <MoveRight className="inline-block" />
