@@ -204,6 +204,12 @@ const SetPassword = () => {
       illustration={passwordIllustration}
       title="Create Your Password"
     >
+      <p className="sm:hidden text-gray-600 text-xs mb-4 flex justify-center items-center ">
+        Create a password that's at least 6 characters long.
+      </p>
+
+      <hr className="sm:hidden my-4 mx-5 border-[1px] border-blue-200" />
+
       {/* <div className="mb-6 flex items-center justify-between bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
         <span className="text-sm text-blue-800">
           Setting password for: <strong>{signupEmail}</strong>
@@ -232,7 +238,7 @@ const SetPassword = () => {
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
+              <Lock className="h-5 w-5 text-gray-400 max-sm:hidden" />
             </div>
             <input
               type={showPassword ? 'text' : 'password'}
@@ -243,7 +249,8 @@ const SetPassword = () => {
               className={`block w-full pl-10 pr-12 py-3 border ${validationErrors.password
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                } rounded-lg focus:outline-none focus:ring-2 transition-colors
+                                max-sm:pl-4 max-sm:py-3.5 max-sm:rounded-xl max-sm:bg-gray-50 max-sm:border-gray-200 max-sm:placeholder-gray-400`}
               placeholder="••••••••"
             />
             <button
@@ -270,11 +277,11 @@ const SetPassword = () => {
             htmlFor="confirmPassword"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Re-enter password <span className="text-red-500">*</span>
+            Confirm Password <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
+              <Lock className="h-5 w-5 text-gray-400 max-sm:hidden" />
             </div>
             <input
               type={showConfirmPassword ? 'text' : 'password'}
@@ -285,7 +292,8 @@ const SetPassword = () => {
               className={`block w-full pl-10 pr-12 py-3 border ${validationErrors.confirmPassword
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                } rounded-lg focus:outline-none focus:ring-2 transition-colors
+                                max-sm:pl-4 max-sm:py-3.5 max-sm:rounded-xl max-sm:bg-gray-50 max-sm:border-gray-200 max-sm:placeholder-gray-400`}
               placeholder="••••••••"
             />
             <button
@@ -315,7 +323,8 @@ const SetPassword = () => {
              focus:ring-2 focus:ring-[#3A8BFF] focus:ring-offset-2 
              transition-all duration-200 
              disabled:opacity-50 disabled:cursor-not-allowed 
-             flex items-center justify-center"
+             flex items-center justify-center
+             max-sm:rounded-2xl max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200"
         >
           {isLoading ? (
             <>
@@ -323,7 +332,10 @@ const SetPassword = () => {
               Setting Password...
             </>
           ) : (
-            'Set Password & Continue'
+            <span>
+              <span className="max-sm:hidden">Set Password & Continue</span>
+              <span className="hidden max-sm:inline">Next</span>
+            </span>
           )}
         </button>
       </form>
