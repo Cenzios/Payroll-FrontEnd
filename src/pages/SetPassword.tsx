@@ -5,6 +5,7 @@ import { setPassword, clearError, setSignupEmail, loginUser } from '../store/sli
 import { Lock, Loader2, Eye, EyeOff, Mail, ArrowRight } from 'lucide-react';
 import passwordIllustration from '../assets/images/password-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
+import lock from '../assets/images/lock-pw.svg';
 
 const SetPassword = () => {
   const navigate = useNavigate();
@@ -204,6 +205,9 @@ const SetPassword = () => {
       illustration={passwordIllustration}
       title="Create Your Password"
     >
+      <div className="lg:hidden fixed top-14 left-32">
+        <img src={lock} alt="Lock" className="mt-[70px] h-24" />
+      </div>
       <p className="sm:hidden text-gray-600 text-xs mb-4 flex justify-center items-center ">
         Create a password that's at least 6 characters long.
       </p>
@@ -324,7 +328,7 @@ const SetPassword = () => {
              transition-all duration-200 
              disabled:opacity-50 disabled:cursor-not-allowed 
              flex items-center justify-center
-             max-sm:rounded-2xl max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200"
+             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200"
         >
           {isLoading ? (
             <>

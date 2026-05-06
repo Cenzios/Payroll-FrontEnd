@@ -4,7 +4,6 @@ import illustrationAsset from '../assets/images/Ilustration-Asset.svg';
 import mainImage from '../assets/images/Image.svg';
 import kit2 from '../assets/images/Kit 2.svg';
 import bgIllustration from '../assets/images/Background-illustration.svg';
-import lock from '../assets/images/lock-pw.svg';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -96,8 +95,6 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
             {/* Mobile Logo (visible only on small screens) */}
             <div className="lg:hidden fixed top-14 left-8 flex items-start justify-start gap-2">
               <img src={logo} alt="Payroll Logo" className="h-8" />
-              <img src={lock} alt="Lock" className="mt-[70px] h-24 ml-5" />
-
             </div>
 
             {title && (
@@ -107,7 +104,7 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
             )}
 
             {subtitle && (
-              <p className="text-gray-500 mt-3 text-[16px] font-normal leading-[1.7]">
+              <p className="text-gray-500 mt-3 text-[16px] font-normal leading-[1.7] text-center sm:text-left">
                 {subtitle}
               </p>
             )}
