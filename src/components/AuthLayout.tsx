@@ -4,6 +4,7 @@ import illustrationAsset from '../assets/images/Ilustration-Asset.svg';
 import mainImage from '../assets/images/Image.svg';
 import kit2 from '../assets/images/Kit 2.svg';
 import bgIllustration from '../assets/images/Background-illustration.svg';
+import lock from '../assets/images/lock-pw.svg';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -93,13 +94,14 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
         <div className="w-full max-w-md mx-auto relative z-10 animate-[fadeInUp_0.6s_ease-out]">
           <div className="mb-8">
             {/* Mobile Logo (visible only on small screens) */}
-            <div className="lg:hidden flex items-center gap-2 mb-8">
+            <div className="lg:hidden fixed top-14 left-8 flex items-start justify-start gap-2">
               <img src={logo} alt="Payroll Logo" className="h-8" />
-              <span className="text-[#3A8BFF] text-[28px] font-medium">ayroll</span>
+              <img src={lock} alt="Lock" className="mt-[70px] h-24 ml-5" />
+
             </div>
 
             {title && (
-              <h2 className="text-[28px] font-medium text-gray-900 leading-tight">
+              <h2 className="text-[28px] font-medium text-gray-900 leading-tight text-center sm:text-left">
                 {title}
               </h2>
             )}
@@ -114,6 +116,11 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
           <div className="animate-[fadeIn_0.6s_ease-out_0.2s_both]">
             {children}
           </div>
+        </div>
+
+        {/* Background Waves - Bottom Left */}
+        <div className="absolute -bottom-60 -left-28 w-96 h-96 z-0 opacity-100 pointer-events-none sm:hidden ">
+          <img src={bgIllustration} alt="Background Wave" className="w-full h-full object-contain " />
         </div>
       </div>
     </div>
