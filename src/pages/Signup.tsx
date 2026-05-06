@@ -181,7 +181,7 @@ const Signup = () => {
              transition-all duration-200 
              disabled:opacity-50 disabled:cursor-not-allowed 
              flex items-center justify-center
-                                                      max-sm:rounded-2xl max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:text-white max-sm:border-0 max-sm:shadow-blue-200"
+             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:text-white max-sm:border-0 max-sm:shadow-blue-200"
         >
           {isLoading ? (
             <>

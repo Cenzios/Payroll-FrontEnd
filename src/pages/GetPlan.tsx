@@ -55,6 +55,13 @@ const GetPlan = () => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isProcessingPlan, setIsProcessingPlan] = useState(false);
 
+  // ~line 55 — add state for which card is expanded on mobile
+  const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
+
+  const toggleExpand = (planId: string) => {
+    setExpandedPlan(prev => prev === planId ? null : planId);
+  };
+
   // Fetch plans from API
   useEffect(() => {
     const fetchPlans = async () => {
@@ -137,25 +144,34 @@ const GetPlan = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden 
-  bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
-  flex flex-col items-center justify-center px-4 py-7">
+      bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
+      flex flex-col items-center justify-center px-4 py-7
+      max-sm:justify-start max-sm:py-10 max-sm:px-8">
 
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]" />
 
-      <div className="text-center mb-10 relative z-10">
-        <h1 className="text-4xl font-bold text-center text-[#0E1D44] mb-3 relative z-10">
+      {/* Title */}
+      <div className="text-center mb-10 relative z-10
+        max-sm:mb-6">
+        <h1 className="text-4xl font-bold text-center text-[#0E1D44] mb-3 relative z-10
+          max-sm:text-2xl max-sm:text-center">
           Choose The Plan That's Right For You
         </h1>
-        <p className="text-[#53616A] mt-3 text-sm md:text-base">
+        <p className="text-[#53616A] mt-3 text-sm md:text-base
+          max-sm:text-center max-sm:text-xs">
           Simple, transparent pricing — one fixed plan or fully tailored to your needs.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-10 w-full max-w-5xl relative z-10">
-        {/* Single Plan Card (Basic) */}
-        <div className="w-full max-w-[400px] mx-auto relative z-10 flex flex-col items-center">
+      {/* Cards Grid */}
+      <div className="grid md:grid-cols-2 gap-10 w-full max-w-5xl relative z-10
+        max-sm:grid-cols-1 max-sm:gap-7">
+
+        {/* Basic Plan Card */}
+        <div className="w-full max-w-[400px] mx-auto relative z-10 flex flex-col items-center
+          max-sm:max-w-full max-sm:mx-0">
           <PlanCard
-            planId={basicPlan.id} // ✅ PASSING PLAN ID
+            planId={basicPlan.id}
             planName={basicPlan.name}
             price={basicPlan.employeePrice || basicPlan.price}
             description={basicPlan.description}
@@ -165,6 +181,9 @@ const GetPlan = () => {
             showFreeTrial={searchParams.get('isUpgrade') !== 'true'}
             isLoading={isProcessingPlan}
             onSelectPlan={() => handleSelectPlan(basicPlan.id)}
+            // ✅ mobile expand props
+            isMobileExpanded={expandedPlan === basicPlan.id}
+            onMobileToggle={() => toggleExpand(basicPlan.id)}
           />
 
           {/* Contact Footer Bar */}
@@ -181,22 +200,52 @@ const GetPlan = () => {
         </div> */}
         </div>
 
-        <div>
-          {/*cutom plan */}
-          <div className={` bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300  max-w-[400px] hover:shadow-3xl hover:-translate-y-1`}>
+        {/* Custom Plan Card */}
+        <div className="max-sm:flex-1">
+          <div
+            className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300 max-w-[400px] hover:shadow-3xl hover:-translate-y-1
+              max-sm:max-w-full max-sm:rounded-2xl max-sm:shadow-md"
+          >
+            {/* Card Header — always visible, acts as toggle on mobile */}
+            <div
+              className="relative bg-gradient-to-r from-[#2563EB] to-[#153885] text-white p-8 py-8
+                max-sm:p-8 max-sm:cursor-pointer max-sm:flex max-sm:h-[220px]"
+              onClick={() => toggleExpand('custom')}
+            >
+              <div>
+                <p className="text-xs tracking-widest opacity-80 flex items-start justify-start uppercase">
+                  CUSTOM PLAN
+                </p>
 
-            <div className="bg-gradient-to-r from-[#2563EB] to-[#153885] text-white p-8 py-8">
-              <p className="text-xs tracking-widest opacity-80">CUSTOM PLAN</p>
-              <h2 className="text-[50px] font-bold mt-6">Let's talk</h2>
-              <p className="text-xs font-light flex items-start text-white mt-2">
-                Tailored pricing for your business size & needs
-              </p>
+                <h2 className="text-[50px] font-bold mt-6
+                  max-sm:text-4xl max-sm:font-bold max-sm:mt-6">
+                  Let's talk
+                </h2>
+                <p className="text-xs font-light text-white mt-2
+                  max-sm:text-sm max-sm:opacity-80 max-sm:mt-4">
+                  Tailored pricing for your business size & needs
+                </p>
+              </div>
+
+              {/* drop down icon  */}
+              <div className="hidden max-sm:flex items-center justify-center w-8 h-8 rounded-full bg-white/20 shrink-0 ml-4 transition-transform duration-300"
+                style={{ transform: expandedPlan === 'custom' ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
 
-            <div className="px-9 pt-7 pb-7 space-y-4 text-[13px] text-[#334155]">
+
+            {/* Card Body — hidden on mobile until expanded */}
+            <div className={`px-9 pt-7 pb-7 space-y-4 text-[13px] text-[#334155]
+  max-sm:overflow-hidden max-sm:transition-all max-sm:duration-300
+  ${expandedPlan === 'custom'
+                ? 'max-sm:max-h-[600px] max-sm:opacity-100 max-sm:px-4 max-sm:pt-4 max-sm:pb-4'
+                : 'max-sm:max-h-0 max-sm:opacity-0 max-sm:px-0 max-sm:pt-0 max-sm:pb-0'
+              }`}>
               <p className="text-[13px] opacity-90">
-                Everything in the Basic plan, plus features
-                built around your specific requirements:
+                Everything in the Basic plan, plus features built around your specific requirements:
               </p>
 
               {[
@@ -215,6 +264,7 @@ const GetPlan = () => {
                 </div>
               ))}
 
+
               <button
                 onClick={() => setIsContactModalOpen(true)}
                 className="w-full bg-[#0C3080] mb-5 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
@@ -225,6 +275,7 @@ const GetPlan = () => {
           </div>
         </div>
       </div>
+
       <ContactModal
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
