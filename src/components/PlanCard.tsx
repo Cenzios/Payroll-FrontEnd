@@ -51,8 +51,8 @@ const PlanCard: React.FC<PlanCardProps> = ({
             <div
                 className="
     relative px-10 py-8 text-center text-white overflow-hidden
-    max-sm:p-6 max-sm:cursor-pointer
-    max-sm:flex max-sm:items-start max-sm:justify-between max-sm:text-left"
+    max-sm:p-7 max-sm:cursor-pointer
+    max-sm:flex max-sm:items-start max-sm:justify-between max-sm:text-left max-sm:h-[220px]"
                 style={{
                     background: `linear-gradient(
                         305deg,
@@ -80,7 +80,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
 
                     <p className="
                         text-xs font-light flex items-start text-white mt-[18px]
-                        max-sm:mt-1 max-sm:text-[11px] max-sm:opacity-80
+                        max-sm:mt-3\4 max-sm:text-sm max-sm:opacity-80
                     ">
                         No employee limit - scales as your team grows
                     </p>
@@ -88,17 +88,17 @@ const PlanCard: React.FC<PlanCardProps> = ({
                     <p className="
                         text-[10px] font-medium flex items-start text-white mt-3
                         bg-white/20 px-5 py-1 rounded-full w-fit border border-white/30
-                        max-sm:mt-2 max-sm:px-3 max-sm:py-0.5
+                        max-sm:mt-4 max-sm:px-3 max-sm:py-0.5 
                     ">
                         MOST POPULAR
                     </p>
 
                     <div className="
                         flex items-baseline gap-1 mt-1
-                        max-sm:mt-1
+                        max-sm:mt-2
                     ">
                         <p className="text-xl text-white font-semibold max-sm:text-base">RS:</p>
-                        <span className="text-5xl text-white font-bold max-sm:text-3xl">{price}</span>
+                        <span className="text-5xl text-white font-bold max-sm:text-4xl">{price}</span>
                         <span className="text-[13px] text-white opacity-80 lowercase font-light ml-1 max-sm:text-[11px]">
                             / employee / mo
                         </span>

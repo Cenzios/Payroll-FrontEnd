@@ -146,7 +146,7 @@ const GetPlan = () => {
     <div className="min-h-screen relative overflow-hidden 
       bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
       flex flex-col items-center justify-center px-4 py-7
-      max-sm:justify-start max-sm:py-8 max-sm:px-6">
+      max-sm:justify-start max-sm:py-10 max-sm:px-8">
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]" />
 
@@ -154,18 +154,18 @@ const GetPlan = () => {
       <div className="text-center mb-10 relative z-10
         max-sm:mb-6">
         <h1 className="text-4xl font-bold text-center text-[#0E1D44] mb-3 relative z-10
-          max-sm:text-2xl max-sm:text-left">
+          max-sm:text-2xl max-sm:text-center">
           Choose The Plan That's Right For You
         </h1>
         <p className="text-[#53616A] mt-3 text-sm md:text-base
-          max-sm:text-left max-sm:text-xs">
+          max-sm:text-center max-sm:text-xs">
           Simple, transparent pricing — one fixed plan or fully tailored to your needs.
         </p>
       </div>
 
       {/* Cards Grid */}
       <div className="grid md:grid-cols-2 gap-10 w-full max-w-5xl relative z-10
-        max-sm:grid-cols-1 max-sm:gap-4">
+        max-sm:grid-cols-1 max-sm:gap-7">
 
         {/* Basic Plan Card */}
         <div className="w-full max-w-[400px] mx-auto relative z-10 flex flex-col items-center
@@ -209,20 +209,20 @@ const GetPlan = () => {
             {/* Card Header — always visible, acts as toggle on mobile */}
             <div
               className="relative bg-gradient-to-r from-[#2563EB] to-[#153885] text-white p-8 py-8
-                max-sm:p-6 max-sm:cursor-pointer max-sm:flex max-sm:items-center max-sm:justify-between "
+                max-sm:p-8 max-sm:cursor-pointer max-sm:flex max-sm:h-[220px]"
               onClick={() => toggleExpand('custom')}
             >
               <div>
-                <p className="text-xs tracking-widest opacity-80 flex items-start uppercase">
+                <p className="text-xs tracking-widest opacity-80 flex items-start justify-start uppercase">
                   CUSTOM PLAN
                 </p>
 
                 <h2 className="text-[50px] font-bold mt-6
-                  max-sm:text-3xl max-sm:font-bold max-sm:mt-1">
+                  max-sm:text-4xl max-sm:font-bold max-sm:mt-6">
                   Let's talk
                 </h2>
                 <p className="text-xs font-light text-white mt-2
-                  max-sm:text-[11px] max-sm:opacity-80">
+                  max-sm:text-sm max-sm:opacity-80 max-sm:mt-4">
                   Tailored pricing for your business size & needs
                 </p>
               </div>

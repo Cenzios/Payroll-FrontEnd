@@ -41,6 +41,7 @@ import CompanySwitcher from '../components/CompanySwitcher';
 import PageHeader from '../components/PageHeader';
 import { salaryApi } from '../api/salaryApi';
 import AlertBar from '../components/AlertBar';
+import logo from '../assets/images/logo-login.svg';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -217,10 +218,6 @@ const Dashboard = () => {
     }
   }, [companies, selectedCompanyId, dispatch]);
 
-
-
-
-
   const [confirmation, setConfirmation] = useState<{
     isOpen: boolean;
     type: 'danger' | 'warning' | 'info';
@@ -309,7 +306,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans
+    max-sm:h-auto max-sm:overflow-auto">
       {/* {isTrial && (
         <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
           <AlertTriangle className="w-5 h-5" />
@@ -330,22 +328,58 @@ const Dashboard = () => {
       {/* Margin bottom gap after the banner */}
       <div className="-mb-4 shrink-0"></div>
 
-      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
+      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0
+      max-sm:flex-col max-sm:overflow-visible">
         <Sidebar />
 
         {/* Main Content */}
-        <div className="flex-1 ml-64 p-6 h-full overflow-hidden flex flex-col">
-          <PageHeader
-            title={`${getGreeting()}, ${user?.fullName?.split(' ')[0] || 'User'}`}
-            subtitle="Here's Your Dashboard Overview"
-            showLogout={true}
-            actionElement={
-              <>
-                {/* Company Switcher */}
-                <div className="relative">
-                  <button
-                    onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
-                    className="
+        <div className="flex-1 ml-64 p-6 h-full overflow-hidden flex flex-col
+        max-sm:ml-0 max-sm:p-5 max-sm:py-7 max-sm:overflow-visible max-sm:h-auto">
+
+          {/* ── MOBILE HEADER (replaces PageHeader on mobile) ── */}
+          <div className="hidden max-sm:rounded-xl  max-sm:flex items-center justify-between px-4 pt-5 pb-3 bg-white border-b border-gray-100">
+            <div>
+              <img src={logo} alt="logo" />
+            </div>
+            <div className="flex items-center gap-2 ml-6">
+              {/* Company switcher pill */}
+              <button
+                onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-700"
+              >
+                <Building2 className="w-3 h-3 text-gray-500" />
+                {selectedCompany?.name
+                  ? selectedCompany.name.split(' ').slice(0, 2).join(' ') + ' ...'
+                  : 'Select Co'}
+                <ChevronDown className="w-3 h-3 text-gray-400" />
+              </button>
+              <CompanySwitcher
+                isOpen={isCompanyDropdownOpen}
+                onClose={() => setIsCompanyDropdownOpen(false)}
+                companies={companies}
+                selectedCompanyId={selectedCompanyId}
+                onSelectCompany={(id) => dispatch(setSelectedCompanyId(id))}
+                onAddNew={() => { setIsCompanyDropdownOpen(false); openAddCompany(); }}
+              />
+              {/* Avatar circle */}
+              <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                {user?.fullName?.charAt(0) || 'U'}
+              </div>
+            </div>
+          </div>
+
+          <div className="max-sm:hidden">
+            <PageHeader
+              title={`${getGreeting()}, ${user?.fullName?.split(' ')[0] || 'User'}`}
+              subtitle="Here's Your Dashboard Overview"
+              showLogout={true}
+              actionElement={
+                <>
+                  {/* Company Switcher */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                      className="
                     flex items-center gap-2
                     px-4 py-2
                     rounded-xl
@@ -354,71 +388,71 @@ const Dashboard = () => {
                     hover:bg-gray-50
                     text-sm font-medium text-gray-700
                   "
+                    >
+                      <Building2 className="w-4 h-4 text-gray-500" />
+                      {selectedCompany?.name
+                        ? selectedCompany.name.split(' ').slice(0, 2).join(' ') + ' ...'
+                        : 'Select Company'}
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    </button>
+
+                    <CompanySwitcher
+                      isOpen={isCompanyDropdownOpen}
+                      onClose={() => setIsCompanyDropdownOpen(false)}
+                      companies={companies}
+                      selectedCompanyId={selectedCompanyId}
+                      onSelectCompany={(id) => dispatch(setSelectedCompanyId(id))}
+                      onAddNew={() => {
+                        setIsCompanyDropdownOpen(false);
+                        openAddCompany();
+                      }}
+                    />
+                  </div>
+
+                  {/* add employee button */}
+                  <button
+                    onClick={() => {
+                      if (!selectedCompanyId) {
+                        setToast({
+                          message: "Please select a company from the Dashboard first.",
+                          type: "error",
+                        });
+                        return;
+                      }
+                      openAddEmployee();
+                    }}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                    title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
                   >
-                    <Building2 className="w-4 h-4 text-gray-500" />
-                    {selectedCompany?.name
-                      ? selectedCompany.name.split(' ').slice(0, 2).join(' ') + ' ...'
-                      : 'Select Company'}
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                    <span className="hidden sm:inline whitespace-nowrap">Add New Employee</span>
+                    <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                      <Plus className="w-4 h-4" />
+                    </div>
                   </button>
 
-                  <CompanySwitcher
-                    isOpen={isCompanyDropdownOpen}
-                    onClose={() => setIsCompanyDropdownOpen(false)}
-                    companies={companies}
-                    selectedCompanyId={selectedCompanyId}
-                    onSelectCompany={(id) => dispatch(setSelectedCompanyId(id))}
-                    onAddNew={() => {
-                      setIsCompanyDropdownOpen(false);
-                      openAddCompany();
-                    }}
-                  />
-                </div>
+                  {/* add company button */}
+                  <button
+                    onClick={openAddCompany}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                    title="Add New Company"
+                  >
+                    <span className="hidden sm:inline whitespace-nowrap">Add New Company</span>
+                    <span className="sm:hidden whitespace-nowrap">Add</span>
+                    <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                  </button>
+                </>
+              }
+            />
+          </div>
 
-                {/* add employee button */}
-                <button
-                  onClick={() => {
-                    if (!selectedCompanyId) {
-                      setToast({
-                        message: "Please select a company from the Dashboard first.",
-                        type: "error",
-                      });
-                      return;
-                    }
-                    openAddEmployee();
-                  }}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
-                  title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
-                >
-                  <span className="hidden sm:inline whitespace-nowrap">Add New Employee</span>
-                  <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
-                    <Plus className="w-4 h-4" />
-                  </div>
-                </button>
-
-                {/* add company button */}
-                <button
-                  onClick={openAddCompany}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
-                  title="Add New Company"
-                >
-                  <span className="hidden sm:inline whitespace-nowrap">Add New Company</span>
-                  <span className="sm:hidden whitespace-nowrap">Add</span>
-                  <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
-                    <Plus className="w-4 h-4" />
-                  </div>
-                </button>
-
-
-              </>
-            }
-          />
-
-          <main className="flex-1">
+          <main className="flex-1 max-sm:mt-2">
             {isDashboardLoading ? <DashboardSkeleton /> : (
               <>
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6
+                ">
                   <StatCard
                     icon={Users}
                     title="Total Active Employees"

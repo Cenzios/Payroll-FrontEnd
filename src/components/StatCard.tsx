@@ -46,7 +46,8 @@ const StatCard = ({
   const themeStyle = themeStyles[colorTheme];
 
   return (
-    <div className="relative rounded-lg p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all group flex items-center justify-between">
+    <div className="relative rounded-lg p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all group flex items-center justify-between
+    max-sm:p-4 max-sm:-mb-5">
 
       {/* Date Badge — top-right corner*/}
       <div className="absolute top-6 right-6 flex items-center gap-1">
@@ -58,7 +59,7 @@ const StatCard = ({
 
       {/* Left Content */}
       <div>
-        <div className="text-[11px] text-gray-600 mb-4 font-regular">
+        <div className="text-[11px] text-gray-600 mb-4 font-regular max-sm:mb-2">
           {title}
         </div>
         <div className="text-[20px] font-bold text-gray-900 leading-none">

@@ -246,7 +246,7 @@ const TermsAndConditions = () => {
                                 disabled={!hasScrolledToBottom || isProcessing}
                                 className={`px-6 py-2.5 font-semibold rounded-lg transition-all whitespace-nowrap flex items-center gap-2
                                     ${hasScrolledToBottom && !isProcessing
-                                        ? 'bg-[#3A8BFF] text-white hover:bg-[#337AEB] focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                                        ? 'bg-[#3A8BFF] text-white hover:bg-[#337AEB] focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 max-sm:rounded-lg max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:text-white max-sm:border-0 max-sm:shadow-blue-200'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                             >
