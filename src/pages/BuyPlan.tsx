@@ -140,7 +140,8 @@ const BuyPlan = () => {
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
       <div className="w-full max-w-5xl relative z-10">
-        <h1 className="text-4xl font-bold text-center text-gray-900 mb-10">
+        <h1 className="text-4xl font-bold text-center text-gray-900 mb-10
+        max-sm:text-3xl ">
           {isPlanChange ? 'Confirm Plan Change' : 'Complete Registration Payment'}
         </h1>
 
@@ -158,22 +159,26 @@ const BuyPlan = () => {
         ) : (
           <div className="grid grid-cols-[1fr_1fr] gap-10">
             {/* Dynamic Plan Card - Shows Selected Plan */}
-            <PlanCard
-              planName={activeSubscription?.planName || selectedPlan.name}
-              price={activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price}
-              registrationFee={activeSubscription?.registrationFee || selectedPlan.registrationFee}
-              description={selectedPlan.description}
-              features={selectedPlan.features}
-              showPerEmployeePrice={true}
-              isHighlighted={true}
-              showButton={false}
-            />
+            <div className='max-sm:hidden'>
+              <PlanCard
+                planName={activeSubscription?.planName || selectedPlan.name}
+                price={activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price}
+                registrationFee={activeSubscription?.registrationFee || selectedPlan.registrationFee}
+                description={selectedPlan.description}
+                features={selectedPlan.features}
+                showPerEmployeePrice={true}
+                isHighlighted={true}
+                showButton={false}
+              />
+            </div>
 
-            <PlanOption
-              value={paymentMethod}
-              onChange={setPaymentMethod}
-              initialStep={isManualPending ? 'pay' : 'select'}
-            />
+            <div>
+              <PlanOption
+                value={paymentMethod}
+                onChange={setPaymentMethod}
+                initialStep={isManualPending ? 'pay' : 'select'}
+              />
+            </div>
 
             {/* <div className="bg-white rounded-[2.5rem] shadow-xl p-4 flex flex-col">
               <div className="mb-4 text-center space-y-2">

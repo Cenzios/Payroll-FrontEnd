@@ -180,7 +180,8 @@ const SetPassword = () => {
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center
+            max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200"
           >
             Continue <ArrowRight className="ml-2 h-5 w-5" />
           </button>
@@ -205,7 +206,7 @@ const SetPassword = () => {
       illustration={passwordIllustration}
       title="Create Your Password"
     >
-      <div className="lg:hidden fixed top-14 left-32">
+      <div className="lg:hidden fixed top-14 left-36">
         <img src={lock} alt="Lock" className="mt-[70px] h-24" />
       </div>
       <p className="sm:hidden text-gray-600 text-xs mb-4 flex justify-center items-center ">

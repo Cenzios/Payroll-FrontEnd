@@ -208,7 +208,7 @@ const Sidebar = () => {
             </div>
 
             {/* ── Mobile Bottom Navigation Bar ── */}
-            <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+            <div className="sm:hidden fixed -bottom-14 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
                 <div className="flex items-center justify-around px-2 py-1">
 
                     {/* Dashboard */}
@@ -252,7 +252,7 @@ const Sidebar = () => {
                                 onClick={() => setIsNotificationDrawerOpen(false)}
                             />
                             {/* Panel positioned just above the bottom nav bar */}
-                            <div className="sm:hidden fixed bottom-[580px] left-2 right-2 z-50">
+                            <div className="sm:hidden fixed bottom-[520px] left-2 right-2 z-50">
                                 <NotificationDropdown
                                     isOpen={true}
                                     onClose={() => setIsNotificationDrawerOpen(false)}
@@ -307,7 +307,7 @@ const Sidebar = () => {
                         onClick={() => setIsMobileMoreOpen(false)}
                     />
                     <div
-                        className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl"
+                        className="sm:hidden fixed -bottom-14 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl"
                         style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}
                     >
                         <div className="flex items-center justify-between px-6 pt-4 pb-3 border-b border-gray-100">
@@ -321,12 +321,12 @@ const Sidebar = () => {
                             </button>
                         </div>
 
-                        <nav className="px-4 py-3 space-y-1">
+                        <nav className="px-4 py-3 space-y-1 -mb-20">
                             <NavLink
                                 to="/salary"
                                 onClick={() => setIsMobileMoreOpen(false)}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 ${isActive
+                                    `flex items-center gap-4 px-4 py-3.5 border-b border-gray-300 transition-all duration-200 ${isActive
                                         ? 'bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white'
                                         : 'text-[#67696C] hover:bg-gray-50'
                                     }`
@@ -340,7 +340,7 @@ const Sidebar = () => {
                                 to="/loans"
                                 onClick={() => setIsMobileMoreOpen(false)}
                                 className={({ isActive }) =>
-                                    `flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 ${isActive
+                                    `flex items-center gap-4 px-4 py-3.5 border-b border-gray-300 transition-all duration-200 ${isActive
                                         ? 'bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white'
                                         : 'text-[#67696C] hover:bg-gray-50'
                                     }`
@@ -354,7 +354,7 @@ const Sidebar = () => {
                             <div>
                                 <button
                                     onClick={toggleReports}
-                                    className={`flex items-center justify-between w-full px-4 py-3.5 rounded-xl transition-all duration-200 ${isReportActive
+                                    className={`flex items-center justify-between w-full px-4 py-3.5 border-b border-gray-300 transition-all duration-200 ${isReportActive
                                         ? 'bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white'
                                         : 'text-[#67696C] hover:bg-gray-50'
                                         }`}
@@ -367,7 +367,7 @@ const Sidebar = () => {
                                 </button>
 
                                 {isReportsOpen && (
-                                    <div className="mt-1 ml-4 pl-4 border-l-2 border-gray-200 space-y-1">
+                                    <div className="mt-1 ml-4 pl-4 space-y-1 border-b border-gray-300 ">
                                         {[
                                             { to: '/reports', label: 'Payroll Summary' },
                                             { to: '/epf-etf', label: 'EPF / ETF' },
