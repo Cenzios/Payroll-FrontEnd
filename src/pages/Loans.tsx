@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Loader2, ScrollText, CreditCard } from 'lucide-react';
+import { Plus, Search, Loader2, ScrollText, CreditCard, SlidersHorizontal } from 'lucide-react';
 import { useAppSelector } from '../store/hooks';
 import Sidebar from '../components/Sidebar';
 import PageHeader from '../components/PageHeader';
@@ -12,6 +12,7 @@ import loanAmount from '../assets/images/loan-amount-icon.svg';
 import loanPayment from '../assets/images/loan-payment-icon.svg';
 import { DollarSign, HandCoins, CircleDotDashed, Shapes } from 'lucide-react';
 import AlertBar from '../components/AlertBar';
+import logo from '../assets/images/logo-login.svg';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -33,7 +34,7 @@ const Loans = () => {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<any | null>(null);
-  const { selectedCompanyId } = useAppSelector((state) => state.auth);
+  const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
 
   const { data: loans = [], isLoading, isError } = useGetLoansQuery(
     { companyId: selectedCompanyId || "" },
@@ -58,32 +59,132 @@ const Loans = () => {
     iconBg: string;
     iconColor: string;
   }) => (
-    <div className="bg-white p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50 flex items-center justify-between">
+    <div className="bg-white p-6 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50 flex items-center justify-between
+      max-sm:p-4 max-sm:rounded-2xl max-sm:flex-col max-sm:items-start max-sm:gap-2 max-sm:shadow-[0_2px_12px_rgba(0,0,0,0.06)] max-sm:border-[#F0F0F0]">
       <div>
-        <p className="text-[12px] font-medium text-[#989FA7] mb-1">{title}</p>
-        <h3 className="text-[20px] font-bold text-[#1D1F24]">{value}</h3>
+        <p className="text-[12px] font-medium text-[#989FA7] mb-1 max-sm:text-[11px]">{title}</p>
+        <h3 className="text-[20px] font-bold text-[#1D1F24] max-sm:text-[17px]">{value}</h3>
       </div>
-      <div className={`${iconBg} w-12 h-12 rounded-xl flex items-center justify-center`}>
-        <Icon className={`${iconColor} w-6 h-6`} />
+      <div className={`${iconBg} w-12 h-12 rounded-xl flex items-center justify-center
+        max-sm:w-7 max-sm:h-7 max-sm:rounded-lg max-sm:order-first`}>
+        <Icon className={`${iconColor} w-6 h-6 max-sm:w-3.5 max-sm:h-3.5`} />
+      </div>
+    </div>
+  );
+
+
+  // Mobile-only loan card matching the design
+  const MobileLoanCard = ({ loan }: { loan: any }) => (
+    <div
+      className="bg-white rounded-2xl border border-[#EBEBEB] p-4 cursor-pointer active:bg-gray-50 transition-colors shadow-[0_1px_6px_rgba(0,0,0,0.04)]"
+      onClick={() => setSelectedLoan(loan)}
+    >
+      {/* Employee row */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold text-[15px] shrink-0 overflow-hidden">
+            {loan.employee?.fullName?.charAt(0) || 'E'}
+          </div>
+          <div>
+            <div className="text-[13px] font-bold text-[#353843]">{loan.employee?.fullName}</div>
+            <div className="text-[11px] text-[#A8B0B9] mt-0.5">{loan.employee?.employeeId}</div>
+          </div>
+        </div>
+        {getStatusBadge(loan.status || 'Active')}
+      </div>
+
+      {/* Loan Amount + Loan Title row */}
+      <div className="flex items-end justify-between mb-3">
+        <div>
+          <p className="text-[10px] text-[#989FA7] mb-0.5 font-medium">Loan Amount</p>
+          <p className="text-[16px] font-bold text-[#1D1F24]">
+            Rs: {loan.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          </p>
+        </div>
+        <p className="text-[12px] font-semibold text-[#6B7280]">{loan.loanTitle}</p>
+      </div>
+
+      {/* Divider */}
+      <div className="h-px bg-[#F2F2F2] mb-3" />
+
+      {/* Stats row: Interest | Installments | Premium */}
+      <div className="grid grid-cols-3 gap-0">
+        <div className="text-center">
+          <p className="text-[9px] text-[#989FA7] uppercase tracking-wide font-semibold mb-1">Interest</p>
+          <p className="text-[11px] font-bold text-[#353843]">
+            {loan.interestRate}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})
+          </p>
+        </div>
+        <div className="text-center border-x border-[#F0F0F0]">
+          <p className="text-[9px] text-[#989FA7] uppercase tracking-wide font-semibold mb-1">Installments</p>
+          <p className="text-[11px] font-bold text-[#353843]">
+            {loan.installments?.filter((i: any) => i.status === 'PAID').length || 0} / {loan.installmentCount}
+          </p>
+        </div>
+        <div className="text-center">
+          <p className="text-[9px] text-[#989FA7] uppercase tracking-wide font-semibold mb-1">Premium</p>
+          <p className="text-[11px] font-bold text-[#353843]">
+            Rs:{loan.monthlyPremium.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          </p>
+        </div>
       </div>
     </div>
   );
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans
+    max-sm:h-auto max-sm:overflow-auto">
       <AlertBar />
 
       {/* Margin bottom gap after the banner */}
       <div className="-mb-4 shrink-0"></div>
 
-      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">      <Sidebar />
-        <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
+      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0
+      max-sm:flex-col max-sm:overflow-visible">
+        <Sidebar />
+        <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col
+          max-sm:ml-0 max-sm:p-0 max-sm:h-auto max-sm:overflow-visible">
           {selectedLoan ? (
             <LoanHistoryView loan={selectedLoan} onBack={() => setSelectedLoan(null)} />
           ) : (
             <>
-              {/* Header */}
-              <div className="shrink-0">
+              {/* ── MOBILE HEADER (replaces PageHeader on mobile) ── */}
+              <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+                <div>
+                  <img src={logo} alt="logo" className='w-40 h-10' />
+                </div>
+                <div className="flex items-center gap-2 ml-6">
+
+                  {/* Avatar circle */}
+                  <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                    {user?.fullName?.charAt(0) || 'U'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Loans Title & Action */}
+              <div className="hidden max-sm:block px-6 py-4 bg-white shrink-0">
+                <div className="flex items-center justify-between mb-1">
+                  <div>
+                    <div className="inline-block px-3 py-0.5 rounded-sm">
+                      <h1 className="text-[22px] font-bold text-[#1D1F24]">Loans</h1>
+                    </div>
+                    <p className="text-[13px] text-[#989FA7] mt-3 font-medium">Handle Employees Loans</p>
+                  </div>
+                  <button
+                    onClick={() => setIsCreateDrawerOpen(true)}
+                    className="flex items-center gap-2 bg-[#2054C8] text-white pl-5 pr-2 py-2 rounded-full text-[14px] font-bold shadow-lg shadow-blue-100"
+                  >
+                    Create Loan
+                    <div className="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Desktop Header */}
+              <div className="shrink-0 max-sm:hidden">
                 <PageHeader
                   title="Loans"
                   subtitle="Handle Employees Loans"
@@ -102,8 +203,8 @@ const Loans = () => {
               </div>
 
               {/* Main Content */}
-              <div className="flex-1 mt-2 overflow-y-auto">
-                <div className="overflow-x-auto h-full">
+              <div className="flex-1 mt-2 overflow-y-auto max-sm:overflow-visible max-sm:px-6">
+                <div className="overflow-x-auto h-full max-sm:overflow-visible">
                   {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                       <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
@@ -115,15 +216,16 @@ const Loans = () => {
                     </div>
                   ) : loans.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full min-h-[500px]">
-                      <div className="bg-white rounded-[24px] p-10 max-w-[540px] w-full text-center shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-gray-50 flex flex-col items-center">
-                        <div className="w-32 h-32 mb-8 relative">
+                      <div className="bg-white rounded-[24px] p-10 max-w-[540px] w-full text-center shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-gray-50 flex flex-col items-center
+                        max-sm:rounded-2xl max-sm:p-6 max-sm:shadow-none max-sm:border-0">
+                        <div className="w-32 h-32 mb-8 relative max-sm:w-24 max-sm:h-24 max-sm:mb-6">
                           <div className="absolute inset-0 bg-blue-400/20 blur-[30px] rounded-full scale-110"></div>
                           <img src={loanIcon} alt="No loans" className="w-full h-full relative z-10" />
                         </div>
 
-                        <h3 className="text-[24px] font-bold text-[#1D1F24] mb-4">No loans created yet</h3>
+                        <h3 className="text-[24px] font-bold text-[#1D1F24] mb-4 max-sm:text-[20px]">No loans created yet</h3>
 
-                        <p className="text-[#989FA7] leading-[1.6] text-[15px] mb-10 px-4">
+                        <p className="text-[#989FA7] leading-[1.6] text-[15px] mb-10 px-4 max-sm:text-[13px] max-sm:mb-7 max-sm:px-0">
                           Start managing employee loans by creating your first loan record. Track amounts, interest rates, instalments and repayment status all in one place.
                         </p>
 
@@ -140,8 +242,9 @@ const Loans = () => {
                     </div>
                   ) : (
                     <>
-                      {/* Summary Cards */}
-                      <div className="grid grid-cols-4 gap-6 mb-8 mt-2">
+                      {/* Summary Cards — 4-col on desktop, 2×2 grid on mobile */}
+                      <div className="grid grid-cols-4 gap-6 mb-8 mt-2
+                        max-sm:grid-cols-2 max-sm:gap-3 max-sm:mb-5 max-sm:mt-1">
                         <SummaryCard
                           title="Total Active Loans"
                           value={totalActiveLoans}
@@ -172,7 +275,17 @@ const Loans = () => {
                         />
                       </div>
 
-                      <div className="border-x-2 border-y-2 border-[#e1e2e4] rounded-xl overflow-hidden">
+                      {/* "Employee Loans" section header — mobile only */}
+                      <div className="hidden max-sm:flex items-center justify-between mb-3">
+                        <p className="text-[15px] font-bold text-[#1D1F24]">Employee Loans</p>
+                        <button className="flex items-center gap-1.5 text-[12px] font-semibold text-[#6B7280] border border-[#E5E7EB] bg-white rounded-full px-3 py-1.5">
+                          <SlidersHorizontal className="w-3.5 h-3.5" />
+                          Filter
+                        </button>
+                      </div>
+
+                      {/* Desktop: table */}
+                      <div className="border-x-2 border-y-2 border-[#e1e2e4] rounded-xl overflow-hidden max-sm:hidden">
                         <table className="w-full text-left border-collapse bg-white">
                           <thead className="bg-[#FAFBFC]">
                             <tr className="border-b-2 border-[#e1e2e4]">
@@ -215,6 +328,13 @@ const Loans = () => {
                             ))}
                           </tbody>
                         </table>
+                      </div>
+
+                      {/* Mobile: card list */}
+                      <div className="hidden max-sm:flex flex-col gap-3 pb-6">
+                        {loans.map((loan: any) => (
+                          <MobileLoanCard key={loan.id} loan={loan} />
+                        ))}
                       </div>
                     </>
                   )}
