@@ -67,15 +67,30 @@ const AlertBar = () => {
         if (token) checkTrialStatus();
     }, [token, navigate, user]);
 
+    const [isCheckingDocs, setIsCheckingDocs] = useState(false);
+
     // ✅ Handle Upgrade Now click:
-    // If subscription is PENDING_ACTIVATION → user already submitted payment, show PlanVerify
+    // If subscription is PENDING_ACTIVATION AND they uploaded a slip → show PlanVerify
     // Otherwise → go to plan selection flow
-    const handleUpgradeNow = () => {
+    const handleUpgradeNow = async () => {
         if (subscriptionStatus === 'PENDING_ACTIVATION') {
-            navigate('/plan-verify');
-        } else {
-            navigate('/get-plan?isUpgrade=true');
+            setIsCheckingDocs(true);
+            try {
+                const { data } = await axiosInstance.get('/user-documents');
+                // Check if any document is currently pending review
+                const hasPendingDoc = data.data?.some((doc: any) => doc.status === 'PENDING');
+
+                if (hasPendingDoc) {
+                    navigate('/plan-verify');
+                    return;
+                }
+            } catch (err) {
+                console.warn('Document check failed, defaulting to plan selection');
+            } finally {
+                setIsCheckingDocs(false);
+            }
         }
+        navigate('/get-plan?isUpgrade=true');
     };
 
     return (
@@ -88,8 +103,10 @@ const AlertBar = () => {
                     <span className='text-gray-600 text-2xl'>| </span>
                     <button
                         onClick={handleUpgradeNow}
-                        className='font-extrabold underline cursor-pointer'>
-                        Upgrade Now</button>
+                        disabled={isCheckingDocs}
+                        className='font-extrabold underline cursor-pointer disabled:opacity-70'>
+                        {isCheckingDocs ? 'Checking status...' : 'Upgrade Now'}
+                    </button>
                 </div>
             )}
         </div>
