@@ -92,7 +92,8 @@ const PlanPaymentCard = () => {
     }, [user, isFetchingSub, isPlanChange, selectedPlan.id, activeSubscription?.registrationFee, selectedPlan.registrationFee]); // Dependencies
 
     return (
-        <div className="bg-white rounded-[2.5rem] shadow-xl p-6 flex flex-col justify-center h-full min-h-[400px]">
+        <div className="bg-white rounded-[2.5rem] shadow-xl p-6 flex flex-col justify-center h-full min-h-[400px]
+        max-sm:w-[22rem]">
             <div className="mb-6 text-center space-y-2">
                 <h2 className="text-2xl font-semibold text-gray-900">Secure Payment via Stripe</h2>
                 <p className="text-gray-600 text-sm">

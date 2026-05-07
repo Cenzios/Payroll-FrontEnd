@@ -34,9 +34,11 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
     return (
         <>
             {step === "select" && (
-                <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-4">
+                <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-3
+                                max-sm:w-[22rem]">
 
-                    <h3 className="text-lg font-bold text-gray-900">
+                    <h3 className="text-lg font-bold text-gray-900
+                    max-sm:flex max-sm:justify-center">
                         Payment Method
                     </h3>
 
@@ -109,7 +111,8 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
 
                         <button
                             onClick={() => setStep("pay")}
-                            className="w-full bg-[#3B82F6] font-semibold text-white mt-4 py-3 rounded-xl flex items-center justify-center gap-2"
+                            className="w-full bg-[#3B82F6] font-semibold text-white mt-4 py-3 rounded-xl flex items-center justify-center gap-2
+             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200"
                         >
                             Proceed to Pay
                             <MoveRight className="inline-block" />
