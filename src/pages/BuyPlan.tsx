@@ -25,7 +25,7 @@ const BuyPlan = () => {
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
   const [isFetchingSub, setIsFetchingSub] = useState(true);
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "manual">("card");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "manual" | null>(null);
 
   // Stripe State
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -88,7 +88,11 @@ const BuyPlan = () => {
 
   // ✅ Create Payment Intent on Mount (or when plan/user is ready)
   useEffect(() => {
-    if (!user || isFetchingSub) return;
+    // Only create Stripe Intent if:
+    // 1. User and Sub data are loaded
+    // 2. User has NOT already submitted a manual payment (isManualPending is false)
+    // 3. Current selected method is 'card'
+    if (!user || isFetchingSub || isManualPending || paymentMethod !== 'card') return;
 
     const createPaymentIntent = async () => {
       setIsLoadingSecret(true);
@@ -126,7 +130,7 @@ const BuyPlan = () => {
     };
 
     createPaymentIntent();
-  }, [user, isFetchingSub, isPlanChange, selectedPlan.id]); // Dependencies
+  }, [user, isFetchingSub, isPlanChange, selectedPlan.id, paymentMethod, isManualPending]); // Dependencies updated
 
   return (
     <div
