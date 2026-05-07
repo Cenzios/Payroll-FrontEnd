@@ -41,7 +41,7 @@ const NotificationDropdown = ({ isOpen, onClose, notifications, onClearAll, onNo
     return (
         <div
             ref={dropdownRef}
-            className="absolute top-12 right-0 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+            className="absolute top-12 right-0 w-96 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-sm:rounded-t-3xl max-sm:rounded-b-none"
         >
             <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
