@@ -337,7 +337,7 @@ const Dashboard = () => {
         max-sm:ml-0 max-sm:p-5 max-sm:py-7 max-sm:overflow-visible max-sm:h-auto">
 
           {/* ── MOBILE HEADER (replaces PageHeader on mobile) ── */}
-          <div className="hidden max-sm:rounded-xl  max-sm:flex items-center justify-between px-4 pt-5 pb-3 bg-white border-b border-gray-100">
+          <div className="hidden  max-sm:flex items-center justify-between -ml-3 pt-5 pb-3 border-b border-gray-100">
             <div>
               <img src={logo} alt="logo" />
             </div>
@@ -483,6 +483,43 @@ const Dashboard = () => {
                   />
                 </div>
 
+                {/* add buttons */}
+                <div className='hidden max-sm:flex items-center justify-center gap-6 mt-10 mb-4'>
+                  {/* add employee button */}
+                  <button
+                    onClick={() => {
+                      if (!selectedCompanyId) {
+                        setToast({
+                          message: "Please select a company from the Dashboard first.",
+                          type: "error",
+                        });
+                        return;
+                      }
+                      openAddEmployee();
+                    }}
+                    className="w-[160px] flex items-center gap-2 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] text-white pl-5 pr-2 py-2 rounded-lg text-sm font-normal transition-colors"
+                    title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
+                  >
+                    <span className="whitespace-nowrap">Add Employee</span>
+                    <div className="bg-white/20 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                  </button>
+
+                  {/* add company button */}
+                  <button
+                    onClick={openAddCompany}
+                    className="w-[160px] flex items-center gap-2 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] text-white pl-5 pr-2 py-2 rounded-lg text-sm font-normal transition-colors"
+                    title="Add New Company"
+                  >
+                    <span className="whitespace-nowrap">Add Company</span>
+                    <div className="bg-white/20 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                  </button>
+                </div>
+
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start flex-1 overflow-hidden">
                   {/* Left (2/3) – Salary Paid Summary Chart */}
                   <div className="lg:col-span-2 h-full flex flex-col">
@@ -490,7 +527,8 @@ const Dashboard = () => {
                   </div>
 
                   {/* Right (1/3) – Quick Actions */}
-                  <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col h-full">
+                  <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col h-full
+                                  max-sm:p-4">
                     <h2 className="text-[15px] font-semibold text-gray-900 mb-4">
                       Quick Actions
                     </h2>
@@ -505,14 +543,16 @@ const Dashboard = () => {
                         onClick={() => navigate('/salary')}
                       />
 
-                      <QuickAction
-                        icon={UserPlus}
-                        title="Add Employee"
-                        description="Register new staff member"
-                        bgColor="text-[#4182F9]"
-                        lightBgColor="bg-[#EBF2FF]"
-                        onClick={openAddEmployee}
-                      />
+                      <div className='max-sm:hidden'>
+                        <QuickAction
+                          icon={UserPlus}
+                          title="Add Employee"
+                          description="Register new staff member"
+                          bgColor="text-[#4182F9]"
+                          lightBgColor="bg-[#EBF2FF]"
+                          onClick={openAddEmployee}
+                        />
+                      </div>
 
                       <QuickAction
                         icon={BarChart3}
