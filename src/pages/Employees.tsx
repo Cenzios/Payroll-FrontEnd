@@ -22,6 +22,7 @@ import Toast from "../components/Toast";
 import TableSkeleton from "../components/skeletons/TableSkeleton";
 import PortalDropdown from "../components/PortalDropdown";
 import AlertBar from "../components/AlertBar";
+import logo from '../assets/images/logo-login.svg';
 
 const Employees = () => {
   const { selectedCompanyId } = useAppSelector((state) => state.auth);
@@ -451,6 +452,20 @@ const Employees = () => {
         <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col
           max-sm:ml-0 max-sm:p-0 max-sm:h-auto max-sm:overflow-visible">
 
+          {/* MOBILE HEADER */}
+          <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+            <div>
+              <img src={logo} alt="logo" className='w-40 h-10' />
+            </div>
+            <div className="flex items-center gap-2 ml-6">
+
+              {/* Avatar circle */}
+              <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                {/* {user?.fullName?.charAt(0) || 'U'} */}
+              </div>
+            </div>
+          </div>
+
           {/* ─── DESKTOP layout ─── */}
           <div className="contents max-sm:hidden">
             <div className="shrink-0 px-6 pt-6">
@@ -569,7 +584,7 @@ const Employees = () => {
             {/* MOBILE: List View */}
             <div className={`flex flex-col flex-1 ${mobileView === "list" ? "block" : "hidden"}`}>
               {/* Mobile Header */}
-              <div className="px-4 pt-4 pb-2 shrink-0">
+              <div className="px-7 pb-2 shrink-0">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h1 className="text-xl font-bold text-gray-900">Employees</h1>
@@ -583,9 +598,12 @@ const Employees = () => {
                       }
                       openAddDrawer();
                     }}
-                    className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-semibold transition-colors"
+                    className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors
+                    max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] "
                   >
-                    <Plus className="w-4 h-4" />
+                    <div className="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center">
+                      <Plus className="w-4 h-4" />
+                    </div>
                     Add
                   </button>
                 </div>
