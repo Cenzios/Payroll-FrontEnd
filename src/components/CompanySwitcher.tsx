@@ -69,6 +69,7 @@ const CompanySwitcher = ({
                     {otherCompanies.map((company) => (
                         <button
                             key={company.id}
+                            onMouseDown={(e) => e.stopPropagation()}
                             onClick={() => {
                                 onSelectCompany(company.id);
                                 onClose();
@@ -93,9 +94,10 @@ const CompanySwitcher = ({
 
                 <div className="mt-2 pt-2 border-t border-gray-50">
                     <button
+                        onMouseDown={(e) => e.stopPropagation()}
                         onClick={() => {
                             onAddNew();
-                            onClose();
+                            // onClose();
                         }}
                         className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-blue-50 transition-colors flex items-center gap-3 text-blue-600 group"
                     >
