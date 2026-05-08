@@ -83,7 +83,7 @@ export interface EmployeeBank {
 export const apiSlice = createApi({
     reducerPath: 'api',
     baseQuery: axiosBaseQuery({ baseUrl: '' }), // baseUrl handled by axiosInstance
-    tagTypes: ['Dashboard', 'Company', 'Employee', 'Subscription', 'Notification'],
+    tagTypes: ['Dashboard', 'Company', 'Employee', 'Subscription', 'Notification', 'Salary'],
     endpoints: (builder) => ({
         // --- DASHBOARD ---
         getDashboardSummary: builder.query<DashboardSummary, string | undefined>({
@@ -325,7 +325,31 @@ export const apiSlice = createApi({
                 method: 'GET',
                 params,
             }),
-            providesTags: ['Employee'],
+            providesTags: ['Salary', 'Employee'],
+        }),
+        saveSalary: builder.mutation<any, any>({
+            query: (data) => ({
+                url: '/salary',
+                method: 'POST',
+                data,
+            }),
+            invalidatesTags: ['Salary', 'Employee', 'Dashboard'],
+        }),
+        getSalaryReport: builder.query<any, { companyId: string; startMonth: number; startYear: number; endMonth: number; endYear: number }>({
+            query: (params) => ({
+                url: '/reports/company-payroll-summary',
+                method: 'GET',
+                params,
+            }),
+            providesTags: ['Salary'],
+        }),
+        getCFormReport: builder.query<any, { companyId: string; month: number; year: number }>({
+            query: (params) => ({
+                url: '/reports/c-form',
+                method: 'GET',
+                params,
+            }),
+            providesTags: ['Salary'],
         }),
     }),
 });
@@ -359,4 +383,9 @@ export const {
     useUploadEmployeeDocumentMutation,
     useDeleteEmployeeDocumentMutation,
     useGetSalaryHistoryQuery,
+    useSaveSalaryMutation,
+    useGetSalaryReportQuery,
+    useLazyGetSalaryReportQuery,
+    useGetCFormReportQuery,
+    useLazyGetCFormReportQuery,
 } = apiSlice;
