@@ -254,7 +254,8 @@ const Dashboard = () => {
   const handleDrawerSubmit = async (data: any) => {
     try {
       if (drawerMode === 'company') {
-        await createCompany(data as CreateCompanyRequest).unwrap();
+        // await createCompany(data as CreateCompanyRequest).unwrap();
+        await createCompanyMutation(data as CreateCompanyRequest).unwrap();
         setToast({ message: 'Company created successfully!', type: 'success' });
 
         // setModalTitle("Company Created");
