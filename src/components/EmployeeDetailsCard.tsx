@@ -108,9 +108,10 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`pb-2 text-[13px] font-semibold transition-colors relative -mb-[2px] ${activeTab === tab
-                                    ? "text-[#4A7DFF]"
-                                    : "text-[#8392A5] hover:text-gray-600"
+                                className={`pb-2 text-[13px] font-semibold transition-colors relative -mb-[2px]
+                                    ${activeTab === tab
+                                        ? "text-[#4A7DFF]"
+                                        : "text-[#8392A5] hover:text-gray-600"
                                     }`}
                             >
                                 {tab}

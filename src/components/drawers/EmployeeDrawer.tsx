@@ -319,7 +319,8 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                     key={tab}
                                     type="button"
                                     onClick={() => setActiveTab(tab)}
-                                    className={`pb-2 text-[13px] font-medium transition-colors relative ${activeTab === tab ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}`}
+                                    className={`pb-2 text-[13px] font-medium transition-colors relative ${activeTab === tab ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}
+                                    max-sm:text-xs`}
                                 >
                                     {tab === "employee" ? "Employee Information" : tab === "payment" ? "Salary Information" : "Bank Details"}
                                     {activeTab === tab && <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#367AFF] rounded-t-full" />}
@@ -750,13 +751,15 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                     <div className="p-4 border-t border-gray-200 flex justify-center">
                         {activeTab === "bank" ? (
                             <button type="submit" onClick={handleSubmit} disabled={isSubmitting || !isFormValid()}
-                                className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed">
+                                className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed
+                                             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
                                 {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
                             </button>
                         ) : (
                             <button type="button" onClick={() => { if (activeTab === "employee") setActiveTab("payment"); else if (activeTab === "payment") setActiveTab("bank"); }}
                                 disabled={!isTabValid(activeTab)}
-                                className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed">
+                                className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed
+                                             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
                                 Next
                             </button>
                         )}

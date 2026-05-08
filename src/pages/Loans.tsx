@@ -148,7 +148,7 @@ const Loans = () => {
             <LoanHistoryView loan={selectedLoan} onBack={() => setSelectedLoan(null)} />
           ) : (
             <>
-              {/* ── MOBILE HEADER (replaces PageHeader on mobile) ── */}
+              {/* MOBILE HEADER */}
               <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
                 <div>
                   <img src={logo} alt="logo" className='w-40 h-10' />
@@ -162,18 +162,19 @@ const Loans = () => {
                 </div>
               </div>
 
-              {/* Mobile Loans Title & Action */}
+              {/* Mobile Title & Action */}
               <div className="hidden max-sm:block px-6 py-4 bg-white shrink-0">
                 <div className="flex items-center justify-between mb-1">
-                  <div>
-                    <div className="inline-block px-3 py-0.5 rounded-sm">
+                  <div className='px-3'>
+                    <div className="inline-block rounded-sm">
                       <h1 className="text-[22px] font-bold text-[#1D1F24]">Loans</h1>
                     </div>
-                    <p className="text-[13px] text-[#989FA7] mt-3 font-medium">Handle Employees Loans</p>
+                    <p className="text-[13px] text-[#989FA7] font-medium">Handle Employees Loans</p>
                   </div>
                   <button
                     onClick={() => setIsCreateDrawerOpen(true)}
-                    className="flex items-center gap-2 bg-[#2054C8] text-white pl-5 pr-2 py-2 rounded-full text-[14px] font-bold shadow-lg shadow-blue-100"
+                    className="flex items-center gap-2 bg-[#2054C8] text-white pl-5 pr-2 py-2 rounded-lg text-[14px] font-bold shadow-lg shadow-blue-100
+                    max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] "
                   >
                     Create Loan
                     <div className="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center">
