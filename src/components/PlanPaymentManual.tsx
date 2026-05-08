@@ -69,9 +69,11 @@ const PlanPaymentManual = () => {
     }
 
     return (
-        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-4">
+        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-4
+        max-sm:w-[22rem]">
 
-            <h3 className="text-lg font-bold text-gray-900">
+            <h3 className="text-lg font-bold text-gray-900
+            max-sm:flex max-sm:justify-center">
                 Bank Deposit & Slip Upload
             </h3>
 
@@ -149,7 +151,8 @@ const PlanPaymentManual = () => {
             <button
                 onClick={handleSubmit}
                 disabled={isSubmitting || !file}
-                className="w-full bg-[#367AFF] text-white font-semibold py-3 flex justify-center items-center rounded-xl shadow-md hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-[#367AFF] text-white font-semibold py-3 flex justify-center items-center rounded-xl shadow-md hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed
+             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200"
             >
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Submit Bank Slip & Activate"}
             </button>

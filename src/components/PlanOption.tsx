@@ -34,9 +34,11 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
     return (
         <>
             {step === "select" && (
-                <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-4">
+                <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-3
+                                max-sm:w-[22rem]">
 
-                    <h3 className="text-lg font-bold text-gray-900">
+                    <h3 className="text-lg font-bold text-gray-900
+                    max-sm:flex max-sm:justify-center">
                         Payment Method
                     </h3>
 

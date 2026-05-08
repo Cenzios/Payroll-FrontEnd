@@ -192,7 +192,7 @@ const EpfEtfReport = () => {
                     <div className="shrink-0 mb-4">
                         <PageHeader
                             title="EPF / ETF Summary Report"
-                            subtitle="Here's your EPF / ETF History."
+                            subtitle="Here's Your EPF / ETF History."
                         />
                     </div>
 

@@ -10,13 +10,14 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
 
     return (
 
-        <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-xl p-8 text-center">
+        <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-xl p-8 text-center
+        max-sm:w-[22rem]">
 
             {/* Icon */}
             <div className="flex justify-center mb-6">
                 <div className="w-20 h-20 rounded-full bg-[#FEF3C6] flex items-center justify-center relative">
                     <Clock className="w-8 h-8 text-[#BB4D00]" />
-                    <div className="absolute inset-0 rounded-full border-2 border-[#e7dba8]" />
+                    <div className="absolute inset-0 rounded-full border-2 border-[#e7dba8] max-sm:hidden" />
                 </div>
             </div>
 
@@ -49,17 +50,17 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
 
                     <div className="flex justify-between">
                         <span className="text-gray-500">Amount Submitted</span>
-                        <span className="font-semibold text-base">Rs 100</span>
+                        <span className="font-semibold text-base text-end">Rs 100</span>
                     </div>
 
                     <div className="flex justify-between">
                         <span className="text-gray-500">Reference ID</span>
-                        <span className="font-normal">{referenceId || "TRX-8923-AB"}</span>
+                        <span className="font-normal text-end">{referenceId || "TRX-8923-AB"}</span>
                     </div>
 
                     <div className="flex justify-between">
                         <span className="text-gray-500">Est. Approval Time</span>
-                        <span className="font-semibold">1–2 Business Hours</span>
+                        <span className="font-semibold text-end">1–2 Business Hours</span>
                     </div>
                 </div>
             </div>
@@ -76,7 +77,8 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
 
                 <button
                     onClick={() => setIsContactModalOpen(true)}
-                    className="flex-1 bg-blue-500 text-white rounded-xl py-3 text-sm font-medium hover:bg-blue-600">
+                    className="flex-1 bg-blue-500 text-white rounded-xl py-3 text-sm font-medium hover:bg-blue-600
+             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
                     Contact Support
                 </button>
             </div>
