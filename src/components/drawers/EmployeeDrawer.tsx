@@ -390,7 +390,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                             <div>
                                                 <div className="relative mt-4">
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Activity className="h-4 w-4 text-blue-500" /></div>
-                                                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">EPF Number <strong className="text-red-600 text-[15px]">*</strong></label>
+                                                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">EPF Number</label>
                                                 </div>
                                                 <input type="text" value={employeeData.epfNumber || ""} onChange={(e) => handleEmployeeChange("epfNumber", e.target.value)} onBlur={() => handleBlur("epfNumber")} placeholder="Enter EPF Number"
                                                     className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.epfNumber && errors.epfNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
