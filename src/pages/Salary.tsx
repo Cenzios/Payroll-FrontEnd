@@ -16,8 +16,8 @@ import {
   useGetCompaniesQuery,
   useGetAllPendingLoanInstallmentsQuery,
   useGetSalaryHistoryQuery,
+  useSaveSalaryMutation,
 } from "../store/apiSlice";
-import { salaryApi } from "../api/salaryApi";
 import { Employee } from "../types/employee.types";
 import Toast from "../components/Toast";
 import SalaryListSkeleton from "../components/skeletons/SalaryListSkeleton";
@@ -60,7 +60,7 @@ const Salary = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null,
   );
-  const [isSaving, setIsSaving] = useState(false);
+  const [saveSalary, { isLoading: isSaving }] = useSaveSalaryMutation();
 
   const [toast, setToast] = useState<{
     message: string;
@@ -522,9 +522,8 @@ const Salary = () => {
     // Save to DB
     if (saveToDb) {
       if (!selectedCompanyId) return;
-      setIsSaving(true);
       try {
-        await salaryApi.saveSalary({
+        await saveSalary({
           companyId: selectedCompanyId,
           employeeId: emp.id,
           month: selectedMonth + 1,
@@ -544,15 +543,13 @@ const Salary = () => {
           companyWorkingDays: companyWorkingDays,
           allowances: currentAllowances.map(a => ({ type: a.type, amount: Number(a.amount) })),
           deductions: currentDeductions.map(d => ({ type: d.type, amount: Number(d.amount) })),
-        });
+        }).unwrap();
         setToast({ message: "Salary saved successfully!", type: "success" });
       } catch (error: any) {
         setToast({
-          message: error.response?.data?.message || "Failed to save salary",
+          message: error.data?.message || "Failed to save salary",
           type: "error",
         });
-      } finally {
-        setIsSaving(false);
       }
     } // end saveToDb
   };

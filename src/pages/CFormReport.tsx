@@ -3,7 +3,7 @@ import { FileText, FileSpreadsheet, Download, Loader2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import PageHeader from '../components/PageHeader';
 import { useAppSelector } from '../store/hooks';
-import { salaryApi } from '../api/salaryApi';
+import { useLazyGetCFormReportQuery } from '../store/apiSlice';
 import Toast from '../components/Toast';
 import * as XLSX from 'xlsx';
 import { fillEPFFormC } from '../utils/fillEPFFormC';
@@ -29,6 +29,7 @@ const CFormReport = () => {
     const [hasApplied, setHasApplied] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+    const [getCFormReport] = useLazyGetCFormReportQuery();
     const years = Array.from({ length: 10 }, (_, i) => currentDate.getFullYear() - i);
 
     const handleApply = async () => {
@@ -36,7 +37,11 @@ const CFormReport = () => {
         setIsLoading(true);
         setHasApplied(true);
         try {
-            const res = await salaryApi.getCFormReport(selectedCompanyId, selectedMonth, selectedYear);
+            const res = await getCFormReport({
+                companyId: selectedCompanyId,
+                month: selectedMonth,
+                year: selectedYear
+            }).unwrap();
             setReportData(res.data || res);
         } catch (error: any) {
             setToast({

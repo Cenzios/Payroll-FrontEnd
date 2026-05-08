@@ -4,13 +4,12 @@ import Sidebar from '../components/Sidebar';
 import MonthRangePicker from '../components/MonthRangePicker';
 import MonthSection from '../components/MonthSection';
 import { useAppSelector } from '../store/hooks';
-import { salaryApi } from '../api/salaryApi';
+import { useGetCompaniesQuery, useLazyGetSalaryReportQuery } from '../store/apiSlice';
 import Toast from '../components/Toast';
 import EmployeePayrollModal from '../components/EmployeePayrollModal';
 import AllEmployeesSummaryModal from '../components/AllEmployeesSummaryModal';
 import PageHeader from '../components/PageHeader';
 import { exportPayrollSummaryReport } from '../utils/exportService';
-import { useGetCompaniesQuery } from '../store/apiSlice';
 import AlertBar from '../components/AlertBar';
 
 const Reports = () => {
@@ -52,6 +51,7 @@ const Reports = () => {
 
     // Expand/collapse state for months
     const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+    const [getSalaryReport] = useLazyGetSalaryReportQuery();
 
     const checkAndUpdateData = async (sM?: number, sY?: number, eM?: number, eY?: number) => {
         if (!selectedCompanyId) return;
@@ -74,13 +74,13 @@ const Reports = () => {
         console.groupEnd();
 
         try {
-            const response = await salaryApi.getSalaryReport(
-                selectedCompanyId,
-                currentStartMonth + 1,
-                currentStartYear,
-                currentEndMonth + 1,
-                currentEndYear
-            );
+            const response = await getSalaryReport({
+                companyId: selectedCompanyId,
+                startMonth: currentStartMonth + 1,
+                startYear: currentStartYear,
+                endMonth: currentEndMonth + 1,
+                endYear: currentEndYear
+            }).unwrap();
 
             const reportData = response.data;
             console.log('✅ Report Data Received:', reportData);
