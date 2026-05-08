@@ -213,7 +213,7 @@ const SetPassword = () => {
         Create a password that's at least 6 characters long.
       </p>
 
-      <hr className="sm:hidden my-4 mx-5 border-[1px] border-blue-200" />
+      {/* <hr className="sm:hidden my-4 mx-5 border-[1px] border-blue-200" /> */}
 
       {/* <div className="mb-6 flex items-center justify-between bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
         <span className="text-sm text-blue-800">
@@ -255,7 +255,7 @@ const SetPassword = () => {
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                 } rounded-lg focus:outline-none focus:ring-2 transition-colors
-                                max-sm:pl-4 max-sm:py-3.5 max-sm:rounded-xl max-sm:bg-gray-50 max-sm:border-gray-200 max-sm:placeholder-gray-400`}
+                  max-sm:mb-5 max-sm:pl-4 max-sm:py-2 max-sm:rounded-xl max-sm:bg-gray-50 max-sm:border-gray-200 max-sm:placeholder-gray-400`}
               placeholder="••••••••"
             />
             <button
@@ -298,7 +298,7 @@ const SetPassword = () => {
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                 } rounded-lg focus:outline-none focus:ring-2 transition-colors
-                                max-sm:pl-4 max-sm:py-3.5 max-sm:rounded-xl max-sm:bg-gray-50 max-sm:border-gray-200 max-sm:placeholder-gray-400`}
+                                max-sm:pl-4 max-sm:py-2 max-sm:rounded-xl max-sm:bg-gray-50 max-sm:border-gray-200 max-sm:placeholder-gray-400`}
               placeholder="••••••••"
             />
             <button
