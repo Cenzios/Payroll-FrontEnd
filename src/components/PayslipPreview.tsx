@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { FileText, FileSpreadsheet, Download, ArrowBigDownIcon, ArrowDownIcon } from "lucide-react";
+import { FileText, ArrowDownIcon } from "lucide-react";
 import PortalDropdown from "./PortalDropdown";
 import { Employee } from "../types/employee.types";
 
@@ -15,11 +15,7 @@ interface PayslipPreviewProps {
     exportCSV: () => void;
 }
 
-const Divider = () => (
-    <div className="text-[11px] text-gray-400 my-1 select-none overflow-hidden whitespace-nowrap">
-        {"------------------------------------------------------------"}
-    </div>
-);
+
 
 const PayslipPreview = ({
     previewPayslip,
@@ -123,10 +119,17 @@ const PayslipPreview = ({
                             <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.workedDays ?? previewPayslip.workingDays}</span>
                         </div>
 
-                        {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.paidLeave || 0) > 0 && (
+                        {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.leaveDays || 0) > 0 && (
                             <div className="flex justify-between items-center text-[12px]">
-                                <span className="text-[#718096]">Paid Leave</span>
-                                <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.paidLeave}</span>
+                                <span className="text-[#718096]">Annual Leave used</span>
+                                <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.leaveDays} d</span>
+                            </div>
+                        )}
+
+                        {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.sickLeaveDays || 0) > 0 && (
+                            <div className="flex justify-between items-center text-[12px]">
+                                <span className="text-[#718096]">Sick Leave used</span>
+                                <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.sickLeaveDays} d</span>
                             </div>
                         )}
 

@@ -82,7 +82,7 @@ const Reports = () => {
                 endYear: currentEndYear
             }).unwrap();
 
-            const reportData = response.data;
+            const reportData = response;
             console.log('✅ Report Data Received:', reportData);
 
             setMonthlyData(reportData.monthlyData || []);
