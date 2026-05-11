@@ -1,4 +1,4 @@
-import { ExternalLink, Calendar, CheckCircle2, CalendarDays, ArrowLeft, Loader2, Coins, PieChart, Eye, FileText } from 'lucide-react';
+import { ExternalLink, Calendar, CheckCircle2, CalendarDays, ArrowLeft, Loader2, Coins, PieChart, Eye, FileText, Plus } from 'lucide-react';
 import PageHeader from './PageHeader';
 import { useGetLoanByIdQuery, useUploadEmployeeDocumentMutation } from '../store/apiSlice';
 import { useAppSelector } from '../store/hooks';
@@ -47,6 +47,8 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
         { loanId: initialLoan.id, companyId: selectedCompanyId || "" },
         { skip: !selectedCompanyId || !initialLoan.id }
     );
+
+    const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
     const [uploadDocument, { isLoading: isUploading }] = useUploadEmployeeDocumentMutation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -112,7 +114,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
         .reduce((sum: number, i: any) => sum + i.amount, 0);
 
     return (
-        <div className="flex-1 flex flex-col pt-6 max-sm:px-5 max-sm:pb-10">
+        <div className="flex-1 flex flex-col pt-6">
             {/* Standard Header */}
             <div className="mb-6 -mt-2 max-sm:hidden">
                 <PageHeader
@@ -144,8 +146,31 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
             </div>
 
+            {/* Mobile Title & Action */}
+            <div className="hidden max-sm:block px-6 py-4 bg-white shrink-0">
+                <div className="flex items-center justify-between mb-1">
+                    <div className='px-1'>
+                        <div className="inline-block rounded-sm">
+                            <h1 className="text-[22px] font-bold text-[#1D1F24]">Loans</h1>
+                        </div>
+                        <p className="text-[13px] text-[#989FA7] font-medium">Handle Employees Loans</p>
+                    </div>
+                    <button
+                        onClick={() => setIsCreateDrawerOpen(true)}
+                        className="flex items-center gap-2 bg-[#2054C8] text-white pl-5 pr-2 py-2 rounded-lg text-[14px] font-bold shadow-lg shadow-blue-100
+                                max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] "
+                    >
+                        Create Loan
+                        <div className="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center">
+                            <Plus className="w-4 h-4" />
+                        </div>
+                    </button>
+                </div>
+            </div>
+
             {/* Top Employee Card */}
-            <div className="bg-[#407BFF1A] rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+            <div className="bg-[#407BFF1A] rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4
+                        max-sm:mx-5 max-sm:mt-3">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[11px] sm:text-[13px] font-medium text-gray-500">
                     <div className="w-[60px] h-[60px] rounded-full bg-blue-200 text-blue-700 font-bold text-3xl flex items-center justify-center shrink-0 overflow-hidden">
                         {/* <img
@@ -165,14 +190,16 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                                 {loan.employee?.employeeId}
                             </div>
                             <div className="w-px h-3 bg-gray-300"></div>
-                            <div className="flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5" />
-                                {loan.loanTitle}
-                            </div>
-                            <div className="w-px h-3 bg-gray-300"></div>
-                            <div className="flex items-center gap-1.5">
-                                <span className="font-bold">%</span>
-                                {loan.interestRate}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})
+                            <div className='flex items-center gap-4'>
+                                <div className="flex items-center gap-1.5">
+                                    <Calendar className="w-3.5 h-3.5" />
+                                    {loan.loanTitle}
+                                </div>
+                                <div className="w-px h-3 bg-gray-300"></div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="font-bold">%</span>
+                                    {loan.interestRate}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -200,7 +227,8 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
             </div>
 
             {/* 4 Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8
+            max-sm:mx-5">
                 {/* Card 1 */}
                 <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
@@ -270,7 +298,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
             </div>
 
             {/* History Table */}
-            <div>
+            <div className='max-sm:mx-5'>
                 <h3 className="text-lg font-bold text-[#141B3B] mb-6">Monthly Payment History</h3>
                 {/* Mobile Card View */}
                 <div className="flex flex-col gap-3 sm:hidden">
