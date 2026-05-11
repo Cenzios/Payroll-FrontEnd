@@ -114,7 +114,21 @@ const PlanPaymentManual = () => {
             </div>
 
             {/* Upload Box */}
-            <label className="border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-blue-400 transition">
+            <label
+                className="border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-blue-400 transition"
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const droppedFile = e.dataTransfer.files?.[0];
+                    if (droppedFile) {
+                        setFile(droppedFile);
+                    }
+                }}
+            >
                 <UploadCloud className="w-8 h-8 text-blue-500 mb-2" />
 
                 <p className="text-sm text-gray-700">
