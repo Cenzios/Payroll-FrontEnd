@@ -59,6 +59,7 @@ const CompanyDrawer = ({ isOpen, onClose, onSubmit, initialData }: CompanyDrawer
         setCompanyData((prev) => ({ ...prev, [field]: value }));
         const error = validateCompanyField(field, value);
         setErrors((prev) => ({ ...prev, [field]: error }));
+        if (value && String(value).trim() !== "") setTouched((prev) => ({ ...prev, [field]: true }));
     };
 
     const handleBlur = (field: string) => {

@@ -140,7 +140,7 @@ const Sidebar = () => {
     return (
         <>
             {/* ── Desktop Sidebar ── */}
-            <div className="w-64 bg-[#DCEAF7] h-screen flex flex-col border-r border-white/10 fixed left-0 top-0 overflow-y-auto max-sm:hidden">
+            <div className="w-64 bg-[#DCEAF7] h-[750px] flex flex-col border-r border-white/10 fixed left-0 top-0 overflow-y-auto max-sm:hidden">
                 {/* Logo */}
                 <div className="p-6 flex items-center justify-center">
                     <NavLink to="/dashboard" className="cursor-pointer">
