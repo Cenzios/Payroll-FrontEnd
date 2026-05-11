@@ -13,12 +13,16 @@ interface EmployeeSalaryCardProps {
     isLoanEnabled: boolean;
     otHours: number;
     salaryAdvance: number;
+    leaveDays: number;
+    sickLeaveDays: number;
     loanDeduction: number;
     companyWorkingDays: number;
     hasLoanInstallment: boolean;
     handleEmployeeWorkedDaysChange: (empId: string, val: number) => void;
     handleEmployeeOtHoursChange: (empId: string, val: number) => void;
     handleEmployeeSalaryAdvanceChange: (empId: string, val: number) => void;
+    handleEmployeeLeaveDaysChange: (empId: string, val: number) => void;
+    handleEmployeeSickLeaveDaysChange: (empId: string, val: number) => void;
     handleToggleLoan: (empId: string) => void;
     handleToggleEpfEtf: (empId: string) => void;
     handleGeneratePayslip: (emp: Employee) => void;
@@ -72,12 +76,16 @@ const EmployeeSalaryCard = ({
     isLoanEnabled,
     otHours,
     salaryAdvance,
+    leaveDays,
+    sickLeaveDays,
     loanDeduction,
     companyWorkingDays,
     hasLoanInstallment,
     handleEmployeeWorkedDaysChange,
     handleEmployeeOtHoursChange,
     handleEmployeeSalaryAdvanceChange,
+    handleEmployeeLeaveDaysChange,
+    handleEmployeeSickLeaveDaysChange,
     handleToggleLoan,
     handleToggleEpfEtf,
     handleGeneratePayslip,
@@ -131,10 +139,9 @@ const EmployeeSalaryCard = ({
         : emp.salaryType === "MONTHLY"
             ? companyWorkingDays > 0
                 ? (() => {
-                    const absentDays = Math.max(0, companyWorkingDays - displayWorkedDays);
-                    const applicablePaidLeaves = Math.min(emp.paidLeave || 0, absentDays);
-                    const payableDays = displayWorkedDays + applicablePaidLeaves;
-                    return (basicSalary / companyWorkingDays) * payableDays;
+                    const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
+                    const payableDays = displayWorkedDays + applicableAnnualLeave + sickLeaveDays;
+                    return (basicSalary / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
                 })()
                 : 0
             : basicSalary * displayWorkedDays;
@@ -395,7 +402,7 @@ const EmployeeSalaryCard = ({
                         )}
 
                         {/* Advance */}
-                        <div className="px-6 w-40 border-r border-gray-200">
+                        <div className="px-6 w-36 border-r border-gray-200">
                             <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Advance</p>
                             <input
                                 type="number"
@@ -408,6 +415,46 @@ const EmployeeSalaryCard = ({
                                 disabled={isLocked}
                             />
                         </div>
+
+                        {/* Annual Leave (Monthly Only) */}
+                        {emp.salaryType === "MONTHLY" && (
+                            <div className="px-6 w-40 border-r border-gray-200">
+                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Annual Leave</p>
+                                <div className="space-y-1">
+                                    <input
+                                        type="number"
+                                        step="1"
+                                        value={leaveDays === 0 ? "" : leaveDays}
+                                        onChange={(e) => handleEmployeeLeaveDaysChange(emp.id, parseFloat(e.target.value) || 0)}
+                                        onWheel={(e) => e.currentTarget.blur()}
+                                        onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                        className={inputClass(isLocked)}
+                                        min="0"
+                                        max={emp.paidLeave}
+                                        disabled={isLocked}
+                                    />
+                                    <p className="text-[10px] text-gray-400 font-medium text-right">Bal: {emp.paidLeave || 0}d</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Sick Leave (Monthly Only) */}
+                        {emp.salaryType === "MONTHLY" && (
+                            <div className="px-6 w-40 border-r border-gray-200">
+                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Sick Leave</p>
+                                <input
+                                    type="number"
+                                    step="1"
+                                    value={sickLeaveDays === 0 ? "" : sickLeaveDays}
+                                    onChange={(e) => handleEmployeeSickLeaveDaysChange(emp.id, parseFloat(e.target.value) || 0)}
+                                    onWheel={(e) => e.currentTarget.blur()}
+                                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                    className={inputClass(isLocked)}
+                                    min="0"
+                                    disabled={isLocked}
+                                />
+                            </div>
+                        )}
 
                         {/* Loan */}
                         <div className="px-6 w-44 border-r border-gray-200">
