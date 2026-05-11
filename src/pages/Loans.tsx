@@ -279,10 +279,10 @@ const Loans = () => {
                       {/* "Employee Loans" section header — mobile only */}
                       <div className="hidden max-sm:flex items-center justify-between mb-3">
                         <p className="text-[15px] font-bold text-[#1D1F24]">Employee Loans</p>
-                        <button className="flex items-center gap-1.5 text-[12px] font-semibold text-[#6B7280] border border-[#E5E7EB] bg-white rounded-full px-3 py-1.5">
+                        {/* <button className="flex items-center gap-1.5 text-[12px] font-semibold text-[#6B7280] border border-[#E5E7EB] bg-white rounded-full px-3 py-1.5">
                           <SlidersHorizontal className="w-3.5 h-3.5" />
                           Filter
-                        </button>
+                        </button> */}
                       </div>
 
                       {/* Desktop: table */}

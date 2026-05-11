@@ -25,7 +25,7 @@ import AlertBar from "../components/AlertBar";
 import logo from '../assets/images/logo-login.svg';
 
 const Employees = () => {
-  const { selectedCompanyId } = useAppSelector((state) => state.auth);
+  const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
   const [search, setSearch] = useState("");
 
   // Mobile view state: "list" | "detail"
@@ -461,7 +461,7 @@ const Employees = () => {
 
               {/* Avatar circle */}
               <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                {/* {user?.fullName?.charAt(0) || 'U'} */}
+                {user?.fullName?.charAt(0) || 'U'}
               </div>
             </div>
           </div>
@@ -685,20 +685,12 @@ const Employees = () => {
             </div>
 
             {/* MOBILE Detail View */}
-            <div className={`flex flex-col flex-1 ${mobileView === "detail" ? "block" : "hidden"}`}>
-              {/* Back button header */}
-              <div className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-gray-100 bg-white shrink-0">
-                <button
-                  onClick={() => setMobileView("list")}
-                  className="flex items-center gap-1.5 text-blue-600 font-medium text-sm"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Employees
-                </button>
-              </div>
+            <div className={`flex flex-col flex-1 bg-black/30 backdrop-blur-sm pt-20
+              ${mobileView === "detail" ? "block" : "hidden"}`}
+              onClick={() => { setSelectedEmployee(null); setMobileView("list"); }}>
 
               {/* Employee Detail Card mobile */}
-              <div className="flex-1 overflow-y-auto pb-24">
+              <div className="flex-1 overflow-y-auto">
                 <EmployeeDetailsCard
                   selectedEmployee={selectedEmployee}
                   setPreviewImage={setPreviewImage}

@@ -5,6 +5,8 @@ import { useAppSelector } from '../store/hooks';
 import { useRef, useState } from 'react';
 import FileUploadModal from './FileUploadModal';
 import DocumentViewerModal from './DocumentViewerModal';
+import logo from '../assets/images/logo-login.svg';
+
 
 interface LoanHistoryViewProps {
     loan: any;
@@ -110,16 +112,16 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
         .reduce((sum: number, i: any) => sum + i.amount, 0);
 
     return (
-        <div className="flex-1 flex flex-col pt-0">
+        <div className="flex-1 flex flex-col pt-6 max-sm:px-5 max-sm:pb-10">
             {/* Standard Header */}
-            <div className="mb-6 -mt-2">
+            <div className="mb-6 -mt-2 max-sm:hidden">
                 <PageHeader
                     title="Loans"
                     subtitle="Loan history"
                     actionElement={
                         <button
                             onClick={onBack}
-                            className="flex items-center gap-2 text-[#4F5660] hover:text-blue-600 font-semibold text-sm transition-colors py-2 px-4 rounded-full border border-gray-200 hover:border-blue-200 bg-white"
+                            className="flex items-center gap-2 text-[#4F5660] hover:text-blue-600 font-semibold text-xs sm:text-sm transition-colors py-1.5 px-3 sm:py-2 sm:px-4 rounded-full border border-gray-200 hover:border-blue-200 bg-white"
                         >
                             <ArrowLeft className="w-4 h-4" />
                             Back to Loans
@@ -128,9 +130,23 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 />
             </div>
 
+            {/* MOBILE HEADER */}
+            <div className="hidden mt-6 max-sm:flex items-center justify-between pb-3 border-b border-gray-100">
+                <div>
+                    <img src={logo} alt="logo" className='w-40 h-10' />
+                </div>
+                <div className="flex items-center gap-2 ml-6">
+
+                    {/* Avatar circle */}
+                    <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                        {loan.employee?.fullName?.charAt(0) || 'E'}
+                    </div>
+                </div>
+            </div>
+
             {/* Top Employee Card */}
-            <div className="bg-[#407BFF1A] rounded-2xl p-6 flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
+            <div className="bg-[#407BFF1A] rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[11px] sm:text-[13px] font-medium text-gray-500">
                     <div className="w-[60px] h-[60px] rounded-full bg-blue-200 text-blue-700 font-bold text-3xl flex items-center justify-center shrink-0 overflow-hidden">
                         {/* <img
                             src={`https://ui-avatars.com/api/?name=${encodeURIComponent(loan.employee?.fullName || 'E')}&background=BFDBFE&color=2563EB`}
@@ -184,15 +200,15 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
             </div>
 
             {/* 4 Stats Cards */}
-            <div className="grid grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8">
                 {/* Card 1 */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-[130px]">
+                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
                         <ExternalLink className="w-4 h-4 -rotate-45" />
                         Principal Loan Amount
                     </div>
                     <div>
-                        <div className="text-[22px] font-bold text-[#141B3B] mb-1">
+                        <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
                             Rs: {loan.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div className="text-[12px] text-gray-400 font-medium">Requested Amount</div>
@@ -200,13 +216,13 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
 
                 {/* Card 2 */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-[130px]">
+                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
                         <PieChart className="w-4 h-4" />
                         Full Amount (w/ Interest)
                     </div>
                     <div>
-                        <div className="text-[22px] font-bold text-[#141B3B] mb-1">
+                        <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
                             Rs: {fullAmountWithInterest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div className="text-[12px] text-gray-400 font-medium">Includes Rs: {totalInterest.toLocaleString('en-US', { minimumFractionDigits: 2 })} interest</div>
@@ -214,13 +230,13 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
 
                 {/* Card 3 (With Progress Bar) */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-[130px]">
+                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-emerald-500">
                         <CheckCircle2 className="w-4 h-4" />
                         Current Paid Amount
                     </div>
                     <div>
-                        <div className="text-[22px] font-bold text-[#141B3B] mb-2">
+                        <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
                             Rs: {currentPaidAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div className="flex items-center gap-3">
@@ -239,13 +255,13 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
 
                 {/* Card 4 */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-[130px]">
+                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
                         <CalendarDays className="w-4 h-4" />
                         Monthly Premium
                     </div>
                     <div>
-                        <div className="text-[22px] font-bold text-[#141B3B] mb-1">
+                        <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
                             Rs: {loan.monthlyPremium.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div className="text-[12px] text-gray-400 font-medium">Next due: {installments.find((i: any) => i.status === 'PENDING')?.dueDate ? new Date(installments.find((i: any) => i.status === 'PENDING').dueDate).toLocaleDateString() : '-'}</div>
@@ -256,8 +272,55 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
             {/* History Table */}
             <div>
                 <h3 className="text-lg font-bold text-[#141B3B] mb-6">Monthly Payment History</h3>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                {/* Mobile Card View */}
+                <div className="flex flex-col gap-3 sm:hidden">
+                    {installments.map((row: any) => (
+                        <div key={row.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                            {/* Top row: installment number + status badge */}
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-[13px] font-bold text-[#141B3B]">
+                                    {row.installmentNumber} / {totalInstallmentsCount}
+                                    <span className="text-gray-400 font-medium ml-1.5">
+                                        Due {new Date(row.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    </span>
+                                </span>
+                                {getHistoryBadge(row.status)}
+                            </div>
+
+                            {/* 2x2 grid of fields */}
+                            <div className="grid grid-cols-2 gap-y-3">
+                                <div>
+                                    <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Payment Date</div>
+                                    <div className="text-[13px] font-semibold text-gray-700">
+                                        {row.status === 'PAID' ? new Date(row.updatedAt).toLocaleDateString() : '-'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Principal</div>
+                                    <div className="text-[13px] font-semibold text-gray-700">
+                                        Rs: {row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Interest</div>
+                                    <div className="text-[13px] font-semibold text-gray-700">
+                                        Rs: {(row.interest ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Total Premium</div>
+                                    <div className="text-[13px] font-bold text-blue-500">
+                                        Rs: {row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden sm:block overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                    <table className="w-full text-left min-w-[480px]">
                         <thead>
                             <tr className="border-b border-gray-100">
                                 <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Installment</th>

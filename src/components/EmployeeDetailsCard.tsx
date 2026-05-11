@@ -65,7 +65,8 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
     };
 
     return (
-        <div className="flex-1 bg-[#FBFBFF] rounded-2xl shadow-sm border border-[#E4E4E7] p-6 h-full overflow-hidden">
+        <div className="flex-1 bg-[#FBFBFF] rounded-2xl shadow-sm border border-[#E4E4E7] p-6 h-full overflow-hidden
+        max-sm:mx-3">
             <div className="max-w-2xl h-full flex flex-col">
                 {/* Profile Header */}
                 <div className="flex items-center gap-4 mb-4 shrink-0 relative">
@@ -108,9 +109,10 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`pb-2 text-[13px] font-semibold transition-colors relative -mb-[2px]
+                                className={`pb-2 text-[13px] font-semibold transition-colors relative -mb-[2px] 
+                                max-sm:text-[11px]
                                     ${activeTab === tab
-                                        ? "text-[#4A7DFF]"
+                                        ? "text-[#4A7DFF] "
                                         : "text-[#8392A5] hover:text-gray-600"
                                     }`}
                             >
