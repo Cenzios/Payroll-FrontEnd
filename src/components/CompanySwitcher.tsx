@@ -45,8 +45,8 @@ const CompanySwitcher = ({
     return (
         <div
             ref={dropdownRef}
-            className="absolute top-12 left-0 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-        >
+            className="absolute top-12 left-0 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200
+            max-sm:left-1/2 max-sm:-translate-x-1/2 max-sm:mt-16">
             {selectedCompany && (
                 <div className="p-4 border-b border-gray-50 flex flex-col items-center text-center">
                     <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold mb-3 text-lg">
