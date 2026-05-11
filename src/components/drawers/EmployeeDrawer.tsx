@@ -556,7 +556,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                 <div>
                                                     <div className="relative mt-4">
                                                         <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Calendar className="h-4 w-4 text-blue-500" /></div>
-                                                        <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Paid Leave Count</label>
+                                                        <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Annual Leave Days</label>
                                                     </div>
                                                     <div className="relative">
                                                         <div className="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none">

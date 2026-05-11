@@ -31,8 +31,9 @@ import {
   toggleEpfEtf,
   toggleLoanEnabled,
   setPreviewPayslip,
-  setMonth,
   setYear,
+  setEmployeeLeaveDays,
+  setEmployeeSickLeaveDays,
 } from "../store/slices/salarySlice";
 import EmployeeSalaryCard from "../components/EmployeeSalaryCard";
 import PayslipPreview from "../components/PayslipPreview";
@@ -49,6 +50,8 @@ const Salary = () => {
     employeeSalaryAdvance,
     employeeEpfEtf,
     employeeLoanEnabled,
+    employeeLeaveDays,
+    employeeSickLeaveDays,
     previewPayslip,
     selectedMonth,
     selectedYear,
@@ -232,6 +235,8 @@ const Salary = () => {
     const isLoanEnabled = employeeLoanEnabled[empId] ?? true;
     const otHours = employeeOtHours[empId] ?? 0;
     const salaryAdvance = employeeSalaryAdvance[empId] ?? 0;
+    const leaveDays = employeeLeaveDays[empId] ?? 0;
+    const sickLeaveDays = employeeSickLeaveDays[empId] ?? 0;
     const hasLoanInstallment = !!employeeLoanMap[empId];
     const loanDeduction = (isLoanEnabled && hasLoanInstallment) ? employeeLoanMap[empId] || 0 : 0;
     return {
@@ -240,6 +245,8 @@ const Salary = () => {
       isLoanEnabled,
       otHours,
       salaryAdvance,
+      leaveDays,
+      sickLeaveDays,
       loanDeduction,
       hasLoanInstallment,
     };
@@ -323,14 +330,15 @@ const Salary = () => {
     if (isBeforeJoinedDate(emp, selectedYear, selectedMonth)) return true;
     if (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays)
       return true;
-    const { workedDays, otHours, salaryAdvance, isEpfEnabled, isLoanEnabled, loanDeduction } = getEmployeeValues(emp.id);
+    const { workedDays, otHours, salaryAdvance, isEpfEnabled, isLoanEnabled, loanDeduction, leaveDays, sickLeaveDays } = getEmployeeValues(emp.id);
     if (workedDays < 0 || workedDays > companyWorkingDays) return true;
+    if (leaveDays < 0 || sickLeaveDays < 0) return true;
 
     // Check for negative net salary
     const otRate = emp.otRate || 0;
     const otAmount = emp.otRate > 0 ? otHours * otRate : 0;
     const basicPay = emp.salaryType === "MONTHLY"
-      ? (companyWorkingDays > 0 ? (emp.basicSalary / companyWorkingDays) * workedDays : 0)
+      ? (companyWorkingDays > 0 ? (emp.basicSalary / companyWorkingDays) * Math.min(workedDays + leaveDays + sickLeaveDays, companyWorkingDays) : 0)
       : emp.basicSalary * workedDays;
 
     const epfAmount = emp.epfEnabled && isEpfEnabled ? basicPay * 0.08 : 0;
@@ -355,9 +363,7 @@ const Salary = () => {
     }));
     const clippedVal = Math.min(Math.max(0, val), companyWorkingDays);
     dispatch(setEmployeeWorkedDays({ id: empId, days: clippedVal }));
-  };
-
-  const handleMonthChange = (month: number) => {
+  }; const handleMonthChange = (month: number) => {
     setTouchedFields((prev) => ({ ...prev, month: true }));
     dispatch(setMonth(month));
     dispatch(setCompanyWorkingDays(getMaxAllowedDays(selectedYear, month)));
@@ -378,6 +384,7 @@ const Salary = () => {
     dispatch(setCompanyWorkingDays(getMaxAllowedDays(year, targetMonth)));
   };
 
+
   const handleToggleEpfEtf = (empId: string) => {
     const currentVal = employeeEpfEtf[empId] ?? true;
     dispatch(toggleEpfEtf({ id: empId, value: !currentVal }));
@@ -396,6 +403,14 @@ const Salary = () => {
     dispatch(setEmployeeSalaryAdvance({ id: empId, advance: Math.max(0, val) }));
   };
 
+  const handleEmployeeLeaveDaysChange = (empId: string, val: number) => {
+    dispatch(setEmployeeLeaveDays({ id: empId, days: Math.max(0, val) }));
+  };
+
+  const handleEmployeeSickLeaveDaysChange = (empId: string, val: number) => {
+    dispatch(setEmployeeSickLeaveDays({ id: empId, days: Math.max(0, val) }));
+  };
+
   // Handle Generate process (Preview or Save)
   const processPayslip = async (emp: Employee, saveToDb: boolean = false) => {
     setSelectedEmployee(emp);
@@ -406,6 +421,8 @@ const Salary = () => {
       isLoanEnabled,
       otHours,
       salaryAdvance,
+      leaveDays,
+      sickLeaveDays,
       loanDeduction,
       hasLoanInstallment,
     } = getEmployeeValues(emp.id);
@@ -437,10 +454,9 @@ const Salary = () => {
     let basicPay = 0;
 
     if (emp.salaryType === "MONTHLY") {
-      const absentDays = Math.max(0, companyWorkingDays - workedDays);
-      const applicablePaidLeaves = Math.min(emp.paidLeave || 0, absentDays);
-      const payableDays = workedDays + applicablePaidLeaves;
-      basicPay = (basicSalaryForCalc / companyWorkingDays) * payableDays;
+      const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
+      const payableDays = workedDays + applicableAnnualLeave + sickLeaveDays;
+      basicPay = (basicSalaryForCalc / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
     } else {
       basicPay = basicSalaryForCalc * workedDays;
     }
@@ -489,6 +505,8 @@ const Salary = () => {
       otHours,
       otAmount,
       salaryAdvance,
+      leaveDays,
+      sickLeaveDays,
       loanDeduction,
       epf8: epfEmployee, // For display purposes
       epf12: epfEmployer, // For display purposes
@@ -541,6 +559,8 @@ const Salary = () => {
           isLoanEnabled,
           isEpfEnabled: emp.epfEnabled,
           companyWorkingDays: companyWorkingDays,
+          leaveDays: Math.min(leaveDays, emp.paidLeave || 0),
+          sickLeaveDays: sickLeaveDays,
           allowances: currentAllowances.map(a => ({ type: a.type, amount: Number(a.amount) })),
           deductions: currentDeductions.map(d => ({ type: d.type, amount: Number(d.amount) })),
         }).unwrap();
@@ -573,6 +593,8 @@ const Salary = () => {
         otHours: savedRecord.otHours,
         otAmount: savedRecord.otAmount,
         salaryAdvance: savedRecord.salaryAdvance,
+        leaveDays: savedRecord.leaveDays || 0,
+        sickLeaveDays: savedRecord.sickLeaveDays || 0,
         loanDeduction: savedRecord.loanDeduction,
         epf8: savedRecord.employeeEPF,
         epf12: savedRecord.employerEPF,
@@ -770,6 +792,8 @@ const Salary = () => {
                       isLoanEnabled,
                       otHours,
                       salaryAdvance,
+                      leaveDays,
+                      sickLeaveDays,
                       loanDeduction,
                       hasLoanInstallment,
                     } = getEmployeeValues(emp.id);
@@ -786,12 +810,16 @@ const Salary = () => {
                         isLoanEnabled={isLoanEnabled}
                         otHours={otHours}
                         salaryAdvance={salaryAdvance}
+                        leaveDays={leaveDays}
+                        sickLeaveDays={sickLeaveDays}
                         loanDeduction={loanDeduction}
                         companyWorkingDays={companyWorkingDays}
                         hasLoanInstallment={hasLoanInstallment}
                         handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
                         handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
                         handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}
+                        handleEmployeeLeaveDaysChange={handleEmployeeLeaveDaysChange}
+                        handleEmployeeSickLeaveDaysChange={handleEmployeeSickLeaveDaysChange}
                         handleToggleLoan={handleToggleLoan}
                         handleToggleEpfEtf={handleToggleEpfEtf}
                         handleGeneratePayslip={handleGeneratePayslip}
