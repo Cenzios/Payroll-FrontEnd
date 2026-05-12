@@ -418,8 +418,8 @@ const EmployeeSalaryCard = ({
 
                         {/* Annual Leave (Monthly Only) */}
                         {emp.salaryType === "MONTHLY" && (
-                            <div className="px-6 w-40 border-r border-gray-200">
-                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Annual Leave</p>
+                            <div className="px-6 w-40 border-r border-gray-200 pt-5">
+                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Paid Leave Count</p>
                                 <div className="space-y-1">
                                     <input
                                         type="number"
@@ -441,7 +441,7 @@ const EmployeeSalaryCard = ({
                         {/* Sick Leave (Monthly Only) */}
                         {emp.salaryType === "MONTHLY" && (
                             <div className="px-6 w-40 border-r border-gray-200">
-                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Sick Leave</p>
+                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Non Paid Leave Count</p>
                                 <input
                                     type="number"
                                     step="1"

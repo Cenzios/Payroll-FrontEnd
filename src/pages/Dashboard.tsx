@@ -309,22 +309,23 @@ const Dashboard = () => {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans
     max-sm:h-auto max-sm:overflow-auto">
-      {/* {isTrial && (
-        <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
-          <AlertTriangle className="w-5 h-5" />
-          <p className="text-white">Heads Up! Your trial ends in
-            <span className="font-bold p-[2px] rounded-[4px] bg-orange-400 mx-2"> {remainingDays > 0 ? remainingDays : 0} </span>
-            Days</p>
-          <span className='text-gray-600 text-2xl'> | </span>
-          <p>
-            <button
-              onClick={() => navigate('/get-plan?isUpgrade=true')}
-              className='font-extrabold underline cursor-pointer'>
-              Upgrade Now</button> to keep your account active!</p>
-        </div>
-      )} */}
+      {isTrial && (
+        // <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
+        //   <AlertTriangle className="w-5 h-5" />
+        //   <p className="text-white">Heads Up! Your trial ends in
+        //     <span className="font-bold p-[2px] rounded-[4px] bg-orange-400 mx-2"> {remainingDays > 0 ? remainingDays : 0} </span>
+        //     Days</p>
+        //   <span className='text-gray-600 text-2xl'> | </span>
+        //   <p>
+        //     <button
+        //       onClick={() => navigate('/get-plan?isUpgrade=true')}
+        //       className='font-extrabold underline cursor-pointer'>
+        //       Upgrade Now</button> to keep your account active!</p>
+        // </div>
+        <AlertBar />
+      )}
 
-      <AlertBar />
+      {/* <AlertBar /> */}
 
       {/* Margin bottom gap after the banner */}
       <div className="-mb-4 shrink-0"></div>
