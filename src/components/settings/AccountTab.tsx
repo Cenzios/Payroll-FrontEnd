@@ -155,7 +155,7 @@ const AccountTab = () => {
     return (
         <div className="space-y-0">
             {/* Employee Usage Section */}
-            <section className="py-6 border-b border-gray-200">
+            {/* <section className="py-6 border-b border-gray-200">
                 <div className="px-2">
                     <h3 className="text-[14px] font-semibold text-gray-900 mb-2">Employee Usage</h3>
                     <p className="text-[13px] text-gray-600">
@@ -172,7 +172,7 @@ const AccountTab = () => {
                         Upgrade plan <ArrowRight className="w-4 h-4" />
                     </button>
                 </div>
-            </section>
+            </section> */}
 
             {/* Personal Info Section */}
             <section className="py-8 border-b border-gray-200">

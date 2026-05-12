@@ -34,6 +34,7 @@ import {
   setYear,
   setEmployeeLeaveDays,
   setEmployeeSickLeaveDays,
+  setMonth,
 } from "../store/slices/salarySlice";
 import EmployeeSalaryCard from "../components/EmployeeSalaryCard";
 import PayslipPreview from "../components/PayslipPreview";
