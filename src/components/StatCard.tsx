@@ -47,10 +47,11 @@ const StatCard = ({
 
   return (
     <div className="relative rounded-lg p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all group flex items-center justify-between
-    max-sm:p-4 max-sm:-mb-5">
+    max-sm:flex-col max-sm:items-start max-sm:p-4 max-sm:gap-2">
 
       {/* Date Badge — top-right corner*/}
-      <div className="absolute top-6 right-6 flex items-center gap-1">
+      <div className="absolute top-6 right-6 flex items-center gap-1
+      max-sm:static max-sm:order-3 max-sm:mt-1">
         <span className={`w-[7px] h-[7px] rounded-full ${themeStyle.dot} shrink-0`} />
         <span className="text-[11px] font-medium text-gray-400">
           {monthLabel} {yearLabel}
@@ -58,8 +59,8 @@ const StatCard = ({
       </div>
 
       {/* Left Content */}
-      <div>
-        <div className="text-[11px] text-gray-600 mb-4 font-regular max-sm:mb-2">
+      <div className="max-sm:order-2">
+        <div className="text-[11px] text-gray-600 mb-4 font-regular max-sm:mb-1">
           {title}
         </div>
         <div className="text-[20px] font-bold text-gray-900 leading-none">
@@ -68,8 +69,9 @@ const StatCard = ({
       </div>
 
       {/* Right Icon */}
-      <div className={`mt-5 w-8 h-8 rounded-xl ${themeStyle.bg} flex items-center justify-center shrink-0 transition-transform group-hover:scale-105`}>
-        <Icon className={`w-5 h-5 ${themeStyle.text}`} />
+      <div className={`mt-5 w-8 h-8 rounded-xl ${themeStyle.bg} flex items-center justify-center shrink-0 transition-transform group-hover:scale-105
+      max-sm:absolute max-sm:top-5 max-sm:right-4 max-sm:w-6 max-sm:h-6 max-sm:mt-0 max-sm:rounded-lg`}>
+        <Icon className={`w-5 h-5 max-sm:w-4 max-sm:h-4 ${themeStyle.text}`} />
       </div>
 
     </div>
