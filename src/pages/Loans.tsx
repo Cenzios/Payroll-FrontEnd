@@ -163,7 +163,7 @@ const Loans = () => {
               </div>
 
               {/* Mobile Title & Action */}
-              <div className="hidden max-sm:block px-6 py-4 bg-white shrink-0">
+              <div className="hidden max-sm:block px-6 py-4 shrink-0">
                 <div className="flex items-center justify-between mb-1">
                   <div className='px-3'>
                     <div className="inline-block rounded-sm">
