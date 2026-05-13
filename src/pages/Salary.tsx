@@ -4,6 +4,7 @@ import {
   Loader2,
   Calculator,
   Calendar,
+  Plus,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -40,10 +41,11 @@ import EmployeeSalaryCard from "../components/EmployeeSalaryCard";
 import PayslipPreview from "../components/PayslipPreview";
 import ManageSalaryModal from "../components/ManageSalaryModal";
 import AlertBar from "../components/AlertBar";
+import logo from '../assets/images/logo-login.svg';
 
 const Salary = () => {
   const dispatch = useAppDispatch();
-  const { selectedCompanyId } = useAppSelector((state) => state.auth);
+  const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
   const {
     companyWorkingDays,
     employeeWorkedDays,
@@ -676,12 +678,39 @@ const Salary = () => {
       {/* Margin bottom gap after the banner */}
       <div className="-mb-4 shrink-0"></div>
 
-      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
+      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
         <Sidebar />
 
-        <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
-          {/* Header */}
-          <div className="shrink-0">
+        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
+
+          {/* MOBILE HEADER */}
+          <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+            <div>
+              <img src={logo} alt="logo" className='w-40 h-10' />
+            </div>
+            <div className="flex items-center gap-2 ml-6">
+
+              {/* Avatar circle */}
+              <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                {user?.fullName?.charAt(0) || 'U'}
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Title & Action */}
+          <div className="hidden max-sm:block px-6 py-4 shrink-0">
+            <div className="flex items-center justify-between mb-1">
+              <div className='px-3'>
+                <div className="inline-block rounded-sm">
+                  <h1 className="text-[22px] font-bold text-[#1D1F24]">Salary</h1>
+                </div>
+                <p className="text-[13px] text-[#989FA7] font-medium">View and Calculate Employee Salaries</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Header */}
+          <div className="shrink-0 max-sm:hidden">
             <PageHeader
               title="Salary"
               subtitle="View and Calculate Employee Salaries"
@@ -689,13 +718,13 @@ const Salary = () => {
           </div>
 
           {/* MAIN CONTENT */}
-          <div className="flex gap-6 flex-1 overflow-hidden">
+          <div className="flex flex-col md:flex-row gap-6 flex-1 overflow-hidden max-sm:px-6">
 
             {/* LEFT SIDE */}
-            <div className="w-10/12 flex flex-col overflow-hidden">
+            <div className="w-full md:w-10/12 flex flex-col overflow-hidden">
 
               {/* FILTER BOX */}
-              <div className="bg-white gap-14 p-7 w-full rounded-xl mb-6 flex flex-row border border-gray-200">
+              <div className="bg-white gap-4 md:gap-14 p-4 md:p-7 w-full rounded-xl mb-6 flex flex-col md:flex-row border border-gray-200">
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-800 mb-2">
                     Search Employee
@@ -707,73 +736,75 @@ const Salary = () => {
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search by Name or ID"
-                      className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none w-80"
+                      className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none w-full md:w-80"
                     />
                   </div>
                 </div>
 
-                <div className="flex flex-col max-w-xs min-w-[200px]">
-                  <label className="text-sm font-medium text-gray-800 mb-2">
-                    Select Period
-                  </label>
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      views={['month', 'year']}
-                      value={dayjs(new Date(selectedYear, selectedMonth))}
-                      maxDate={dayjs(new Date())}
-                      onChange={(newValue) => {
-                        if (newValue && newValue.isValid()) {
-                          handleYearChange(newValue.year());
-                          handleMonthChange(newValue.month());
-                        }
-                      }}
-                      slotProps={{
-                        textField: {
-                          size: "small",
-                          sx: {
-                            backgroundColor: "white",
-                            "& .MuiOutlinedInput-root": {
-                              borderRadius: "0.75rem",
-                              "& fieldset": {
-                                borderColor: "#374151",
+                <div className="flex gap-8 max-sm:gap-4">
+                  <div className="flex flex-col min-w-[100px]">
+                    <label className="text-sm font-medium text-gray-800 mb-2">
+                      Select Period
+                    </label>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        views={['month', 'year']}
+                        value={dayjs(new Date(selectedYear, selectedMonth))}
+                        maxDate={dayjs(new Date())}
+                        onChange={(newValue) => {
+                          if (newValue && newValue.isValid()) {
+                            handleYearChange(newValue.year());
+                            handleMonthChange(newValue.month());
+                          }
+                        }}
+                        slotProps={{
+                          textField: {
+                            size: "small",
+                            sx: {
+                              backgroundColor: "white",
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: "0.75rem",
+                                "& fieldset": {
+                                  borderColor: "#374151",
+                                },
+                                "&.Mui-focused fieldset": {
+                                  borderColor: "#374151",
+                                  borderWidth: "1px",
+                                },
                               },
-                              "&.Mui-focused fieldset": {
-                                borderColor: "#374151",
-                                borderWidth: "1px",
-                              },
-                            },
-                            "& .MuiInputBase-input": {
-                              paddingY: "9.5px",
-                              paddingX: "14px",
-                              fontSize: "0.875rem",
-                              color: "#1f2937",
+                              "& .MuiInputBase-input": {
+                                paddingY: "9.5px",
+                                paddingX: "14px",
+                                fontSize: "0.875rem",
+                                color: "#1f2937",
+                              }
                             }
                           }
-                        }
-                      }}
-                    />
-                  </LocalizationProvider>
-                </div>
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </div>
 
-                {/* Working Days */}
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-800 mb-2">
-                    Working Days
-                  </label>
-                  <div className="relative flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-300">
-                    <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                    <input
-                      type="number"
-                      min="1"
-                      max={maxAllowedCompanyDays}
-                      value={companyWorkingDays}
-                      onChange={(e) =>
-                        handleCompanyWorkingDaysChange(
-                          parseInt(e.target.value) || 0
-                        )
-                      }
-                      className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center text-sm font-medium text-gray-700"
-                    />
+                  {/* Working Days */}
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-800 mb-2">
+                      Working Days
+                    </label>
+                    <div className="relative flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-300">
+                      <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                      <input
+                        type="number"
+                        min="1"
+                        max={maxAllowedCompanyDays}
+                        value={companyWorkingDays}
+                        onChange={(e) =>
+                          handleCompanyWorkingDaysChange(
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                        className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center text-sm font-medium text-gray-700"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -842,7 +873,22 @@ const Salary = () => {
             </div>
 
             {/* RIGHT SIDE */}
-            <div className="w-5/12 flex flex-col overflow-y-auto">
+            <div className={`
+              fixed md:relative inset-0 md:inset-auto z-40 md:z-auto
+              w-full md:w-5/12
+              flex flex-col overflow-y-auto
+              bg-white md:bg-transparent
+              transition-transform duration-300
+              ${selectedEmployee && previewPayslip ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+            `}>
+
+              <button
+                className="md:hidden flex items-center gap-1 text-sm text-gray-500 p-4 border-b border-gray-100"
+                onClick={() => { setSelectedEmployee(null); dispatch(setPreviewPayslip(null)); }}
+              >
+                ← Back
+              </button>
+
               <PayslipPreview
                 previewPayslip={previewPayslip}
                 selectedEmployee={selectedEmployee}

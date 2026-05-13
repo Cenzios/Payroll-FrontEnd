@@ -62,9 +62,9 @@ const PayslipPreview = ({
     });
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col w-full">
             {/* Header */}
-            <div className="text-center mt-3">
+            <div className="text-center mt-2 md:mt-3">
                 <h1 className="text-sm font-bold text-[#1D1F24]">{companyName}</h1>
                 <p className="text-xs font-bold text-[#718096] tracking-[0.15em] mt-1 mb-5 uppercase">
                     PAY SLIP • {monthLabel}
@@ -72,7 +72,7 @@ const PayslipPreview = ({
             </div>
 
             {/* Employee Profile Box */}
-            <div className="bg-[#F4F4EE] p-3 flex items-center gap-5 pl-5 mb-3">
+            <div className="bg-[#F4F4EE] p-2 md:p-3 flex items-center gap-3 md:gap-5 pl-3 md:pl-5 mb-3">
                 <div className="w-7 h-7 bg-[#F0F9FF] rounded-lg flex items-center justify-center text-[#407BFF] font-bold text-sm shadow-sm border border-[#E0F2FE]">
                     {selectedEmployee.fullName.charAt(0)}
                 </div>
@@ -88,7 +88,7 @@ const PayslipPreview = ({
 
 
             {/* Sections Container */}
-            <div className="px-6">
+            <div className="px-3 md:px-6">
                 {/* EARNINGS */}
                 <div className="mb-4">
                     <h3 className="text-[10px] font-bold text-[#718096] tracking-widest uppercase mb-4 flex items-center gap-3">
@@ -185,12 +185,12 @@ const PayslipPreview = ({
 
             {/* NET SALARY PAYABLE BOX */}
             <div className="bg-[#EBF8FF] p-4 border border-[#0000000A]">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
                     <div>
                         <p className="text-[10px] font-bold text-[#407BFF] tracking-widest uppercase mb-1">NET SALARY PAYABLE</p>
                         <h2 className="text-[16px] font-bold text-[#407BFF] tracking-tight">Rs. {previewPayslip.netSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                         <div className="text-right">
                             <p className="text-[10px] font-bold text-[#718096] uppercase tracking-wider mb-1">GROSS</p>
                             <p className="text-[10px] font-bold text-[#407BFF] tracking-tight">{fmt(grossEarnings)}</p>
@@ -206,7 +206,7 @@ const PayslipPreview = ({
 
             {/* EMPLOYER CONTRIBUTIONS */}
             {previewPayslip.isEpfEnabled && (
-                <div className="bg-[#FDFBF7] px-6 py-4 flex items-center justify-between mb-6 border border-[#0000000A]">
+                <div className="bg-[#FDFBF7] px-3 md:px-6 py-3 md:py-4 flex items-center justify-between mb-3 md:mb-6 border border-[#0000000A]">
                     <p className="text-[8px] font-bold text-[#1D1F24] tracking-widest uppercase">EMPLOYER CONTRIBUTIONS</p>
                     <div className="flex gap-8">
                         <div className="flex items-center gap-3">
@@ -222,7 +222,7 @@ const PayslipPreview = ({
             )}
 
             {/* Footer */}
-            <footer className="flex items-center justify-between px-6 pb-2">
+            <footer className="flex items-center justify-between px-3 md:px-6 pb-3 md:pb-2">
                 <p className="text-[8px] tracking-wide">
                     Powered by Cenzios (PVT) LTD
                 </p>
@@ -230,7 +230,7 @@ const PayslipPreview = ({
                 <button
                     ref={downloadBtnRef}
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center mt-2 gap-2 px-8 py-2.5 bg-[#407BFF] text-white text-sm font-bold rounded-xl hover:bg-blue-600 transition-all shadow-sm active:scale-95"
+                    className="flex items-center justify-center mt-2 gap-2 px-4 md:px-8 py-2.5 bg-[#407BFF] text-white text-sm font-bold rounded-xl hover:bg-blue-600 transition-all shadow-sm active:scale-95 w-full md:w-auto"
                 >
                     <ArrowDownIcon className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} /> Download
                 </button>
