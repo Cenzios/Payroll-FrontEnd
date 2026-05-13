@@ -121,15 +121,15 @@ const PayslipPreview = ({
 
                         {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.leaveDays || 0) > 0 && (
                             <div className="flex justify-between items-center text-[12px]">
-                                <span className="text-[#718096]">Annual Leave used</span>
-                                <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.leaveDays} d</span>
+                                <span className="text-[#718096]">Used Paid Leave Count</span>
+                                <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.leaveDays}</span>
                             </div>
                         )}
 
                         {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.sickLeaveDays || 0) > 0 && (
                             <div className="flex justify-between items-center text-[12px]">
-                                <span className="text-[#718096]">Sick Leave used</span>
-                                <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.sickLeaveDays} d</span>
+                                <span className="text-[#718096]">Used Non Paid Leave Count</span>
+                                <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.sickLeaveDays}</span>
                             </div>
                         )}
 

@@ -140,7 +140,8 @@ const EmployeeSalaryCard = ({
             ? companyWorkingDays > 0
                 ? (() => {
                     const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
-                    const payableDays = displayWorkedDays + applicableAnnualLeave + sickLeaveDays;
+                    // const payableDays = displayWorkedDays + applicableAnnualLeave + sickLeaveDays;
+                    const payableDays = displayWorkedDays + applicableAnnualLeave;
                     return (basicSalary / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
                 })()
                 : 0
