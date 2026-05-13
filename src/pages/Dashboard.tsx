@@ -454,10 +454,10 @@ const Dashboard = () => {
               <>
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6
-                ">
+                max-sm:grid max-sm:grid-cols-2 max-sm:gap-2">
                   <StatCard
                     icon={Users}
-                    title="Total Active Employees"
+                    title="Active Employees"
                     value={dashboardData?.totalEmployees?.toString() || '0'}
                     colorTheme="blue"
                     showLastMonth={true}
@@ -486,7 +486,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* add buttons */}
-                <div className='hidden max-sm:flex items-center justify-center gap-6 mt-10 mb-4'>
+                <div className='hidden max-sm:flex items-center justify-center gap-6 mb-4'>
                   {/* add employee button */}
                   <button
                     onClick={() => {

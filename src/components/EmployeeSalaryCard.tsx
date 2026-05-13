@@ -140,7 +140,8 @@ const EmployeeSalaryCard = ({
             ? companyWorkingDays > 0
                 ? (() => {
                     const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
-                    const payableDays = displayWorkedDays + applicableAnnualLeave + sickLeaveDays;
+                    // const payableDays = displayWorkedDays + applicableAnnualLeave + sickLeaveDays;
+                    const payableDays = displayWorkedDays + applicableAnnualLeave;
                     return (basicSalary / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
                 })()
                 : 0
@@ -419,7 +420,7 @@ const EmployeeSalaryCard = ({
                         {/* Annual Leave (Monthly Only) */}
                         {emp.salaryType === "MONTHLY" && (
                             <div className="px-6 w-40 border-r border-gray-200 pt-5">
-                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Paid Leave Count</p>
+                                <p className="text-[9px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Paid Leaves</p>
                                 <div className="space-y-1">
                                     <input
                                         type="number"
@@ -441,7 +442,7 @@ const EmployeeSalaryCard = ({
                         {/* Sick Leave (Monthly Only) */}
                         {emp.salaryType === "MONTHLY" && (
                             <div className="px-6 w-40 border-r border-gray-200">
-                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Non Paid Leave Count</p>
+                                <p className="text-[9px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Non Paid Leaves</p>
                                 <input
                                     type="number"
                                     step="1"
