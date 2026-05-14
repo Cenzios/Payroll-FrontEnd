@@ -366,6 +366,10 @@ const Salary = () => {
     }));
     const clippedVal = Math.min(Math.max(0, val), companyWorkingDays);
     dispatch(setEmployeeWorkedDays({ id: empId, days: clippedVal }));
+
+    // Non paid leaves
+    const autoNonPaidLeaves = Math.max(0, companyWorkingDays - clippedVal);
+    dispatch(setEmployeeSickLeaveDays({ id: empId, days: autoNonPaidLeaves }));
   }; const handleMonthChange = (month: number) => {
     setTouchedFields((prev) => ({ ...prev, month: true }));
     dispatch(setMonth(month));
@@ -407,7 +411,12 @@ const Salary = () => {
   };
 
   const handleEmployeeLeaveDaysChange = (empId: string, val: number) => {
-    dispatch(setEmployeeLeaveDays({ id: empId, days: Math.max(0, val) }));
+    const clippedVal = Math.max(0, val);
+    dispatch(setEmployeeLeaveDays({ id: empId, days: clippedVal }));
+    // Non paid leaves
+    const currentWorkedDays = employeeWorkedDays[empId] ?? companyWorkingDays;
+    const autoNonPaidLeaves = Math.max(0, companyWorkingDays - currentWorkedDays - clippedVal);
+    dispatch(setEmployeeSickLeaveDays({ id: empId, days: autoNonPaidLeaves }));
   };
 
   const handleEmployeeSickLeaveDaysChange = (empId: string, val: number) => {
