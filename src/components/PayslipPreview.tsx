@@ -53,6 +53,7 @@ const PayslipPreview = ({
         (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0);
 
     const totalDeductions =
+        (previewPayslip.nonPaidLeaveDeduction || 0) +
         (previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) +
         previewPayslip.deductions.reduce((sum: number, d: any) => sum + d.amount, 0);
 
@@ -89,15 +90,43 @@ const PayslipPreview = ({
 
             {/* Sections Container */}
             <div className="px-3 md:px-6">
+
+                {/* Dates */}
+                <div className="grid grid-cols-2 gap-x-10 gap-y-2">
+                    <div className="flex items-center text-[11px]">
+                        <span className="text-[#718096]">Working Days in Month</span>
+                        <span className="text-[#1D1F24] font-bold tracking-tight ml-auto">{companyWorkingDays}</span>
+                    </div>
+
+                    <div className="flex items-center text-[11px]">
+                        <span className="text-[#718096]">Worked Days</span>
+                        <span className="text-[#1D1F24] font-bold tracking-tight ml-auto">{previewPayslip.workedDays ?? previewPayslip.workingDays}</span>
+                    </div>
+
+                    {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.leaveDays || 0) > 0 && (
+                        <div className="flex items-center text-[11px]">
+                            <span className="text-[#718096]">Paid Leave Count</span>
+                            <span className="text-[#1D1F24] font-bold tracking-tight ml-auto">{previewPayslip.leaveDays}</span>
+                        </div>
+                    )}
+
+                    {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.sickLeaveDays || 0) > 0 && (
+                        <div className="flex items-center text-[11px]">
+                            <span className="text-[#718096]">Unpaid Leave Count</span>
+                            <span className="text-[#1D1F24] font-bold tracking-tight ml-auto">{previewPayslip.sickLeaveDays}</span>
+                        </div>
+                    )}
+                </div>
+
                 {/* EARNINGS */}
-                <div className="mb-4">
-                    <h3 className="text-[10px] font-bold text-[#718096] tracking-widest uppercase mb-4 flex items-center gap-3">
+                <div className="my-4">
+                    <h3 className="text-[10px] font-bold text-[#718096] tracking-widest uppercase mb-4 mt-5 pt-2 flex items-center gap-3 border-t border-gray-100">
                         EARNINGS
                     </h3>
                     <div className="space-y-2">
                         <div className="flex justify-between items-center text-[12px]">
                             <span className="text-[#718096]">
-                                {previewPayslip.salaryType === "MONTHLY" ? "Monthly basic salary" : "Daily basic salary"}
+                                {previewPayslip.salaryType === "MONTHLY" ? "Monthly Basic Salary" : "Daily Basic Salary"}
                             </span>
                             <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicSalary)}</span>
                         </div>
@@ -108,30 +137,6 @@ const PayslipPreview = ({
                                 <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(a.amount)}</span>
                             </div>
                         ))}
-
-                        <div className="flex justify-between items-center text-[12px]">
-                            <span className="text-[#718096]">Working days in month</span>
-                            <span className="text-[#1D1F24] font-bold tracking-tight">{companyWorkingDays}</span>
-                        </div>
-
-                        <div className="flex justify-between items-center text-[12px]">
-                            <span className="text-[#718096]">Worked days</span>
-                            <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.workedDays ?? previewPayslip.workingDays}</span>
-                        </div>
-
-                        {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.leaveDays || 0) > 0 && (
-                            <div className="flex justify-between items-center text-[12px]">
-                                <span className="text-[#718096]">Paid Leave Count</span>
-                                <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.leaveDays}</span>
-                            </div>
-                        )}
-
-                        {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.sickLeaveDays || 0) > 0 && (
-                            <div className="flex justify-between items-center text-[12px]">
-                                <span className="text-[#718096]">Unpaid Leave Count</span>
-                                <span className="text-[#1D1F24] font-bold tracking-tight">{previewPayslip.sickLeaveDays}</span>
-                            </div>
-                        )}
 
                         {previewPayslip.salaryType === "DAILY" && (
                             <div className="flex justify-between items-center text-[12px]">
@@ -150,18 +155,20 @@ const PayslipPreview = ({
                         )}
                     </div>
 
-                    <div className="flex justify-between items-center mt-1 pt-3 border-t border-gray-100">
-                        <span className="text-[13px] font-bold text-[#1D1F24]">Gross earnings</span>
-                        <span className="text-[13px] font-bold text-[#22A103]">{fmt(grossEarnings)}</span>
-                    </div>
                 </div>
 
                 {/* DEDUCTIONS */}
                 <div className="mb-4">
-                    <h3 className="text-[10px] font-bold text-[#64748B] tracking-widest uppercase mb-4 mt-6">
+                    <h3 className="text-[10px] font-bold text-[#64748B] tracking-widest uppercase mb-4 mt-5 pt-2 border-t border-gray-100">
                         DEDUCTIONS
                     </h3>
                     <div className="space-y-2">
+                        {previewPayslip.nonPaidLeaveDeduction > 0 && (
+                            <div className="flex justify-between items-center text-[12px]">
+                                <span className="text-[#718096]">Unpaid Leave Deduction</span>
+                                <span className="text-[#E11D48] font-bold tracking-tight">{fmt(previewPayslip.nonPaidLeaveDeduction)}</span>
+                            </div>
+                        )}
                         {previewPayslip.isEpfEnabled && (
                             <div className="flex justify-between items-center text-[12px]">
                                 <span className="text-[#718096]">EPF (8%)</span>
@@ -176,9 +183,14 @@ const PayslipPreview = ({
                         ))}
                     </div>
 
-                    <div className="flex justify-between items-center mt-1 pt-3 border-t border-gray-100">
-                        <span className="text-[13px] font-bold text-[#1D1F24]">Total deductions</span>
+                    <div className="flex justify-between items-center mt-5 pt-2 border-t border-gray-100">
+                        <span className="text-[13px] font-bold text-[#1D1F24]">Total Deductions</span>
                         <span className="text-[13px] font-bold text-[#E11D48]">{totalDeductions.toFixed(2)}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center mt-1 pt-3">
+                        <span className="text-[13px] font-bold text-[#1D1F24]">Gross Earnings</span>
+                        <span className="text-[13px] font-bold text-[#22A103]">{fmt(grossEarnings)}</span>
                     </div>
                 </div>
             </div>

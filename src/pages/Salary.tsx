@@ -474,6 +474,10 @@ const Salary = () => {
       basicPay = basicSalaryForCalc * workedDays;
     }
 
+    const nonPaidLeaveDeduction = emp.salaryType === "MONTHLY" && companyWorkingDays > 0
+      ? (basicSalaryForCalc / companyWorkingDays) * sickLeaveDays
+      : 0;
+
     const currentAllowances = salaryAllowances[emp.id] || emp.recurringAllowances || [];
     const currentDeductions = salaryDeductions[emp.id] || emp.recurringDeductions || [];
 
@@ -500,8 +504,8 @@ const Salary = () => {
 
     const tax = 0; // Tax will be calculated by backend
     const totalDeductions =
-      epfEmployee + tax + salaryAdvance + deductionAmount + loanDeduction;
-    const netSalary = basicPay + otAmount + allowanceAmount - totalDeductions;
+      epfEmployee + tax + salaryAdvance + deductionAmount + loanDeduction + nonPaidLeaveDeduction;
+    const netSalary = basicPay + otAmount + allowanceAmount - totalDeductions + nonPaidLeaveDeduction;
 
     const details = {
       basicSalary: emp.basicSalary || 0,
@@ -518,6 +522,7 @@ const Salary = () => {
       otHours,
       otAmount,
       salaryAdvance,
+      nonPaidLeaveDeduction,
       leaveDays,
       sickLeaveDays,
       loanDeduction,
@@ -573,6 +578,7 @@ const Salary = () => {
           isEpfEnabled: emp.epfEnabled,
           companyWorkingDays: companyWorkingDays,
           leaveDays: Math.min(leaveDays, emp.paidLeave || 0),
+          nonPaidLeaveDeduction,
           sickLeaveDays: sickLeaveDays,
           allowances: currentAllowances.map(a => ({ type: a.type, amount: Number(a.amount) })),
           deductions: currentDeductions.map(d => ({ type: d.type, amount: Number(d.amount) })),
@@ -606,6 +612,7 @@ const Salary = () => {
         otHours: savedRecord.otHours,
         otAmount: savedRecord.otAmount,
         salaryAdvance: savedRecord.salaryAdvance,
+        nonPaidLeaveDeduction: savedRecord.nonPaidLeaveDeduction ?? 0,
         leaveDays: savedRecord.leaveDays || 0,
         sickLeaveDays: savedRecord.sickLeaveDays || 0,
         loanDeduction: savedRecord.loanDeduction,
