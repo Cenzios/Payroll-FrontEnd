@@ -279,6 +279,9 @@ const GetPlan = () => {
       <ContactModal
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
+        title="Custom Plan"
+        subtitle="Tailored pricing for your business"
+        description="Need advanced features or a custom solution? Contact our team and we'll create a package that fits your business needs."
       />
 
       {/* Background Wave - Bottom Right */}

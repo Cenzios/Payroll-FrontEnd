@@ -82,9 +82,13 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
                     Contact Support
                 </button>
             </div>
+
             <ContactModal
                 isOpen={isContactModalOpen}
                 onClose={() => setIsContactModalOpen(false)}
+                title="Payment Support"
+                subtitle="We're here to help you"
+                description="If your payment verification is taking longer than expected, please contact our support team."
             />
         </div>
     );
