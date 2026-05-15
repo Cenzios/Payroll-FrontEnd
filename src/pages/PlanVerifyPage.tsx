@@ -9,7 +9,6 @@ const PlanVerifyPage = () => {
     const [activeSubscription, setActiveSubscription] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [referenceId, setReferenceId] = useState<string | undefined>(undefined);
-    const [approvalStatus, setApprovalStatus] = useState<"PENDING" | "APPROVED">("PENDING");
 
     useEffect(() => {
         const fetchData = async () => {
@@ -18,9 +17,6 @@ const PlanVerifyPage = () => {
                 const subRes = await axiosInstance.get('/subscription/current');
                 if (subRes.data?.data) {
                     setActiveSubscription(subRes.data.data);
-                    if (subRes.data.data.status === 'ACTIVE') {
-                        setApprovalStatus("APPROVED");
-                    }
                 }
 
                 // Fetch pending document for referenceId
@@ -36,9 +32,6 @@ const PlanVerifyPage = () => {
             }
         };
         fetchData();
-
-        const intervalId = setInterval(fetchData, 5000);
-        return () => clearInterval(intervalId);
     }, []);
 
     const selectedPlanId = localStorage.getItem('reg_planId') || PLANS.BASIC.id;
@@ -75,7 +68,7 @@ const PlanVerifyPage = () => {
                         />
 
                         {/* Right — Verification Pending card */}
-                        <PlanVerify referenceId={referenceId} status={approvalStatus} />
+                        <PlanVerify referenceId={referenceId} />
                     </div>
                 )}
             </div>
