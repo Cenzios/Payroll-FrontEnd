@@ -1,9 +1,9 @@
-import { ArrowLeft, Clock, Loader2Icon } from "lucide-react";
+import { ArrowLeft, Clock, Loader2Icon, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ContactModal from "./ContactModal";
 import { useState } from "react";
 
-const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
+const PlanVerify = ({ referenceId, status = "PENDING" }: { referenceId?: string, status?: "PENDING" | "APPROVED" }) => {
     const navigate = useNavigate();
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
@@ -15,21 +15,28 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
 
             {/* Icon */}
             <div className="flex justify-center mb-6">
-                <div className="w-20 h-20 rounded-full bg-[#FEF3C6] flex items-center justify-center relative">
-                    <Clock className="w-8 h-8 text-[#BB4D00]" />
-                    <div className="absolute inset-0 rounded-full border-2 border-[#e7dba8] max-sm:hidden" />
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center relative ${status === 'APPROVED' ? 'bg-[#D1FAE5]' : 'bg-[#FEF3C6]'}`}>
+                    {status === 'APPROVED' ? (
+                        <CheckCircle className="w-8 h-8 text-[#059669]" />
+                    ) : (
+                        <Clock className="w-8 h-8 text-[#BB4D00]" />
+                    )}
+                    <div className={`absolute inset-0 rounded-full border-2 max-sm:hidden ${status === 'APPROVED' ? 'border-[#A7F3D0]' : 'border-[#e7dba8]'}`} />
                 </div>
             </div>
 
             {/* Title */}
             <h2 className="text-xl font-bold text-gray-800">
-                Verification Pending
+                {status === 'APPROVED' ? "Payment Approved" : "Verification Pending"}
             </h2>
 
             {/* Description */}
             <p className="text-sm text-gray-500 mt-3 leading-relaxed">
-                We've successfully received your bank slip.
-                Our admin team is currently reviewing your payment details.
+                {status === 'APPROVED' ? (
+                    "Your payment has been successfully approved! You can now access your dashboard and manage your subscriptions."
+                ) : (
+                    "We've successfully received your bank slip. Our admin team is currently reviewing your payment details."
+                )}
             </p>
 
             {/* Details Card */}
@@ -42,10 +49,17 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
 
                     <div className="flex justify-between">
                         <span className="text-gray-500">Status</span>
-                        <span className="flex items-center gap-1 text-xs px-3 py-2 rounded-lg bg-[#FEF3C6] text-[#BB4D00] font-medium">
-                            <Loader2Icon className="w-4 h-4" />
-                            In Review
-                        </span>
+                        {status === 'APPROVED' ? (
+                            <span className="flex items-center gap-1 text-xs px-3 py-2 rounded-lg bg-[#D1FAE5] text-[#059669] font-medium">
+                                <CheckCircle className="w-4 h-4" />
+                                Approved
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-1 text-xs px-3 py-2 rounded-lg bg-[#FEF3C6] text-[#BB4D00] font-medium">
+                                <Loader2Icon className="w-4 h-4 animate-spin" />
+                                In Review
+                            </span>
+                        )}
                     </div>
 
                     <div className="flex justify-between">
@@ -67,20 +81,21 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
 
             {/* Buttons */}
             <div className="flex gap-3 mt-6">
-
-                {/* <button
-                    onClick={() => navigate('/dashboard')}
-                    className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-3 text-sm text-gray-600 hover:bg-gray-50">
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to Dashboard
-                </button> */}
-
-                <button
-                    onClick={() => setIsContactModalOpen(true)}
-                    className="flex-1 bg-blue-500 text-white rounded-xl py-3 text-sm font-medium hover:bg-blue-600
-             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
-                    Contact Support
-                </button>
+                {status === 'APPROVED' ? (
+                    <button
+                        onClick={() => window.location.href = '/dashboard'}
+                        className="flex-1 bg-[#059669] text-white rounded-xl py-3 text-sm font-bold hover:bg-[#047857] shadow-lg shadow-green-200"
+                    >
+                        Login to Dashboard
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => setIsContactModalOpen(true)}
+                        className="flex-1 bg-blue-500 text-white rounded-xl py-3 text-sm font-medium hover:bg-blue-600
+                 max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
+                        Contact Support
+                    </button>
+                )}
             </div>
 
             <ContactModal
