@@ -1,11 +1,30 @@
 import { ArrowLeft, Clock, Loader2Icon, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ContactModal from "./ContactModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axiosInstance from "../api/axios";
 
-const PlanVerify = ({ referenceId, status = "PENDING" }: { referenceId?: string, status?: "PENDING" | "APPROVED" }) => {
+const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
     const navigate = useNavigate();
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+    const [status, setStatus] = useState<"PENDING" | "APPROVED">("PENDING");
+
+    useEffect(() => {
+        const checkStatus = async () => {
+            try {
+                const subRes = await axiosInstance.get('/subscription/current');
+                if (subRes.data?.data?.status === 'ACTIVE') {
+                    setStatus("APPROVED");
+                }
+            } catch (error) {
+                console.warn("Failed to check approval status", error);
+            }
+        };
+
+        checkStatus();
+        const intervalId = setInterval(checkStatus, 5000);
+        return () => clearInterval(intervalId);
+    }, []);
 
 
     return (
