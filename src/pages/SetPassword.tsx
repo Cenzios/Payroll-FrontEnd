@@ -21,12 +21,34 @@ const SetPassword = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const [validationErrors, setValidationErrors] = useState({
     email: '',
     password: '',
     confirmPassword: '',
   });
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+
+    if (name === 'password') {
+      if (!value) {
+        setValidationErrors(prev => ({ ...prev, password: 'Password is required' }));
+      } else if (value.length < 6) {
+        setValidationErrors(prev => ({ ...prev, password: 'Password must be at least 6 characters' }));
+      }
+    }
+
+    if (name === 'confirmPassword') {
+      if (!value) {
+        setValidationErrors(prev => ({ ...prev, confirmPassword: 'Please confirm your password' }));
+      } else if (value !== formData.password) {
+        setValidationErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }));
+      }
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -76,14 +98,21 @@ const SetPassword = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setValidationErrors((prev) => ({
-      ...prev,
-      [name]: '',
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+
+    // validation when field has been touched
+    if (touched[name]) {
+      if (name === 'password') {
+        if (!value) setValidationErrors(prev => ({ ...prev, password: 'Password is required' }));
+        else if (value.length < 6) setValidationErrors(prev => ({ ...prev, password: 'Password must be at least 6 characters' }));
+        else setValidationErrors(prev => ({ ...prev, password: '' }));
+      }
+      if (name === 'confirmPassword') {
+        if (!value) setValidationErrors(prev => ({ ...prev, confirmPassword: 'Please confirm your password' }));
+        else if (value !== formData.password) setValidationErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }));
+        else setValidationErrors(prev => ({ ...prev, confirmPassword: '' }));
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -251,6 +280,7 @@ const SetPassword = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
+              onBlur={handleBlur}
               className={`block w-full pl-10 pr-12 py-3 border ${validationErrors.password
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
@@ -294,6 +324,7 @@ const SetPassword = () => {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
+              onBlur={handleBlur}
               className={`block w-full pl-10 pr-12 py-3 border ${validationErrors.confirmPassword
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
