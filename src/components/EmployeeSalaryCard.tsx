@@ -375,7 +375,7 @@ const EmployeeSalaryCard = ({
                     {/* ── ROW 3: Input fields ── */}
                     <div className="flex items-center gap-2 px-5 py-3 border-b border-blue-100/70 bg-white max-sm:gap-0">
                         {/* Worked */}
-                        <div className="pr-3 md:pr-6 w-[calc(50%-8px)] md:w-[120px] border-r border-gray-200
+                        <div className="pr-2 w-[calc(50%-8px)] md:w-[120px] border-r border-gray-200
                         max-sm:border-none">
                             <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Worked Days</p>
                             <input
@@ -395,7 +395,7 @@ const EmployeeSalaryCard = ({
 
                         {/* OT Hours */}
                         {emp.otRate > 0 && (
-                            <div className="px-3 md:px-6 w-[calc(50%-8px)] md:w-40 border-r border-gray-200
+                            <div className="px-2 w-[calc(50%-8px)] md:w-[120px] border-r border-gray-200
                             max-sm:border-none">
                                 <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">OT Hours</p>
                                 <input
@@ -413,7 +413,7 @@ const EmployeeSalaryCard = ({
                         )}
 
                         {/* Advance */}
-                        <div className="px-3 md:px-6 w-[calc(50%-8px)] md:w-36 border-r border-gray-200
+                        <div className="px-2 w-[calc(50%-8px)] md:w-[120px] border-r border-gray-200
                         max-sm:border-none">
                             <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Advance</p>
                             <input
@@ -430,9 +430,9 @@ const EmployeeSalaryCard = ({
 
                         {/* Annual Leave (Monthly Only) */}
                         {emp.salaryType === "MONTHLY" && (
-                            <div className="px-3 md:px-6 w-[calc(50%-8px)] md:w-40 border-r border-gray-200 pt-0 md:pt-5
+                            <div className="px-2 w-[calc(50%-8px)] md:w-[120px] border-r border-gray-200 pt-0 md:pt-5
                             max-sm:border-none">
-                                <p className="text-[9px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Paid Leaves</p>
+                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Paid Leaves</p>
                                 <div className="space-y-1">
                                     <input
                                         type="number"
@@ -441,10 +441,10 @@ const EmployeeSalaryCard = ({
                                         onChange={(e) => handleEmployeeLeaveDaysChange(emp.id, parseFloat(e.target.value) || 0)}
                                         onWheel={(e) => e.currentTarget.blur()}
                                         onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
-                                        className={inputClass(isLocked)}
+                                        className={inputClass(isLocked || (emp.paidLeave ?? 0) === 0)}
                                         min="0"
                                         max={emp.paidLeave}
-                                        disabled={isLocked}
+                                        disabled={isLocked || (emp.paidLeave ?? 0) === 0}
                                     />
                                     <p className="text-[10px] text-gray-400 font-medium text-right">Bal: {emp.paidLeave || 0}d</p>
                                 </div>
@@ -453,9 +453,9 @@ const EmployeeSalaryCard = ({
 
                         {/* Sick Leave (Monthly Only) */}
                         {emp.salaryType === "MONTHLY" && (
-                            <div className="px-3 md:px-6 w-[calc(50%-8px)] md:w-40 border-r border-gray-200
+                            <div className="px-2 w-[calc(50%-8px)] md:w-[120px] border-r border-gray-200
                             max-sm:border-none">
-                                <p className="text-[9px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Non Paid Leaves</p>
+                                <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Unpaid Leaves</p>
                                 <input
                                     type="number"
                                     step="1"
@@ -471,7 +471,7 @@ const EmployeeSalaryCard = ({
                         )}
 
                         {/* Loan */}
-                        <div className="px-3 md:px-6 w-[calc(50%-8px)] md:w-44 border-r border-gray-200
+                        <div className="px-2 w-[calc(50%-8px)] md:w-[120px] 
                         max-sm:border-none">
                             {hasLoanInstallment && (
                                 <div>
