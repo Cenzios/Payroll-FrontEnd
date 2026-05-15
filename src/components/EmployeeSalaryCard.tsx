@@ -147,6 +147,12 @@ const EmployeeSalaryCard = ({
                 : 0
             : basicSalary * displayWorkedDays;
 
+    const nonPaidLeaveDeduction = isLocked && generatedSalary
+        ? generatedSalary.nonPaidLeaveDeduction ?? 0
+        : emp.salaryType === "MONTHLY" && companyWorkingDays > 0
+            ? (basicSalary / companyWorkingDays) * sickLeaveDays
+            : 0;
+
     // const epfAmount = isLocked
     const epfAmount = isLocked && generatedSalary
         ? generatedSalary.employeeEPF
@@ -162,14 +168,15 @@ const EmployeeSalaryCard = ({
     // const totalDeductions = isLocked
     const totalDeductions = isLocked && generatedSalary
         ? generatedSalary.totalDeduction
-        : displaySalaryAdvance +
+        : nonPaidLeaveDeduction +
+        displaySalaryAdvance +
         epfAmount +
         (hasLoanInstallment && isLoanEnabled ? loanDeduction : 0) +
         totalDeductions_custom;
 
     //    const netSalary = isLocked ? generatedSalary.netSalary : totalEarnings - totalDeductions;
     const netSalary = isLocked && generatedSalary
-        ? generatedSalary.netSalary : totalEarnings - totalDeductions;
+        ? generatedSalary.netSalary : totalEarnings - totalDeductions + (nonPaidLeaveDeduction || 0);
 
     // Current period label
     const periodLabel = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "short", year: "numeric" });

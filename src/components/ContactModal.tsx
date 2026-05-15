@@ -6,9 +6,19 @@ import whatsapp from '../assets/images/contact-whatsapp.svg';
 interface ContactModalProps {
     isOpen: boolean;
     onClose: () => void;
+    title?: string;
+    subtitle?: string;
+    description?: string;
 }
 
-const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) => {
+const ContactModal: React.FC<ContactModalProps> = ({
+    isOpen,
+    onClose,
+    title = "Contact Us",
+    subtitle = "Get in Touch With Our Team",
+    description = "Contact us today and our team will assist you with the best solutions for your needs."
+}) => {
+
     if (!isOpen) return null;
 
     return (
@@ -16,33 +26,37 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) => {
         max-sm:p-5">
             <div className=" bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-[#2563EB] to-[#153885] px-8 py-10 text-center text-white relative">
+                <div className="bg-gradient-to-r from-[#2563EB] to-[#153885] px-8 py-8 text-center text-white relative">
                     <button
                         onClick={onClose}
                         className="absolute top-6 right-6 text-white/80 hover:text-white transition-colors"
                     >
                         <X className="w-6 h-6" />
                     </button>
-                    <h2 className="text-lg font-bold mb-2 uppercase">Customize plan</h2>
-                    <p className="text-sm font-extralight">Designed for your unique needs</p>
+                    <h2 className="text-lg font-bold mb-2 uppercase">
+                        {title}
+                    </h2>
+                    <p className="text-sm font-extralight">
+                        {subtitle}
+                    </p>
                 </div>
 
                 {/* Content */}
                 <div className="px-10 py-10">
-                    <div className="mb-10 text-center">
+                    <div className="mb-6 text-center">
                         <p className="text-lg font-medium text-gray-900 leading-tight">
-                            If you want a customize plan, <br />please contact us.
+                            {description}
                         </p>
                     </div>
 
-                    <div className="space-y-6 mb-10">
+                    <div className="space-y-3 mb-10">
                         {/* Company */}
                         <div className="flex items-center gap-5">
                             <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100/50">
                                 <Building2 className="w-5 h-5 text-[#0052CC]" />
                             </div>
                             <div>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-wider">Company </p>
+                                <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Company </p>
                                 <p className="text-base font-medium text-gray-800">Cenzios Pvt.Ltd</p>
                             </div>
                         </div>
@@ -53,7 +67,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) => {
                                 <Mail className="w-5 h-5 text-[#0052CC]" />
                             </div>
                             <div>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-wider">Email Address</p>
+                                <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Email Address</p>
                                 <p className="text-base font-medium text-gray-800">lahiru123@gmail.com</p>
                             </div>
                         </div>
@@ -64,26 +78,26 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) => {
                                 <Phone className="w-5 h-5 text-[#0052CC]" />
                             </div>
                             <div>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-wider">Contact No</p>
+                                <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Contact No</p>
                                 <p className="text-base font-medium text-gray-800">0764591786</p>
                             </div>
                         </div>
 
                         {/* Whatsapp No */}
-                        <div className="flex items-center gap-5">
+                        {/* <div className="flex items-center gap-5">
                             <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100/50">
                                 <img src={whatsapp} alt="whatsapp" className='w-5 h-5' />
                             </div>
                             <div>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-wider">Whatsapp No</p>
+                                <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Whatsapp No</p>
                                 <p className="text-base font-medium text-gray-800">0764591786</p>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
                     <button
                         onClick={() => window.location.href = 'mailto:lahiru123@gmail.com'}
-                        className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#2563EB] to-[#153885] text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98]"
+                        className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#2563EB] to-[#153885] text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98]"
                     >
                         <Phone className="w-5 h-5 text-white" />
 
@@ -92,7 +106,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose }) => {
 
                     <button
                         onClick={() => window.location.href = 'mailto:lahiru123@gmail.com'}
-                        className="flex items-center justify-center gap-2 mt-4 w-full bg-blue-100 text-black font-bold py-4 rounded-xl transition-all duration-200 active:scale-[0.98]"
+                        className="flex items-center justify-center gap-2 mt-4 w-full bg-blue-100 text-black font-bold py-3 rounded-xl transition-all duration-200 active:scale-[0.98]"
                     >
                         <img src={whatsapp} alt="whatsapp" className='w-5 h-5' />
                         Connect WhatsApp

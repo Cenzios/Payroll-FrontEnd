@@ -149,6 +149,8 @@ const Sidebar = () => {
                 </div>
 
                 {/* Nav Items */}
+                {/* TRIAL EXPIRE LOCK */}
+                {/* <nav data-sidebar-nav className="flex-1 px-4 py-6 space-y-2"> */}
                 <nav className="flex-1 px-4 py-6 space-y-2">
                     {navItems.map((item) => (
                         <NavLink
@@ -199,6 +201,9 @@ const Sidebar = () => {
                 </nav>
 
                 {/* Settings */}
+                {/* TRIAL EXPIRE LOCK */}
+                {/* <div data-sidebar-nav className="p-4 border-t border-white/10"> */}
+
                 <div className="p-4 border-t border-white/10">
                     <NavLink to="/settings" className={({ isActive }) => getItemClass(isActive)}>
                         <Settings className="w-5 h-5" />
