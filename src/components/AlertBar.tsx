@@ -10,7 +10,7 @@ const AlertBar = () => {
     const { user, token } = useAppSelector((state) => state.auth);
 
     const [remainingDays, setRemainingDays] = useState(7);
-    const [isTrial, setIsTrial] = useState(false);
+    const [isTrial, setIsTrial] = useState<boolean | null>(null);
     const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
 
     // ✅ Robust Trial Status & Banner Logic
@@ -143,7 +143,12 @@ const AlertBar = () => {
 
     return (
         <div>
-            {isTrial && (
+            {/* prevent layout shift */}
+            {/* {isTrial === null && (
+                <div className="h-7 w-full bg-[#438FEF]/20 animate-pulse" />
+            )} */}
+
+            {isTrial === true && (
                 <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
                     <p className="text-white">
                         {remainingDays <= 0 ? 'Your trial period has ended. ' : 'Heads Up! Your trial ends in'}
