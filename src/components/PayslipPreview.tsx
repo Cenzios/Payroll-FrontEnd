@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { FileText, ArrowDownIcon } from "lucide-react";
 import PortalDropdown from "./PortalDropdown";
 import { Employee } from "../types/employee.types";
+import { useTrialStatus } from "../hooks/useTrialStatus";
 
 interface PayslipPreviewProps {
     previewPayslip: any;
@@ -30,6 +31,7 @@ const PayslipPreview = ({
 }: PayslipPreviewProps) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const downloadBtnRef = useRef<HTMLButtonElement>(null);
+    const { handleTrialAction } = useTrialStatus();
 
     if (!previewPayslip || !selectedEmployee) {
         return (
@@ -254,28 +256,28 @@ const PayslipPreview = ({
                 >
                     <div className="flex flex-col">
                         <button
-                            onClick={() => {
+                            onClick={(e) => handleTrialAction(e, () => {
                                 exportPDF();
                                 setIsDropdownOpen(false);
-                            }}
+                            })}
                             className="flex items-center justify-center py-2.5 text-[13px] font-medium text-blue-400 hover:bg-blue-50 hover:text-blue-500 rounded-lg transition-colors group"
                         >
                             <span>PDF</span>
                         </button>
                         <button
-                            onClick={() => {
+                            onClick={(e) => handleTrialAction(e, () => {
                                 exportExcel();
                                 setIsDropdownOpen(false);
-                            }}
+                            })}
                             className="flex items-center justify-center py-2.5 text-[13px] font-medium text-green-500 hover:bg-green-50 hover:text-green-600 rounded-lg transition-colors group"
                         >
                             <span>Excel</span>
                         </button>
                         <button
-                            onClick={() => {
+                            onClick={(e) => handleTrialAction(e, () => {
                                 exportCSV();
                                 setIsDropdownOpen(false);
-                            }}
+                            })}
                             className="flex items-center justify-center py-2.5 text-[13px] font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-700 rounded-lg transition-colors group"
                         >
                             <span>CSV</span>

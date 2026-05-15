@@ -7,11 +7,13 @@ import { useGetEmployeesQuery, useGetSalaryHistoryQuery, useGetCompaniesQuery } 
 import { exportBankAdviceReport } from '../utils/exportService';
 import Toast from '../components/Toast';
 import AlertBar from '../components/AlertBar';
+import { useTrialStatus } from '../hooks/useTrialStatus';
 
 const BankAdviceReport = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
     const [isExportOpen, setIsExportOpen] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const { handleTrialAction } = useTrialStatus();
 
     // Filters
     const currentDate = new Date();
@@ -165,13 +167,13 @@ const BankAdviceReport = () => {
                                         <>
                                             <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
                                             <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
-                                                <button onClick={() => handleExport('pdf')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+                                                <button onClick={(e) => handleTrialAction(e, () => handleExport('pdf'))} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
                                                     <FileText className="w-4 h-4" /> PDF
                                                 </button>
-                                                <button onClick={() => handleExport('excel')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-green-600 hover:bg-green-50 transition-colors">
+                                                <button onClick={(e) => handleTrialAction(e, () => handleExport('excel'))} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-green-600 hover:bg-green-50 transition-colors">
                                                     <FileSpreadsheet className="w-4 h-4" /> Excel
                                                 </button>
-                                                <button onClick={() => handleExport('csv')} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors">
+                                                <button onClick={(e) => handleTrialAction(e, () => handleExport('csv'))} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors">
                                                     <Download className="w-4 h-4" /> CSV
                                                 </button>
                                             </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Download, FileText, Image as ImageIcon, File, ExternalLink } from 'lucide-react';
+import { useTrialStatus } from '../hooks/useTrialStatus';
 
 interface DocumentViewerModalProps {
     isOpen: boolean;
@@ -16,6 +17,7 @@ interface DocumentViewerModalProps {
 
 const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClose, doc }) => {
     if (!isOpen || !doc) return null;
+    const { handleTrialAction } = useTrialStatus();
 
     const isImage = doc.fileType.startsWith('image/');
     const isPDF = doc.fileType === 'application/pdf';
@@ -50,7 +52,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
                     </div>
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={handleDownload}
+                            onClick={(e) => handleTrialAction(e, handleDownload)}
                             className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-sm transition-all active:scale-95"
                         >
                             <Download className="w-4 h-4" />
@@ -96,7 +98,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
                                 This file type cannot be previewed directly. Please download the file to view its content.
                             </p>
                             <button
-                                onClick={handleDownload}
+                                onClick={(e) => handleTrialAction(e, handleDownload)}
                                 className="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-sm shadow-lg shadow-blue-500/20 transition-all active:scale-95"
                             >
                                 <ExternalLink className="w-4 h-4" />

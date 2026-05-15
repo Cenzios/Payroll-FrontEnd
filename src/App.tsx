@@ -21,6 +21,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 import RenewPlanModal from './components/RenewPlanModal';
+import TrialUpgradeModal from './components/TrialUpgradeModal';
 import SettleInvoice from './pages/SettleInvoice';
 import PlanVerifyPage from './pages/PlanVerifyPage';
 import BankAdviceReport from './pages/BankAdviceReport';
@@ -42,6 +43,7 @@ function App() {
   return (
     <Router>
       <RenewPlanModal />
+      <TrialUpgradeModal />
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/signup" element={<Signup />} />
