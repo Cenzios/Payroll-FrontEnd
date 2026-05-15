@@ -10,7 +10,7 @@ const AlertBar = () => {
     const { user, token } = useAppSelector((state) => state.auth);
 
     const [remainingDays, setRemainingDays] = useState(7);
-    const [isTrial, setIsTrial] = useState<boolean | null>(null);
+    const [isTrial, setIsTrial] = useState(false);
     const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
 
     // ✅ Robust Trial Status & Banner Logic
@@ -88,6 +88,7 @@ const AlertBar = () => {
                 window.dispatchEvent(new CustomEvent('open-renew-modal'));
             }
         };
+
         const handleGlobalKeydown = (e: KeyboardEvent) => {
             if (document.body.getAttribute('data-trial-expired') !== 'true') return;
             const target = e.target as HTMLElement;
@@ -96,15 +97,18 @@ const AlertBar = () => {
                 e.stopPropagation();
             }
         };
+
         const handleGlobalChange = (e: Event) => {
             if (document.body.getAttribute('data-trial-expired') !== 'true') return;
             e.preventDefault();
             e.stopPropagation();
             window.dispatchEvent(new CustomEvent('open-renew-modal'));
         };
+
         document.addEventListener('click', handleGlobalClick, true);
         document.addEventListener('keydown', handleGlobalKeydown, true);
         document.addEventListener('change', handleGlobalChange, true);
+
         return () => {
             document.removeEventListener('click', handleGlobalClick, true);
             document.removeEventListener('keydown', handleGlobalKeydown, true);
@@ -140,12 +144,7 @@ const AlertBar = () => {
 
     return (
         <div>
-            {/* prevent layout shift */}
-            {/* {isTrial === null && (
-                <div className="h-7 w-full bg-[#438FEF]/20 animate-pulse" />
-            )} */}
-
-            {isTrial === true && (
+            {isTrial && (
                 <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
                     <p className="text-white">
                         {remainingDays <= 0 ? 'Your trial period has ended. ' : 'Heads Up! Your trial ends in'}
@@ -158,8 +157,8 @@ const AlertBar = () => {
                     </p>
                     <span className='text-gray-600 text-2xl'>| </span>
                     <button
-                        // // TRIAL EXPIRE LOCK
-                        // data-upgrade-btn
+                        // TRIAL EXPIRE LOCK
+                        data-upgrade-btn
                         onClick={handleUpgradeNow}
                         disabled={isCheckingDocs}
                         className='font-extrabold underline cursor-pointer disabled:opacity-70'>
@@ -172,4 +171,3 @@ const AlertBar = () => {
 }
 
 export default AlertBar;
-

@@ -171,9 +171,9 @@ const Dashboard = () => {
             const remDays = 7 - diffDays;
             setRemainingDays(remDays > 0 ? remDays : 0);
 
-            if (remDays <= 0) {
-              navigate('/buy-plan?isUpgrade=true');
-            }
+            // if (remDays <= 0) {
+            //   navigate('/buy-plan?isUpgrade=true');
+            // }
           } else {
             setIsTrial(false);
           }

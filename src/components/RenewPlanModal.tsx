@@ -20,7 +20,8 @@ const RenewPlanModal = () => {
         setTimeout(() => {
             setIsOpen(false);
             setIsLoading(false);
-            navigate('/settle-invoice');
+            // navigate('/settle-invoice');
+            navigate('/get-plan?isUpgrade=true');
         }, 500);
     };
 
@@ -35,7 +36,11 @@ const RenewPlanModal = () => {
                     <h3 className="text-lg font-bold text-gray-900">
                         Subscription Expired
                     </h3>
-                    <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600">
+                    <button
+                        // TRIAL EXPIRE LOCK
+                        data-upgrade-btn
+                        onClick={() => setIsOpen(false)}
+                        className="text-gray-400 hover:text-gray-600">
                         ✕
                     </button>
                 </div>
@@ -55,6 +60,8 @@ const RenewPlanModal = () => {
                             Please settle your outstanding invoices to continue accessing all features and data.
                         </p>
                         <button
+                            // TRIAL EXPIRE LOCK
+                            data-upgrade-btn
                             onClick={handleStartRenewal}
                             disabled={isLoading}
                             className="w-full bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors flex justify-center items-center gap-2 shadow-lg shadow-red-200"
