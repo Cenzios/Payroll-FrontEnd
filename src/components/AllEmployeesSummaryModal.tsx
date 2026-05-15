@@ -3,6 +3,7 @@ import { X, Loader2, FileSpreadsheet, Download } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
 import Toast from './Toast';
 import { exportAllEmployeesSummary } from '../utils/exportService';
+import { useTrialStatus } from '../hooks/useTrialStatus';
 
 interface AllEmployeesSummaryModalProps {
     isOpen: boolean;
@@ -62,6 +63,7 @@ const AllEmployeesSummaryModal = ({
     const [isLoading, setIsLoading] = useState(false);
     const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const { handleTrialAction } = useTrialStatus();
 
     useEffect(() => {
         if (isOpen && selectedEmployeeIds.length > 0 && companyId) {
@@ -217,7 +219,7 @@ const AllEmployeesSummaryModal = ({
                     {/* Footer Actions */}
                     <div className="px-8 py-6 border-t border-gray-200 flex justify-center gap-4 bg-white">
                         <button
-                            onClick={exportPDF}
+                            onClick={(e) => handleTrialAction(e, exportPDF)}
                             disabled={!summaryData || summaryData.employees.length === 0}
                             className="flex items-center gap-2 px-8 py-2.5 text-sm font-bold text-white bg-[#3b82f6] rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
                         >
@@ -225,7 +227,7 @@ const AllEmployeesSummaryModal = ({
                             Export PDF
                         </button>
                         <button
-                            onClick={exportExcel}
+                            onClick={(e) => handleTrialAction(e, exportExcel)}
                             disabled={!summaryData || summaryData.employees.length === 0}
                             className="flex items-center gap-2 px-8 py-2.5 text-sm font-bold text-white bg-[#22c55e] rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
                         >
@@ -233,7 +235,7 @@ const AllEmployeesSummaryModal = ({
                             Export Excel
                         </button>
                         <button
-                            onClick={exportCSV}
+                            onClick={(e) => handleTrialAction(e, exportCSV)}
                             disabled={!summaryData || summaryData.employees.length === 0}
                             className="flex items-center gap-2 px-8 py-2.5 text-sm font-bold text-white bg-[#6b7280] rounded-lg hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
                         >

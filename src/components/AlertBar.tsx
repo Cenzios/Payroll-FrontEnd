@@ -30,10 +30,6 @@ const AlertBar = () => {
                         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                         const remDays = 7 - diffDays;
                         setRemainingDays(remDays > 0 ? remDays : 0);
-
-                        if (remDays <= 0) {
-                            navigate('/buy-plan?isUpgrade=true');
-                        }
                     } else {
                         setIsTrial(false);
                     }
@@ -55,10 +51,6 @@ const AlertBar = () => {
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 const remDays = 7 - diffDays;
                 setRemainingDays(remDays > 0 ? remDays : 0);
-
-                if (remDays <= 0) {
-                    navigate('/buy-plan?isUpgrade=true');
-                }
             } else {
                 setIsTrial(false);
             }
@@ -153,9 +145,15 @@ const AlertBar = () => {
         <div>
             {isTrial && (
                 <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
-                    <p className="text-white">Heads Up! Your trial ends in
-                        <span className="font-bold p-[2px] rounded-[4px] bg-orange-400 mx-2"> {remainingDays > 0 ? remainingDays : 0} </span>
-                        Days</p>
+                    <p className="text-white">
+                        {remainingDays <= 0 ? 'Your trial period has ended. ' : 'Heads Up! Your trial ends in'}
+                        {remainingDays > 0 && (
+                            <>
+                                <span className="font-bold p-[2px] rounded-[4px] bg-orange-400 mx-2"> {remainingDays} </span>
+                                Days
+                            </>
+                        )}
+                    </p>
                     <span className='text-gray-600 text-2xl'>| </span>
                     <button
                         // // TRIAL EXPIRE LOCK

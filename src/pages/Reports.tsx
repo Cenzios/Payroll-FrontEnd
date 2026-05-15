@@ -11,11 +11,13 @@ import AllEmployeesSummaryModal from '../components/AllEmployeesSummaryModal';
 import PageHeader from '../components/PageHeader';
 import { exportPayrollSummaryReport } from '../utils/exportService';
 import AlertBar from '../components/AlertBar';
+import { useTrialStatus } from '../hooks/useTrialStatus';
 
 const Reports = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
     const [isLoading, setIsLoading] = useState(false);
     const [isExportOpen, setIsExportOpen] = useState(false);
+    const { handleTrialAction } = useTrialStatus();
 
     // Date range filters
     const currentDate = new Date();
@@ -316,21 +318,21 @@ const Reports = () => {
                                             <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
                                             <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
                                                 <button
-                                                    onClick={() => { exportPDF(); setIsExportOpen(false); }}
+                                                    onClick={(e) => handleTrialAction(e, () => { exportPDF(); setIsExportOpen(false); })}
                                                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-red-50 transition-colors"
                                                 >
                                                     <FileText className="w-4 h-4" /> PDF
                                                 </button>
                                                 <div className="border-t border-gray-100" />
                                                 <button
-                                                    onClick={() => { exportExcel(); setIsExportOpen(false); }}
+                                                    onClick={(e) => handleTrialAction(e, () => { exportExcel(); setIsExportOpen(false); })}
                                                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-green-50 transition-colors"
                                                 >
                                                     <FileSpreadsheet className="w-4 h-4" /> Excel
                                                 </button>
                                                 <div className="border-t border-gray-100" />
                                                 <button
-                                                    onClick={() => { exportCSV(); setIsExportOpen(false); }}
+                                                    onClick={(e) => handleTrialAction(e, () => { exportCSV(); setIsExportOpen(false); })}
                                                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-blue-50 transition-colors"
                                                 >
                                                     <Download className="w-4 h-4" /> CSV

@@ -8,6 +8,7 @@ import Toast from '../components/Toast';
 import * as XLSX from 'xlsx';
 import { fillEPFFormC } from '../utils/fillEPFFormC';
 import AlertBar from '../components/AlertBar';
+import { useTrialStatus } from '../hooks/useTrialStatus';
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -19,6 +20,7 @@ const fmt = (val: number) =>
 
 const CFormReport = () => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
+    const { handleTrialAction } = useTrialStatus();
 
     const currentDate = new Date();
     const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
@@ -219,21 +221,21 @@ const CFormReport = () => {
                             <h2 className="font-bold text-gray-800">C-Form Summary</h2>
                             <div className="flex gap-2">
                                 <button
-                                    onClick={exportPDF}
+                                    onClick={(e) => handleTrialAction(e, exportPDF)}
                                     disabled={!reportData || rows.length === 0}
                                     className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded hover:bg-red-100 border border-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <FileText className="w-3.5 h-3.5" /> Export PDF
                                 </button>
                                 <button
-                                    onClick={exportExcel}
+                                    onClick={(e) => handleTrialAction(e, exportExcel)}
                                     disabled={!reportData || rows.length === 0}
                                     className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50 rounded hover:bg-green-100 border border-green-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <FileSpreadsheet className="w-3.5 h-3.5" /> Export Excel
                                 </button>
                                 <button
-                                    onClick={exportCSV}
+                                    onClick={(e) => handleTrialAction(e, exportCSV)}
                                     disabled={!reportData || rows.length === 0}
                                     className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded hover:bg-blue-100 border border-blue-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
