@@ -10,7 +10,7 @@ const AlertBar = () => {
     const { user, token } = useAppSelector((state) => state.auth);
 
     const [remainingDays, setRemainingDays] = useState(7);
-    const [isTrial, setIsTrial] = useState<boolean | null>(null);
+    const [isTrial, setIsTrial] = useState(false);
     const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
 
     // ✅ Robust Trial Status & Banner Logic
@@ -59,58 +59,61 @@ const AlertBar = () => {
         if (token) checkTrialStatus();
     }, [token, navigate, user]);
 
-    // TRIAL EXPIRE LOCK
-    // body attribute effect
-    useEffect(() => {
-        if (isTrial && remainingDays <= 0) {
-            document.body.setAttribute('data-trial-expired', 'true');
-        } else {
-            document.body.removeAttribute('data-trial-expired');
-        }
-    }, [isTrial, remainingDays]);
+    // // TRIAL EXPIRE LOCK
+    // // body attribute effect
+    // useEffect(() => {
+    //     if (isTrial && remainingDays <= 0) {
+    //         document.body.setAttribute('data-trial-expired', 'true');
+    //     } else {
+    //         document.body.removeAttribute('data-trial-expired');
+    //     }
+    // }, [isTrial, remainingDays]);
 
-    // TRIAL EXPIRE LOCK
-    //  global interceptor effect
-    useEffect(() => {
-        const handleGlobalClick = (e: MouseEvent) => {
-            if (document.body.getAttribute('data-trial-expired') !== 'true') return;
-            const target = e.target as HTMLElement;
-            const isSidebarLink = target.closest('[data-sidebar-nav]');
-            if (isSidebarLink) return;
-            const isUpgradeBtn = target.closest('[data-upgrade-btn]');
-            if (isUpgradeBtn) return;
-            const isInteractive = target.closest(
-                'button, a:not([data-sidebar-nav] a), input, select, textarea, [role="button"], [role="checkbox"], [role="switch"]'
-            );
-            if (isInteractive) {
-                e.preventDefault();
-                e.stopPropagation();
-                window.dispatchEvent(new CustomEvent('open-renew-modal'));
-            }
-        };
-        const handleGlobalKeydown = (e: KeyboardEvent) => {
-            if (document.body.getAttribute('data-trial-expired') !== 'true') return;
-            const target = e.target as HTMLElement;
-            if (target.closest('input, textarea, select')) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        };
-        const handleGlobalChange = (e: Event) => {
-            if (document.body.getAttribute('data-trial-expired') !== 'true') return;
-            e.preventDefault();
-            e.stopPropagation();
-            window.dispatchEvent(new CustomEvent('open-renew-modal'));
-        };
-        document.addEventListener('click', handleGlobalClick, true);
-        document.addEventListener('keydown', handleGlobalKeydown, true);
-        document.addEventListener('change', handleGlobalChange, true);
-        return () => {
-            document.removeEventListener('click', handleGlobalClick, true);
-            document.removeEventListener('keydown', handleGlobalKeydown, true);
-            document.removeEventListener('change', handleGlobalChange, true);
-        };
-    }, []);
+    // //  global interceptor effect
+    // useEffect(() => {
+    //     const handleGlobalClick = (e: MouseEvent) => {
+    //         if (document.body.getAttribute('data-trial-expired') !== 'true') return;
+    //         const target = e.target as HTMLElement;
+    //         const isSidebarLink = target.closest('[data-sidebar-nav]');
+    //         if (isSidebarLink) return;
+    //         const isUpgradeBtn = target.closest('[data-upgrade-btn]');
+    //         if (isUpgradeBtn) return;
+    //         const isInteractive = target.closest(
+    //             'button, a:not([data-sidebar-nav] a), input, select, textarea, [role="button"], [role="checkbox"], [role="switch"]'
+    //         );
+    //         if (isInteractive) {
+    //             e.preventDefault();
+    //             e.stopPropagation();
+    //             window.dispatchEvent(new CustomEvent('open-renew-modal'));
+    //         }
+    //     };
+
+    //     const handleGlobalKeydown = (e: KeyboardEvent) => {
+    //         if (document.body.getAttribute('data-trial-expired') !== 'true') return;
+    //         const target = e.target as HTMLElement;
+    //         if (target.closest('input, textarea, select')) {
+    //             e.preventDefault();
+    //             e.stopPropagation();
+    //         }
+    //     };
+
+    //     const handleGlobalChange = (e: Event) => {
+    //         if (document.body.getAttribute('data-trial-expired') !== 'true') return;
+    //         e.preventDefault();
+    //         e.stopPropagation();
+    //         window.dispatchEvent(new CustomEvent('open-renew-modal'));
+    //     };
+
+    //     document.addEventListener('click', handleGlobalClick, true);
+    //     document.addEventListener('keydown', handleGlobalKeydown, true);
+    //     document.addEventListener('change', handleGlobalChange, true);
+
+    //     return () => {
+    //         document.removeEventListener('click', handleGlobalClick, true);
+    //         document.removeEventListener('keydown', handleGlobalKeydown, true);
+    //         document.removeEventListener('change', handleGlobalChange, true);
+    //     };
+    // }, []);
 
     const [isCheckingDocs, setIsCheckingDocs] = useState(false);
 
@@ -140,12 +143,7 @@ const AlertBar = () => {
 
     return (
         <div>
-            {/* prevent layout shift */}
-            {/* {isTrial === null && (
-                <div className="h-7 w-full bg-[#438FEF]/20 animate-pulse" />
-            )} */}
-
-            {isTrial === true && (
+            {isTrial && (
                 <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
                     <p className="text-white">
                         {remainingDays <= 0 ? 'Your trial period has ended. ' : 'Heads Up! Your trial ends in'}
@@ -172,4 +170,3 @@ const AlertBar = () => {
 }
 
 export default AlertBar;
-
