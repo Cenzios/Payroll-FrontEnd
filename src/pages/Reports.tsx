@@ -12,9 +12,10 @@ import PageHeader from '../components/PageHeader';
 import { exportPayrollSummaryReport } from '../utils/exportService';
 import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
+import logo from '../assets/images/logo-login.svg';
 
 const Reports = () => {
-    const { selectedCompanyId } = useAppSelector((state) => state.auth);
+    const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
     const [isLoading, setIsLoading] = useState(false);
     const [isExportOpen, setIsExportOpen] = useState(false);
     const { handleTrialAction } = useTrialStatus();
@@ -250,10 +251,39 @@ const Reports = () => {
             {/* Margin bottom gap after the banner */}
             <div className="-mb-4 shrink-0"></div>
 
-            <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
+            <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
                 <Sidebar />
-                <div className="flex-1 ml-64 p-6 h-full flex flex-col overflow-hidden">                {/* Header — keeps notification + profile via PageHeader */}
-                    <div className="shrink-0 mb-4">
+
+                <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
+
+                    {/* MOBILE HEADER */}
+                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+                        <div>
+                            <img src={logo} alt="logo" className='w-40 h-10' />
+                        </div>
+                        <div className="flex items-center gap-2 ml-6">
+
+                            {/* Avatar circle */}
+                            <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                                {user?.fullName?.charAt(0) || 'U'}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile Title & Action */}
+                    <div className="hidden max-sm:block px-6 py-4 shrink-0">
+                        <div className="flex items-center justify-between mb-1">
+                            <div className='px-3'>
+                                <div className="inline-block rounded-sm">
+                                    <h1 className="text-[22px] font-bold text-[#1D1F24]">Summary Report</h1>
+                                </div>
+                                <p className="text-[13px] text-[#989FA7] font-medium">Here's Your Payroll History.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Desktop Header */}
+                    <div className="shrink-0 max-sm:hidden">
                         <PageHeader
                             title="Summary Report"
                             subtitle="Here's Your Payroll History."
@@ -261,26 +291,26 @@ const Reports = () => {
                     </div>
 
                     {/* Filter Bar */}
-                    <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
-                        <div className="flex items-center gap-4 flex-wrap">
+                    <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4 max-sm:mx-5">
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 flex-wrap">
                             {/* Search */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Search Employee</span>
-                                <div className="relative">
+                            <div className="flex items-center gap-2 w-auto max-sm:w-full">
+                                <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Search Employee</span>
+                                <div className="relative max-sm:w-full">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                     <input
                                         type="text"
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         placeholder="Search..."
-                                        className="pl-9 pr-4 py-2 mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-56 focus:ring-2 focus:ring-blue-100 outline-none"
+                                        className="pl-9 pr-4 py-2 mr-0 md:mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-full md:w-56 "
                                     />
                                 </div>
                             </div>
 
                             {/* Time Period */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Time Period</span>
+                            <div className="flex items-center gap-2 w-auto">
+                                <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Time Period</span>
                                 <MonthRangePicker
                                     startMonth={startMonth}
                                     startYear={startYear}
@@ -293,7 +323,7 @@ const Reports = () => {
                             </div>
 
                             {/* Buttons */}
-                            <div className="flex items-center gap-3 ml-auto">
+                            <div className="flex items-center gap-3 ml-auto w-full md:w-auto justify-end">
 
                                 {/* Reset */}
                                 <button
@@ -345,102 +375,104 @@ const Reports = () => {
                         </div>
                     </div>
 
-                    <div className='p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 min-h-0 overflow-hidden'>                    <div className="shrink-0 bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm px-6 py-4 mb-4">
-                        <div className="grid grid-cols-5 gap-4 divide-x divide-gray-100">
-                            {/* Total Employees */}
-                            <div className="text-center ">
-                                <div className="text-2xl font-regular text-gray-900">
-                                    {overallTotals.totalEmployees}
+                    <div className='p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 min-h-0 overflow-hidden max-sm:mx-5'>
+                        <div className="shrink-0 bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm px-3 md:px-6 py-3 md:py-4 mb-4 whitespace-nowrap">
+                            <div className="overflow-x-auto md:overflow-visible grid grid-cols-5 gap-[150px] md:gap-4 md:divide-x divide-gray-100 max-sm:py-2">
+                                {/* Total Employees */}
+                                <div className="text-center max-sm:border-l-2 max-sm:border-[#F4F8FC] max-sm:pl-4">
+                                    <div className="text-2xl font-regular text-gray-900">
+                                        {overallTotals.totalEmployees}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                        Total Employees
+                                    </div>
                                 </div>
-                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                    Total Employees
-                                </div>
-                            </div>
 
-                            {/* Total Gross Pay */}
-                            <div className="text-center">
-                                <div className="text-xl font-regular text-[#1f6feb]">
-                                    Rs. {overallTotals.totalGrossPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                {/* Total Gross Pay */}
+                                <div className="text-center max-sm:border-l-2 max-sm:border-black max-sm:pl-4">
+                                    <div className="text-xl font-regular text-[#1f6feb]">
+                                        Rs. {overallTotals.totalGrossPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                        Total Gross Pay
+                                    </div>
                                 </div>
-                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                    Total Gross Pay
-                                </div>
-                            </div>
 
-                            {/* Total Net Pay */}
-                            <div className="text-center">
-                                <div className="text-xl font-regular text-[#1f6feb]">
-                                    Rs. {overallTotals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                {/* Total Net Pay */}
+                                <div className="text-center max-sm:border-l-2 max-sm:border-black max-sm:pl-4">
+                                    <div className="text-xl font-regular text-[#1f6feb]">
+                                        Rs. {overallTotals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                        Total Net Pay
+                                    </div>
                                 </div>
-                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                    Total Net Pay
-                                </div>
-                            </div>
 
-                            {/* Total Employee EPF */}
-                            <div className="text-center">
-                                <div className="text-xl font-regular text-[#1f6feb]">
-                                    Rs. {overallTotals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                {/* Total Employee EPF */}
+                                <div className="text-center max-sm:border-l-2 max-sm:border-black max-sm:pl-4">
+                                    <div className="text-xl font-regular text-[#1f6feb]">
+                                        Rs. {overallTotals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                        Total Employee EPF
+                                    </div>
                                 </div>
-                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                    Total Employee EPF
-                                </div>
-                            </div>
 
-                            {/* Total Company EPF/ETF */}
-                            <div className="text-center">
-                                <div className="text-xl font-regular text-[#1f6feb]">
-                                    Rs. {overallTotals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                </div>
-                                <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
-                                    Total Company EPF/ETF
+                                {/* Total Company EPF/ETF */}
+                                <div className="text-center max-sm:border-l-2 max-sm:border-black max-sm:pl-4">
+                                    <div className="text-xl font-regular text-[#1f6feb]">
+                                        Rs. {overallTotals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                        Total Company EPF/ETF
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
                         {/* Main Content — Scrollable */}
-                        <div className="flex-1 overflow-y-auto space-y-3">                        {isLoading ? (
-                            <div className="flex justify-center items-center py-20">
-                                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                            </div>
-                        ) : monthlyData.length === 0 ? (
-                            <div className="bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm p-10 text-center text-gray-400 text-sm">
-                                No payroll records found for the selected period.
-                            </div>
-                        ) : (
-                            monthlyData.map((monthData) => {
-                                const monthKey = `${monthData.year}-${monthData.monthNumber}`;
-                                return (
-                                    <MonthSection
-                                        key={monthKey}
-                                        year={monthData.year}
-                                        month={monthData.month}
-                                        monthNumber={monthData.monthNumber}
-                                        status={monthData.status}
-                                        employees={monthData.employees}
-                                        totals={monthData.totals}
-                                        isExpanded={expandedMonths.has(monthKey)}
-                                        onToggle={() => toggleMonth(monthKey)}
-                                        selectedEmployeeIds={selectedEmployeeIds}
-                                        onSelectEmployee={handleSelectEmployee}
-                                        onViewEmployee={(id, companyId) => {
-                                            setSelectedEmployee({
-                                                id,
-                                                companyId,
-                                                month: monthData.monthNumber,
-                                                year: monthData.year
-                                            });
-                                            setIsModalOpen(true);
-                                        }}
-                                        companyId={selectedCompanyId || ''}
-                                        searchQuery={search}
-                                    />
-                                );
-                            })
-                        )}
+                        <div className="flex-1 overflow-y-auto space-y-3">
+                            {isLoading ? (
+                                <div className="flex justify-center items-center py-20">
+                                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                                </div>
+                            ) : monthlyData.length === 0 ? (
+                                <div className="bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm p-10 text-center text-gray-400 text-sm">
+                                    No payroll records found for the selected period.
+                                </div>
+                            ) : (
+                                monthlyData.map((monthData) => {
+                                    const monthKey = `${monthData.year}-${monthData.monthNumber}`;
+                                    return (
+                                        <MonthSection
+                                            key={monthKey}
+                                            year={monthData.year}
+                                            month={monthData.month}
+                                            monthNumber={monthData.monthNumber}
+                                            status={monthData.status}
+                                            employees={monthData.employees}
+                                            totals={monthData.totals}
+                                            isExpanded={expandedMonths.has(monthKey)}
+                                            onToggle={() => toggleMonth(monthKey)}
+                                            selectedEmployeeIds={selectedEmployeeIds}
+                                            onSelectEmployee={handleSelectEmployee}
+                                            onViewEmployee={(id, companyId) => {
+                                                setSelectedEmployee({
+                                                    id,
+                                                    companyId,
+                                                    month: monthData.monthNumber,
+                                                    year: monthData.year
+                                                });
+                                                setIsModalOpen(true);
+                                            }}
+                                            companyId={selectedCompanyId || ''}
+                                            searchQuery={search}
+                                        />
+                                    );
+                                })
+                            )}
                         </div>
-                        <p className="text-end text-gray-400 text-[13px] mt-2 mr-4">All values are display in LKR</p>
+                        <p className="text-end text-gray-400 text-[10px] mt-2 mr-4">All values are display in LKR</p>
 
                     </div>
                     {toast && (
