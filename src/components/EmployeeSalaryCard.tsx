@@ -373,10 +373,11 @@ const EmployeeSalaryCard = ({
                     )}
 
                     {/* ── ROW 3: Input fields ── */}
-                    <div className="flex items-center gap-2 px-5 py-3 border-b border-blue-100/70 bg-white max-sm:gap-0">
+                    <div className="flex items-center gap-2 px-5 py-3 border-b border-blue-100/70 bg-white
+                    max-sm:grid max-sm:grid-cols-3">
                         {/* Worked */}
                         <div className="pr-2 w-[calc(50%-8px)] md:w-[120px] border-r border-gray-200
-                        max-sm:border-none">
+                        max-sm:border-none max-sm:w-[90px]">
                             <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Worked Days</p>
                             <input
                                 type="number"
@@ -396,7 +397,7 @@ const EmployeeSalaryCard = ({
                         {/* OT Hours */}
                         {emp.otRate > 0 && (
                             <div className="px-2 w-[calc(50%-8px)] md:w-[120px] border-r border-gray-200
-                            max-sm:border-none">
+                        max-sm:border-none max-sm:w-[90px]">
                                 <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">OT Hours</p>
                                 <input
                                     type="number"
@@ -414,8 +415,9 @@ const EmployeeSalaryCard = ({
 
                         {/* Advance */}
                         <div className="px-2 w-[calc(50%-8px)] md:w-[120px] border-r border-gray-200
-                        max-sm:border-none">
-                            <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Advance</p>
+                        max-sm:border-none max-sm:w-[90px]">
+                            <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center
+                            max-sm:top-0">Advance</p>
                             <input
                                 type="number"
                                 value={displaySalaryAdvance === 0 ? "" : displaySalaryAdvance}
@@ -431,7 +433,7 @@ const EmployeeSalaryCard = ({
                         {/* Annual Leave (Monthly Only) */}
                         {emp.salaryType === "MONTHLY" && (
                             <div className="px-2 w-[calc(50%-8px)] md:w-[120px] border-r border-gray-200 pt-0 md:pt-5
-                            max-sm:border-none">
+                        max-sm:border-none max-sm:w-[90px]">
                                 <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Paid Leaves</p>
                                 <div className="space-y-1">
                                     <input
@@ -454,7 +456,7 @@ const EmployeeSalaryCard = ({
                         {/* Sick Leave (Monthly Only) */}
                         {emp.salaryType === "MONTHLY" && (
                             <div className="px-2 w-[calc(50%-8px)] md:w-[120px] border-r border-gray-200
-                            max-sm:border-none">
+                        max-sm:border-none max-sm:w-[90px]">
                                 <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">Unpaid Leaves</p>
                                 <input
                                     type="number"
@@ -472,7 +474,7 @@ const EmployeeSalaryCard = ({
 
                         {/* Loan */}
                         <div className="px-2 w-[calc(50%-8px)] md:w-[120px] 
-                        max-sm:border-none">
+                        max-sm:border-none max-sm:w-[90px]">
                             {hasLoanInstallment && (
                                 <div>
                                     <div className="flex items-center gap-2 mb-2 h-6">
