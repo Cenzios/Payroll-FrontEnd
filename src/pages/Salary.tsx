@@ -826,7 +826,7 @@ const Salary = () => {
               </div>
 
               {/* EMPLOYEE LIST */}
-              <div className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] max-sm:pb-20">
                 {isLoading ? (
                   <SalaryListSkeleton />
                 ) : validEmployees.length === 0 ? (

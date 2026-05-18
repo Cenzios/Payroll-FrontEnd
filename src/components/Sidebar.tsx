@@ -212,7 +212,7 @@ const Sidebar = () => {
             </div>
 
             {/* ── Mobile Bottom Navigation Bar ── */}
-            <div className="sm:hidden fixed -bottom-14 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+            <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
                 <div className="flex items-center justify-around px-2 py-1">
 
                     {/* Dashboard */}
@@ -311,7 +311,7 @@ const Sidebar = () => {
                         onClick={() => setIsMobileMoreOpen(false)}
                     />
                     <div
-                        className="sm:hidden fixed -bottom-14 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl"
+                        className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl"
                         style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}
                     >
                         <div className="flex items-center justify-between px-6 pt-4 pb-3 border-b border-gray-100">

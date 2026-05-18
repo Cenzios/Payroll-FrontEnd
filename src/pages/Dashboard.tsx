@@ -307,8 +307,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans
-    max-sm:h-auto max-sm:overflow-auto">
+    <div className="flex flex-col h-screen overflow-clip bg-gray-50 font-sans">
       {/* {isTrial && (
         // <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
         //   <AlertTriangle className="w-5 h-5" />
@@ -332,13 +331,11 @@ const Dashboard = () => {
       {/* Margin bottom gap after the banner */}
       <div className="-mb-4 shrink-0"></div>
 
-      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0
-      max-sm:flex-col max-sm:overflow-visible">
+      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
         <Sidebar />
 
         {/* Main Content */}
-        <div className="flex-1 ml-64 p-6 h-full overflow-hidden flex flex-col
-        max-sm:ml-0 max-sm:p-5 max-sm:py-7 max-sm:overflow-visible max-sm:h-auto">
+        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-svh max-sm:p-5 max-sm:py-7">
 
           {/* ── MOBILE HEADER (replaces PageHeader on mobile) ── */}
           <div className="hidden  max-sm:flex items-center justify-between -ml-3 pt-5 pb-3 border-b border-gray-100">
@@ -451,7 +448,7 @@ const Dashboard = () => {
             />
           </div>
 
-          <main className="flex-1 max-sm:mt-2">
+          <main className="flex-1 max-sm:mt-2 max-sm:pb-14">
             {isDashboardLoading ? <DashboardSkeleton /> : (
               <>
                 {/* Stats Cards */}

@@ -375,7 +375,7 @@ const Reports = () => {
                         </div>
                     </div>
 
-                    <div className='p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 min-h-0 overflow-hidden max-sm:mx-5'>
+                    <div className='p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 min-h-0 overflow-hidden max-sm:mx-5  max-sm:pb-20'>
                         <div className="shrink-0 bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm px-3 md:px-6 py-3 md:py-4 mb-4 whitespace-nowrap">
                             <div className="overflow-x-auto md:overflow-visible grid grid-cols-5 gap-[150px] md:gap-4 md:divide-x divide-gray-100 max-sm:py-2">
                                 {/* Total Employees */}
@@ -431,7 +431,7 @@ const Reports = () => {
                         </div>
 
                         {/* Main Content — Scrollable */}
-                        <div className="flex-1 overflow-y-auto space-y-3">
+                        <div className="flex-1 overflow-y-auto space-y-3 max-sm:pb-10">
                             {isLoading ? (
                                 <div className="flex justify-center items-center py-20">
                                     <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />

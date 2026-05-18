@@ -439,18 +439,15 @@ const Employees = () => {
   const activeMenuEmployee = employees.find((e) => e.id === activeMenuId);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans
-    max-sm:h-auto max-sm:overflow-auto">
+    <div className="flex flex-col h-screen overflow-clip bg-gray-50 font-sans">
       <AlertBar />
 
       <div className="-mb-4 shrink-0"></div>
 
-      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0
-      max-sm:flex-col max-sm:overflow-visible">
+      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
         <Sidebar />
 
-        <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col
-          max-sm:ml-0 max-sm:p-0 max-sm:h-auto max-sm:overflow-visible">
+        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-svh">
 
           {/* MOBILE HEADER */}
           <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
@@ -579,7 +576,7 @@ const Employees = () => {
           </div>
 
           {/* MOBILE layout */}
-          <div className="hidden max-sm:flex flex-col flex-1 min-h-screen">
+          <div className="hidden max-sm:flex flex-col flex-1">
 
             {/* MOBILE: List View */}
             <div className={`flex flex-col flex-1 ${mobileView === "list" ? "block" : "hidden"}`}>
