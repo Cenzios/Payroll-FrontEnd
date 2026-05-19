@@ -459,7 +459,7 @@ const Dashboard = () => {
                     title="Active Employees"
                     value={dashboardData?.totalEmployees?.toString() || '0'}
                     colorTheme="blue"
-                    showLastMonth={true}
+                    showLastMonth={false}
                   />
                   <StatCard
                     icon={DollarSign}

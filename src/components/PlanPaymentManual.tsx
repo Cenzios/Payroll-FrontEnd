@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { UploadCloud, Copy, Loader2 } from "lucide-react";
+import { UploadCloud, Copy, Loader2, X } from "lucide-react";
 import PlanVerify from "./PlanVerify";
 import axiosInstance from "../api/axios";
 
@@ -28,9 +28,40 @@ const PlanPaymentManual = () => {
         fetchExistingDocs();
     }, []);
 
+    const validateFile = (file: File) => {
+        const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
+        const maxSize = 10 * 1024 * 1024; // 10MB
+
+        if (!allowedTypes.includes(file.type)) {
+            alert("Invalid file type. Only PNG, JPG, and PDF are allowed.");
+            return false;
+        }
+
+        if (file.size > maxSize) {
+            alert("File is too large. Maximum size is 10MB.");
+            return false;
+        }
+
+        return true;
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]);
+            const selectedFile = e.target.files[0];
+
+            if (file) {
+                const confirmReplace = window.confirm("You have already selected a file. Do you want to replace it with the new one?");
+                if (!confirmReplace) {
+                    e.target.value = ""; // Clear the input
+                    return;
+                }
+            }
+
+            if (validateFile(selectedFile)) {
+                setFile(selectedFile);
+            } else {
+                e.target.value = ""; // Clear the input
+            }
         }
     };
 
@@ -124,16 +155,39 @@ const PlanPaymentManual = () => {
                     e.preventDefault();
                     e.stopPropagation();
                     const droppedFile = e.dataTransfer.files?.[0];
+
                     if (droppedFile) {
-                        setFile(droppedFile);
+                        if (file) {
+                            const confirmReplace = window.confirm("You have already selected a file. Do you want to replace it with the new one?");
+                            if (!confirmReplace) return;
+                        }
+
+                        if (validateFile(droppedFile)) {
+                            setFile(droppedFile);
+                        }
                     }
                 }}
             >
                 <UploadCloud className="w-8 h-8 text-blue-500 mb-2" />
 
-                <p className="text-sm text-gray-700">
-                    {file ? file.name : "Choose a file or Drag & Drop"}
-                </p>
+                <div className="flex flex-col items-center">
+                    <p className="text-sm text-gray-700">
+                        {file ? file.name : "Choose a file or Drag & Drop"}
+                    </p>
+                    {file && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setFile(null);
+                            }}
+                            className="mt-2 text-xs text-red-500 font-medium flex items-center gap-1 hover:text-red-600"
+                        >
+                            <X className="w-3 h-3" /> Remove File
+                        </button>
+                    )}
+                </div>
 
                 <p className="text-xs text-gray-400 mt-1">
                     Accepted: PNG, JPG, PDF (Max 10MB)
