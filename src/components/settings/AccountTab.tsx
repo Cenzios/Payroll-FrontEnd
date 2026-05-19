@@ -151,7 +151,6 @@ const AccountTab = () => {
     const inputClasses = (hasError: boolean, isDisabled: boolean) =>
         `w-full pl-10 pr-4 py-2.5 rounded-full transition-all border outline-none text-[13px] ${hasError ? 'border-red-400 focus:ring-red-100' : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50'
         } ${isDisabled ? 'bg-gray-50 text-gray-500 cursor-not-allowed border-gray-200' : 'bg-white'}`;
-
     return (
         <div className="space-y-0">
             {/* Employee Usage Section */}
@@ -175,16 +174,15 @@ const AccountTab = () => {
             </section> */}
 
             {/* Personal Info Section */}
-            <section className="py-8 border-b border-gray-200">
-                <div className="flex gap-8">
-                    {/* Left Description */}
-                    <div className="w-[200px] shrink-0 px-2">
+            <section className="py-8 border-b border-gray-200 max-sm:py-5">
+                <div className="flex gap-8 max-sm:flex-col max-sm:gap-3">                    {/* Left Description */}
+                    <div className="w-[200px] shrink-0 px-2 max-sm:w-full max-sm:px-0">
                         <h3 className="text-[14px] font-semibold text-gray-900 mb-1">Personal Info</h3>
                         <p className="text-[12px] text-gray-500 leading-relaxed">You can change your personal information settings here.</p>
                     </div>
                     {/* Right Content */}
-                    <div className="flex-1 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                    <div className="flex-1 space-y-4 max-sm:border max-sm:border-gray-200 max-sm:p-3 max-sm:rounded-lg">
+                        <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                             <div>
                                 <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Full Name</label>
                                 <div className="relative">
@@ -221,26 +219,25 @@ const AccountTab = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex justify-end">
+                        <div className="flex justify-end max-sm:justify-center">
                             {!isEditingPersonal ? (
                                 <button
                                     onClick={() => setIsEditingPersonal(true)}
-                                    className="flex items-center gap-2 bg-blue-600 text-white text-[12px] font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-all"
-                                >
+                                    className="flex items-center gap-2 bg-blue-600 text-white text-[12px] font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-all max-sm:w-full max-sm:justify-center max-sm:py-2.5">
                                     Edit Details <Edit2 className="h-3.5 w-3.5" />
                                 </button>
                             ) : (
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 max-sm:w-full">
                                     <button
                                         onClick={() => setIsEditingPersonal(false)}
-                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 text-[12px] rounded-lg font-medium transition-all"
+                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 text-[12px] rounded-lg font-medium transition-all max-sm:flex-1 max-sm:text-center max-sm:py-2.5"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={handleSavePersonal}
                                         disabled={isSavingPersonal}
-                                        className="flex items-center gap-2 bg-blue-600 text-white text-[12px] px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-all"
+                                        className="flex items-center gap-2 bg-blue-600 text-white text-[12px] px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-all max-sm:flex-1 max-sm:justify-center max-sm:py-2.5"
                                     >
                                         {isSavingPersonal ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                                         Save Changes
@@ -253,16 +250,16 @@ const AccountTab = () => {
             </section>
 
             {/* Company Info Section */}
-            <section className="py-8 border-b border-gray-200">
-                <div className="flex gap-8">
+            <section className="py-8 border-b border-gray-200 max-sm:py-5">
+                <div className="flex gap-8 max-sm:flex-col max-sm:gap-3">
                     {/* Left Description */}
-                    <div className="w-[200px] shrink-0 px-2">
+                    <div className="w-[200px] shrink-0 px-2 max-sm:w-full max-sm:px-0">
                         <h3 className="text-[14px] font-semibold text-gray-900 mb-1">Company Info</h3>
                         <p className="text-[12px] text-gray-500 leading-relaxed">You can change your company details here.</p>
                     </div>
                     {/* Right Content */}
-                    <div className="flex-1 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                    <div className="flex-1 space-y-4 max-sm:border max-sm:border-gray-200 max-sm:p-3 max-sm:rounded-lg">
+                        <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                             <div>
                                 <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Name</label>
                                 <div className="relative">
@@ -304,7 +301,7 @@ const AccountTab = () => {
                                 {companyErrors.email && <p className="text-xs text-red-500 mt-1">{companyErrors.email}</p>}
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                             <div>
                                 <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Phone Number</label>
                                 <div className="relative">
@@ -346,26 +343,25 @@ const AccountTab = () => {
                                 {companyErrors.address && <p className="text-xs text-red-500 mt-1">{companyErrors.address}</p>}
                             </div>
                         </div>
-                        <div className="flex justify-end">
+                        <div className="flex justify-end max-sm:justify-center">
                             {!isEditingCompany ? (
                                 <button
                                     onClick={() => setIsEditingCompany(true)}
-                                    className="flex items-center gap-2 bg-blue-600 text-white text-[12px] font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-all"
-                                >
+                                    className="flex items-center gap-2 bg-blue-600 text-white text-[12px] font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-all max-sm:w-full max-sm:justify-center max-sm:py-2.5"                                >
                                     Edit Details <Edit2 className="h-3.5 w-3.5" />
                                 </button>
                             ) : (
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 max-sm:w-full">
                                     <button
                                         onClick={() => setIsEditingCompany(false)}
-                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 text-[12px] rounded-lg font-medium transition-all"
+                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 text-[12px] rounded-lg font-medium transition-all max-sm:flex-1 max-sm:text-center max-sm:py-2.5"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={handleSaveCompany}
                                         disabled={isSavingCompany}
-                                        className="flex items-center gap-2 bg-blue-600 text-white text-[12px] px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-all"
+                                        className="flex items-center gap-2 bg-blue-600 text-white text-[12px] px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-all max-sm:flex-1 max-sm:justify-center max-sm:py-2.5"
                                     >
                                         {isSavingCompany ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                                         Save Changes
@@ -378,19 +374,19 @@ const AccountTab = () => {
             </section>
 
             {/* Change Password Section */}
-            <section className="py-8">
-                <div className="flex gap-8">
+            <section className="py-8 max-sm:py-5">
+                <div className="flex gap-8 max-sm:flex-col max-sm:gap-3">
                     {/* Left Description */}
-                    <div className="w-[200px] shrink-0 px-2">
+                    <div className="w-[200px] shrink-0 px-2 max-sm:w-full max-sm:px-0">
                         <h3 className="text-[14px] font-semibold text-gray-900 mb-1">Change Password</h3>
                         <p className="text-[12px] text-gray-500 leading-relaxed">Update your password to keep your account secure.</p>
                     </div>
                     {/* Right Content */}
-                    <div className="flex-1 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2">
+                    <div className="flex-1 space-y-4 max-sm:border max-sm:border-gray-200 max-sm:p-3 max-sm:rounded-lg">
+                        <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                            <div className="col-span-2 max-sm:col-span-1">
                                 <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Current Password</label>
-                                <div className="relative max-w-sm">
+                                <div className="relative max-w-sm max-sm:max-w-full">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                                         <Lock className="h-4 w-4" />
                                     </span>
@@ -412,7 +408,7 @@ const AccountTab = () => {
                                 {passwordErrors.currentPassword && <p className="text-xs text-red-500 mt-1">{passwordErrors.currentPassword}</p>}
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
                             <div>
                                 <label className="block text-[12px] font-medium text-gray-700 mb-1.5">New Password</label>
                                 <div className="relative">
@@ -460,12 +456,11 @@ const AccountTab = () => {
                                 {passwordErrors.confirmPassword && <p className="text-xs text-red-500 mt-1">{passwordErrors.confirmPassword}</p>}
                             </div>
                         </div>
-                        <div className="flex justify-end">
+                        <div className="flex justify-end max-sm:justify-stretch">
                             <button
                                 onClick={handleSavePassword}
                                 disabled={isSavingPassword || !passwordData.currentPassword || !passwordData.newPassword}
-                                className="bg-blue-600 text-white px-5 py-2 rounded-lg text-[12px] font-medium hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center gap-2"
-                            >
+                                className="bg-blue-600 text-white px-5 py-2 rounded-lg text-[12px] font-medium hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center gap-2 max-sm:w-full max-sm:justify-center max-sm:py-2.5"                            >
                                 {isSavingPassword ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Update Password'}
                             </button>
                         </div>

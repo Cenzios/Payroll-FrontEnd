@@ -298,7 +298,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
             </div>
 
             {/* History Table */}
-            <div className='max-sm:mx-5'>
+            <div className='max-sm:mx-5 max-sm:pb-20'>
                 <h3 className="text-lg font-bold text-[#141B3B] mb-6">Monthly Payment History</h3>
                 {/* Mobile Card View */}
                 <div className="flex flex-col gap-3 sm:hidden">
