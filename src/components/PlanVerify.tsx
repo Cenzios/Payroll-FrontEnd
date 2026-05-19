@@ -1,20 +1,46 @@
-import { ArrowLeft, Clock, Loader2Icon, CheckCircle } from "lucide-react";
+import { ArrowLeft, Clock, Loader2Icon, CheckCircle, AlertCircle, RefreshCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ContactModal from "./ContactModal";
 import { useState, useEffect } from "react";
 import axiosInstance from "../api/axios";
+import { useGetUserDocumentsQuery } from "../store/apiSlice";
 
 const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
     const navigate = useNavigate();
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
-    const [status, setStatus] = useState<"PENDING" | "APPROVED">("PENDING");
+    const [status, setStatus] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
+
+    // Fetch user documents to check for rejection
+    const { data: documentsData, refetch: refetchDocs } = useGetUserDocumentsQuery();
 
     useEffect(() => {
         const checkStatus = async () => {
             try {
+                // 1. Check Subscription Status
                 const subRes = await axiosInstance.get('/subscription/current');
-                if (subRes.data?.data?.status === 'ACTIVE') {
-                    setStatus("APPROVED");
+                const subStatus = subRes.data?.data?.status;
+
+                if (subStatus === 'ACTIVE') {
+                    // But check if there's a recent rejection that takes precedence for the UI
+                    const latestDoc = documentsData?.data?.[0];
+                    if (latestDoc && latestDoc.status === 'REJECTED') {
+                        setStatus("REJECTED");
+                    } else {
+                        setStatus("APPROVED");
+                    }
+                    return;
+                }
+
+                // 2. Check Document Status if subscription is not active
+                const latestDoc = documentsData?.data?.[0];
+                if (latestDoc) {
+                    if (latestDoc.status === 'APPROVED') {
+                        setStatus("APPROVED");
+                    } else if (latestDoc.status === 'REJECTED') {
+                        setStatus("REJECTED");
+                    } else {
+                        setStatus("PENDING");
+                    }
                 }
             } catch (error) {
                 console.warn("Failed to check approval status", error);
@@ -22,37 +48,48 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
         };
 
         checkStatus();
-        const intervalId = setInterval(checkStatus, 5000);
+        const intervalId = setInterval(() => {
+            checkStatus();
+            refetchDocs();
+        }, 5000);
         return () => clearInterval(intervalId);
-    }, []);
+    }, [documentsData, refetchDocs]);
 
 
     return (
 
-        <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-xl p-8 text-center
-        max-sm:w-[22rem]">
+        <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-xl p-8 text-center max-sm:w-[22rem]">
 
             {/* Icon */}
             <div className="flex justify-center mb-6">
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center relative ${status === 'APPROVED' ? 'bg-[#D1FAE5]' : 'bg-[#FEF3C6]'}`}>
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center relative 
+                    ${status === 'APPROVED' ? 'bg-[#D1FAE5]' :
+                        status === 'REJECTED' ? 'bg-red-100' : 'bg-[#FEF3C6]'}`}>
                     {status === 'APPROVED' ? (
                         <CheckCircle className="w-8 h-8 text-[#059669]" />
+                    ) : status === 'REJECTED' ? (
+                        <AlertCircle className="w-8 h-8 text-red-600" />
                     ) : (
                         <Clock className="w-8 h-8 text-[#BB4D00]" />
                     )}
-                    <div className={`absolute inset-0 rounded-full border-2 max-sm:hidden ${status === 'APPROVED' ? 'border-[#A7F3D0]' : 'border-[#e7dba8]'}`} />
+                    <div className={`absolute inset-0 rounded-full border-2 max-sm:hidden 
+                        ${status === 'APPROVED' ? 'border-[#A7F3D0]' :
+                            status === 'REJECTED' ? 'border-red-200' : 'border-[#e7dba8]'}`} />
                 </div>
             </div>
 
             {/* Title */}
             <h2 className="text-xl font-bold text-gray-800">
-                {status === 'APPROVED' ? "Payment Approved" : "Verification Pending"}
+                {status === 'APPROVED' ? "Payment Approved" :
+                    status === 'REJECTED' ? "Payment Rejected" : "Verification Pending"}
             </h2>
 
             {/* Description */}
             <p className="text-sm text-gray-500 mt-3 leading-relaxed">
                 {status === 'APPROVED' ? (
                     "Your payment has been successfully approved! You can now access your dashboard and manage your subscriptions."
+                ) : status === 'REJECTED' ? (
+                    "Your payment proof was rejected by the admin. Please review your submission and upload a valid bank slip."
                 ) : (
                     "We've successfully received your bank slip. Our admin team is currently reviewing your payment details."
                 )}
@@ -72,6 +109,11 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
                             <span className="flex items-center gap-1 text-xs px-3 py-2 rounded-lg bg-[#D1FAE5] text-[#059669] font-medium">
                                 <CheckCircle className="w-4 h-4" />
                                 Approved
+                            </span>
+                        ) : status === 'REJECTED' ? (
+                            <span className="flex items-center gap-1 text-xs px-3 py-2 rounded-lg bg-red-100 text-red-700 font-medium">
+                                <AlertCircle className="w-4 h-4" />
+                                Rejected
                             </span>
                         ) : (
                             <span className="flex items-center gap-1 text-xs px-3 py-2 rounded-lg bg-[#FEF3C6] text-[#BB4D00] font-medium">
@@ -107,11 +149,21 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
                     >
                         Login to Dashboard
                     </button>
+                ) : status === 'REJECTED' ? (
+                    <button
+                        onClick={() => {
+                            // Reset state and allow re-upload
+                            navigate('/buy-plan?isUpgrade=true');
+                        }}
+                        className="flex-1 bg-red-600 text-white rounded-xl py-3 text-sm font-bold hover:bg-red-700 shadow-lg shadow-red-200 flex items-center justify-center gap-2"
+                    >
+                        <RefreshCcw className="w-4 h-4" />
+                        Resubmit Payment
+                    </button>
                 ) : (
                     <button
                         onClick={() => setIsContactModalOpen(true)}
-                        className="flex-1 bg-blue-500 text-white rounded-xl py-3 text-sm font-medium hover:bg-blue-600
-                 max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
+                        className="flex-1 bg-blue-500 text-white rounded-xl py-3 text-sm font-medium hover:bg-blue-600 max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
                         Contact Support
                     </button>
                 )}
