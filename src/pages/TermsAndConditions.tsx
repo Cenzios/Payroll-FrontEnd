@@ -62,7 +62,7 @@ const TermsAndConditions = () => {
                     <h1 className="text-3xl font-extrabold text-gray-900">Terms & Conditions</h1>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[80vh]">
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[76vh]">
                     {/* Scrollable Content */}
                     <div
                         ref={contentRef}
@@ -221,7 +221,7 @@ const TermsAndConditions = () => {
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="px-8 py-6 bg-gray-50 border-t border-gray-200 flex flex-col gap-4">
+                    <div className="px-8 py-4 bg-gray-50 border-t border-gray-200 flex flex-col gap-4">
                         {/* Row 1: Centered Message */}
                         {!hasScrolledToBottom && (
                             <div className="text-center w-full">
@@ -236,7 +236,7 @@ const TermsAndConditions = () => {
                             <button
                                 type="button"
                                 onClick={handleCancel}
-                                className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors whitespace-nowrap"
+                                className="px-6 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors whitespace-nowrap"
                             >
                                 Cancel
                             </button>
@@ -244,7 +244,7 @@ const TermsAndConditions = () => {
                                 type="button"
                                 onClick={handleAccept}
                                 disabled={!hasScrolledToBottom || isProcessing}
-                                className={`px-6 py-2.5 font-semibold rounded-lg transition-all whitespace-nowrap flex items-center gap-2
+                                className={`px-6 py-2 font-semibold rounded-lg transition-all whitespace-nowrap flex items-center gap-2
                                     ${hasScrolledToBottom && !isProcessing
                                         ? 'bg-[#3A8BFF] text-white hover:bg-[#337AEB] focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 max-sm:rounded-lg max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:text-white max-sm:border-0 max-sm:shadow-blue-200'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
