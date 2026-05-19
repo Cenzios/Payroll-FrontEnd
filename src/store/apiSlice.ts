@@ -349,7 +349,10 @@ export const apiSlice = createApi({
                 method: 'GET',
                 params,
             }),
-            providesTags: ['Salary'],
+        }),
+        getUserDocuments: builder.query<any, void>({
+            query: () => ({ url: '/user-documents', method: 'GET' }),
+            providesTags: ['Subscription'],
         }),
     }),
 });
@@ -388,4 +391,5 @@ export const {
     useLazyGetSalaryReportQuery,
     useGetCFormReportQuery,
     useLazyGetCFormReportQuery,
+    useGetUserDocumentsQuery,
 } = apiSlice;

@@ -304,55 +304,44 @@ const EpfEtfReport = () => {
                         {/* Table Content Wrapper */}
                         <div className="p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 overflow-hidden">
 
-                        {/* Summary Footer */}
-                        <div className="flex justify-between items-center gap-2">
-                            <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
-                                <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Employees</p>
-                                <p className="text-lg font-bold">{totals.count}</p>
+                            {/* Summary Footer */}
+                            <div className="flex justify-between items-center gap-2">
+                                <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
+                                    <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Employees</p>
+                                    <p className="text-lg font-bold">{totals.count}</p>
+                                </div>
+                                <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
+                                    <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Total Gross Pay</p>
+                                    <p className="text-lg font-bold text-[#155390]">{fmt(totals.grossPay)}</p>
+                                </div>
+                                <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
+                                    <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Total Net Pay</p>
+                                    <p className="text-lg font-bold text-[#155390]">{fmt(totals.netPay)}</p>
+                                </div>
+                                <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
+                                    <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Employee EPF (8%)</p>
+                                    <p className="text-lg font-bold text-[#757575]">{fmt(totals.empEpf)}</p>
+                                </div>
+                                <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
+                                    <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Company EPF/ETF (15%)</p>
+                                    <p className="text-lg font-bold text-[#757575]">{fmt(totals.employerEpf + totals.etf)}</p>
+                                </div>
                             </div>
-                            <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
-                                <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Total Gross Pay</p>
-                                <p className="text-lg font-bold text-[#155390]">{fmt(totals.grossPay)}</p>
-                            </div>
-                            <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
-                                <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Total Net Pay</p>
-                                <p className="text-lg font-bold text-[#155390]">{fmt(totals.netPay)}</p>
-                            </div>
-                            <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
-                                <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Employee EPF (8%)</p>
-                                <p className="text-lg font-bold text-[#757575]">{fmt(totals.empEpf)}</p>
-                            </div>
-                            <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
-                                <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Company EPF/ETF (15%)</p>
-                                <p className="text-lg font-bold text-[#757575]">{fmt(totals.employerEpf + totals.etf)}</p>
-                            </div>
-                        </div>
 
-                        {/* Table */}
-                        <div className="flex-1 mt-5 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-                            <div className="overflow-y-auto flex-1">
-                                <table className="w-full text-left border-collapse">
-                                    <thead className="sticky top-0 bg-gray-50 z-10">
-                                        <tr className="border-b border-gray-200">
-                                            <th className="px-6 py-4 text-xs font-bold text-gray-900">Employee ID</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-gray-900">Employee Name</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-gray-900">EPF No</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Basic Salary</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Emp EPF (8%)</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Employer EPF (12%)</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">ETF (3%)</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-[#2b74ff] text-right">Total Contribution</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {isLoading ? (
-                                            <tr>
-                                                <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
-                                                    <div className="flex justify-center items-center gap-2">
-                                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                                        Loading report data...
-                                                    </div>
-                                                </td>
+                            {/* Table */}
+                            <div className="flex-1 mt-5 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                                <div className="overflow-y-auto flex-1">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead className="sticky top-0 bg-gray-50 z-10">
+                                            <tr className="border-b border-gray-200">
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-900">Employee ID</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-900">Employee Name</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-900">EPF No</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Basic Salary</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Emp EPF (8%)</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Employer EPF (12%)</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">ETF (3%)</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-[#2b74ff] text-right">Total Contribution</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
