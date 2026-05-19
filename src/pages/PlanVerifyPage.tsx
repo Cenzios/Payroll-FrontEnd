@@ -19,11 +19,12 @@ const PlanVerifyPage = () => {
                     setActiveSubscription(subRes.data.data);
                 }
 
-                // Fetch pending document for referenceId
+                // Fetch pending/latest document for referenceId
                 const docRes = await axiosInstance.get('/user-documents');
-                const pendingDoc = docRes.data?.data?.find((doc: any) => doc.status === 'PENDING');
-                if (pendingDoc?.referenceId) {
-                    setReferenceId(pendingDoc.referenceId);
+                const documents = docRes.data?.data || [];
+                const latestDoc = documents[0]; // Backend sorts by createdAt desc
+                if (latestDoc?.referenceId) {
+                    setReferenceId(latestDoc.referenceId);
                 }
             } catch (err) {
                 console.warn('Failed to fetch data for PlanVerifyPage', err);

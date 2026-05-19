@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { UploadCloud, Copy, Loader2, X } from "lucide-react";
+import { UploadCloud, Copy, Loader2, X, AlertCircle } from "lucide-react";
 import PlanVerify from "./PlanVerify";
 import axiosInstance from "../api/axios";
 
@@ -8,18 +8,23 @@ const PlanPaymentManual = () => {
     const [reference, setReference] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [rejectionReason, setRejectionReason] = useState<string | null>(null);
 
     const accountNumber = "1234567890";
 
-    // ✅ Check for existing pending docs on mount
+    // ✅ Check for existing docs on mount
     useEffect(() => {
         const fetchExistingDocs = async () => {
             try {
                 const { data } = await axiosInstance.get("/user-documents");
-                const pendingDoc = data.data.find((doc: any) => doc.status === "PENDING");
-                if (pendingDoc) {
-                    setReference(pendingDoc.referenceId || "");
+                const documents = data.data || [];
+                const latestDoc = documents[0];
+
+                if (latestDoc?.status === "PENDING") {
+                    setReference(latestDoc.referenceId || "");
                     setIsSubmitted(true);
+                } else if (latestDoc?.status === "REJECTED") {
+                    setRejectionReason("Your previous payment proof was rejected by the admin. Please upload a clear bank slip for verification.");
                 }
             } catch (err) {
                 console.warn("Failed to fetch existing user documents", err);
@@ -100,13 +105,20 @@ const PlanPaymentManual = () => {
     }
 
     return (
-        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-4
-        max-sm:w-[22rem]">
+        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-4 max-sm:w-[22rem]">
 
-            <h3 className="text-lg font-bold text-gray-900
-            max-sm:flex max-sm:justify-center">
+            <h3 className="text-lg font-bold text-gray-900 max-sm:flex max-sm:justify-center">
                 Bank Deposit & Slip Upload
             </h3>
+
+            {rejectionReason && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                    <p className="text-xs text-red-700 leading-relaxed font-medium">
+                        {rejectionReason}
+                    </p>
+                </div>
+            )}
 
             {/* Bank Details */}
             <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
@@ -219,15 +231,14 @@ const PlanPaymentManual = () => {
             <button
                 onClick={handleSubmit}
                 disabled={isSubmitting || !file}
-                className="w-full bg-[#367AFF] text-white font-semibold py-3 flex justify-center items-center rounded-xl shadow-md hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed
-             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200"
+                className="w-full bg-[#367AFF] text-white font-semibold py-3 flex justify-center items-center rounded-xl shadow-md hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200"
             >
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Submit Bank Slip & Activate"}
             </button>
 
             {/* Footer Note */}
             <p className="text-[11px] text-gray-400 text-center">
-                Verification typically takes 1–2 business days. A confirmation email will be sent.
+                Verification typically takes 1–2 business hours. A confirmation email will be sent.
             </p>
         </div>
     );
