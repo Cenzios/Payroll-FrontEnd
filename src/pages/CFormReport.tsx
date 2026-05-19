@@ -9,6 +9,7 @@ import * as XLSX from 'xlsx';
 import { fillEPFFormC } from '../utils/fillEPFFormC';
 import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
+import logo from '../assets/images/logo-login.svg';
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -19,7 +20,7 @@ const fmt = (val: number) =>
     val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const CFormReport = () => {
-    const { selectedCompanyId } = useAppSelector((state) => state.auth);
+    const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
     const { handleTrialAction } = useTrialStatus();
 
     const currentDate = new Date();
@@ -156,13 +157,46 @@ const CFormReport = () => {
             {/* Margin bottom gap after the banner */}
             <div className="-mb-4 shrink-0"></div>
 
-            <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
+            <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
                 <Sidebar />
-                <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
-                    {/* Header */}
-                    <div className="shrink-0">
-                        <PageHeader title="C-Form Report" subtitle="Here's Your C-Form History." />
 
+                <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
+
+                    {/* MOBILE HEADER */}
+                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+                        <div>
+                            <img src={logo} alt="logo" className='w-40 h-10' />
+                        </div>
+                        <div className="flex items-center gap-2 ml-6">
+
+                            {/* Avatar circle */}
+                            <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                                {user?.fullName?.charAt(0) || 'U'}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile Title & Action */}
+                    <div className="hidden max-sm:block px-6 py-4 shrink-0">
+                        <div className="flex items-center justify-between mb-1">
+                            <div className='px-3'>
+                                <div className="inline-block rounded-sm">
+                                    <h1 className="text-[22px] font-bold text-[#1D1F24]">C-Form Report</h1>
+                                </div>
+                                <p className="text-[13px] text-[#989FA7] font-medium">Here's Your C-Form Report.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Desktop Header */}
+                    <div className="max-sm:hidden">
+                        <PageHeader
+                            title="C-Form Report"
+                            subtitle="Here's Your C-Form History."
+                        />
+                    </div>
+
+                    <div className='max-sm:mx-5  max-sm:pb-20'>
                         {/* Filter Section */}
                         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
                             <div className="flex items-center gap-6 flex-wrap">
@@ -212,115 +246,115 @@ const CFormReport = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Table Section */}
-                    <div className="flex-1 overflow-y-auto">
-                        {/* Card Header with export buttons */}
-                        <div className="bg-white rounded-t-xl shadow-sm border border-gray-200 border-b-0 px-5 py-4 flex items-center justify-between">
-                            <h2 className="font-bold text-gray-800">C-Form Summary</h2>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={(e) => handleTrialAction(e, exportPDF)}
-                                    disabled={!reportData || rows.length === 0}
-                                    className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded hover:bg-red-100 border border-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    <FileText className="w-3.5 h-3.5" /> Export PDF
-                                </button>
-                                <button
-                                    onClick={(e) => handleTrialAction(e, exportExcel)}
-                                    disabled={!reportData || rows.length === 0}
-                                    className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50 rounded hover:bg-green-100 border border-green-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    <FileSpreadsheet className="w-3.5 h-3.5" /> Export Excel
-                                </button>
-                                <button
-                                    onClick={(e) => handleTrialAction(e, exportCSV)}
-                                    disabled={!reportData || rows.length === 0}
-                                    className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded hover:bg-blue-100 border border-blue-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                >
-                                    <Download className="w-3.5 h-3.5" /> Export CSV
-                                </button>
+                        {/* Table Section */}
+                        <div className="flex-1 overflow-y-auto">
+                            {/* Card Header with export buttons */}
+                            <div className="bg-white rounded-t-xl shadow-sm border border-gray-200 border-b-0 px-5 py-4 flex items-center justify-between">
+                                <h2 className="font-bold text-gray-800">C-Form Summary</h2>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={(e) => handleTrialAction(e, exportPDF)}
+                                        disabled={!reportData || rows.length === 0}
+                                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded hover:bg-red-100 border border-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <FileText className="w-3.5 h-3.5" /> Export PDF
+                                    </button>
+                                    <button
+                                        onClick={(e) => handleTrialAction(e, exportExcel)}
+                                        disabled={!reportData || rows.length === 0}
+                                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50 rounded hover:bg-green-100 border border-green-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <FileSpreadsheet className="w-3.5 h-3.5" /> Export Excel
+                                    </button>
+                                    <button
+                                        onClick={(e) => handleTrialAction(e, exportCSV)}
+                                        disabled={!reportData || rows.length === 0}
+                                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded hover:bg-blue-100 border border-blue-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <Download className="w-3.5 h-3.5" /> Export CSV
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Table body card */}
-                        <div className="bg-white rounded-b-xl shadow-sm border border-gray-200 overflow-hidden">
-                            {/* Sub-header row */}
-                            <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-                                <span className="text-sm font-semibold text-gray-700">All Employee</span>
-                                {reportData && (
-                                    <span className="text-xs text-gray-400">
-                                        Period: {periodLabel} &nbsp;|&nbsp; Employees: {String(rows.length).padStart(2, '0')}
-                                    </span>
+                            {/* Table body card */}
+                            <div className="bg-white rounded-b-xl shadow-sm border border-gray-200 overflow-hidden">
+                                {/* Sub-header row */}
+                                <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                                    <span className="text-sm font-semibold text-gray-700">All Employee</span>
+                                    {reportData && (
+                                        <span className="text-xs text-gray-400">
+                                            Period: {periodLabel} &nbsp;|&nbsp; Employees: {String(rows.length).padStart(2, '0')}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Loading */}
+                                {isLoading ? (
+                                    <div className="flex justify-center items-center py-24">
+                                        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                                    </div>
+                                ) : !hasApplied ? (
+                                    <div className="text-center py-24 text-gray-400 text-sm">
+                                        Select a year and month, then click <span className="font-semibold text-blue-500">Apply</span> to load the report.
+                                    </div>
+                                ) : rows.length === 0 ? (
+                                    <div className="text-center py-24 text-gray-400 text-sm">
+                                        No salary records found for <span className="font-semibold">{periodLabel}</span>.
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left">
+                                            <thead>
+                                                <tr className="border-b border-gray-100">
+                                                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 w-[220px]">Employee's Name</th>
+                                                    <th className="px-4 py-3 text-xs font-semibold text-gray-500">National Idt. No.</th>
+                                                    <th className="px-4 py-3 text-xs font-semibold text-gray-500">Member No</th>
+                                                    {/* Grouped header */}
+                                                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">Total (Rs.)</th>
+                                                    <th colSpan={2} className="px-0 py-3 text-xs font-semibold text-gray-500 text-center border-l border-gray-100">
+                                                        Contributions (Rs.)
+                                                    </th>
+                                                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">Total Earnings (Rs.)</th>
+                                                </tr>
+                                                <tr className="border-b border-gray-100 bg-gray-50/60">
+                                                    <th className="px-4 py-2"></th>
+                                                    <th className="px-4 py-2"></th>
+                                                    <th className="px-4 py-2"></th>
+                                                    <th className="px-4 py-2"></th>
+                                                    <th className="px-4 py-2 text-xs font-semibold text-gray-500 border-l border-gray-100">Employer</th>
+                                                    <th className="px-4 py-2 text-xs font-semibold text-gray-500">Employee</th>
+                                                    <th className="px-4 py-2"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-50">
+                                                {rows.map((row: any, idx: number) => (
+                                                    <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                                                        <td className="px-4 py-3 text-[13px] font-medium text-gray-800">{row.employeeName}</td>
+                                                        <td className="px-4 py-3 text-[13px] text-blue-400">{row.nationalId}</td>
+                                                        <td className="px-4 py-3 text-[13px] text-blue-400">{row.memberNo}</td>
+                                                        <td className="px-4 py-3 text-[13px] text-gray-600 text-right">{fmt(row.basicPay)}</td>
+                                                        <td className="px-4 py-3 text-[13px] text-gray-600 border-l border-gray-100">{fmt(row.employerEpf)}</td>
+                                                        <td className="px-4 py-3 text-[13px] text-gray-600">{fmt(row.employeeEpf)}</td>
+                                                        <td className="px-4 py-3 text-[13px] font-semibold text-gray-700 text-right">{fmt(row.totalEarnings)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                            {totals && (
+                                                <tfoot>
+                                                    <tr className="border-t-2 border-gray-200 bg-gray-50">
+                                                        <td className="px-4 py-3 text-sm font-bold text-gray-800" colSpan={3}>Total</td>
+                                                        <td className="px-4 py-3 text-sm font-bold text-gray-800 text-right">{fmt(totals.basicPay)}</td>
+                                                        <td className="px-4 py-3 text-sm font-bold text-gray-800 border-l border-gray-100">{fmt(totals.employerEpf)}</td>
+                                                        <td className="px-4 py-3 text-sm font-bold text-gray-800">{fmt(totals.employeeEpf)}</td>
+                                                        <td className="px-4 py-3 text-sm font-bold text-gray-800 text-right">{fmt(totals.totalEarnings)}</td>
+                                                    </tr>
+                                                </tfoot>
+                                            )}
+                                        </table>
+                                    </div>
                                 )}
                             </div>
-
-                            {/* Loading */}
-                            {isLoading ? (
-                                <div className="flex justify-center items-center py-24">
-                                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                                </div>
-                            ) : !hasApplied ? (
-                                <div className="text-center py-24 text-gray-400 text-sm">
-                                    Select a year and month, then click <span className="font-semibold text-blue-500">Apply</span> to load the report.
-                                </div>
-                            ) : rows.length === 0 ? (
-                                <div className="text-center py-24 text-gray-400 text-sm">
-                                    No salary records found for <span className="font-semibold">{periodLabel}</span>.
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead>
-                                            <tr className="border-b border-gray-100">
-                                                <th className="px-4 py-3 text-xs font-semibold text-gray-500 w-[220px]">Employee's Name</th>
-                                                <th className="px-4 py-3 text-xs font-semibold text-gray-500">National Idt. No.</th>
-                                                <th className="px-4 py-3 text-xs font-semibold text-gray-500">Member No</th>
-                                                {/* Grouped header */}
-                                                <th className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">Total (Rs.)</th>
-                                                <th colSpan={2} className="px-0 py-3 text-xs font-semibold text-gray-500 text-center border-l border-gray-100">
-                                                    Contributions (Rs.)
-                                                </th>
-                                                <th className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">Total Earnings (Rs.)</th>
-                                            </tr>
-                                            <tr className="border-b border-gray-100 bg-gray-50/60">
-                                                <th className="px-4 py-2"></th>
-                                                <th className="px-4 py-2"></th>
-                                                <th className="px-4 py-2"></th>
-                                                <th className="px-4 py-2"></th>
-                                                <th className="px-4 py-2 text-xs font-semibold text-gray-500 border-l border-gray-100">Employer</th>
-                                                <th className="px-4 py-2 text-xs font-semibold text-gray-500">Employee</th>
-                                                <th className="px-4 py-2"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-50">
-                                            {rows.map((row: any, idx: number) => (
-                                                <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                                                    <td className="px-4 py-3 text-[13px] font-medium text-gray-800">{row.employeeName}</td>
-                                                    <td className="px-4 py-3 text-[13px] text-blue-400">{row.nationalId}</td>
-                                                    <td className="px-4 py-3 text-[13px] text-blue-400">{row.memberNo}</td>
-                                                    <td className="px-4 py-3 text-[13px] text-gray-600 text-right">{fmt(row.basicPay)}</td>
-                                                    <td className="px-4 py-3 text-[13px] text-gray-600 border-l border-gray-100">{fmt(row.employerEpf)}</td>
-                                                    <td className="px-4 py-3 text-[13px] text-gray-600">{fmt(row.employeeEpf)}</td>
-                                                    <td className="px-4 py-3 text-[13px] font-semibold text-gray-700 text-right">{fmt(row.totalEarnings)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                        {totals && (
-                                            <tfoot>
-                                                <tr className="border-t-2 border-gray-200 bg-gray-50">
-                                                    <td className="px-4 py-3 text-sm font-bold text-gray-800" colSpan={3}>Total</td>
-                                                    <td className="px-4 py-3 text-sm font-bold text-gray-800 text-right">{fmt(totals.basicPay)}</td>
-                                                    <td className="px-4 py-3 text-sm font-bold text-gray-800 border-l border-gray-100">{fmt(totals.employerEpf)}</td>
-                                                    <td className="px-4 py-3 text-sm font-bold text-gray-800">{fmt(totals.employeeEpf)}</td>
-                                                    <td className="px-4 py-3 text-sm font-bold text-gray-800 text-right">{fmt(totals.totalEarnings)}</td>
-                                                </tr>
-                                            </tfoot>
-                                        )}
-                                    </table>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
