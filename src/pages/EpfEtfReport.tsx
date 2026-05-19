@@ -10,9 +10,10 @@ import Toast from '../components/Toast';
 import SingleMonthPicker from '../components/SingleMonthPicker';
 import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
+import logo from '../assets/images/logo-login.svg';
 
 const EpfEtfReport = () => {
-    const { selectedCompanyId } = useAppSelector((state) => state.auth);
+    const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
     const [searchTerm, setSearchTerm] = useState('');
     const [isExportOpen, setIsExportOpen] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -191,88 +192,117 @@ const EpfEtfReport = () => {
             {/* Margin bottom gap after the banner */}
             <div className="-mb-4 shrink-0"></div>
 
-            <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
+            <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
                 <Sidebar />
-                <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
 
-                    <div className="shrink-0 mb-4">
+                <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
+
+                    {/* MOBILE HEADER */}
+                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+                        <div>
+                            <img src={logo} alt="logo" className='w-40 h-10' />
+                        </div>
+                        <div className="flex items-center gap-2 ml-6">
+
+                            {/* Avatar circle */}
+                            <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                                {user?.fullName?.charAt(0) || 'U'}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile Title & Action */}
+                    <div className="hidden max-sm:block px-6 py-4 shrink-0">
+                        <div className="flex items-center justify-between mb-1">
+                            <div className='px-3'>
+                                <div className="inline-block rounded-sm">
+                                    <h1 className="text-[22px] font-bold text-[#1D1F24]">EPF / ETF Summary Report</h1>
+                                </div>
+                                <p className="text-[13px] text-[#989FA7] font-medium">Here's Your EPF / ETF History.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Desktop Header */}
+                    <div className="max-sm:hidden">
                         <PageHeader
                             title="EPF / ETF Summary Report"
                             subtitle="Here's Your EPF / ETF History."
                         />
                     </div>
 
-                    {/* Filters */}
-                    <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
-                        <div className="flex items-center gap-4 flex-wrap">
-                            {/* Search */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Search Employee</span>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        placeholder="Search..."
-                                        className="pl-9 pr-4 py-2 mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-56 focus:ring-2 focus:ring-blue-100 outline-none"
+                    <div className='max-sm:mx-5  max-sm:pb-20'>
+                        {/* Filters */}
+                        <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
+                            <div className="flex items-center gap-4 flex-wrap">
+                                {/* Search */}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Search Employee</span>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            placeholder="Search..."
+                                            className="pl-9 pr-4 py-2 mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-56 focus:ring-2 focus:ring-blue-100 outline-none max-sm:w-full"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Time Period */}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Time Period</span>
+                                    <SingleMonthPicker
+                                        selectedMonth={month}
+                                        selectedYear={year}
+                                        onMonthChange={(m, y) => { setMonth(m); setYear(y); }}
+                                        onApply={(m, y) => fetchData(m, y)}
                                     />
                                 </div>
-                            </div>
 
-                            {/* Time Period */}
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Time Period</span>
-                                <SingleMonthPicker
-                                    selectedMonth={month}
-                                    selectedYear={year}
-                                    onMonthChange={(m, y) => { setMonth(m); setYear(y); }}
-                                    onApply={(m, y) => fetchData(m, y)}
-                                />
-                            </div>
-
-                            {/* Buttons */}
-                            <div className="flex items-center gap-3 ml-auto">
-                                <button
-                                    onClick={handleReset}
-                                    className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
-                                >
-                                    Reset
-                                </button>
-
-                                <div className="relative">
+                                {/* Buttons */}
+                                <div className="flex gap-3 ml-auto">
                                     <button
-                                        onClick={() => setIsExportOpen(!isExportOpen)}
-                                        className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
+                                        onClick={handleReset}
+                                        className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
                                     >
-                                        Export
-                                        <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
+                                        Reset
                                     </button>
-                                    {isExportOpen && (
-                                        <>
-                                            <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
-                                            <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
-                                                <button onClick={(e) => handleTrialAction(e, () => handleExport('pdf'))} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-red-50 transition-colors">
-                                                    <FileText className="w-4 h-4" /> PDF
-                                                </button>
-                                                <div className="border-t border-gray-100" />
-                                                <button onClick={(e) => handleTrialAction(e, () => handleExport('excel'))} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-green-50 transition-colors">
-                                                    <FileSpreadsheet className="w-4 h-4" /> Excel
-                                                </button>
-                                                <div className="border-t border-gray-100" />
-                                                <button onClick={(e) => handleTrialAction(e, () => handleExport('csv'))} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-blue-50 transition-colors">
-                                                    <Download className="w-4 h-4" /> CSV
-                                                </button>
-                                            </div>
-                                        </>
-                                    )}
+
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setIsExportOpen(!isExportOpen)}
+                                            className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
+                                        >
+                                            Export
+                                            <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        {isExportOpen && (
+                                            <>
+                                                <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
+                                                <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
+                                                    <button onClick={(e) => handleTrialAction(e, () => handleExport('pdf'))} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-red-50 transition-colors">
+                                                        <FileText className="w-4 h-4" /> PDF
+                                                    </button>
+                                                    <div className="border-t border-gray-100" />
+                                                    <button onClick={(e) => handleTrialAction(e, () => handleExport('excel'))} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-green-50 transition-colors">
+                                                        <FileSpreadsheet className="w-4 h-4" /> Excel
+                                                    </button>
+                                                    <div className="border-t border-gray-100" />
+                                                    <button onClick={(e) => handleTrialAction(e, () => handleExport('csv'))} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-blue-50 transition-colors">
+                                                        <Download className="w-4 h-4" /> CSV
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Table Content Wrapper */}
-                    <div className="p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 overflow-hidden">
+                        {/* Table Content Wrapper */}
+                        <div className="p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 overflow-hidden">
 
                         {/* Summary Footer */}
                         <div className="flex justify-between items-center gap-2">
@@ -324,31 +354,43 @@ const EpfEtfReport = () => {
                                                     </div>
                                                 </td>
                                             </tr>
-                                        ) : filteredData.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
-                                                    No EPF/ETF data found for the selected period.
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            filteredData.map((item) => (
-                                                <tr key={item.employeeId} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-6 py-4 text-sm font-medium text-[#2b74ff]">{item.employeeCode}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-700">{item.fullName}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-400">{item.epfNo}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.basicSalary)}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.empEpf)}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.employerEpf)}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.etf)}</td>
-                                                    <td className="px-6 py-4 text-sm font-bold text-[#2b74ff] text-right">{fmt(item.totalContribution)}</td>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {isLoading ? (
+                                                <tr>
+                                                    <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
+                                                        <div className="flex justify-center items-center gap-2">
+                                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                                            Loading report data...
+                                                        </div>
+                                                    </td>
                                                 </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
+                                            ) : filteredData.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
+                                                        No EPF/ETF data found for the selected period.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                filteredData.map((item) => (
+                                                    <tr key={item.employeeId} className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-6 py-4 text-sm font-medium text-[#2b74ff]">{item.employeeCode}</td>
+                                                        <td className="px-6 py-4 text-sm text-gray-700">{item.fullName}</td>
+                                                        <td className="px-6 py-4 text-sm text-gray-400">{item.epfNo}</td>
+                                                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.basicSalary)}</td>
+                                                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.empEpf)}</td>
+                                                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.employerEpf)}</td>
+                                                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.etf)}</td>
+                                                        <td className="px-6 py-4 text-sm font-bold text-[#2b74ff] text-right">{fmt(item.totalContribution)}</td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+
                             </div>
-
-
                         </div>
                     </div>
                     {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
