@@ -163,7 +163,7 @@ const CFormReport = () => {
                 <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
 
                     {/* MOBILE HEADER */}
-                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 border-b border-gray-100">
                         <div>
                             <img src={logo} alt="logo" className='w-40 h-10' />
                         </div>
@@ -177,7 +177,7 @@ const CFormReport = () => {
                     </div>
 
                     {/* Mobile Title & Action */}
-                    <div className="hidden max-sm:block px-6 py-4 shrink-0">
+                    <div className="hidden max-sm:block px-6 py-2 shrink-0">
                         <div className="flex items-center justify-between mb-1">
                             <div className='px-3'>
                                 <div className="inline-block rounded-sm">
@@ -199,47 +199,49 @@ const CFormReport = () => {
                     <div className='max-sm:mx-5  max-sm:pb-20'>
                         {/* Filter Section */}
                         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
-                            <div className="flex items-center gap-6 flex-wrap">
-                                {/* Year */}
-                                <div className="flex items-center gap-3">
-                                    <label className="text-sm font-semibold text-gray-600 whitespace-nowrap">Year</label>
-                                    <select
-                                        value={selectedYear}
-                                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none min-w-[100px]"
-                                    >
-                                        {years.map((y) => (
-                                            <option key={y} value={y}>{y}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                            <div className="flex items-center gap-6 max-sm:gap-4 max-sm:w-full max-sm:flex-col">
+                                <div className='flex flex-row gap-4'>
+                                    {/* Year */}
+                                    <div className="flex items-center gap-3 max-sm:flex-1">
+                                        <label className="text-sm font-semibold text-gray-600 whitespace-nowrap">Year</label>
+                                        <select
+                                            value={selectedYear}
+                                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
+                                        >
+                                            {years.map((y) => (
+                                                <option key={y} value={y}>{y}</option>
+                                            ))}
+                                        </select>
+                                    </div>
 
-                                {/* Month */}
-                                <div className="flex items-center gap-3">
-                                    <label className="text-sm font-semibold text-gray-600 whitespace-nowrap">Month</label>
-                                    <select
-                                        value={selectedMonth}
-                                        onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none min-w-[130px]"
-                                    >
-                                        {MONTHS.map((m, i) => (
-                                            <option key={i + 1} value={i + 1}>{m}</option>
-                                        ))}
-                                    </select>
+                                    {/* Month */}
+                                    <div className="flex items-center gap-3 max-sm:flex-1">
+                                        <label className="text-sm font-semibold text-gray-600 whitespace-nowrap">Month</label>
+                                        <select
+                                            value={selectedMonth}
+                                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
+                                        >
+                                            {MONTHS.map((m, i) => (
+                                                <option key={i + 1} value={i + 1}>{m}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
 
                                 {/* Buttons */}
-                                <div className="flex gap-3 ml-auto">
+                                <div className="flex gap-3 ml-auto max-sm:ml-0 max-sm:w-full max-sm:items-center max-sm:flex-row">
                                     <button
                                         onClick={handleApply}
                                         disabled={isLoading}
-                                        className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60"
+                                        className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 max-sm:flex-1 max-sm:py-2.5"
                                     >
                                         {isLoading ? 'Loading...' : 'Apply'}
                                     </button>
                                     <button
                                         onClick={handleReset}
-                                        className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
+                                        className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors max-sm:flex-1 max-sm:py-2.5"
                                     >
                                         Reset
                                     </button>
@@ -250,27 +252,27 @@ const CFormReport = () => {
                         {/* Table Section */}
                         <div className="flex-1 overflow-y-auto">
                             {/* Card Header with export buttons */}
-                            <div className="bg-white rounded-t-xl shadow-sm border border-gray-200 border-b-0 px-5 py-4 flex items-center justify-between">
-                                <h2 className="font-bold text-gray-800">C-Form Summary</h2>
+                            <div className="bg-white rounded-t-xl shadow-sm border border-gray-200 border-b-0 px-5 py-4 flex items-center justify-between max-sm:flex-col">
+                                <h2 className="font-bold text-gray-800 max-sm:pb-2">C-Form Summary</h2>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={(e) => handleTrialAction(e, exportPDF)}
                                         disabled={!reportData || rows.length === 0}
-                                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded hover:bg-red-100 border border-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded hover:bg-red-100 border border-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed max-sm:py-1 max-sm:text-xs max-sm:gap-1"
                                     >
                                         <FileText className="w-3.5 h-3.5" /> Export PDF
                                     </button>
                                     <button
                                         onClick={(e) => handleTrialAction(e, exportExcel)}
                                         disabled={!reportData || rows.length === 0}
-                                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50 rounded hover:bg-green-100 border border-green-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50 rounded hover:bg-green-100 border border-green-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed max-sm:py-1 max-sm:text-xs max-sm:gap-1"
                                     >
                                         <FileSpreadsheet className="w-3.5 h-3.5" /> Export Excel
                                     </button>
                                     <button
                                         onClick={(e) => handleTrialAction(e, exportCSV)}
                                         disabled={!reportData || rows.length === 0}
-                                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded hover:bg-blue-100 border border-blue-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded hover:bg-blue-100 border border-blue-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed max-sm:py-1 max-sm:text-xs max-sm:gap-1"
                                     >
                                         <Download className="w-3.5 h-3.5" /> Export CSV
                                     </button>

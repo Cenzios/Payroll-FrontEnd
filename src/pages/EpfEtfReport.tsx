@@ -216,7 +216,7 @@ const EpfEtfReport = () => {
                 </button>
 
                 {expanded && (
-                    <div className="px-2 pb-4 pt-3 space-y-2 mx-4 mb-3 rounded-xl border-t border-gray-300">
+                    <div className="px-2 pb-4 pt-3 space-y-2 mx-4 mb-3 border-t border-gray-300">
                         {[
                             { label: 'EPF No', value: item.epfNo },
                             { label: 'Basic Salary', value: fmt(item.basicSalary) },
@@ -248,7 +248,7 @@ const EpfEtfReport = () => {
                 <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
 
                     {/* MOBILE HEADER */}
-                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 border-b border-gray-100">
                         <div>
                             <img src={logo} alt="logo" className='w-40 h-10' />
                         </div>
@@ -262,7 +262,7 @@ const EpfEtfReport = () => {
                     </div>
 
                     {/* Mobile Title & Action */}
-                    <div className="hidden max-sm:block px-6 py-4 shrink-0">
+                    <div className="hidden max-sm:block px-6 py-2 shrink-0">
                         <div className="flex items-center justify-between mb-1">
                             <div className='px-3'>
                                 <div className="inline-block rounded-sm">
@@ -314,10 +314,10 @@ const EpfEtfReport = () => {
                                 </div>
 
                                 {/* Buttons */}
-                                <div className="flex gap-3 ml-auto">
+                                <div className="flex gap-3 ml-auto max-sm:ml-0 max-sm:w-full max-sm:items-center max-sm:flex-row">
                                     <button
                                         onClick={handleReset}
-                                        className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
+                                        className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors max-sm:flex-1 max-sm:py-2.5"
                                     >
                                         Reset
                                     </button>
@@ -325,7 +325,7 @@ const EpfEtfReport = () => {
                                     <div className="relative">
                                         <button
                                             onClick={() => setIsExportOpen(!isExportOpen)}
-                                            className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
+                                            className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5"
                                         >
                                             Export
                                             <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />

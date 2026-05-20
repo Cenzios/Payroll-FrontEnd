@@ -257,7 +257,7 @@ const Reports = () => {
                 <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
 
                     {/* MOBILE HEADER */}
-                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 border-b border-gray-100">
                         <div>
                             <img src={logo} alt="logo" className='w-40 h-10' />
                         </div>
@@ -271,7 +271,7 @@ const Reports = () => {
                     </div>
 
                     {/* Mobile Title & Action */}
-                    <div className="hidden max-sm:block px-6 py-4 shrink-0">
+                    <div className="hidden max-sm:block px-6 py-2 shrink-0">
                         <div className="flex items-center justify-between mb-1">
                             <div className='px-3'>
                                 <div className="inline-block rounded-sm">
@@ -293,42 +293,43 @@ const Reports = () => {
                     {/* Filter Bar */}
                     <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4 max-sm:mx-5">
                         <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 flex-wrap">
-                            {/* Search */}
-                            <div className="flex items-center gap-2 w-auto max-sm:w-full">
-                                <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Search Employee</span>
-                                <div className="relative max-sm:w-full">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        placeholder="Search..."
-                                        className="pl-9 pr-4 py-2 mr-0 md:mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-full md:w-56 "
+                            <div className='flex flex-row gap-4'>
+                                {/* Search */}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Search Employee</span>
+                                    <div className="relative max-sm:w-full">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
+                                            placeholder="Search..."
+                                            className="pl-9 pr-4 py-2 mr-0 md:mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-full md:w-56 "
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Time Period */}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Time Period</span>
+                                    <MonthRangePicker
+                                        startMonth={startMonth}
+                                        startYear={startYear}
+                                        endMonth={endMonth}
+                                        endYear={endYear}
+                                        onStartChange={(month, year) => { setStartMonth(month); setStartYear(year); }}
+                                        onEndChange={(month, year) => { setEndMonth(month); setEndYear(year); }}
+                                        onApply={(sM, sY, eM, eY) => checkAndUpdateData(sM, sY, eM, eY)}
                                     />
                                 </div>
                             </div>
-
-                            {/* Time Period */}
-                            <div className="flex items-center gap-2 w-auto">
-                                <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Time Period</span>
-                                <MonthRangePicker
-                                    startMonth={startMonth}
-                                    startYear={startYear}
-                                    endMonth={endMonth}
-                                    endYear={endYear}
-                                    onStartChange={(month, year) => { setStartMonth(month); setStartYear(year); }}
-                                    onEndChange={(month, year) => { setEndMonth(month); setEndYear(year); }}
-                                    onApply={(sM, sY, eM, eY) => checkAndUpdateData(sM, sY, eM, eY)}
-                                />
-                            </div>
-
                             {/* Buttons */}
-                            <div className="flex items-center gap-3 ml-auto w-full md:w-auto justify-end">
+                            <div className="flex gap-3 ml-auto max-sm:ml-0 max-sm:w-full max-sm:items-center max-sm:flex-row">
 
                                 {/* Reset */}
                                 <button
                                     onClick={handleReset}
-                                    className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
+                                    className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors max-sm:flex-1 max-sm:py-2.5"
                                 >
                                     Reset
                                 </button>
@@ -337,7 +338,7 @@ const Reports = () => {
                                 <div className="relative">
                                     <button
                                         onClick={() => setIsExportOpen(prev => !prev)}
-                                        className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
+                                        className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5"
                                     >
                                         Export
                                         <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
