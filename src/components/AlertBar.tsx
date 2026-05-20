@@ -9,25 +9,46 @@ const AlertBar = () => {
     const navigate = useNavigate();
     const { user, token } = useAppSelector((state) => state.auth);
 
-    const [remainingDays, setRemainingDays] = useState(7);
-    const [isTrial, setIsTrial] = useState(false);
+    // const [remainingDays, setRemainingDays] = useState(7);
+    // const [isTrial, setIsTrial] = useState(false);
+
+
+    const calculateDays = (createdAt: string | Date) => {
+        const signupDate = new Date(createdAt);
+        const now = new Date();
+
+        // Reset both to midnight to count calendar days
+        const signDateOnly = new Date(signupDate.getFullYear(), signupDate.getMonth(), signupDate.getDate());
+        const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        const diffTime = nowDateOnly.getTime() - signDateOnly.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const remDays = Math.max(0, 7 - diffDays);
+        return remDays;
+    };
+
+    const [isTrial, setIsTrial] = useState(!!user?.isTrialUser);
+    const [remainingDays, setRemainingDays] = useState(
+        user?.createdAt ? calculateDays(user.createdAt) : 7
+    );
+
     const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
 
     // ✅ Robust Trial Status & Banner Logic
     useEffect(() => {
-        const calculateDays = (createdAt: string | Date) => {
-            const signupDate = new Date(createdAt);
-            const now = new Date();
+        // const calculateDays = (createdAt: string | Date) => {
+        //     const signupDate = new Date(createdAt);
+        //     const now = new Date();
 
-            // Reset both to midnight to count calendar days
-            const signDateOnly = new Date(signupDate.getFullYear(), signupDate.getMonth(), signupDate.getDate());
-            const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        //     // Reset both to midnight to count calendar days
+        //     const signDateOnly = new Date(signupDate.getFullYear(), signupDate.getMonth(), signupDate.getDate());
+        //     const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-            const diffTime = nowDateOnly.getTime() - signDateOnly.getTime();
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            const remDays = Math.max(0, 7 - diffDays);
-            return remDays;
-        };
+        //     const diffTime = nowDateOnly.getTime() - signDateOnly.getTime();
+        //     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        //     const remDays = Math.max(0, 7 - diffDays);
+        //     return remDays;
+        // };
 
         const checkTrialStatus = async () => {
             try {
