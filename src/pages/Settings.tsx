@@ -61,20 +61,26 @@ const Settings = () => {
                                 subtitle=""
                             />
                         </div>
-                        {/* Tabs */}
                         <div className="flex gap-6 border-b border-gray-200 mb-4 max-sm:px-8">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.key}
-                                    onClick={() => setActiveTab(tab.key)}
-                                    className={`pb-3 text-[14px] font-medium transition-all border-b-2 ${activeTab === tab.key
-                                        ? 'text-gray-900 border-blue-600'
-                                        : 'text-gray-400 border-transparent hover:text-gray-600'
-                                        }`}
-                                >
-                                    {tab.label}
-                                </button>
-                            ))}
+                            {tabs.map((tab) => {
+                                const isDisabled = tab.key === 'payment' && user?.isTrialUser;
+                                return (
+                                    <button
+                                        key={tab.key}
+                                        onClick={() => !isDisabled && setActiveTab(tab.key)}
+                                        disabled={isDisabled}
+                                        title={isDisabled ? "Payment Details are not available during trial" : ""}
+                                        className={`pb-3 text-[14px] font-medium transition-all border-b-2 ${activeTab === tab.key
+                                            ? 'text-gray-900 border-blue-600'
+                                            : isDisabled
+                                                ? 'text-gray-300 border-transparent cursor-not-allowed'
+                                                : 'text-gray-400 border-transparent hover:text-gray-600'
+                                            }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
