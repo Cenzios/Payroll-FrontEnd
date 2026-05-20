@@ -111,6 +111,8 @@ const AlertBar = () => {
             if (isSidebarLink) return;
             const isUpgradeBtn = target.closest('[data-upgrade-btn]');
             if (isUpgradeBtn) return;
+            const isLogoutBtn = target.closest('[data-logout-btn]');
+            if (isLogoutBtn) return;
             const isInteractive = target.closest(
                 'button, a:not([data-sidebar-nav] a), input, select, textarea, [role="button"], [role="checkbox"], [role="switch"]'
             );

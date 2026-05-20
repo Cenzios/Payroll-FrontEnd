@@ -293,6 +293,7 @@ const Dashboard = () => {
               {/* Avatar circle with dropdown */}
               <div className="relative">
                 <button
+                  data-logout-btn
                   onClick={() => setIsAvatarDropdownOpen(!isAvatarDropdownOpen)}
                   className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0"
                 >
@@ -321,6 +322,7 @@ const Dashboard = () => {
 
                       {/* Sign out */}
                       <button
+                        data-logout-btn
                         onClick={() => {
                           setIsAvatarDropdownOpen(false);
                           dispatch(logout());
