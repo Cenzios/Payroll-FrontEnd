@@ -682,22 +682,25 @@ const Employees = () => {
             </div>
 
             {/* MOBILE Detail View */}
-            <div className={`flex flex-col flex-1 bg-black/30 backdrop-blur-sm pt-20
-              ${mobileView === "detail" ? "block" : "hidden"}`}
-              onClick={() => { setSelectedEmployee(null); setMobileView("list"); }}>
-
-              {/* Employee Detail Card mobile */}
-              <div className="flex-1 overflow-y-auto">
-                <EmployeeDetailsCard
-                  selectedEmployee={selectedEmployee}
-                  setPreviewImage={setPreviewImage}
-                  onAddFileClick={() => setIsFileModalOpen(true)}
-                  onDeleteFileClick={handleDeleteFileClick}
-                  onEditClick={() => selectedEmployee && handleEdit(selectedEmployee)}
-                  isAddFileDisabled={(selectedEmployee?.documents?.length || 0) >= 3}
+            {mobileView === "detail" && (
+              <>
+                <div
+                  className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+                  onClick={() => { setSelectedEmployee(null); setMobileView("list"); }}
                 />
-              </div>
-            </div>
+
+                <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[88vw] h-[75vh] z-50">
+                  <EmployeeDetailsCard
+                    selectedEmployee={selectedEmployee}
+                    setPreviewImage={setPreviewImage}
+                    onAddFileClick={() => setIsFileModalOpen(true)}
+                    onDeleteFileClick={handleDeleteFileClick}
+                    onEditClick={() => selectedEmployee && handleEdit(selectedEmployee)}
+                    isAddFileDisabled={(selectedEmployee?.documents?.length || 0) >= 3}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

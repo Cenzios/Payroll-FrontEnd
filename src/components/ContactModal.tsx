@@ -57,7 +57,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                             </div>
                             <div>
                                 <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Company </p>
-                                <p className="text-base font-medium text-gray-800">Cenzios Pvt.Ltd</p>
+                                <p className="text-base font-medium text-gray-800">Cenzios (Pvt) Ltd</p>
                             </div>
                         </div>
 
@@ -68,7 +68,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                             </div>
                             <div>
                                 <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Email Address</p>
-                                <p className="text-base font-medium text-gray-800">lahiru123@gmail.com</p>
+                                <p className="text-base font-medium text-gray-800">info@cenzios.com</p>
                             </div>
                         </div>
 
@@ -79,7 +79,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                             </div>
                             <div>
                                 <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Contact No</p>
-                                <p className="text-base font-medium text-gray-800">0764591786</p>
+                                <p className="text-base font-medium text-gray-800">+94 71 118 6028</p>
                             </div>
                         </div>
 
