@@ -15,6 +15,20 @@ const AlertBar = () => {
 
     // ✅ Robust Trial Status & Banner Logic
     useEffect(() => {
+        const calculateDays = (createdAt: string | Date) => {
+            const signupDate = new Date(createdAt);
+            const now = new Date();
+
+            // Reset both to midnight to count calendar days
+            const signDateOnly = new Date(signupDate.getFullYear(), signupDate.getMonth(), signupDate.getDate());
+            const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            const diffTime = nowDateOnly.getTime() - signDateOnly.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const remDays = Math.max(0, 7 - diffDays);
+            return remDays;
+        };
+
         const checkTrialStatus = async () => {
             try {
                 const { data } = await axiosInstance.get('/subscription/current');
@@ -24,12 +38,7 @@ const AlertBar = () => {
 
                     if (isTrialUser) {
                         setIsTrial(true);
-                        const createdDate = new Date(data.data.createdAt);
-                        const now = new Date();
-                        const diffTime = now.getTime() - createdDate.getTime();
-                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                        const remDays = 7 - diffDays;
-                        setRemainingDays(remDays > 0 ? remDays : 0);
+                        setRemainingDays(calculateDays(data.data.createdAt));
                     } else {
                         setIsTrial(false);
                     }
@@ -46,18 +55,20 @@ const AlertBar = () => {
             if (user?.isTrialUser) {
                 setIsTrial(true);
                 const signupDate = (user as any).createdAt ? new Date((user as any).createdAt) : new Date();
-                const now = new Date();
-                const diffTime = now.getTime() - signupDate.getTime();
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                const remDays = 7 - diffDays;
-                setRemainingDays(remDays > 0 ? remDays : 0);
+                setRemainingDays(calculateDays(signupDate));
             } else {
                 setIsTrial(false);
             }
         };
 
-        if (token) checkTrialStatus();
-    }, [token, navigate, user]);
+        if (token) {
+            checkTrialStatus();
+
+            // Re-check on window focus to ensure dynamic updates if tab is left open
+            window.addEventListener('focus', checkTrialStatus);
+            return () => window.removeEventListener('focus', checkTrialStatus);
+        }
+    }, [token, user]);
 
     // TRIAL EXPIRE LOCK
     // body attribute effect
