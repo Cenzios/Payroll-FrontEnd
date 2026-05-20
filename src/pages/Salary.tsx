@@ -473,15 +473,17 @@ const Salary = () => {
     }
 
     let basicSalaryForCalc = emp.basicSalary || 0;
-    let basicPay = 0;
+    let fullBasicPay = 0;
+    let earnedBasicPay = 0;
 
     if (emp.salaryType === "MONTHLY") {
       const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
-      // const payableDays = workedDays + applicableAnnualLeave + sickLeaveDays;
       const payableDays = workedDays + applicableAnnualLeave;
-      basicPay = (basicSalaryForCalc / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
+      fullBasicPay = basicSalaryForCalc;
+      earnedBasicPay = (basicSalaryForCalc / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
     } else {
-      basicPay = basicSalaryForCalc * workedDays;
+      fullBasicPay = basicSalaryForCalc * workedDays;
+      earnedBasicPay = fullBasicPay;
     }
 
     const nonPaidLeaveDeduction = emp.salaryType === "MONTHLY" && companyWorkingDays > 0
@@ -502,11 +504,11 @@ const Salary = () => {
 
     // Calculations
     let epfEmployee = 0;
-    let epfEmployer = basicPay * 0.12;
-    let etfEmployer = basicPay * 0.03;
+    let epfEmployer = earnedBasicPay * 0.12;
+    let etfEmployer = earnedBasicPay * 0.03;
 
     if (emp.epfEnabled && isEpfEnabled) {
-      epfEmployee = basicPay * 0.08;
+      epfEmployee = earnedBasicPay * 0.08;
     } else {
       epfEmployer = 0;
       etfEmployer = 0;
@@ -515,12 +517,12 @@ const Salary = () => {
     const tax = 0; // Tax will be calculated by backend
     const totalDeductions =
       epfEmployee + tax + salaryAdvance + deductionAmount + loanDeduction + nonPaidLeaveDeduction;
-    const netSalary = basicPay + otAmount + allowanceAmount - totalDeductions + nonPaidLeaveDeduction;
+    const netSalary = fullBasicPay + otAmount + allowanceAmount - totalDeductions;
 
     const details = {
       basicSalary: emp.basicSalary || 0,
       salaryType: emp.salaryType || "DAILY",
-      basicPay,
+      basicPay: fullBasicPay,
       epfEmployee,
       epfEmployer,
       etfEmployer,
@@ -575,7 +577,7 @@ const Salary = () => {
           month: selectedMonth + 1,
           year: selectedYear,
           workingDays: workedDays,
-          basicPay: basicPay,
+          basicPay: fullBasicPay,
           otHours: otHours,
           otAmount: otAmount,
           salaryAdvance: salaryAdvance,
