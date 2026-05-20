@@ -133,19 +133,25 @@ const EmployeeSalaryCard = ({
         ? generatedSalary.deductionTotal - (generatedSalary.loanDeduction || 0)
         : currentDeductions.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
-    // const basicPay = isLocked
-    const basicPay = isLocked && generatedSalary
+    // Display Basic Pay: For Monthly, we show the full basic in Gross Earnings.
+    // For Daily, it's always rate * days worked.
+    const displayBasicPay = isLocked && generatedSalary
         ? generatedSalary.basicPay
         : emp.salaryType === "MONTHLY"
-            ? companyWorkingDays > 0
-                ? (() => {
-                    const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
-                    // const payableDays = displayWorkedDays + applicableAnnualLeave + sickLeaveDays;
-                    const payableDays = displayWorkedDays + applicableAnnualLeave;
-                    return (basicSalary / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
-                })()
-                : 0
+            ? basicSalary
             : basicSalary * displayWorkedDays;
+
+    // Earned Basic Pay: This is the actual amount earned (reduced by unpaid leaves), 
+    // used primarily for EPF calculation to remain legally accurate.
+    const earnedBasicPay = isLocked && generatedSalary
+        ? generatedSalary.basicPay - (generatedSalary.nonPaidLeaveDeduction || 0)
+        : emp.salaryType === "MONTHLY" && companyWorkingDays > 0
+            ? (() => {
+                const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
+                const payableDays = displayWorkedDays + applicableAnnualLeave;
+                return (basicSalary / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
+            })()
+            : displayBasicPay;
 
     const nonPaidLeaveDeduction = isLocked && generatedSalary
         ? generatedSalary.nonPaidLeaveDeduction ?? 0
@@ -153,19 +159,20 @@ const EmployeeSalaryCard = ({
             ? (basicSalary / companyWorkingDays) * sickLeaveDays
             : 0;
 
-    // const epfAmount = isLocked
+    // EPF is calculated on the actual EARNED amount (including allowances as per Gross requirement).
+    const epfBasis = earnedBasicPay + totalAllowances;
     const epfAmount = isLocked && generatedSalary
         ? generatedSalary.employeeEPF
         : emp.epfEnabled && isEpfEnabled
-            ? basicPay * 0.08
+            ? epfBasis * 0.08
             : 0;
 
-    //   const totalEarnings = isLocked
+    // Gross Earnings uses the FULL display basic pay.
     const totalEarnings = isLocked && generatedSalary
         ? generatedSalary.grossSalary
-        : basicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances;
+        : displayBasicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances;
 
-    // const totalDeductions = isLocked
+    // Total Deductions includes the unpaid leave deduction.
     const totalDeductions = isLocked && generatedSalary
         ? generatedSalary.totalDeduction
         : nonPaidLeaveDeduction +
@@ -174,9 +181,9 @@ const EmployeeSalaryCard = ({
         (hasLoanInstallment && isLoanEnabled ? loanDeduction : 0) +
         totalDeductions_custom;
 
-    //    const netSalary = isLocked ? generatedSalary.netSalary : totalEarnings - totalDeductions;
+    // Net Salary is simply Gross - Deductions.
     const netSalary = isLocked && generatedSalary
-        ? generatedSalary.netSalary : totalEarnings - totalDeductions + (nonPaidLeaveDeduction || 0);
+        ? generatedSalary.netSalary : totalEarnings - totalDeductions;
 
     // Current period label
     const periodLabel = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "short", year: "numeric" });

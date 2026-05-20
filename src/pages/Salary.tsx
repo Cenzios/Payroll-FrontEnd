@@ -367,10 +367,13 @@ const Salary = () => {
     const clippedVal = Math.min(Math.max(0, val), companyWorkingDays);
     dispatch(setEmployeeWorkedDays({ id: empId, days: clippedVal }));
 
-    // Non paid leaves
-    const autoNonPaidLeaves = Math.max(0, companyWorkingDays - clippedVal);
+    // Auto-calculate Unpaid Leaves (Sick Leaves in the code)
+    // Formula: Unpaid = Total - Worked - Paid
+    const { leaveDays } = getEmployeeValues(empId);
+    const autoNonPaidLeaves = Math.max(0, companyWorkingDays - clippedVal - leaveDays);
     dispatch(setEmployeeSickLeaveDays({ id: empId, days: autoNonPaidLeaves }));
-  }; const handleMonthChange = (month: number) => {
+  };
+  const handleMonthChange = (month: number) => {
     setTouchedFields((prev) => ({ ...prev, month: true }));
     dispatch(setMonth(month));
     dispatch(setCompanyWorkingDays(getMaxAllowedDays(selectedYear, month)));
@@ -420,7 +423,14 @@ const Salary = () => {
   };
 
   const handleEmployeeSickLeaveDaysChange = (empId: string, val: number) => {
-    dispatch(setEmployeeSickLeaveDays({ id: empId, days: Math.max(0, val) }));
+    const sickDays = Math.max(0, val);
+    dispatch(setEmployeeSickLeaveDays({ id: empId, days: sickDays }));
+
+    // Auto-calculate Worked Days
+    // Formula: Worked = Total - Unpaid - Paid
+    const { leaveDays } = getEmployeeValues(empId);
+    const autoWorkedDays = Math.max(0, companyWorkingDays - sickDays - leaveDays);
+    dispatch(setEmployeeWorkedDays({ id: empId, days: autoWorkedDays }));
   };
 
   // Handle Generate process (Preview or Save)
@@ -463,15 +473,17 @@ const Salary = () => {
     }
 
     let basicSalaryForCalc = emp.basicSalary || 0;
-    let basicPay = 0;
+    let fullBasicPay = 0;
+    let earnedBasicPay = 0;
 
     if (emp.salaryType === "MONTHLY") {
       const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
-      // const payableDays = workedDays + applicableAnnualLeave + sickLeaveDays;
       const payableDays = workedDays + applicableAnnualLeave;
-      basicPay = (basicSalaryForCalc / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
+      fullBasicPay = basicSalaryForCalc;
+      earnedBasicPay = (basicSalaryForCalc / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
     } else {
-      basicPay = basicSalaryForCalc * workedDays;
+      fullBasicPay = basicSalaryForCalc * workedDays;
+      earnedBasicPay = fullBasicPay;
     }
 
     const nonPaidLeaveDeduction = emp.salaryType === "MONTHLY" && companyWorkingDays > 0
@@ -491,12 +503,13 @@ const Salary = () => {
     );
 
     // Calculations
+    const epfBasis = earnedBasicPay + allowanceAmount;
     let epfEmployee = 0;
-    let epfEmployer = basicPay * 0.12;
-    let etfEmployer = basicPay * 0.03;
+    let epfEmployer = epfBasis * 0.12;
+    let etfEmployer = epfBasis * 0.03;
 
     if (emp.epfEnabled && isEpfEnabled) {
-      epfEmployee = basicPay * 0.08;
+      epfEmployee = epfBasis * 0.08;
     } else {
       epfEmployer = 0;
       etfEmployer = 0;
@@ -505,12 +518,12 @@ const Salary = () => {
     const tax = 0; // Tax will be calculated by backend
     const totalDeductions =
       epfEmployee + tax + salaryAdvance + deductionAmount + loanDeduction + nonPaidLeaveDeduction;
-    const netSalary = basicPay + otAmount + allowanceAmount - totalDeductions + nonPaidLeaveDeduction;
+    const netSalary = fullBasicPay + otAmount + allowanceAmount - totalDeductions;
 
     const details = {
       basicSalary: emp.basicSalary || 0,
       salaryType: emp.salaryType || "DAILY",
-      basicPay,
+      basicPay: fullBasicPay,
       epfEmployee,
       epfEmployer,
       etfEmployer,
@@ -565,7 +578,7 @@ const Salary = () => {
           month: selectedMonth + 1,
           year: selectedYear,
           workingDays: workedDays,
-          basicPay: basicPay,
+          basicPay: fullBasicPay,
           otHours: otHours,
           otAmount: otAmount,
           salaryAdvance: salaryAdvance,
