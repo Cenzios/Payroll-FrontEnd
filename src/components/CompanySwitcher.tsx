@@ -109,7 +109,7 @@ const CompanySwitcher = ({
                             <Plus className="w-4 h-4" />
                         </div>
                         <span className="text-sm font-semibold">
-                            Add new company
+                            Add New Company
                         </span>
                     </button>
                 </div>

@@ -170,7 +170,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
 
             {/* Top Employee Card */}
             <div className="bg-[#407BFF1A] rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4
-                        max-sm:mx-5 max-sm:mt-3">
+    max-sm:mx-5 max-sm:mt-3 max-sm:rounded-3xl max-sm:bg-white max-sm:shadow-md max-sm:border max-sm:border-gray-100">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[11px] sm:text-[13px] font-medium text-gray-500">
                     <div className="w-[60px] h-[60px] rounded-full bg-blue-200 text-blue-700 font-bold text-3xl flex items-center justify-center shrink-0 overflow-hidden">
                         {/* <img
@@ -204,11 +204,11 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 max-sm:w-full max-sm:flex-col">
                     <button
                         onClick={() => setIsViewModalOpen(true)}
                         disabled={!loan?.supportingDoc}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95 shadow-blue-500/10 
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95 shadow-blue-500/10 max-sm:w-full max-sm:justify-center max-sm:py-3 max-sm:rounded-2xl max-sm:bg-[#4A7DFF] max-sm:text-white
                             ${!loan?.supportingDoc
                                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
                                 : 'bg-blue-600 hover:bg-blue-700 text-white font-semibold'}`}
@@ -226,11 +226,12 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
             </div>
 
-            {/* 4 Stats Cards */}
+            {/* Stats Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8
-            max-sm:mx-5">
+    max-sm:mx-5 max-sm:grid-cols-1 max-sm:gap-3">
                 {/* Card 1 */}
-                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]">
+                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]
+    max-sm:min-h-0 max-sm:p-5 max-sm:rounded-2xl">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
                         <ExternalLink className="w-4 h-4 -rotate-45" />
                         Principal Loan Amount
@@ -244,7 +245,8 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
 
                 {/* Card 2 */}
-                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]">
+                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]
+    max-sm:min-h-0 max-sm:p-5 max-sm:rounded-2xl">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
                         <PieChart className="w-4 h-4" />
                         Full Amount (w/ Interest)
@@ -258,7 +260,8 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
 
                 {/* Card 3 (With Progress Bar) */}
-                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]">
+                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]
+    max-sm:min-h-0 max-sm:p-5 max-sm:rounded-2xl">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-emerald-500">
                         <CheckCircle2 className="w-4 h-4" />
                         Current Paid Amount
@@ -267,15 +270,12 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                         <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
                             Rs: {currentPaidAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 max-sm:mt-1">
                             <div className="text-[12px] text-gray-400 font-medium whitespace-nowrap">
                                 {paidInstallmentsCount} / {totalInstallmentsCount} Installments
                             </div>
-                            <div className="flex-1 max-w-[100px] h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-blue-500 rounded-full"
-                                    style={{ width: `${progressPercent}%` }}
-                                ></div>
+                            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-sm:max-w-none">
+                                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${progressPercent}%` }}></div>
                             </div>
                             <div className="text-[12px] font-bold text-[#141B3B]">{progressPercent}%</div>
                         </div>
@@ -283,7 +283,8 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
 
                 {/* Card 4 */}
-                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]">
+                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]
+    max-sm:min-h-0 max-sm:p-5 max-sm:rounded-2xl">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
                         <CalendarDays className="w-4 h-4" />
                         Monthly Premium
