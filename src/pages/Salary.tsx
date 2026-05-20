@@ -503,12 +503,13 @@ const Salary = () => {
     );
 
     // Calculations
+    const epfBasis = earnedBasicPay + allowanceAmount;
     let epfEmployee = 0;
-    let epfEmployer = earnedBasicPay * 0.12;
-    let etfEmployer = earnedBasicPay * 0.03;
+    let epfEmployer = epfBasis * 0.12;
+    let etfEmployer = epfBasis * 0.03;
 
     if (emp.epfEnabled && isEpfEnabled) {
-      epfEmployee = earnedBasicPay * 0.08;
+      epfEmployee = epfBasis * 0.08;
     } else {
       epfEmployer = 0;
       etfEmployer = 0;
