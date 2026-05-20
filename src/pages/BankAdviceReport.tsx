@@ -166,7 +166,7 @@ const BankAdviceReport = () => {
                 <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
 
                     {/* MOBILE HEADER */}
-                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 border-b border-gray-100">
                         <div>
                             <img src={logo} alt="logo" className='w-40 h-10' />
                         </div>
@@ -180,7 +180,7 @@ const BankAdviceReport = () => {
                     </div>
 
                     {/* Mobile Title & Action */}
-                    <div className="hidden max-sm:block px-6 py-4 shrink-0">
+                    <div className="hidden max-sm:block px-6 py-2 shrink-0">
                         <div className="flex items-center justify-between mb-1">
                             <div className='px-3'>
                                 <div className="inline-block rounded-sm">
@@ -220,7 +220,7 @@ const BankAdviceReport = () => {
                                         <select
                                             value={selectedMonth}
                                             onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 min-w-[120px] max-sm:flex-1 max-sm:min-w-0"
+                                            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
                                         >
                                             {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
                                         </select>
