@@ -24,6 +24,7 @@ const EpfEtfReport = () => {
     const [year, setYear] = useState(currentDate.getFullYear());
 
     const [isLoading, setIsLoading] = useState(false);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
     const [rawReportData, setRawReportData] = useState<any[]>([]);
     const [reportData, setReportData] = useState<any[]>([]);
     const [totals, setTotals] = useState({
@@ -185,6 +186,59 @@ const EpfEtfReport = () => {
 
     const fmt = (val: number | undefined | null) => (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+    const MobileCard = ({ item, expandedId, setExpandedId }: {
+        item: any,
+        expandedId: string | null,
+        setExpandedId: (id: string | null) => void
+    }) => {
+        const expanded = expandedId === item.employeeId;
+
+        const initials = item.fullName
+            .split(' ')
+            .map((n: string) => n[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase();
+
+        return (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <button
+                    onClick={() => setExpandedId(expanded ? null : item.employeeId)}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+                >
+                    <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0">
+                        {initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{item.fullName}</p>
+                        <p className="text-xs text-gray-400">{item.employeeCode}</p>
+                    </div>
+                    <span className="text-sm font-bold text-blue-600 whitespace-nowrap mr-1">
+                        Rs. {fmt(item.totalContribution)}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+                </button>
+
+                {expanded && (
+                    <div className="px-2 pb-4 pt-3 space-y-2 mx-4 mb-3 border-t border-gray-300">
+                        {[
+                            { label: 'EPF No', value: item.epfNo },
+                            { label: 'Basic Salary', value: fmt(item.basicSalary) },
+                            { label: 'Emp EPF (8%)', value: fmt(item.empEpf) },
+                            { label: 'Employer EPF (12%)', value: fmt(item.employerEpf) },
+                            { label: 'ETF (3%)', value: fmt(item.etf) },
+                        ].map(({ label, value }) => (
+                            <div key={label} className="flex justify-between items-center">
+                                <span className="text-xs text-gray-400">{label}</span>
+                                <span className="text-xs font-semibold text-gray-700">{value}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
             <AlertBar />
@@ -198,7 +252,7 @@ const EpfEtfReport = () => {
                 <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
 
                     {/* MOBILE HEADER */}
-                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 border-b border-gray-100">
                         <div>
                             <img src={logo} alt="logo" className='w-40 h-10' />
                         </div>
@@ -212,7 +266,7 @@ const EpfEtfReport = () => {
                     </div>
 
                     {/* Mobile Title & Action */}
-                    <div className="hidden max-sm:block px-6 py-4 shrink-0">
+                    <div className="hidden max-sm:block px-6 py-2 shrink-0">
                         <div className="flex items-center justify-between mb-1">
                             <div className='px-3'>
                                 <div className="inline-block rounded-sm">
@@ -235,37 +289,39 @@ const EpfEtfReport = () => {
                         {/* Filters */}
                         <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
                             <div className="flex items-center gap-4 flex-wrap">
-                                {/* Search */}
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Search Employee</span>
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                        <input
-                                            type="text"
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            placeholder="Search..."
-                                            className="pl-9 pr-4 py-2 mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-56 focus:ring-2 focus:ring-blue-100 outline-none max-sm:w-full"
+                                <div className='flex flex-row gap-4'>
+                                    {/* Search */}
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Search Employee</span>
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                placeholder="Search..."
+                                                className="pl-9 pr-4 py-2 mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-56 focus:ring-2 focus:ring-blue-100 outline-none max-sm:w-full"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Time Period */}
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Time Period</span>
+                                        <SingleMonthPicker
+                                            selectedMonth={month}
+                                            selectedYear={year}
+                                            onMonthChange={(m, y) => { setMonth(m); setYear(y); }}
+                                            onApply={(m, y) => fetchData(m, y)}
                                         />
                                     </div>
                                 </div>
 
-                                {/* Time Period */}
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Time Period</span>
-                                    <SingleMonthPicker
-                                        selectedMonth={month}
-                                        selectedYear={year}
-                                        onMonthChange={(m, y) => { setMonth(m); setYear(y); }}
-                                        onApply={(m, y) => fetchData(m, y)}
-                                    />
-                                </div>
-
                                 {/* Buttons */}
-                                <div className="flex gap-3 ml-auto">
+                                <div className="flex gap-3 ml-auto max-sm:ml-0 max-sm:w-full max-sm:items-center max-sm:flex-row">
                                     <button
                                         onClick={handleReset}
-                                        className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
+                                        className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors max-sm:flex-1 max-sm:py-2.5"
                                     >
                                         Reset
                                     </button>
@@ -273,7 +329,7 @@ const EpfEtfReport = () => {
                                     <div className="relative">
                                         <button
                                             onClick={() => setIsExportOpen(!isExportOpen)}
-                                            className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors"
+                                            className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5"
                                         >
                                             Export
                                             <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
@@ -302,10 +358,11 @@ const EpfEtfReport = () => {
                         </div>
 
                         {/* Table Content Wrapper */}
-                        <div className="p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 overflow-hidden">
+                        <div className="p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 overflow-hidden
+                        max-sm:bg-transparent max-sm:border-0 max-sm:p-0">
 
                             {/* Summary Footer */}
-                            <div className="flex justify-between items-center gap-2">
+                            <div className="flex justify-between items-center gap-2 max-sm:overflow-x-auto max-sm:w-full max-sm:whitespace-nowrap max-sm:pb-3">
                                 <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
                                     <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Employees</p>
                                     <p className="text-lg font-bold">{totals.count}</p>
@@ -329,7 +386,7 @@ const EpfEtfReport = () => {
                             </div>
 
                             {/* Table */}
-                            <div className="flex-1 mt-5 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                            <div className="flex-1 mt-5 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col max-sm:hidden">
                                 <div className="overflow-y-auto flex-1">
                                     <table className="w-full text-left border-collapse">
                                         <thead className="sticky top-0 bg-gray-50 z-10">
@@ -377,8 +434,30 @@ const EpfEtfReport = () => {
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
 
-
+                            {/* Mobile cards */}
+                            <div className="hidden max-sm:flex flex-col gap-3 mt-4">
+                                <p className="text-base font-semibold text-gray-700 mb-1">Employee Records</p>
+                                {isLoading ? (
+                                    <div className="flex justify-center items-center gap-2 py-12 text-gray-400">
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        Loading report data...
+                                    </div>
+                                ) : filteredData.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-400 text-sm">
+                                        No EPF/ETF data found for the selected period.
+                                    </div>
+                                ) : (
+                                    filteredData.map((item) => (
+                                        <MobileCard
+                                            key={item.employeeId}
+                                            item={item}
+                                            expandedId={expandedId}
+                                            setExpandedId={setExpandedId}
+                                        />
+                                    ))
+                                )}
                             </div>
                         </div>
                     </div>

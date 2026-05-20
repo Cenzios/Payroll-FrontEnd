@@ -14,7 +14,8 @@ import {
   PieChart,
   ChevronDown,
   Building2,
-  AlertTriangle
+  AlertTriangle,
+  LogOut
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
@@ -34,7 +35,8 @@ import {
   useGetDashboardSummaryQuery,
   useGetCompaniesQuery,
   useCreateCompanyMutation,
-  useCreateEmployeeMutation
+  useCreateEmployeeMutation,
+  apiSlice
 } from '../store/apiSlice';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import CompanySwitcher from '../components/CompanySwitcher';
@@ -52,6 +54,7 @@ const Dashboard = () => {
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  const [isAvatarDropdownOpen, setIsAvatarDropdownOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<'company' | 'employee'>('company');
 
   // company pop up related
@@ -262,7 +265,7 @@ const Dashboard = () => {
         <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-svh max-sm:p-5 max-sm:py-7">
 
           {/* ── MOBILE HEADER (replaces PageHeader on mobile) ── */}
-          <div className="hidden  max-sm:flex items-center justify-between -ml-3 pt-5 pb-3 border-b border-gray-100">
+          <div className="hidden max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
             <div>
               <img src={logo} alt="logo" />
             </div>
@@ -286,9 +289,54 @@ const Dashboard = () => {
                 onSelectCompany={(id) => dispatch(setSelectedCompanyId(id))}
                 onAddNew={() => { setIsCompanyDropdownOpen(false); openAddCompany(); }}
               />
-              {/* Avatar circle */}
-              <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                {user?.fullName?.charAt(0) || 'U'}
+
+              {/* Avatar circle with dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsAvatarDropdownOpen(!isAvatarDropdownOpen)}
+                  className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0"
+                >
+                  {user?.fullName?.charAt(0) || 'U'}
+                </button>
+
+                {isAvatarDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setIsAvatarDropdownOpen(false)}
+                    />
+                    <div className="absolute right-0 top-11 z-20 w-44 bg-white rounded-2xl shadow-lg border border-gray-100 py-2 px-1">
+                      {/* User info */}
+                      <div className="flex items-center gap-2 px-3 py-2">
+                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                          {user?.fullName?.charAt(0) || 'U'}
+                        </div>
+                        <div className="leading-tight">
+                          <div className="text-sm font-medium text-gray-900">{user?.fullName}</div>
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">{user?.role || 'Admin'}</div>
+                        </div>
+                      </div>
+
+                      <div className="mx-3 my-1 border-t border-gray-100" />
+
+                      {/* Sign out */}
+                      <button
+                        onClick={() => {
+                          setIsAvatarDropdownOpen(false);
+                          dispatch(logout());
+                          dispatch(apiSlice.util.resetApiState());
+                          navigate('/login');
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-red-50 text-sm text-red-700"
+                      >
+                        <div className='bg-red-100 rounded-md p-1'>
+                          <LogOut className="w-4 h-4 text-red-500" />
+                        </div>
+                        Sign Out
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

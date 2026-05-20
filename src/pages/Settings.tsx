@@ -29,7 +29,7 @@ const Settings = () => {
                 <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
 
                     {/* MOBILE HEADER */}
-                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 border-b border-gray-100">
                         <div>
                             <img src={logo} alt="logo" className='w-40 h-10' />
                         </div>
@@ -43,7 +43,7 @@ const Settings = () => {
                     </div>
 
                     {/* Mobile Title & Action */}
-                    <div className="hidden max-sm:block px-6 py-4 shrink-0">
+                    <div className="hidden max-sm:block px-6 py-2 shrink-0">
                         <div className="flex items-center justify-between mb-1">
                             <div className='px-3'>
                                 <div className="inline-block rounded-sm">
