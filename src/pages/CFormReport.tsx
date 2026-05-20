@@ -87,13 +87,13 @@ const CFormReport = () => {
                     basicPay: r.basicPay,
                     employerEpf: r.employerEpf,
                     employeeEpf: r.employeeEpf,
-                    totalEarnings: r.totalEarnings,
+                    totalEarnings: r.basicPay,
                 })),
                 totals: {
                     basicPay: totals?.basicPay ?? 0,
                     employerEpf: totals?.employerEpf ?? 0,
                     employeeEpf: totals?.employeeEpf ?? 0,
-                    totalEarnings: totals?.totalEarnings ?? 0,
+                    totalEarnings: totals?.basicPay ?? 0,
                 },
                 month: selectedMonth,
                 year: selectedYear,
@@ -114,11 +114,11 @@ const CFormReport = () => {
             ["Employee's Name", 'National ID No.', 'Member No.', 'Total (Rs.)', 'Employer Contribution (Rs.)', 'Employee Contribution (Rs.)', 'Total Earnings (Rs.)'],
             ...rows.map((r: any) => [
                 r.employeeName, r.nationalId, r.memberNo,
-                r.basicPay, r.employerEpf, r.employeeEpf, r.totalEarnings,
+                (r.employerEpf + r.employeeEpf), r.employerEpf, r.employeeEpf, r.basicPay,
             ]),
         ];
         if (totals) {
-            wsData.push(['Total', '', '', totals.basicPay, totals.employerEpf, totals.employeeEpf, totals.totalEarnings]);
+            wsData.push(['Total', '', '', (totals.employerEpf + totals.employeeEpf), totals.employerEpf, totals.employeeEpf, totals.basicPay]);
         }
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         const wb = XLSX.utils.book_new();
@@ -135,11 +135,11 @@ const CFormReport = () => {
             ["Employee's Name", 'National ID No.', 'Member No.', 'Total (Rs.)', 'Employer Contribution (Rs.)', 'Employee Contribution (Rs.)', 'Total Earnings (Rs.)'],
             ...rows.map((r: any) => [
                 r.employeeName, r.nationalId, r.memberNo,
-                r.basicPay, r.employerEpf, r.employeeEpf, r.totalEarnings,
+                (r.employerEpf + r.employeeEpf), r.employerEpf, r.employeeEpf, r.basicPay,
             ]),
         ];
         if (totals) {
-            wsData.push(['Total', '', '', totals.basicPay, totals.employerEpf, totals.employeeEpf, totals.totalEarnings]);
+            wsData.push(['Total', '', '', (totals.employerEpf + totals.employeeEpf), totals.employerEpf, totals.employeeEpf, totals.basicPay]);
         }
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         const csv = XLSX.utils.sheet_to_csv(ws);
@@ -333,10 +333,10 @@ const CFormReport = () => {
                                                         <td className="px-4 py-3 text-[13px] font-medium text-gray-800">{row.employeeName}</td>
                                                         <td className="px-4 py-3 text-[13px] text-blue-400">{row.nationalId}</td>
                                                         <td className="px-4 py-3 text-[13px] text-blue-400">{row.memberNo}</td>
-                                                        <td className="px-4 py-3 text-[13px] text-gray-600 text-right">{fmt(row.basicPay)}</td>
+                                                        <td className="px-4 py-3 text-[13px] text-gray-600 text-right">{fmt(row.employerEpf + row.employeeEpf)}</td>
                                                         <td className="px-4 py-3 text-[13px] text-gray-600 border-l border-gray-100">{fmt(row.employerEpf)}</td>
                                                         <td className="px-4 py-3 text-[13px] text-gray-600">{fmt(row.employeeEpf)}</td>
-                                                        <td className="px-4 py-3 text-[13px] font-semibold text-gray-700 text-right">{fmt(row.totalEarnings)}</td>
+                                                        <td className="px-4 py-3 text-[13px] font-semibold text-gray-700 text-right">{fmt(row.basicPay)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -344,10 +344,10 @@ const CFormReport = () => {
                                                 <tfoot>
                                                     <tr className="border-t-2 border-gray-200 bg-gray-50">
                                                         <td className="px-4 py-3 text-sm font-bold text-gray-800" colSpan={3}>Total</td>
-                                                        <td className="px-4 py-3 text-sm font-bold text-gray-800 text-right">{fmt(totals.basicPay)}</td>
+                                                        <td className="px-4 py-3 text-sm font-bold text-gray-800 text-right">{fmt(totals.employerEpf + totals.employeeEpf)}</td>
                                                         <td className="px-4 py-3 text-sm font-bold text-gray-800 border-l border-gray-100">{fmt(totals.employerEpf)}</td>
                                                         <td className="px-4 py-3 text-sm font-bold text-gray-800">{fmt(totals.employeeEpf)}</td>
-                                                        <td className="px-4 py-3 text-sm font-bold text-gray-800 text-right">{fmt(totals.totalEarnings)}</td>
+                                                        <td className="px-4 py-3 text-sm font-bold text-gray-800 text-right">{fmt(totals.basicPay)}</td>
                                                     </tr>
                                                 </tfoot>
                                             )}
