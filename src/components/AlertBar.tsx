@@ -27,10 +27,8 @@ const AlertBar = () => {
         return remDays;
     };
 
-    const [isTrial, setIsTrial] = useState(!!user?.isTrialUser);
-    const [remainingDays, setRemainingDays] = useState(
-        user?.createdAt ? calculateDays(user.createdAt) : 7
-    );
+    const [isTrial, setIsTrial] = useState(false);
+    const [remainingDays, setRemainingDays] = useState<number | null>(null);
 
     const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
 
@@ -55,9 +53,11 @@ const AlertBar = () => {
                 const { data } = await axiosInstance.get('/subscription/current');
                 if (data?.data) {
                     const isTrialUser = data.data.isTrialUser;
+                    const isPaid = data.data.isPaid;
                     setSubscriptionStatus(data.data.status ?? null);
 
-                    if (isTrialUser) {
+                    // Only show trial banner if user is a trial user AND it's not a paid active/pending plan
+                    if (isTrialUser && !isPaid) {
                         setIsTrial(true);
                         setRemainingDays(calculateDays(data.data.createdAt));
                     } else {
@@ -178,7 +178,7 @@ const AlertBar = () => {
 
     return (
         <div>
-            {isTrial && (
+            {isTrial && remainingDays !== null && (
                 <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
                     <p className="text-white">
                         {remainingDays <= 0 ? 'Your trial period has ended. ' : 'Heads Up! Your trial ends in'}
