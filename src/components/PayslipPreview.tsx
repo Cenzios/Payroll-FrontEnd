@@ -187,7 +187,8 @@ const PayslipPreview = ({
 
                     <div className="flex justify-between items-center mt-5 pt-2 border-t border-gray-100">
                         <span className="text-[13px] font-bold text-[#1D1F24]">Total Deductions</span>
-                        <span className="text-[13px] font-bold text-[#E11D48]">{totalDeductions.toFixed(2)}</span>
+                        {/* <span className="text-[13px] font-bold text-[#E11D48]">{totalDeductions.toFixed(2)}</span> */}
+                        <span className="text-[13px] font-bold text-[#E11D48]">{fmt(totalDeductions)}</span>
                     </div>
 
                     <div className="flex justify-between items-center mt-1 pt-3">
