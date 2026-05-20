@@ -34,7 +34,8 @@ const EpfEtfReport = () => {
         empEpf: 0,
         employerEpf: 0,
         etf: 0,
-        totalContribution: 0
+        totalContribution: 0,
+        netPay: 0
     });
 
     const { data: companies } = useGetCompaniesQuery();
@@ -72,7 +73,7 @@ const EpfEtfReport = () => {
     useEffect(() => {
         if (!rawReportData.length) {
             setReportData([]);
-            setTotals({ count: 0, basicSalary: 0, grossPay: 0, empEpf: 0, employerEpf: 0, etf: 0, totalContribution: 0 });
+            setTotals({ count: 0, basicSalary: 0, grossPay: 0, empEpf: 0, employerEpf: 0, etf: 0, totalContribution: 0, netPay: 0 });
             return;
         }
 
@@ -93,7 +94,8 @@ const EpfEtfReport = () => {
                         empEpf: 0,
                         employerEpf: 0,
                         etf: 0,
-                        totalContribution: 0
+                        totalContribution: 0,
+                        netPay: 0
                     });
                 }
 
@@ -111,6 +113,7 @@ const EpfEtfReport = () => {
 
                 record.basicSalary += basicPay;
                 record.grossPay += emp.grossPay || 0;
+                record.netPay += emp.netPay || emp.netSalary || 0;
 
                 if (empEpf > 0) {
                     record.empEpf += empEpf;
@@ -138,8 +141,9 @@ const EpfEtfReport = () => {
             empEpf: acc.empEpf + curr.empEpf,
             employerEpf: acc.employerEpf + curr.employerEpf,
             etf: acc.etf + curr.etf,
-            totalContribution: acc.totalContribution + curr.totalContribution
-        }), { count: 0, basicSalary: 0, grossPay: 0, empEpf: 0, employerEpf: 0, etf: 0, totalContribution: 0 });
+            totalContribution: acc.totalContribution + curr.totalContribution,
+            netPay: acc.netPay + curr.netPay
+        }), { count: 0, basicSalary: 0, grossPay: 0, empEpf: 0, employerEpf: 0, etf: 0, totalContribution: 0, netPay: 0 });
 
         setTotals(overall);
     }, [rawReportData, employeesData]);
@@ -368,26 +372,18 @@ const EpfEtfReport = () => {
                                     <p className="text-lg font-bold text-[#155390]">{fmt(totals.grossPay)}</p>
                                 </div>
                                 <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
-                                    {/* <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Employee EPF</p> */}
-                                    <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Total NET Pay</p>
-                                    <p className="text-lg font-bold text-[#155390]">{fmt(totals.empEpf)}</p>
+                                    <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Total Net Pay</p>
+                                    <p className="text-lg font-bold text-[#155390]">{fmt(totals.netPay)}</p>
                                 </div>
                                 <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
-                                    <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Employee EPF</p>
-                                    <p className="text-lg font-bold text-[#757575]">{fmt(totals.employerEpf)}</p>
+                                    <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Employee EPF (8%)</p>
+                                    <p className="text-lg font-bold text-[#757575]">{fmt(totals.empEpf)}</p>
                                 </div>
                                 <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
-                                    {/* <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">ETF</p> */}
-                                    <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Company EPF/ETF</p>
-                                    <p className="text-lg font-bold text-[#757575]">{fmt(totals.etf)}</p>
+                                    <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Company EPF/ETF (15%)</p>
+                                    <p className="text-lg font-bold text-[#757575]">{fmt(totals.employerEpf + totals.etf)}</p>
                                 </div>
-                                {/* <div className="pl-8 border-l border-gray-200 text-right w-full">
-                                        <p className="text-[10px] uppercase font-bold text-[#2b74ff] mb-1">Total Contribution</p>
-                                        <p className="text-xl font-bold text-[#2b74ff]">Rs {fmt(totals.totalContribution)}</p>
-                                    </div> */}
                             </div>
-                            {/* <p className="text-[10px] text-gray-400 text-right mt-4 italic">All values are display in LKR</p> */}
-
 
                             {/* Table */}
                             <div className="flex-1 mt-5 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col max-sm:hidden">
