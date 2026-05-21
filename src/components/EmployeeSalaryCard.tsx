@@ -138,8 +138,10 @@ const EmployeeSalaryCard = ({
     const displayBasicPay = isLocked && generatedSalary
         ? generatedSalary.basicPay
         : emp.salaryType === "MONTHLY"
-            ? basicSalary
-            : basicSalary * displayWorkedDays;
+            ? (companyWorkingDays > 0
+                ? (basicSalary / companyWorkingDays) * Math.min(displayWorkedDays + (Math.min(leaveDays, emp.paidLeave || 0)), companyWorkingDays)
+                : basicSalary)
+            : basicSalary * (displayWorkedDays + (Math.min(leaveDays, emp.paidLeave || 0)));
 
     // Earned Basic Pay: This is the actual amount earned (reduced by unpaid leaves), 
     // used primarily for EPF calculation to remain legally accurate.
@@ -172,11 +174,10 @@ const EmployeeSalaryCard = ({
         ? generatedSalary.grossSalary
         : displayBasicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances;
 
-    // Total Deductions includes the unpaid leave deduction.
+    // Total Deductions includes the unpaid leave deduction (removed as Gross is now pro-rated)
     const totalDeductions = isLocked && generatedSalary
         ? generatedSalary.totalDeduction
-        : nonPaidLeaveDeduction +
-        displaySalaryAdvance +
+        : displaySalaryAdvance +
         epfAmount +
         (hasLoanInstallment && isLoanEnabled ? loanDeduction : 0) +
         totalDeductions_custom;

@@ -341,8 +341,8 @@ const Salary = () => {
     const otRate = emp.otRate || 0;
     const otAmount = emp.otRate > 0 ? otHours * otRate : 0;
     const basicPay = emp.salaryType === "MONTHLY"
-      ? (companyWorkingDays > 0 ? (emp.basicSalary / companyWorkingDays) * Math.min(workedDays + leaveDays + sickLeaveDays, companyWorkingDays) : 0)
-      : emp.basicSalary * workedDays;
+      ? (companyWorkingDays > 0 ? (emp.basicSalary / companyWorkingDays) * Math.min(workedDays + (Math.min(leaveDays, emp.paidLeave || 0)), companyWorkingDays) : 0)
+      : emp.basicSalary * (workedDays + (Math.min(leaveDays, emp.paidLeave || 0)));
 
     const epfAmount = emp.epfEnabled && isEpfEnabled ? basicPay * 0.08 : 0;
     const totalEarnings = basicPay + otAmount + (salaryAllowances[emp.id] || emp.recurringAllowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
@@ -479,10 +479,11 @@ const Salary = () => {
     if (emp.salaryType === "MONTHLY") {
       const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
       const payableDays = workedDays + applicableAnnualLeave;
-      fullBasicPay = basicSalaryForCalc;
-      earnedBasicPay = (basicSalaryForCalc / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
+      fullBasicPay = (basicSalaryForCalc / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
+      earnedBasicPay = fullBasicPay;
     } else {
-      fullBasicPay = basicSalaryForCalc * workedDays;
+      const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
+      fullBasicPay = basicSalaryForCalc * (workedDays + applicableAnnualLeave);
       earnedBasicPay = fullBasicPay;
     }
 
@@ -517,8 +518,8 @@ const Salary = () => {
 
     const tax = 0; // Tax will be calculated by backend
     const totalDeductions =
-      epfEmployee + tax + salaryAdvance + deductionAmount + loanDeduction + nonPaidLeaveDeduction;
-    const netSalary = fullBasicPay + otAmount + allowanceAmount - totalDeductions;
+      epfEmployee + tax + salaryAdvance + deductionAmount + loanDeduction;
+    const netSalary = earnedBasicPay + otAmount + allowanceAmount - totalDeductions;
 
     const details = {
       basicSalary: emp.basicSalary || 0,
