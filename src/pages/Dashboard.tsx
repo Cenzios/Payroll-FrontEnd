@@ -36,6 +36,7 @@ import {
   useGetCompaniesQuery,
   useCreateCompanyMutation,
   useCreateEmployeeMutation,
+  useUploadEmployeeDocumentMutation,
   apiSlice
 } from '../store/apiSlice';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
@@ -102,6 +103,7 @@ const Dashboard = () => {
   });
 
   const [createEmployee] = useCreateEmployeeMutation();
+  const [uploadEmployeeDocument] = useUploadEmployeeDocumentMutation();
 
   // Derived state
   const selectedCompany = companies.find(c => c.id === selectedCompanyId) || null;
@@ -195,7 +197,7 @@ const Dashboard = () => {
     });
   };
 
-  const handleDrawerSubmit = async (data: any) => {
+  const handleDrawerSubmit = async (data: any, files?: File[], fileTitles?: Record<number, string>) => {
     try {
       if (drawerMode === 'company') {
         // await createCompany(data as CreateCompanyRequest).unwrap();
@@ -209,8 +211,27 @@ const Dashboard = () => {
         // setShowSuccessModal(true);
 
       } else {
-        await createEmployee(data as CreateEmployeeRequest).unwrap();
+        const savedEmployee = await createEmployee(data as CreateEmployeeRequest).unwrap();
+
+        if (files && files.length > 0) {
+          setToast({ message: 'Uploading documents...', type: 'success' });
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("employeeId", savedEmployee.id);
+            if (fileTitles && fileTitles[i]) {
+              formData.append("docTitle", fileTitles[i]);
+            }
+            await uploadEmployeeDocument(formData).unwrap();
+          }
+        }
+
         setToast({ message: 'Employee created successfully!', type: 'success' });
+
+        if (selectedCompanyId) {
+          localStorage.removeItem(`employee_add_draft_${selectedCompanyId}`);
+        }
       }
       setIsDrawerOpen(false);
     } catch (error: any) {
