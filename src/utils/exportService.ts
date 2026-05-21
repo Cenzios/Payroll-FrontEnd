@@ -45,6 +45,7 @@ export interface ReportEmployee {
     employeeCode: string;
     employeeName: string;
     workingDays: number;
+    basicSalary: number;
     basicPay: number;
     otAmount: number;
     otHours?: number;
@@ -366,7 +367,7 @@ export const exportPayslip = (
 
         // Clip overflow: Draw white rect over everything below the header
         doc.setFillColor(255, 255, 255); // white
-doc.rect(0, 45, 210, 252, "F");
+        doc.rect(0, 45, 210, 252, "F");
 
         // Header Texts - Left
         doc.setTextColor(255, 255, 255);
@@ -447,7 +448,7 @@ doc.rect(0, 45, 210, 252, "F");
         doc.setTextColor(0, 0, 0);
         doc.text("Description", 14, currentY);
         doc.text("Amount (Rs.)", 196, currentY, { align: "right" });
-        
+
         currentY += 4;
         doc.setLineWidth(0.2);
         doc.setDrawColor(200, 200, 200);
@@ -561,10 +562,10 @@ doc.rect(0, 45, 210, 252, "F");
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
         doc.text("NET SALARY", 20, currentY + 9);
-        
+
         const amountStr = formatCurrency(previewPayslip.netSalary);
         const amountWidth = doc.getTextWidth(amountStr);
-        
+
         doc.setTextColor(255, 255, 255);
         doc.text("Net Salary Payable : ", 190 - amountWidth, currentY + 9, { align: "right" });
         doc.setTextColor(252, 163, 17);
@@ -843,7 +844,7 @@ export const exportPayrollSummaryReport = (
                 emp.employeeCode || "-",
                 emp.employeeName || "-",
                 emp.workingDays,
-                emp.basicPay.toLocaleString(),
+                (emp.basicSalary || 0).toLocaleString(),
                 (emp.otAmount || 0).toLocaleString(),
                 emp.grossPay.toLocaleString(),
                 emp.employeeEPF.toLocaleString(),
@@ -852,7 +853,7 @@ export const exportPayrollSummaryReport = (
             ]);
 
             // Monthly Totals
-            const mTotalBasic = monthData.employees.reduce((s: number, e: ReportEmployee) => s + e.basicPay, 0);
+            const mTotalBasic = monthData.employees.reduce((s: number, e: ReportEmployee) => s + (e.basicSalary || 0), 0);
             const mTotalOT = monthData.employees.reduce((s: number, e: ReportEmployee) => s + (e.otAmount || 0), 0);
             const mTotalGross = monthData.employees.reduce((s: number, e: ReportEmployee) => s + e.grossPay, 0);
             const mTotalEPF = monthData.employees.reduce((s: number, e: ReportEmployee) => s + e.employeeEPF, 0);
@@ -871,7 +872,7 @@ export const exportPayrollSummaryReport = (
 
             autoTable(doc, {
                 startY: currentY,
-                head: [["Emp ID", "Name", "Days", "Basic", "OT", "Gross", "EPF (8%)", "Advance", "Net Pay"]],
+                head: [["Emp ID", "Name", "Days", "Basic Salary", "OT", "Gross", "EPF (8%)", "Advance", "Net Pay"]],
                 body: tableBody,
                 theme: "plain",
                 styles: { fontSize: 8, cellPadding: 2 },
@@ -940,7 +941,7 @@ export const exportPayrollSummaryReport = (
                     emp.employeeCode || "-",
                     emp.employeeName || "-",
                     emp.workingDays,
-                    emp.basicPay,
+                    emp.basicSalary || 0,
                     emp.otAmount,
                     emp.grossPay,
                     emp.employeeEPF,
@@ -1101,7 +1102,7 @@ export const exportEmployeeMonthlySummary = (
             ...monthlyBreakdown.map((row) => [
                 row.month,
                 row.workedDays,
-                row.basicPay,
+                row.basicSalary,
                 row.otAmount,
                 row.grossPay,
                 row.netPay,
@@ -1188,7 +1189,7 @@ export const exportAllEmployeesSummary = (
             emp.employeeCode,
             emp.employeeName,
             emp.workingDays.toString(),
-            `RS ${(emp.basicPay || 0).toLocaleString()} `,
+            `RS ${(emp.basicSalary || 0).toLocaleString()} `,
             `RS ${(emp.otAmount || 0).toLocaleString()} (${emp.otHours || 0}h)`,
             `RS ${(emp.grossPay || 0).toLocaleString()} `,
             `RS ${(emp.salaryAdvance || 0).toLocaleString()} `,
@@ -1200,7 +1201,7 @@ export const exportAllEmployeesSummary = (
             "TOTAL AMOUNTS",
             "",
             "",
-            `RS ${totals.basicPay.toLocaleString()} `,
+            `RS ${totals.basicSalary?.toLocaleString() || totals.basicPay.toLocaleString()} `,
             `RS ${totals.otAmount.toLocaleString()} `,
             `RS ${totals.grossPay.toLocaleString()} `,
             `RS ${totals.salaryAdvance.toLocaleString()} `,
@@ -1215,7 +1216,7 @@ export const exportAllEmployeesSummary = (
                     "Emp ID",
                     "Name",
                     "Days",
-                    "Basic",
+                    "Basic Salary",
                     "OT",
                     "Gross",
                     "Advance",
@@ -1274,7 +1275,7 @@ export const exportAllEmployeesSummary = (
                 emp.employeeCode,
                 emp.employeeName,
                 emp.workingDays,
-                emp.basicPay || 0,
+                emp.basicSalary || 0,
                 emp.otAmount || 0,
                 emp.grossPay || 0,
                 emp.salaryAdvance || 0,

@@ -19,6 +19,7 @@ interface EmployeeRow {
     employeeCode: string;
     employeeName: string;
     workingDays: number;
+    basicSalary: number;
     basicPay: number;
     otHours: number;
     otAmount: number;
@@ -41,6 +42,7 @@ interface SummaryData {
     };
     employees: EmployeeRow[];
     totals: {
+        basicSalary?: number;
         basicPay: number;
         otAmount: number;
         grossPay: number;
@@ -183,7 +185,7 @@ const AllEmployeesSummaryModal = ({
                                                             <td className="px-3 py-3 text-gray-900 border-x border-gray-200 text-center font-medium">{emp.employeeCode}</td>
                                                             <td className="px-3 py-3 text-gray-700 border-x border-gray-200">{emp.employeeName}</td>
                                                             <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">{emp.workingDays}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {emp.basicPay.toLocaleString()}</td>
+                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {emp.basicSalary.toLocaleString()}</td>
                                                             <td className="px-3 py-3 text-center text-green-600 border-x border-gray-200 font-medium">RS: {emp.otAmount.toLocaleString()}</td>
                                                             <td className="px-3 py-3 text-center text-gray-900 border-x border-gray-200 font-bold">RS: {emp.grossPay.toLocaleString()}</td>
                                                             <td className="px-3 py-3 text-center text-red-600 border-x border-gray-200">RS: {emp.salaryAdvance.toLocaleString()}</td>
@@ -195,7 +197,7 @@ const AllEmployeesSummaryModal = ({
                                                 <tfoot className="bg-[#3b82f6] text-white">
                                                     <tr className="font-bold">
                                                         <td colSpan={3} className="px-3 py-3 uppercase">TOTAL AMOUNTS</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.basicPay.toLocaleString()}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.basicSalary?.toLocaleString() || summaryData.totals.basicPay.toLocaleString()}</td>
                                                         <td className="px-3 py-3 text-center">RS: {summaryData.totals.otAmount.toLocaleString()}</td>
                                                         <td className="px-3 py-3 text-center">RS: {summaryData.totals.grossPay.toLocaleString()}</td>
                                                         <td className="px-3 py-3 text-center">RS: {summaryData.totals.salaryAdvance.toLocaleString()}</td>
