@@ -114,7 +114,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
         .reduce((sum: number, i: any) => sum + i.amount, 0);
 
     return (
-        <div className="flex-1 flex flex-col pt-6">
+        <div className="flex-1 flex flex-col pt-6 overflow-y-auto">
             {/* Standard Header */}
             <div className="mb-6 -mt-2 max-sm:hidden">
                 <PageHeader
@@ -204,6 +204,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                         </div>
                     </div>
                 </div>
+
                 <div className="flex items-center gap-4 max-sm:w-full max-sm:flex-col">
                     <button
                         onClick={() => setIsViewModalOpen(true)}
@@ -227,7 +228,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8 
     max-sm:mx-5 max-sm:grid-cols-1 max-sm:gap-3">
                 {/* Card 1 */}
                 <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]
@@ -299,7 +300,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
             </div>
 
             {/* History Table */}
-            <div className='max-sm:mx-5 max-sm:pb-20'>
+            <div className='max-sm:mx-5 max-sm:pb-20 overflow-y-auto'>
                 <h3 className="text-lg font-bold text-[#141B3B] mb-6">Monthly Payment History</h3>
                 {/* Mobile Card View */}
                 <div className="flex flex-col gap-3 sm:hidden">
@@ -348,8 +349,8 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
 
                 {/* Desktop Table View */}
-                <div className="hidden sm:block overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-                    <table className="w-full text-left min-w-[480px]">
+                <div className="hidden sm:block overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 overflow-y-auto">
+                    <table className="w-full text-left min-w-[480px] overflow-y-auto">
                         <thead>
                             <tr className="border-b border-gray-100">
                                 <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Installment</th>
