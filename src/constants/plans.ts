@@ -3,6 +3,7 @@ export const PLAN_IDS = {
     BASIC: "0f022c11-2a3c-49f5-9d11-30082882a8e9",
     PROFESSIONAL: "3a9f7d42-5b6a-4d6b-b3d2-9b4d6d5a1c21",
     ENTERPRISE: "9e1c4b2a-8d7f-4b9a-a5c2-2c3f4d6e7b88",
+    FREE_TRIAL: "77777777-7777-7777-7777-777777777777",
 };
 
 export interface Plan {
