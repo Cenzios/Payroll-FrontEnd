@@ -16,7 +16,7 @@ export const useTrialStatus = () => {
         const now = new Date();
         const diffTime = now.getTime() - signupDate.getTime();
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        const remDays = 7 - diffDays;
+        const remDays = 90 - diffDays;
 
         return remDays <= 0;
     }, [user]);

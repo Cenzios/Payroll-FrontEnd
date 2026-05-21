@@ -23,7 +23,7 @@ const AlertBar = () => {
 
         const diffTime = nowDateOnly.getTime() - signDateOnly.getTime();
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        const remDays = Math.max(0, 7 - diffDays);
+        const remDays = Math.max(0, 90 - diffDays);
         return remDays;
     };
 
@@ -94,7 +94,7 @@ const AlertBar = () => {
     // TRIAL EXPIRE LOCK
     // body attribute effect
     useEffect(() => {
-        if (isTrial && remainingDays <= 0) {
+        if (isTrial && remainingDays !== null && remainingDays <= 0) {
             document.body.setAttribute('data-trial-expired', 'true');
         } else {
             document.body.removeAttribute('data-trial-expired');
@@ -178,7 +178,7 @@ const AlertBar = () => {
 
     return (
         <div>
-            {isTrial && remainingDays !== null && (
+            {isTrial && remainingDays !== null && remainingDays <= 7 && (
                 <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
                     <p className="text-white">
                         {remainingDays <= 0 ? 'Your trial period has ended. ' : 'Heads Up! Your trial ends in'}
