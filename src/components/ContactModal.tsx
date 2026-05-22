@@ -57,7 +57,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                             </div>
                             <div>
                                 <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Company </p>
-                                <p className="text-base font-medium text-gray-800">Cenzios Pvt.Ltd</p>
+                                <p className="text-base font-medium text-gray-800">Cenzios (Pvt) Ltd</p>
                             </div>
                         </div>
 
@@ -68,7 +68,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                             </div>
                             <div>
                                 <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Email Address</p>
-                                <p className="text-base font-medium text-gray-800">lahiru123@gmail.com</p>
+                                <p className="text-base font-medium text-gray-800">info@cenzios.com</p>
                             </div>
                         </div>
 
@@ -79,7 +79,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                             </div>
                             <div>
                                 <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Contact No</p>
-                                <p className="text-base font-medium text-gray-800">0764591786</p>
+                                <p className="text-base font-medium text-gray-800">+94 71 118 6028</p>
                             </div>
                         </div>
 
@@ -96,7 +96,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                     </div>
 
                     <button
-                        onClick={() => window.location.href = 'mailto:lahiru123@gmail.com'}
+                        onClick={() => window.location.href = 'tel:+94711186028'}
                         className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#2563EB] to-[#153885] text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98]"
                     >
                         <Phone className="w-5 h-5 text-white" />
@@ -105,7 +105,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                     </button>
 
                     <button
-                        onClick={() => window.location.href = 'mailto:lahiru123@gmail.com'}
+                        onClick={() => window.open('https://wa.me/94711186028', '_blank')}
                         className="flex items-center justify-center gap-2 mt-4 w-full bg-blue-100 text-black font-bold py-3 rounded-xl transition-all duration-200 active:scale-[0.98]"
                     >
                         <img src={whatsapp} alt="whatsapp" className='w-5 h-5' />

@@ -133,6 +133,7 @@ const HeaderActions = ({ showLogout = true }: HeaderActionsProps = {}) => {
         {/* Logout */}
         {showLogout && (
           <button
+            data-logout-btn
             onClick={handleLogout}
             className="w-10 h-10 rounded-xl hover:bg-gray-100 flex items-center justify-center"
           >
