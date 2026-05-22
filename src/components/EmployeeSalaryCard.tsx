@@ -161,8 +161,8 @@ const EmployeeSalaryCard = ({
             ? (basicSalary / companyWorkingDays) * sickLeaveDays
             : 0;
 
-    // EPF is calculated on the actual EARNED amount (including allowances as per Gross requirement).
-    const epfBasis = earnedBasicPay + totalAllowances;
+    // EPF is calculated on the actual EARNED amount (excluding allowances).
+    const epfBasis = earnedBasicPay;
     const epfAmount = isLocked && generatedSalary
         ? generatedSalary.employeeEPF
         : emp.epfEnabled && isEpfEnabled
