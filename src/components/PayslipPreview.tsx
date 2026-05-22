@@ -131,7 +131,7 @@ const PayslipPreview = ({
                     </div>
 
                     {/* EARNINGS */}
-                    <div className="my-4">
+                    <div className="my-4 max-sm:my-1">
                         <h3 className="text-[10px] font-bold text-[#718096] tracking-widest uppercase mb-4 mt-5 pt-2 flex items-center gap-3 border-t border-gray-100">
                             EARNINGS
                         </h3>
@@ -170,7 +170,7 @@ const PayslipPreview = ({
                     </div>
 
                     {/* DEDUCTIONS */}
-                    <div className="mb-4">
+                    <div className="mb-4 max-sm:mb-2">
                         <h3 className="text-[10px] font-bold text-[#64748B] tracking-widest uppercase mb-4 mt-5 pt-2 border-t border-gray-100">
                             DEDUCTIONS
                         </h3>
@@ -195,7 +195,7 @@ const PayslipPreview = ({
                             ))}
                         </div>
 
-                        <div className="flex justify-between items-center mt-5 pt-2 border-t border-gray-100">
+                        <div className="flex justify-between items-center mt-5 max-sm:mt-2 pt-2 border-t border-gray-100">
                             <span className="text-[13px] font-bold text-[#1D1F24]">Total Deductions</span>
                             {/* <span className="text-[13px] font-bold text-[#E11D48]">{totalDeductions.toFixed(2)}</span> */}
                             <span className="text-[13px] font-bold text-[#E11D48]">{fmt(totalDeductions)}</span>
@@ -210,7 +210,8 @@ const PayslipPreview = ({
 
                 {/* NET SALARY PAYABLE BOX */}
                 <div className="bg-[#EBF8FF] p-4 border border-[#0000000A]">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0
+                    max-sm:grid max-sm:grid-cols-2 max-sm:gap-5">
                         <div>
                             <p className="text-[10px] font-bold text-[#407BFF] tracking-widest uppercase mb-1">NET SALARY PAYABLE</p>
                             <h2 className="text-[16px] font-bold text-[#407BFF] tracking-tight">Rs. {previewPayslip.netSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
@@ -230,21 +231,23 @@ const PayslipPreview = ({
                 </div>
 
                 {/* EMPLOYER CONTRIBUTIONS */}
-                {previewPayslip.isEpfEnabled && (
-                    <div className="bg-[#FDFBF7] px-3 md:px-6 py-3 md:py-4 flex items-center justify-between mb-3 md:mb-6 border border-[#0000000A]">
-                        <p className="text-[8px] font-bold text-[#1D1F24] tracking-widest uppercase">EMPLOYER CONTRIBUTIONS</p>
-                        <div className="flex gap-8">
-                            <div className="flex items-center gap-3">
-                                <span className="text-[8px] text-[#718096] font-bold uppercase">EPF 12%</span>
-                                <span className="text-[8px] font-bold text-[#1D1F24] tracking-tight">{fmt(previewPayslip.epf12)}</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-[8px] text-[#718096] font-bold uppercase">ETF 3%</span>
-                                <span className="text-[8px] font-bold text-[#1D1F24] tracking-tight">{fmt(previewPayslip.etf3)}</span>
+                {
+                    previewPayslip.isEpfEnabled && (
+                        <div className="bg-[#FDFBF7] px-3 md:px-6 py-2 md:py-4 flex items-center justify-between mb-3 md:mb-6 border border-[#0000000A]">
+                            <p className="text-[8px] font-bold text-[#1D1F24] tracking-widest uppercase">EMPLOYER CONTRIBUTIONS</p>
+                            <div className="flex gap-8">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[8px] text-[#718096] font-bold uppercase">EPF 12%</span>
+                                    <span className="text-[8px] font-bold text-[#1D1F24] tracking-tight">{fmt(previewPayslip.epf12)}</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-[8px] text-[#718096] font-bold uppercase">ETF 3%</span>
+                                    <span className="text-[8px] font-bold text-[#1D1F24] tracking-tight">{fmt(previewPayslip.etf3)}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
 
                 {/* Footer */}
                 <footer className="flex items-center justify-between px-3 md:px-6 pb-3 md:pb-2">
@@ -297,8 +300,8 @@ const PayslipPreview = ({
                     </PortalDropdown>
                 </footer>
 
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
