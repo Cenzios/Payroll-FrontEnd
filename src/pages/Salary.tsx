@@ -926,7 +926,7 @@ const Salary = () => {
                 exportCSV={exportCSV}
                 onClose={() => {
                   setSelectedEmployee(null);
-                  setPreviewPayslip(null);
+                  dispatch(setPreviewPayslip(null));
                 }}
               />
             </div>
