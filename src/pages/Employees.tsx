@@ -161,7 +161,8 @@ const Employees = () => {
   const handleQuickUpload = async () => {
     if (!selectedEmployee || !selectedCompanyId || quickUploadFiles.length === 0) return;
 
-    const existingCount = selectedEmployee.documents?.length || 0;
+    const existingEmployeeDocs = selectedEmployee.documents?.filter(d => !d.documentType || d.documentType === 'EMPLOYEE') || [];
+    const existingCount = existingEmployeeDocs.length;
     const totalAfterUpload = existingCount + quickUploadFiles.length;
 
     if (totalAfterUpload > 3) {
@@ -238,7 +239,8 @@ const Employees = () => {
       }
 
       if (files && files.length > 0 && selectedCompanyId) {
-        const existingCount = editingEmployee?.documents?.length || 0;
+        const existingEmployeeDocs = editingEmployee?.documents?.filter(d => !d.documentType || d.documentType === 'EMPLOYEE') || [];
+        const existingCount = existingEmployeeDocs.length;
         const totalAfterUpload = existingCount + files.length;
 
         if (totalAfterUpload > 3) {
@@ -569,7 +571,7 @@ const Employees = () => {
                   onAddFileClick={() => setIsFileModalOpen(true)}
                   onDeleteFileClick={handleDeleteFileClick}
                   onEditClick={() => selectedEmployee && handleEdit(selectedEmployee)}
-                  isAddFileDisabled={(selectedEmployee?.documents?.length || 0) >= 3}
+                  isAddFileDisabled={(selectedEmployee?.documents?.filter(d => !d.documentType || d.documentType === 'EMPLOYEE').length || 0) >= 3}
                 />
               </div>
             )}
@@ -696,7 +698,7 @@ const Employees = () => {
                     onAddFileClick={() => setIsFileModalOpen(true)}
                     onDeleteFileClick={handleDeleteFileClick}
                     onEditClick={() => selectedEmployee && handleEdit(selectedEmployee)}
-                    isAddFileDisabled={(selectedEmployee?.documents?.length || 0) >= 3}
+                    isAddFileDisabled={(selectedEmployee?.documents?.filter(d => !d.documentType || d.documentType === 'EMPLOYEE').length || 0) >= 3}
                   />
                 </div>
               </>
@@ -734,7 +736,7 @@ const Employees = () => {
         onTitlesChange={setQuickUploadTitles}
         onUpload={handleQuickUpload}
         isUploading={isQuickUploading}
-        maxFiles={3 - (selectedEmployee?.documents?.length || 0)}
+        maxFiles={3 - (selectedEmployee?.documents?.filter(d => !d.documentType || d.documentType === 'EMPLOYEE').length || 0)}
       />
 
       {/* Success Modal */}
