@@ -626,7 +626,11 @@ const Salary = () => {
         otHours: savedRecord.otHours,
         otAmount: savedRecord.otAmount,
         salaryAdvance: savedRecord.salaryAdvance,
-        nonPaidLeaveDeduction: savedRecord.nonPaidLeaveDeduction ?? 0,
+        nonPaidLeaveDeduction: savedRecord.nonPaidLeaveDeduction ?? (
+          savedRecord.salaryType === "MONTHLY" && companyWorkingDays > 0
+            ? ((savedRecord.basicSalary || 0) / companyWorkingDays) * (savedRecord.sickLeaveDays || 0)
+            : 0
+        ),
         leaveDays: savedRecord.leaveDays || 0,
         sickLeaveDays: savedRecord.sickLeaveDays || 0,
         loanDeduction: savedRecord.loanDeduction,
