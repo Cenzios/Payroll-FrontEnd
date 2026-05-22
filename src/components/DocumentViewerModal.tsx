@@ -1,29 +1,48 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, Download, FileText, Image as ImageIcon, File, ExternalLink } from 'lucide-react';
+import { X, Download, FileText, Image as ImageIcon, File, ExternalLink, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 
 interface DocumentViewerModalProps {
     isOpen: boolean;
     onClose: () => void;
-    doc: {
+    docs: {
         id: string;
         fileName: string;
         fileUrl: string;
         fileType: string;
         docTitle?: string;
-    } | null;
+    }[] | null;
+    initialIndex?: number;
 }
 
-const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClose, doc }) => {
-    if (!isOpen || !doc) return null;
+const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClose, docs, initialIndex = 0 }) => {
+    const [currentIndex, setCurrentIndex] = React.useState(initialIndex);
     const { handleTrialAction } = useTrialStatus();
 
-    const isImage = doc.fileType.startsWith('image/');
+    React.useEffect(() => {
+        if (isOpen) {
+            setCurrentIndex(initialIndex);
+        }
+    }, [isOpen, initialIndex]);
+
+    if (!isOpen || !docs || docs.length === 0) return null;
+
+    const doc = docs[currentIndex];
+
+    const isImage = doc.fileType?.startsWith('image/') ?? false;
     const isPDF = doc.fileType === 'application/pdf';
 
     const handleDownload = () => {
         window.open(doc.fileUrl, '_blank');
+    };
+
+    const handleNext = () => {
+        setCurrentIndex((prev) => (prev + 1) % docs.length);
+    };
+
+    const handlePrev = () => {
+        setCurrentIndex((prev) => (prev - 1 + docs.length) % docs.length);
     };
 
     return createPortal(
@@ -68,7 +87,25 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-auto bg-gray-50 p-6 flex items-center justify-center min-h-[400px]">
+                <div className="flex-1 overflow-auto bg-gray-50 p-6 flex flex-col items-center justify-center min-h-[400px] relative group/viewer">
+                    {/* Navigation Buttons - Only show if multiple docs */}
+                    {docs.length > 1 && (
+                        <>
+                            <button
+                                onClick={handlePrev}
+                                className="absolute left-4 z-10 p-4 bg-white/80 hover:bg-white text-gray-800 rounded-full shadow-lg border border-gray-100 transition-all active:scale-90 opacity-0 group-hover/viewer:opacity-100"
+                            >
+                                <ArrowLeft className="w-6 h-6" />
+                            </button>
+                            <button
+                                onClick={handleNext}
+                                className="absolute right-4 z-10 p-4 bg-white/80 hover:bg-white text-gray-800 rounded-full shadow-lg border border-gray-100 transition-all active:scale-90 opacity-0 group-hover/viewer:opacity-100"
+                            >
+                                <ArrowRight className="w-6 h-6" />
+                            </button>
+                        </>
+                    )}
+
                     {isImage ? (
                         <div className="relative group">
                             <img
@@ -78,24 +115,34 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
                             />
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                 <div className="bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full text-white text-xs font-bold">
-                                    Document Preview
+                                    Document {currentIndex + 1} of {docs.length}
                                 </div>
                             </div>
                         </div>
                     ) : isPDF ? (
-                        <iframe
-                            src={`${doc.fileUrl}#toolbar=0`}
-                            className="w-full h-[600px] rounded-xl border border-gray-200 shadow-md bg-white"
-                            title="PDF Viewer"
-                        />
+                        <div className="w-full h-full flex flex-col gap-4">
+                            <iframe
+                                src={`${doc.fileUrl}#toolbar=0`}
+                                className="w-full h-[600px] rounded-xl border border-gray-200 shadow-md bg-white"
+                                title="PDF Viewer"
+                            />
+                            {docs.length > 1 && (
+                                <div className="text-center text-sm font-bold text-gray-500">
+                                    Document {currentIndex + 1} of {docs.length}
+                                </div>
+                            )}
+                        </div>
                     ) : (
                         <div className="text-center py-20 px-8 bg-white rounded-3xl shadow-sm border border-gray-100 max-w-md w-full">
                             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <File className="w-10 h-10 text-gray-400" />
                             </div>
                             <h3 className="text-lg font-bold text-gray-900 mb-2">Preview Not Available</h3>
-                            <p className="text-gray-500 text-sm mb-8">
-                                This file type cannot be previewed directly. Please download the file to view its content.
+                            <p className="text-gray-500 text-sm mb-4">
+                                {doc.fileName}
+                            </p>
+                            <p className="text-gray-400 text-xs mb-8">
+                                Document {currentIndex + 1} of {docs.length}
                             </p>
                             <button
                                 onClick={(e) => handleTrialAction(e, handleDownload)}
