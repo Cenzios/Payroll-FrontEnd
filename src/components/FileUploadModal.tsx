@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { UploadCloud, FileText, FileImage, File, Trash2, Loader2 } from "lucide-react";
+import { UploadCloud, FileImage, File, Trash2, Loader2 } from "lucide-react";
 
 interface FileUploadModalProps {
     isOpen: boolean;
@@ -57,7 +57,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         const valid = newFiles.filter(file => {
             if (acceptedCount >= remaining) return false;
 
-            const isValidType = ['image/png', 'image/jpeg', 'application/pdf'].includes(file.type);
+            const isValidType = ['image/png', 'image/jpeg'].includes(file.type);
             const isValidSize = file.size <= 5 * 1024 * 1024;
 
             if (!isValidType) alert(`File ${file.name} is not a supported format.`);
@@ -116,7 +116,6 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 
     const getFileIcon = (type: string) => {
         if (type.startsWith('image/')) return <FileImage className="w-5 h-5 text-blue-500" />;
-        if (type === 'application/pdf') return <FileText className="w-5 h-5 text-red-500" />;
         return <File className="w-5 h-5 text-gray-500" />;
     };
 
@@ -158,7 +157,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                             type="file"
                             ref={fileInputRef}
                             onChange={handleFileSelect}
-                            accept=".png,.jpg,.jpeg,.pdf"
+                            accept=".png,.jpg,.jpeg"
                             multiple
                             className="hidden"
                         />
@@ -167,7 +166,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                         </div>
                         <div className="text-center">
                             <p className="text-[15px] font-semibold text-gray-900">Click to upload or drag and drop</p>
-                            <p className="text-[13px] text-gray-400 mt-1">Total Limit: {maxFiles} documents (PDF, JPG, PNG)</p>
+                            <p className="text-[13px] text-gray-400 mt-1">Total Limit: {maxFiles} documents (JPG, PNG)</p>
                         </div>
                     </div>
 

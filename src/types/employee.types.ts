@@ -46,6 +46,7 @@ export interface Employee {
     accountHolderName?: string;
     documents?: EmployeeDocument[];
     avatar?: string;
+    hasActiveLoan?: boolean;
 }
 
 export interface CreateEmployeeRequest {

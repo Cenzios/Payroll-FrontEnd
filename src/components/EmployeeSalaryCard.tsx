@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Loader2, ChevronRight, Eye, Lock, ArrowBigDown, ArrowDown, Loader, ChevronDown, ArrowUpRight, LockKeyhole } from "lucide-react";
+import { Loader2, ChevronRight, Lock, Loader, ArrowUpRight, LockKeyhole } from "lucide-react";
 import { Employee } from "../types/employee.types";
 import { useAppSelector } from "../store/hooks";
 
@@ -155,32 +155,38 @@ const EmployeeSalaryCard = ({
             })()
             : displayBasicPay;
 
+
     const nonPaidLeaveDeduction = isLocked && generatedSalary
         ? generatedSalary.nonPaidLeaveDeduction ?? 0
         : emp.salaryType === "MONTHLY" && companyWorkingDays > 0
             ? (basicSalary / companyWorkingDays) * sickLeaveDays
             : 0;
 
-    // EPF is calculated on the actual EARNED amount (excluding allowances).
-    const epfBasis = earnedBasicPay;
+    // EPF is calculated on the actual EARNED amount (excluding allowances), 
+    // unless a custom EPF base amount is specified for the employee.
+    const epfBasis = (emp.epfEtfAmount && emp.epfEtfAmount > 0)
+        ? emp.epfEtfAmount
+        : earnedBasicPay;
     const epfAmount = isLocked && generatedSalary
         ? generatedSalary.employeeEPF
         : emp.epfEnabled && isEpfEnabled
             ? epfBasis * 0.08
             : 0;
 
-    // Gross Earnings uses the FULL display basic pay.
+    // Gross Earnings uses the FULL display basic pay for the UI, 
+    // and we show unpaid leaves as a deduction instead of pro-rating it directly here.
     const totalEarnings = isLocked && generatedSalary
-        ? generatedSalary.grossSalary
+        ? generatedSalary.grossSalary + (generatedSalary.nonPaidLeaveDeduction ?? 0)
         : displayBasicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances;
 
-    // Total Deductions includes the unpaid leave deduction (removed as Gross is now pro-rated)
+    // Total Deductions includes the unpaid leave deduction, epf, advance, and loans.
     const totalDeductions = isLocked && generatedSalary
-        ? generatedSalary.totalDeduction
+        ? generatedSalary.totalDeduction + (generatedSalary.nonPaidLeaveDeduction ?? 0)
         : displaySalaryAdvance +
         epfAmount +
         (hasLoanInstallment && isLoanEnabled ? loanDeduction : 0) +
-        totalDeductions_custom;
+        totalDeductions_custom +
+        nonPaidLeaveDeduction;
 
     // Net Salary is simply Gross - Deductions.
     const netSalary = isLocked && generatedSalary
@@ -573,9 +579,16 @@ const EmployeeSalaryCard = ({
                 <div className="relative">
                     <div className="flex justify-center items-center gap-10 px-5 py-3 text-[12px] bg-[#F8F9FE] text-gray-400 italic">
                         <div className="flex">
-                            <Loader className="w-5 h-5 rounded-full p-[2.5px] bg-[#5C81FE] text-white mr-2" />
-                            <p className="text-[#3D70F5] font-semibold">Click to Calculate Salary</p>
+                            {isLocked ? (
+                                <Eye className="w-5 h-5 rounded-full p-[2.5px] bg-[#5C81FE] text-white mr-2" />
+                            ) : (
+                                <Loader className="w-5 h-5 rounded-full p-[2.5px] bg-[#5C81FE] text-white mr-2" />
+                            )}
+                            <p className="text-[#3D70F5] font-semibold">
+                                {isLocked ? "Click to View Pay-Slip" : "Click to Calculate Salary"}
+                            </p>
                         </div>
+
                         {/* <div className="flex">
                             <p className="text-[#8791A9] font-extralight">Enter OT hours, deductions & generate pay-slip</p>
                             <ChevronDown className="w-4 h-4 text-[#8791A9] ml-1" />

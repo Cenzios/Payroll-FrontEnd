@@ -53,10 +53,11 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
   const employees = employeesData?.employees || [];
 
-  // Filter employees based on search term
+  // Filter employees based on search term and active loan status
   const filteredEmployees = employees.filter((emp: Employee) =>
-    emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
+    (emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    !emp.hasActiveLoan
   );
 
   // Close dropdown when clicking outside

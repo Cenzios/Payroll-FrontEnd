@@ -30,7 +30,8 @@ export interface PayslipData {
     netSalary: number;
     epf12: number;
     etf3: number;
-    paidLeave: number;
+    leaveDays: number;
+    nonPaidLeaveDeduction: number;
 }
 
 export interface Employee {
@@ -431,12 +432,59 @@ export const exportPayslip = (
         doc.text(periodStr, 175, 76);
 
         // 3. EARNINGS Section
+        // doc.setTextColor(100, 100, 100);
+        // doc.setFontSize(9);
+        // doc.setFont("helvetica", "bold");
+        // doc.text("EARNINGS", 14, 92);
+
+        let currentY = 90;
+
+        // doc.setDrawColor(200, 200, 200);
+        // doc.setLineWidth(0.2);
+        // doc.line(14, currentY, 196, currentY);
+        // currentY += 6;
+
+        // doc.setFontSize(9);
+        // doc.setFont("helvetica", "bold");
+        // doc.setTextColor(0, 0, 0);
+        // doc.text("Description", 14, currentY);
+        // doc.text("Amount (Rs.)", 196, currentY, { align: "right" });
+
+        // currentY += 4;
+        // doc.setLineWidth(0.2);
+        // doc.setDrawColor(200, 200, 200);
+        // doc.setLineDash([0.8, 0.8], 0);
+        // doc.line(14, currentY, 196, currentY);
+        // doc.setLineDash([], 0);
+        // currentY += 8;
+
+        const addRow = (desc: string, val: string, isBold: boolean = false) => {
+            if (isBold) {
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(0, 0, 0);
+            } else {
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(60, 60, 60);
+            }
+            doc.text(desc, 14, currentY);
+
+            doc.text(val, 196, currentY, { align: "right" });
+            currentY += 7;
+        };
+
+        addRow("Working Days", companyWorkingDays.toString());
+        addRow("Worked Days", previewPayslip.workedDays.toString());
+
+        if (previewPayslip.salaryType === "MONTHLY" && previewPayslip.leaveDays > 0) {
+            addRow("Paid Leave Count", previewPayslip.leaveDays.toString());
+        }
+currentY += 4;
+
         doc.setTextColor(100, 100, 100);
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
-        doc.text("EARNINGS", 14, 92);
-
-        let currentY = 97;
+        doc.text("EARNINGS", 14, currentY);
+        currentY += 5;
 
         doc.setDrawColor(200, 200, 200);
         doc.setLineWidth(0.2);
@@ -457,29 +505,10 @@ export const exportPayslip = (
         doc.setLineDash([], 0);
         currentY += 8;
 
-        const addRow = (desc: string, val: string, isBold: boolean = false) => {
-            if (isBold) {
-                doc.setFont("helvetica", "bold");
-                doc.setTextColor(0, 0, 0);
-            } else {
-                doc.setFont("helvetica", "normal");
-                doc.setTextColor(60, 60, 60);
-            }
-            doc.text(desc, 14, currentY);
-
-            doc.text(val, 196, currentY, { align: "right" });
-            currentY += 7;
-        };
 
         addRow("Rate Type", previewPayslip.salaryType);
         addRow("Basic Rate", formatCurrency(previewPayslip.basicSalary));
-        addRow("Working Days", companyWorkingDays.toString());
-        addRow("Worked Days", previewPayslip.workedDays.toString());
         addRow("Calculated Basic Pay", formatCurrency(previewPayslip.basicPay));
-
-        if (previewPayslip.salaryType === "MONTHLY" && previewPayslip.paidLeave > 0) {
-            addRow("Paid Leave", previewPayslip.paidLeave.toString());
-        }
 
         if (previewPayslip.otAmount > 0) {
             addRow(`OT Amount (${previewPayslip.otHours} hrs)`, formatCurrency(previewPayslip.otAmount));
@@ -530,6 +559,9 @@ export const exportPayslip = (
         doc.setLineDash([], 0);
         currentY += 8;
 
+        if (previewPayslip.nonPaidLeaveDeduction > 0) {
+            addRow("Unpaid Leave Deduction", formatCurrency(previewPayslip.nonPaidLeaveDeduction));
+        }
         if (previewPayslip.isEpfEnabled) {
             addRow("EPF Employee (8%)", formatCurrency(previewPayslip.epf8));
         }
@@ -600,12 +632,13 @@ export const exportPayslip = (
             ["Employee No", selectedEmployee.employeeId],
             ["Designation", selectedEmployee.designation],
             [],
+            ["Worked Days", companyWorkingDays],
+            ["Worked Days", previewPayslip.workedDays],
+            ...(previewPayslip.salaryType === "MONTHLY" && previewPayslip.leaveDays > 0 ? [["Paid Leave", previewPayslip.leaveDays]] : []),
+            [],
             ["EARNINGS", "Amount (Rs.)"],
             ["Rate Type", previewPayslip.salaryType],
             ["Basic Rate", previewPayslip.basicSalary],
-            ["Worked Days", companyWorkingDays],
-            ["Worked Days", previewPayslip.workedDays],
-            ...(previewPayslip.salaryType === "MONTHLY" && previewPayslip.paidLeave > 0 ? [["Paid Leave", previewPayslip.paidLeave]] : []),
             ["Calculated Basic Pay", previewPayslip.basicPay],
             ...(previewPayslip.otAmount > 0
                 ? [

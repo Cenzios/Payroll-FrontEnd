@@ -1,11 +1,5 @@
-import { useState, useEffect } from "react";
-import {
-  Search,
-  Loader2,
-  Calculator,
-  Calendar,
-  Plus,
-} from "lucide-react";
+import { useState } from "react";
+import { Search, Calendar } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -504,7 +498,9 @@ const Salary = () => {
     );
 
     // Calculations
-    const epfBasis = earnedBasicPay;
+    const epfBasis = (emp.epfEtfAmount && emp.epfEtfAmount > 0)
+      ? emp.epfEtfAmount
+      : earnedBasicPay;
     let epfEmployee = 0;
     let epfEmployer = epfBasis * 0.12;
     let etfEmployer = epfBasis * 0.03;
@@ -523,8 +519,8 @@ const Salary = () => {
 
     const details = {
       basicSalary: emp.basicSalary || 0,
-      salaryType: emp.salaryType || "DAILY",
-      basicPay: fullBasicPay,
+      salaryType: emp.salaryType || "MONTHLY",
+      basicPay: earnedBasicPay,
       epfEmployee,
       epfEmployer,
       etfEmployer,
@@ -540,10 +536,10 @@ const Salary = () => {
       leaveDays,
       sickLeaveDays,
       loanDeduction,
-      epf8: epfEmployee, // For display purposes
-      epf12: epfEmployer, // For display purposes
-      etf3: etfEmployer, // For display purposes
-      paidLeave: emp.paidLeave || 0,
+      epf8: epfEmployee,
+      epf12: epfEmployer,
+      etf3: etfEmployer,
+      paidLeave: Math.min(leaveDays, emp.paidLeave || 0),
       dailyRate: emp.salaryType === "MONTHLY" ? ((emp.basicSalary || 0) / companyWorkingDays) : (emp.basicSalary || 0),
       deductions: [
         { name: "Salary Advance", amount: salaryAdvance },
@@ -618,7 +614,6 @@ const Salary = () => {
         epfEmployee: savedRecord.employeeEPF,
         epfEmployer: savedRecord.employerEPF,
         etfEmployer: savedRecord.etfAmount,
-        tax: savedRecord.employeeTaxAmount,
         totalDeductions: savedRecord.totalDeduction,
         netSalary: savedRecord.netSalary,
         workedDays: savedRecord.workingDays,
@@ -626,7 +621,11 @@ const Salary = () => {
         otHours: savedRecord.otHours,
         otAmount: savedRecord.otAmount,
         salaryAdvance: savedRecord.salaryAdvance,
-        nonPaidLeaveDeduction: savedRecord.nonPaidLeaveDeduction ?? 0,
+        nonPaidLeaveDeduction: savedRecord.nonPaidLeaveDeduction ?? (
+          savedRecord.salaryType === "MONTHLY" && companyWorkingDays > 0
+            ? ((savedRecord.basicSalary || 0) / companyWorkingDays) * (savedRecord.sickLeaveDays || 0)
+            : 0
+        ),
         leaveDays: savedRecord.leaveDays || 0,
         sickLeaveDays: savedRecord.sickLeaveDays || 0,
         loanDeduction: savedRecord.loanDeduction,
