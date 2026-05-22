@@ -1,7 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface SalaryDetails {
+    salaryType: string;
     basicSalary: number;
+    basicPay: number;
     epfEmployee: number;
     epfEmployer: number;
     etfEmployer: number;
@@ -14,6 +16,11 @@ interface SalaryDetails {
     otAmount: number;
     salaryAdvance: number;
     loanDeduction: number;
+    paidLeave: number;
+    epf8: number;
+    epf12: number;
+    etf3: number;
+    allowances: { name: string; amount: number }[];
     deductions: { name: string; amount: number }[];
 }
 
