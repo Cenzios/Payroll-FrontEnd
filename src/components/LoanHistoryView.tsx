@@ -113,6 +113,11 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
         .filter((i: any) => i.status === 'PAID')
         .reduce((sum: number, i: any) => sum + i.amount, 0);
 
+    const loanDocuments = loan?.supportingDocs?.length > 0 
+        ? loan.supportingDocs 
+        : loan?.supportingDoc ? [loan.supportingDoc] : [];
+    const hasDocuments = loanDocuments.length > 0;
+
     return (
         <div className="flex-1 flex flex-col pt-6 overflow-y-auto">
             {/* Standard Header */}
@@ -208,21 +213,21 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 <div className="flex items-center gap-4 max-sm:w-full max-sm:flex-col">
                     <button
                         onClick={() => setIsViewModalOpen(true)}
-                        disabled={!loan?.supportingDoc}
+                        disabled={!hasDocuments}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95 shadow-blue-500/10 max-sm:w-full max-sm:justify-center max-sm:py-3 max-sm:rounded-2xl max-sm:bg-[#4A7DFF] max-sm:text-white
-                            ${!loan?.supportingDoc
+                            ${!hasDocuments
                                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
                                 : 'bg-blue-600 hover:bg-blue-700 text-white font-semibold'}`}
                     >
-                        <Eye className={`w-4 h-4 ${!loan?.supportingDoc ? 'text-gray-300' : 'text-white'}`} />
-                        {loan?.supportingDoc ? 'View Document' : 'No Document'}
+                        <Eye className={`w-4 h-4 ${!hasDocuments ? 'text-gray-300' : 'text-white'}`} />
+                        {hasDocuments ? (loanDocuments.length > 1 ? 'View Documents' : 'View Document') : 'No Document'}
                     </button>
                     {getLoanStatusBadge(loan.status)}
 
                     <DocumentViewerModal
                         isOpen={isViewModalOpen}
                         onClose={() => setIsViewModalOpen(false)}
-                        doc={loan?.supportingDoc || null}
+                        docs={loanDocuments}
                     />
                 </div>
             </div>

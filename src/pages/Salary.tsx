@@ -656,8 +656,10 @@ const Salary = () => {
   const handleSelectEmployee = (emp: Employee) => {
     if (selectedEmployee?.id === emp.id) {
       setSelectedEmployee(null);
+      dispatch(setPreviewPayslip(null));
     } else {
       setSelectedEmployee(emp);
+      dispatch(setPreviewPayslip(null));
     }
   };
 
@@ -912,13 +914,6 @@ const Salary = () => {
               ${selectedEmployee && previewPayslip ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
             `}>
 
-              <button
-                className="md:hidden flex items-center gap-1 text-sm text-gray-500 p-4 border-b border-gray-100"
-                onClick={() => { setSelectedEmployee(null); dispatch(setPreviewPayslip(null)); }}
-              >
-                ← Back
-              </button>
-
               <PayslipPreview
                 previewPayslip={previewPayslip}
                 selectedEmployee={selectedEmployee}
@@ -929,6 +924,10 @@ const Salary = () => {
                 exportPDF={exportPDF}
                 exportExcel={exportExcel}
                 exportCSV={exportCSV}
+                onClose={() => {
+                  setSelectedEmployee(null);
+                  setPreviewPayslip(null);
+                }}
               />
             </div>
           </div>
