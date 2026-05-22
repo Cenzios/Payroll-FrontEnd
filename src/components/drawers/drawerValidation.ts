@@ -146,9 +146,7 @@ export const validateEmployeeField = (
             }
             break;
         case "epfNumber":
-            if (!value || !value.trim()) {
-                error = "EPF Number is required";
-            } else {
+            if (value && value.trim()) {
                 const epf = value.trim();
                 if (epf.length > 10)
                     error = "EPF Number cannot exceed 10 characters";

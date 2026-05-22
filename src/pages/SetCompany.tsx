@@ -206,7 +206,7 @@ const SetCompany = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5 max-sm:px-6">
         {/* Company Name */}
         <div>
           <label
@@ -420,7 +420,8 @@ const SetCompany = () => {
              focus:ring-2 focus:ring-[#3A8BFF] focus:ring-offset-2 
              transition-all duration-200 
              disabled:opacity-50 disabled:cursor-not-allowed 
-             flex items-center justify-center"
+             flex items-center justify-center
+                                    max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:text-white max-sm:border-0 max-sm:shadow-blue-200"
         >
           {isLoading ? (
             <>

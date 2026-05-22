@@ -1,10 +1,12 @@
-import { ExternalLink, Calendar, CheckCircle2, CalendarDays, ArrowLeft, Loader2, Coins, PieChart, Eye, FileText } from 'lucide-react';
+import { ExternalLink, Calendar, CheckCircle2, CalendarDays, ArrowLeft, Loader2, Coins, PieChart, Eye, FileText, Plus } from 'lucide-react';
 import PageHeader from './PageHeader';
 import { useGetLoanByIdQuery, useUploadEmployeeDocumentMutation } from '../store/apiSlice';
 import { useAppSelector } from '../store/hooks';
 import { useRef, useState } from 'react';
 import FileUploadModal from './FileUploadModal';
 import DocumentViewerModal from './DocumentViewerModal';
+import logo from '../assets/images/logo-login.svg';
+
 
 interface LoanHistoryViewProps {
     loan: any;
@@ -41,10 +43,12 @@ const getLoanStatusBadge = (status: string) => {
 
 const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) => {
     const { selectedCompanyId } = useAppSelector((state) => state.auth);
-    const { data: loan, isLoading, isError } = useGetLoanByIdQuery(
+    const { data: loan, isLoading, isError, refetch: refetchLoan } = useGetLoanByIdQuery(
         { loanId: initialLoan.id, companyId: selectedCompanyId || "" },
         { skip: !selectedCompanyId || !initialLoan.id }
     );
+
+    const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
     const [uploadDocument, { isLoading: isUploading }] = useUploadEmployeeDocumentMutation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -68,6 +72,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
             await uploadDocument(formData).unwrap();
             setIsModalOpen(false);
             setSelectedFiles([]);
+            refetchLoan();
             alert('Document uploaded successfully');
         } catch (error) {
             console.error('Upload failed:', error);
@@ -109,17 +114,25 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
         .filter((i: any) => i.status === 'PAID')
         .reduce((sum: number, i: any) => sum + i.amount, 0);
 
+    // Consolidate documents: supportingDoc and supportingDocuments
+    const allDocs = [
+        ...(loan?.supportingDoc ? [loan.supportingDoc] : []),
+        ...(loan?.supportingDocuments || [])
+    ].filter((doc, index, self) =>
+        index === self.findIndex((d) => d.id === doc.id)
+    );
+
     return (
-        <div className="flex-1 flex flex-col pt-0">
+        <div className="flex-1 flex flex-col pt-6 overflow-y-auto">
             {/* Standard Header */}
-            <div className="mb-6 -mt-2">
+            <div className="mb-6 -mt-2 max-sm:hidden">
                 <PageHeader
                     title="Loans"
                     subtitle="Loan history"
                     actionElement={
                         <button
                             onClick={onBack}
-                            className="flex items-center gap-2 text-[#4F5660] hover:text-blue-600 font-semibold text-sm transition-colors py-2 px-4 rounded-full border border-gray-200 hover:border-blue-200 bg-white"
+                            className="flex items-center gap-2 text-[#4F5660] hover:text-blue-600 font-semibold text-xs sm:text-sm transition-colors py-1.5 px-3 sm:py-2 sm:px-4 rounded-full border border-gray-200 hover:border-blue-200 bg-white"
                         >
                             <ArrowLeft className="w-4 h-4" />
                             Back to Loans
@@ -128,9 +141,46 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 />
             </div>
 
+            {/* MOBILE HEADER */}
+            <div className="hidden mt-6 max-sm:flex items-center justify-between pb-3 border-b border-gray-100">
+                <div>
+                    <img src={logo} alt="logo" className='w-40 h-10' />
+                </div>
+                <div className="flex items-center gap-2 ml-6">
+
+                    {/* Avatar circle */}
+                    <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                        {loan.employee?.fullName?.charAt(0) || 'E'}
+                    </div>
+                </div>
+            </div>
+
+            {/* Mobile Title & Action */}
+            <div className="hidden max-sm:block px-6 py-4 bg-white shrink-0">
+                <div className="flex items-center justify-between mb-1">
+                    <div className='px-1'>
+                        <div className="inline-block rounded-sm">
+                            <h1 className="text-[22px] font-bold text-[#1D1F24]">Loans</h1>
+                        </div>
+                        <p className="text-[13px] text-[#989FA7] font-medium">Handle Employees Loans</p>
+                    </div>
+                    <button
+                        onClick={() => setIsCreateDrawerOpen(true)}
+                        className="flex items-center gap-2 bg-[#2054C8] text-white pl-5 pr-2 py-2 rounded-lg text-[14px] font-bold shadow-lg shadow-blue-100
+                                max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] "
+                    >
+                        Create Loan
+                        <div className="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center">
+                            <Plus className="w-4 h-4" />
+                        </div>
+                    </button>
+                </div>
+            </div>
+
             {/* Top Employee Card */}
-            <div className="bg-[#407BFF1A] rounded-2xl p-6 flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
+            <div className="bg-[#407BFF1A] rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4
+    max-sm:mx-5 max-sm:mt-3 max-sm:rounded-3xl max-sm:bg-white max-sm:shadow-md max-sm:border max-sm:border-gray-100">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[11px] sm:text-[13px] font-medium text-gray-500">
                     <div className="w-[60px] h-[60px] rounded-full bg-blue-200 text-blue-700 font-bold text-3xl flex items-center justify-center shrink-0 overflow-hidden">
                         {/* <img
                             src={`https://ui-avatars.com/api/?name=${encodeURIComponent(loan.employee?.fullName || 'E')}&background=BFDBFE&color=2563EB`}
@@ -149,50 +199,60 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                                 {loan.employee?.employeeId}
                             </div>
                             <div className="w-px h-3 bg-gray-300"></div>
-                            <div className="flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5" />
-                                {loan.loanTitle}
-                            </div>
-                            <div className="w-px h-3 bg-gray-300"></div>
-                            <div className="flex items-center gap-1.5">
-                                <span className="font-bold">%</span>
-                                {loan.interestRate}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})
+                            <div className='flex items-center gap-4'>
+                                <div className="flex items-center gap-1.5">
+                                    <Calendar className="w-3.5 h-3.5" />
+                                    {loan.loanTitle}
+                                </div>
+                                <div className="w-px h-3 bg-gray-300"></div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="font-bold">%</span>
+                                    {loan.interestRate}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
+
+                <div className="flex items-center gap-4 max-sm:w-full max-sm:flex-col">
                     <button
                         onClick={() => setIsViewModalOpen(true)}
-                        disabled={!loan?.supportingDoc}
+                        disabled={allDocs.length === 0}
                         className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all shadow-md active:scale-95 shadow-blue-500/10 
-                            ${!loan?.supportingDoc
+                            ${allDocs.length === 0
                                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
                                 : 'bg-blue-600 hover:bg-blue-700 text-white font-semibold'}`}
                     >
-                        <Eye className={`w-4 h-4 ${!loan?.supportingDoc ? 'text-gray-300' : 'text-white'}`} />
-                        {loan?.supportingDoc ? 'View Document' : 'No Document'}
+                        <Eye className={`w-4 h-4 ${allDocs.length === 0 ? 'text-gray-300' : 'text-white'}`} />
+                        {allDocs.length > 1 ? 'View Documents' : allDocs.length === 1 ? 'View Document' : 'No Document'}
+                        {allDocs.length > 1 && (
+                            <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded text-[10px]">
+                                {allDocs.length}
+                            </span>
+                        )}
                     </button>
                     {getLoanStatusBadge(loan.status)}
 
                     <DocumentViewerModal
                         isOpen={isViewModalOpen}
                         onClose={() => setIsViewModalOpen(false)}
-                        doc={loan?.supportingDoc || null}
+                        docs={allDocs}
                     />
                 </div>
             </div>
 
-            {/* 4 Stats Cards */}
-            <div className="grid grid-cols-4 gap-6 mb-8">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-8 
+    max-sm:mx-5 max-sm:grid-cols-1 max-sm:gap-3">
                 {/* Card 1 */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-[130px]">
+                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]
+    max-sm:min-h-0 max-sm:p-5 max-sm:rounded-2xl">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
                         <ExternalLink className="w-4 h-4 -rotate-45" />
                         Principal Loan Amount
                     </div>
                     <div>
-                        <div className="text-[22px] font-bold text-[#141B3B] mb-1">
+                        <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
                             Rs: {loan.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div className="text-[12px] text-gray-400 font-medium">Requested Amount</div>
@@ -200,13 +260,14 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
 
                 {/* Card 2 */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-[130px]">
+                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]
+    max-sm:min-h-0 max-sm:p-5 max-sm:rounded-2xl">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
                         <PieChart className="w-4 h-4" />
                         Full Amount (w/ Interest)
                     </div>
                     <div>
-                        <div className="text-[22px] font-bold text-[#141B3B] mb-1">
+                        <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
                             Rs: {fullAmountWithInterest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div className="text-[12px] text-gray-400 font-medium">Includes Rs: {totalInterest.toLocaleString('en-US', { minimumFractionDigits: 2 })} interest</div>
@@ -214,24 +275,22 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
 
                 {/* Card 3 (With Progress Bar) */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-[130px]">
+                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]
+    max-sm:min-h-0 max-sm:p-5 max-sm:rounded-2xl">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-emerald-500">
                         <CheckCircle2 className="w-4 h-4" />
                         Current Paid Amount
                     </div>
                     <div>
-                        <div className="text-[22px] font-bold text-[#141B3B] mb-2">
+                        <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
                             Rs: {currentPaidAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 max-sm:mt-1">
                             <div className="text-[12px] text-gray-400 font-medium whitespace-nowrap">
                                 {paidInstallmentsCount} / {totalInstallmentsCount} Installments
                             </div>
-                            <div className="flex-1 max-w-[100px] h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-blue-500 rounded-full"
-                                    style={{ width: `${progressPercent}%` }}
-                                ></div>
+                            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-sm:max-w-none">
+                                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${progressPercent}%` }}></div>
                             </div>
                             <div className="text-[12px] font-bold text-[#141B3B]">{progressPercent}%</div>
                         </div>
@@ -239,13 +298,14 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
                 </div>
 
                 {/* Card 4 */}
-                <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between h-[130px]">
+                <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] sm:h-[130px]
+    max-sm:min-h-0 max-sm:p-5 max-sm:rounded-2xl">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
                         <CalendarDays className="w-4 h-4" />
                         Monthly Premium
                     </div>
                     <div>
-                        <div className="text-[22px] font-bold text-[#141B3B] mb-1">
+                        <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
                             Rs: {loan.monthlyPremium.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div className="text-[12px] text-gray-400 font-medium">Next due: {installments.find((i: any) => i.status === 'PENDING')?.dueDate ? new Date(installments.find((i: any) => i.status === 'PENDING').dueDate).toLocaleDateString() : '-'}</div>
@@ -254,10 +314,57 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
             </div>
 
             {/* History Table */}
-            <div>
+            <div className='max-sm:mx-5 max-sm:pb-20 overflow-y-auto'>
                 <h3 className="text-lg font-bold text-[#141B3B] mb-6">Monthly Payment History</h3>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                {/* Mobile Card View */}
+                <div className="flex flex-col gap-3 sm:hidden">
+                    {installments.map((row: any) => (
+                        <div key={row.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                            {/* Top row: installment number + status badge */}
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-[13px] font-bold text-[#141B3B]">
+                                    {row.installmentNumber} / {totalInstallmentsCount}
+                                    <span className="text-gray-400 font-medium ml-1.5">
+                                        Due {new Date(row.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    </span>
+                                </span>
+                                {getHistoryBadge(row.status)}
+                            </div>
+
+                            {/* 2x2 grid of fields */}
+                            <div className="grid grid-cols-2 gap-y-3">
+                                <div>
+                                    <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Payment Date</div>
+                                    <div className="text-[13px] font-semibold text-gray-700">
+                                        {row.status === 'PAID' ? new Date(row.updatedAt).toLocaleDateString() : '-'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Principal</div>
+                                    <div className="text-[13px] font-semibold text-gray-700">
+                                        Rs: {row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Interest</div>
+                                    <div className="text-[13px] font-semibold text-gray-700">
+                                        Rs: {(row.interest ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Total Premium</div>
+                                    <div className="text-[13px] font-bold text-blue-500">
+                                        Rs: {row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden sm:block overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 overflow-y-auto">
+                    <table className="w-full text-left min-w-[480px] overflow-y-auto">
                         <thead>
                             <tr className="border-b border-gray-100">
                                 <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Installment</th>

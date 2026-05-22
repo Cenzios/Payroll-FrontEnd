@@ -319,7 +319,8 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                     key={tab}
                                     type="button"
                                     onClick={() => setActiveTab(tab)}
-                                    className={`pb-2 text-[13px] font-medium transition-colors relative ${activeTab === tab ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}`}
+                                    className={`pb-2 text-[13px] font-medium transition-colors relative ${activeTab === tab ? "text-[#367AFF]" : "text-gray-400 hover:text-gray-600"}
+                                    max-sm:text-xs`}
                                 >
                                     {tab === "employee" ? "Employee Information" : tab === "payment" ? "Salary Information" : "Bank Details"}
                                     {activeTab === tab && <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#367AFF] rounded-t-full" />}
@@ -390,7 +391,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                             <div>
                                                 <div className="relative mt-4">
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Activity className="h-4 w-4 text-blue-500" /></div>
-                                                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">EPF Number <strong className="text-red-600 text-[15px]">*</strong></label>
+                                                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">EPF Number</label>
                                                 </div>
                                                 <input type="text" value={employeeData.epfNumber || ""} onChange={(e) => handleEmployeeChange("epfNumber", e.target.value)} onBlur={() => handleBlur("epfNumber")} placeholder="Enter EPF Number"
                                                     className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.epfNumber && errors.epfNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
@@ -555,7 +556,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                 <div>
                                                     <div className="relative mt-4">
                                                         <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Calendar className="h-4 w-4 text-blue-500" /></div>
-                                                        <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Paid Leave Count</label>
+                                                        <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Annual Leave Days</label>
                                                     </div>
                                                     <div className="relative">
                                                         <div className="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none">
@@ -750,13 +751,15 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                     <div className="p-4 border-t border-gray-200 flex justify-center">
                         {activeTab === "bank" ? (
                             <button type="submit" onClick={handleSubmit} disabled={isSubmitting || !isFormValid()}
-                                className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed">
+                                className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed
+                                             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
                                 {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
                             </button>
                         ) : (
                             <button type="button" onClick={() => { if (activeTab === "employee") setActiveTab("payment"); else if (activeTab === "payment") setActiveTab("bank"); }}
                                 disabled={!isTabValid(activeTab)}
-                                className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed">
+                                className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed
+                                             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
                                 Next
                             </button>
                         )}

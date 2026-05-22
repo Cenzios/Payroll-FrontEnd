@@ -2,27 +2,32 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
-const RenewPlanModal = () => {
+const TrialUpgradeModal = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
         const handleOpenModal = () => setIsOpen(true);
-        window.addEventListener('open-renew-modal', handleOpenModal);
+        window.addEventListener('open-trial-upgrade-modal', handleOpenModal);
 
-        return () => window.removeEventListener('open-renew-modal', handleOpenModal);
+        return () => window.removeEventListener('open-trial-upgrade-modal', handleOpenModal);
     }, []);
 
-    const handleStartRenewal = () => {
+    const handleStartUpgrade = () => {
         setIsLoading(true);
         // Briefly show loader then navigate
         setTimeout(() => {
             setIsOpen(false);
             setIsLoading(false);
-            // navigate('/settle-invoice');
-            navigate('/get-plan?isUpgrade=true');
+            window.dispatchEvent(new CustomEvent('trial-modal-closed'));
+            navigate('/buy-plan?isUpgrade=true');
         }, 500);
+    };
+
+    const handleClose = () => {
+        setIsOpen(false);
+        window.dispatchEvent(new CustomEvent('trial-modal-closed'));
     };
 
     if (!isOpen) return null;
@@ -34,13 +39,9 @@ const RenewPlanModal = () => {
                 {/* Header */}
                 <div className="bg-gray-50 p-4 border-b border-gray-100 flex justify-between items-center">
                     <h3 className="text-lg font-bold text-gray-900">
-                        Subscription Expired
+                        Trial Period Ended
                     </h3>
-                    <button
-                        // TRIAL EXPIRE LOCK
-                        data-upgrade-btn
-                        onClick={() => setIsOpen(false)}
-                        className="text-gray-400 hover:text-gray-600">
+                    <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
                         ✕
                     </button>
                 </div>
@@ -49,24 +50,22 @@ const RenewPlanModal = () => {
                 <div className="p-6">
                     <div className="text-center">
                         <div className="flex justify-center mb-4">
-                            <div className="p-3 bg-red-100 rounded-full">
-                                <AlertCircle className="w-10 h-10 text-red-600" />
+                            <div className="p-3 bg-blue-100 rounded-full">
+                                <AlertCircle className="w-10 h-10 text-blue-600" />
                             </div>
                         </div>
                         <h2 className="text-xl font-bold text-gray-800 mb-2">
-                            Your plan has expired!
+                            Your trial has expired!
                         </h2>
                         <p className="text-gray-500 mb-6 text-sm">
-                            Please settle your outstanding invoices to continue accessing all features and data.
+                            Your trial period has ended. Please upgrade your plan to unlock full access and continue using all features.
                         </p>
                         <button
-                            // TRIAL EXPIRE LOCK
-                            data-upgrade-btn
-                            onClick={handleStartRenewal}
+                            onClick={handleStartUpgrade}
                             disabled={isLoading}
-                            className="w-full bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors flex justify-center items-center gap-2 shadow-lg shadow-red-200"
+                            className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors flex justify-center items-center gap-2 shadow-lg shadow-blue-200"
                         >
-                            {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Renew Plan Now'}
+                            {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Upgrade Plan Now'}
                         </button>
                     </div>
                 </div>
@@ -75,4 +74,4 @@ const RenewPlanModal = () => {
     );
 };
 
-export default RenewPlanModal;
+export default TrialUpgradeModal;

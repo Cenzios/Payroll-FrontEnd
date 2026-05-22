@@ -21,7 +21,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
 import RenewPlanModal from './components/RenewPlanModal';
+import TrialUpgradeModal from './components/TrialUpgradeModal';
 import SettleInvoice from './pages/SettleInvoice';
+import PlanVerifyPage from './pages/PlanVerifyPage';
 import BankAdviceReport from './pages/BankAdviceReport';
 import EpfEtfReport from './pages/EpfEtfReport';
 import { useEffect } from 'react';
@@ -41,6 +43,7 @@ function App() {
   return (
     <Router>
       <RenewPlanModal />
+      <TrialUpgradeModal />
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/signup" element={<Signup />} />
@@ -58,6 +61,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
         <Route path="/settle-invoice" element={<SettleInvoice />} />
+        <Route path="/plan-verify" element={<PlanVerifyPage />} />
         <Route
           path="/dashboard"
           element={

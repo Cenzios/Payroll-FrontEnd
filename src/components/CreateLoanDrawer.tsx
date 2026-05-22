@@ -113,7 +113,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
     setIsSubmitting(true);
     try {
-      let documentId = undefined;
+      let documentIds: string[] = [];
 
       if (supportingDocs.length > 0) {
         for (let i = 0; i < supportingDocs.length; i++) {
@@ -126,8 +126,8 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
             formData.append("docTitle", fileTitles[i]);
           }
           const uploadResult = await uploadEmployeeDocument(formData).unwrap();
-          if (i === 0) {
-            documentId = uploadResult?.data?.id;
+          if (uploadResult?.id) {
+            documentIds.push(uploadResult.id);
           }
         }
       }
@@ -146,7 +146,8 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
         installmentCount: parseInt(installmentCount),
         interestRate: parseFloat(interestRate) || 0,
         monthlyPremium: monthlyPremium,
-        supportingDocId: documentId
+        supportingDocId: documentIds[0], // Keep first for backward compatibility
+        supportingDocIds: documentIds
       }).unwrap();
 
       if (onSuccess) {

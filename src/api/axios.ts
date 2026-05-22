@@ -37,6 +37,26 @@ axiosInstance.interceptors.response.use(
     const status = error.response?.status;
     const code = error.response?.data?.code;
 
+    /* 🔥 TRIAL EXPIRATION HANDLING */
+    if (status === 403 && code === 'TRIAL_EXPIRED') {
+      if (!renewModalOpened) {
+        renewModalOpened = true;
+
+        window.dispatchEvent(
+          new CustomEvent('open-trial-upgrade-modal')
+        );
+
+        window.addEventListener(
+          'trial-modal-closed',
+          () => {
+            renewModalOpened = false;
+          },
+          { once: true }
+        );
+      }
+      return Promise.reject(error);
+    }
+
     /* 🔥 SUBSCRIPTION BLOCK HANDLING */
     if (status === 403 && code === 'SUBSCRIPTION_BLOCKED') {
       if (!renewModalOpened) {

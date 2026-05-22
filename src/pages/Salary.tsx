@@ -4,6 +4,7 @@ import {
   Loader2,
   Calculator,
   Calendar,
+  Plus,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -16,8 +17,8 @@ import {
   useGetCompaniesQuery,
   useGetAllPendingLoanInstallmentsQuery,
   useGetSalaryHistoryQuery,
+  useSaveSalaryMutation,
 } from "../store/apiSlice";
-import { salaryApi } from "../api/salaryApi";
 import { Employee } from "../types/employee.types";
 import Toast from "../components/Toast";
 import SalaryListSkeleton from "../components/skeletons/SalaryListSkeleton";
@@ -31,16 +32,20 @@ import {
   toggleEpfEtf,
   toggleLoanEnabled,
   setPreviewPayslip,
-  setMonth,
   setYear,
+  setEmployeeLeaveDays,
+  setEmployeeSickLeaveDays,
+  setMonth,
 } from "../store/slices/salarySlice";
 import EmployeeSalaryCard from "../components/EmployeeSalaryCard";
 import PayslipPreview from "../components/PayslipPreview";
 import ManageSalaryModal from "../components/ManageSalaryModal";
+import AlertBar from "../components/AlertBar";
+import logo from '../assets/images/logo-login.svg';
 
 const Salary = () => {
   const dispatch = useAppDispatch();
-  const { selectedCompanyId } = useAppSelector((state) => state.auth);
+  const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
   const {
     companyWorkingDays,
     employeeWorkedDays,
@@ -48,6 +53,8 @@ const Salary = () => {
     employeeSalaryAdvance,
     employeeEpfEtf,
     employeeLoanEnabled,
+    employeeLeaveDays,
+    employeeSickLeaveDays,
     previewPayslip,
     selectedMonth,
     selectedYear,
@@ -59,7 +66,7 @@ const Salary = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
     null,
   );
-  const [isSaving, setIsSaving] = useState(false);
+  const [saveSalary, { isLoading: isSaving }] = useSaveSalaryMutation();
 
   const [toast, setToast] = useState<{
     message: string;
@@ -231,6 +238,8 @@ const Salary = () => {
     const isLoanEnabled = employeeLoanEnabled[empId] ?? true;
     const otHours = employeeOtHours[empId] ?? 0;
     const salaryAdvance = employeeSalaryAdvance[empId] ?? 0;
+    const leaveDays = employeeLeaveDays[empId] ?? 0;
+    const sickLeaveDays = employeeSickLeaveDays[empId] ?? 0;
     const hasLoanInstallment = !!employeeLoanMap[empId];
     const loanDeduction = (isLoanEnabled && hasLoanInstallment) ? employeeLoanMap[empId] || 0 : 0;
     return {
@@ -239,6 +248,8 @@ const Salary = () => {
       isLoanEnabled,
       otHours,
       salaryAdvance,
+      leaveDays,
+      sickLeaveDays,
       loanDeduction,
       hasLoanInstallment,
     };
@@ -322,15 +333,16 @@ const Salary = () => {
     if (isBeforeJoinedDate(emp, selectedYear, selectedMonth)) return true;
     if (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays)
       return true;
-    const { workedDays, otHours, salaryAdvance, isEpfEnabled, isLoanEnabled, loanDeduction } = getEmployeeValues(emp.id);
+    const { workedDays, otHours, salaryAdvance, isEpfEnabled, isLoanEnabled, loanDeduction, leaveDays, sickLeaveDays } = getEmployeeValues(emp.id);
     if (workedDays < 0 || workedDays > companyWorkingDays) return true;
+    if (leaveDays < 0 || sickLeaveDays < 0) return true;
 
     // Check for negative net salary
     const otRate = emp.otRate || 0;
     const otAmount = emp.otRate > 0 ? otHours * otRate : 0;
     const basicPay = emp.salaryType === "MONTHLY"
-      ? (companyWorkingDays > 0 ? (emp.basicSalary / companyWorkingDays) * workedDays : 0)
-      : emp.basicSalary * workedDays;
+      ? (companyWorkingDays > 0 ? (emp.basicSalary / companyWorkingDays) * Math.min(workedDays + (Math.min(leaveDays, emp.paidLeave || 0)), companyWorkingDays) : 0)
+      : emp.basicSalary * (workedDays + (Math.min(leaveDays, emp.paidLeave || 0)));
 
     const epfAmount = emp.epfEnabled && isEpfEnabled ? basicPay * 0.08 : 0;
     const totalEarnings = basicPay + otAmount + (salaryAllowances[emp.id] || emp.recurringAllowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
@@ -354,8 +366,13 @@ const Salary = () => {
     }));
     const clippedVal = Math.min(Math.max(0, val), companyWorkingDays);
     dispatch(setEmployeeWorkedDays({ id: empId, days: clippedVal }));
-  };
 
+    // Auto-calculate Unpaid Leaves (Sick Leaves in the code)
+    // Formula: Unpaid = Total - Worked - Paid
+    const { leaveDays } = getEmployeeValues(empId);
+    const autoNonPaidLeaves = Math.max(0, companyWorkingDays - clippedVal - leaveDays);
+    dispatch(setEmployeeSickLeaveDays({ id: empId, days: autoNonPaidLeaves }));
+  };
   const handleMonthChange = (month: number) => {
     setTouchedFields((prev) => ({ ...prev, month: true }));
     dispatch(setMonth(month));
@@ -377,6 +394,7 @@ const Salary = () => {
     dispatch(setCompanyWorkingDays(getMaxAllowedDays(year, targetMonth)));
   };
 
+
   const handleToggleEpfEtf = (empId: string) => {
     const currentVal = employeeEpfEtf[empId] ?? true;
     dispatch(toggleEpfEtf({ id: empId, value: !currentVal }));
@@ -395,6 +413,26 @@ const Salary = () => {
     dispatch(setEmployeeSalaryAdvance({ id: empId, advance: Math.max(0, val) }));
   };
 
+  const handleEmployeeLeaveDaysChange = (empId: string, val: number) => {
+    const clippedVal = Math.max(0, val);
+    dispatch(setEmployeeLeaveDays({ id: empId, days: clippedVal }));
+    // Non paid leaves
+    const currentWorkedDays = employeeWorkedDays[empId] ?? companyWorkingDays;
+    const autoNonPaidLeaves = Math.max(0, companyWorkingDays - currentWorkedDays - clippedVal);
+    dispatch(setEmployeeSickLeaveDays({ id: empId, days: autoNonPaidLeaves }));
+  };
+
+  const handleEmployeeSickLeaveDaysChange = (empId: string, val: number) => {
+    const sickDays = Math.max(0, val);
+    dispatch(setEmployeeSickLeaveDays({ id: empId, days: sickDays }));
+
+    // Auto-calculate Worked Days
+    // Formula: Worked = Total - Unpaid - Paid
+    const { leaveDays } = getEmployeeValues(empId);
+    const autoWorkedDays = Math.max(0, companyWorkingDays - sickDays - leaveDays);
+    dispatch(setEmployeeWorkedDays({ id: empId, days: autoWorkedDays }));
+  };
+
   // Handle Generate process (Preview or Save)
   const processPayslip = async (emp: Employee, saveToDb: boolean = false) => {
     setSelectedEmployee(emp);
@@ -405,6 +443,8 @@ const Salary = () => {
       isLoanEnabled,
       otHours,
       salaryAdvance,
+      leaveDays,
+      sickLeaveDays,
       loanDeduction,
       hasLoanInstallment,
     } = getEmployeeValues(emp.id);
@@ -433,16 +473,23 @@ const Salary = () => {
     }
 
     let basicSalaryForCalc = emp.basicSalary || 0;
-    let basicPay = 0;
+    let fullBasicPay = 0;
+    let earnedBasicPay = 0;
 
     if (emp.salaryType === "MONTHLY") {
-      const absentDays = Math.max(0, companyWorkingDays - workedDays);
-      const applicablePaidLeaves = Math.min(emp.paidLeave || 0, absentDays);
-      const payableDays = workedDays + applicablePaidLeaves;
-      basicPay = (basicSalaryForCalc / companyWorkingDays) * payableDays;
+      const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
+      const payableDays = workedDays + applicableAnnualLeave;
+      fullBasicPay = (basicSalaryForCalc / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
+      earnedBasicPay = fullBasicPay;
     } else {
-      basicPay = basicSalaryForCalc * workedDays;
+      const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
+      fullBasicPay = basicSalaryForCalc * (workedDays + applicableAnnualLeave);
+      earnedBasicPay = fullBasicPay;
     }
+
+    const nonPaidLeaveDeduction = emp.salaryType === "MONTHLY" && companyWorkingDays > 0
+      ? (basicSalaryForCalc / companyWorkingDays) * sickLeaveDays
+      : 0;
 
     const currentAllowances = salaryAllowances[emp.id] || emp.recurringAllowances || [];
     const currentDeductions = salaryDeductions[emp.id] || emp.recurringDeductions || [];
@@ -457,12 +504,13 @@ const Salary = () => {
     );
 
     // Calculations
+    const epfBasis = earnedBasicPay;
     let epfEmployee = 0;
-    let epfEmployer = basicPay * 0.12;
-    let etfEmployer = basicPay * 0.03;
+    let epfEmployer = epfBasis * 0.12;
+    let etfEmployer = epfBasis * 0.03;
 
     if (emp.epfEnabled && isEpfEnabled) {
-      epfEmployee = basicPay * 0.08;
+      epfEmployee = epfBasis * 0.08;
     } else {
       epfEmployer = 0;
       etfEmployer = 0;
@@ -471,12 +519,12 @@ const Salary = () => {
     const tax = 0; // Tax will be calculated by backend
     const totalDeductions =
       epfEmployee + tax + salaryAdvance + deductionAmount + loanDeduction;
-    const netSalary = basicPay + otAmount + allowanceAmount - totalDeductions;
+    const netSalary = earnedBasicPay + otAmount + allowanceAmount - totalDeductions;
 
     const details = {
       basicSalary: emp.basicSalary || 0,
       salaryType: emp.salaryType || "DAILY",
-      basicPay,
+      basicPay: fullBasicPay,
       epfEmployee,
       epfEmployer,
       etfEmployer,
@@ -488,6 +536,9 @@ const Salary = () => {
       otHours,
       otAmount,
       salaryAdvance,
+      nonPaidLeaveDeduction,
+      leaveDays,
+      sickLeaveDays,
       loanDeduction,
       epf8: epfEmployee, // For display purposes
       epf12: epfEmployer, // For display purposes
@@ -521,15 +572,14 @@ const Salary = () => {
     // Save to DB
     if (saveToDb) {
       if (!selectedCompanyId) return;
-      setIsSaving(true);
       try {
-        await salaryApi.saveSalary({
+        await saveSalary({
           companyId: selectedCompanyId,
           employeeId: emp.id,
           month: selectedMonth + 1,
           year: selectedYear,
           workingDays: workedDays,
-          basicPay: basicPay,
+          basicPay: fullBasicPay,
           otHours: otHours,
           otAmount: otAmount,
           salaryAdvance: salaryAdvance,
@@ -541,17 +591,18 @@ const Salary = () => {
           isLoanEnabled,
           isEpfEnabled: emp.epfEnabled,
           companyWorkingDays: companyWorkingDays,
+          leaveDays: Math.min(leaveDays, emp.paidLeave || 0),
+          nonPaidLeaveDeduction,
+          sickLeaveDays: sickLeaveDays,
           allowances: currentAllowances.map(a => ({ type: a.type, amount: Number(a.amount) })),
           deductions: currentDeductions.map(d => ({ type: d.type, amount: Number(d.amount) })),
-        });
+        }).unwrap();
         setToast({ message: "Salary saved successfully!", type: "success" });
       } catch (error: any) {
         setToast({
-          message: error.response?.data?.message || "Failed to save salary",
+          message: error.data?.message || "Failed to save salary",
           type: "error",
         });
-      } finally {
-        setIsSaving(false);
       }
     } // end saveToDb
   };
@@ -575,6 +626,9 @@ const Salary = () => {
         otHours: savedRecord.otHours,
         otAmount: savedRecord.otAmount,
         salaryAdvance: savedRecord.salaryAdvance,
+        nonPaidLeaveDeduction: savedRecord.nonPaidLeaveDeduction ?? 0,
+        leaveDays: savedRecord.leaveDays || 0,
+        sickLeaveDays: savedRecord.sickLeaveDays || 0,
         loanDeduction: savedRecord.loanDeduction,
         epf8: savedRecord.employeeEPF,
         epf12: savedRecord.employerEPF,
@@ -602,8 +656,10 @@ const Salary = () => {
   const handleSelectEmployee = (emp: Employee) => {
     if (selectedEmployee?.id === emp.id) {
       setSelectedEmployee(null);
+      dispatch(setPreviewPayslip(null));
     } else {
       setSelectedEmployee(emp);
+      dispatch(setPreviewPayslip(null));
     }
   };
 
@@ -648,200 +704,254 @@ const Salary = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
-      <Sidebar />
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
+      <AlertBar />
 
-      <div className="flex-1 ml-64 p-6 h-screen overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="shrink-0">
-          <PageHeader
-            title="Salary"
-            subtitle="View and Calculate Employee Salaries"
-          />
-        </div>
+      {/* Margin bottom gap after the banner */}
+      <div className="-mb-4 shrink-0"></div>
 
-        {/* MAIN CONTENT */}
-        <div className="flex gap-6 flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
+        <Sidebar />
 
-          {/* LEFT SIDE */}
-          <div className="w-10/12 flex flex-col overflow-hidden">
+        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
 
-            {/* FILTER BOX */}
-            <div className="bg-white gap-14 p-7 w-full rounded-xl mb-6 flex flex-row border border-gray-200">
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-800 mb-2">
-                  Search Employee
-                </label>
-                <div className="relative">
-                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search by Name or ID"
-                    className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none w-80"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col max-w-xs min-w-[200px]">
-                <label className="text-sm font-medium text-gray-800 mb-2">
-                  Select Period
-                </label>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    views={['month', 'year']}
-                    value={dayjs(new Date(selectedYear, selectedMonth))}
-                    maxDate={dayjs(new Date())}
-                    onChange={(newValue) => {
-                      if (newValue && newValue.isValid()) {
-                        handleYearChange(newValue.year());
-                        handleMonthChange(newValue.month());
-                      }
-                    }}
-                    slotProps={{
-                      textField: {
-                        size: "small",
-                        sx: {
-                          backgroundColor: "white",
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: "0.75rem",
-                            "& fieldset": {
-                              borderColor: "#374151",
-                            },
-                            "&.Mui-focused fieldset": {
-                              borderColor: "#374151",
-                              borderWidth: "1px",
-                            },
-                          },
-                          "& .MuiInputBase-input": {
-                            paddingY: "9.5px",
-                            paddingX: "14px",
-                            fontSize: "0.875rem",
-                            color: "#1f2937",
-                          }
-                        }
-                      }
-                    }}
-                  />
-                </LocalizationProvider>
-              </div>
-
-              {/* Working Days */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-800 mb-2">
-                  Working Days
-                </label>
-                <div className="relative flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-300">
-                  <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                  <input
-                    type="number"
-                    min="1"
-                    max={maxAllowedCompanyDays}
-                    value={companyWorkingDays}
-                    onChange={(e) =>
-                      handleCompanyWorkingDaysChange(
-                        parseInt(e.target.value) || 0
-                      )
-                    }
-                    className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center text-sm font-medium text-gray-700"
-                  />
-                </div>
-              </div>
+          {/* MOBILE HEADER */}
+          <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5  border-b border-gray-100">
+            <div>
+              <img src={logo} alt="logo" className='w-40 h-10' />
             </div>
+            <div className="flex items-center gap-2 ml-6">
 
-            {/* EMPLOYEE LIST */}
-            <div className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {isLoading ? (
-                <SalaryListSkeleton />
-              ) : validEmployees.length === 0 ? (
-                <div className="text-center p-12 text-gray-500">
-                  No employees found.
-                </div>
-              ) : (
-                validEmployees.map((emp) => {
-                  const {
-                    workedDays,
-                    isEpfEnabled,
-                    isLoanEnabled,
-                    otHours,
-                    salaryAdvance,
-                    loanDeduction,
-                    hasLoanInstallment,
-                  } = getEmployeeValues(emp.id);
-
-                  return (
-                    <EmployeeSalaryCard
-                      key={emp.id}
-                      emp={emp}
-                      generatedSalary={generatedSalaries[emp.id]}
-                      selectedEmployee={selectedEmployee}
-                      handleSelectEmployee={handleSelectEmployee}
-                      workedDays={workedDays}
-                      isEpfEnabled={isEpfEnabled}
-                      isLoanEnabled={isLoanEnabled}
-                      otHours={otHours}
-                      salaryAdvance={salaryAdvance}
-                      loanDeduction={loanDeduction}
-                      companyWorkingDays={companyWorkingDays}
-                      hasLoanInstallment={hasLoanInstallment}
-                      handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
-                      handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
-                      handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}
-                      handleToggleLoan={handleToggleLoan}
-                      handleToggleEpfEtf={handleToggleEpfEtf}
-                      handleGeneratePayslip={handleGeneratePayslip}
-                      handleConfirmPayslip={handleConfirmPayslip}
-                      openManageModal={openManageModal}
-                      salaryAllowances={salaryAllowances}
-                      salaryDeductions={salaryDeductions}
-                      isSaving={isSaving}
-                      hasAnyError={hasAnyError}
-                      setTouchedFields={setTouchedFields}
-                      selectedMonth={selectedMonth}
-                      selectedYear={selectedYear}
-                    />
-                  );
-                })
-              )}
+              {/* Avatar circle */}
+              <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                {user?.fullName?.charAt(0) || 'U'}
+              </div>
             </div>
           </div>
 
-          {/* RIGHT SIDE */}
-          <div className="w-5/12 flex flex-col overflow-y-auto">
-            <PayslipPreview
-              previewPayslip={previewPayslip}
-              selectedEmployee={selectedEmployee}
-              companyName={companyName}
-              selectedYear={selectedYear}
-              selectedMonth={selectedMonth}
-              companyWorkingDays={companyWorkingDays}
-              exportPDF={exportPDF}
-              exportExcel={exportExcel}
-              exportCSV={exportCSV}
+          {/* Mobile Title & Action */}
+          <div className="hidden max-sm:block px-6 py-2 shrink-0">
+            <div className="flex items-center justify-between mb-1">
+              <div className='px-3'>
+                <div className="inline-block rounded-sm">
+                  <h1 className="text-[22px] font-bold text-[#1D1F24]">Salary</h1>
+                </div>
+                <p className="text-[13px] text-[#989FA7] font-medium">View and Calculate Employee Salaries</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Header */}
+          <div className="shrink-0 max-sm:hidden">
+            <PageHeader
+              title="Salary"
+              subtitle="View and Calculate Employee Salaries"
             />
           </div>
-        </div>
 
-        {/* MODAL */}
-        <ManageSalaryModal
-          manageModal={manageModal}
-          modalEntries={modalEntries}
-          setModalEntries={setModalEntries}
-          onSave={handleModalSave}
-          onCancel={handleModalCancel}
-        />
+          {/* MAIN CONTENT */}
+          <div className="flex flex-col md:flex-row gap-6 flex-1 overflow-hidden max-sm:px-6">
 
-        {/* TOAST */}
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
+            {/* LEFT SIDE */}
+            <div className="w-full md:w-10/12 flex flex-col overflow-hidden">
+
+              {/* FILTER BOX */}
+              <div className="bg-white gap-4 md:gap-14 p-4 md:p-7 w-full rounded-xl mb-6 flex flex-col md:flex-row border border-gray-200">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-800 mb-2">
+                    Search Employee
+                  </label>
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search by Name or ID"
+                      className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none w-full md:w-80"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-8 max-sm:gap-4">
+                  <div className="flex flex-col min-w-[100px]">
+                    <label className="text-sm font-medium text-gray-800 mb-2">
+                      Select Period
+                    </label>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        views={['month', 'year']}
+                        value={dayjs(new Date(selectedYear, selectedMonth))}
+                        maxDate={dayjs(new Date())}
+                        onChange={(newValue) => {
+                          if (newValue && newValue.isValid()) {
+                            handleYearChange(newValue.year());
+                            handleMonthChange(newValue.month());
+                          }
+                        }}
+                        slotProps={{
+                          textField: {
+                            size: "small",
+                            sx: {
+                              backgroundColor: "white",
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: "0.75rem",
+                                "& fieldset": {
+                                  borderColor: "#374151",
+                                },
+                                "&.Mui-focused fieldset": {
+                                  borderColor: "#374151",
+                                  borderWidth: "1px",
+                                },
+                              },
+                              "& .MuiInputBase-input": {
+                                paddingY: "9.5px",
+                                paddingX: "14px",
+                                fontSize: "0.875rem",
+                                color: "#1f2937",
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </div>
+
+                  {/* Working Days */}
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-800 mb-2">
+                      Working Days
+                    </label>
+                    <div className="relative flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-300">
+                      <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                      <input
+                        type="number"
+                        min="1"
+                        max={maxAllowedCompanyDays}
+                        value={companyWorkingDays}
+                        onChange={(e) =>
+                          handleCompanyWorkingDaysChange(
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                        className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center text-sm font-medium text-gray-700"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* EMPLOYEE LIST */}
+              <div className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] max-sm:pb-20">
+                {isLoading ? (
+                  <SalaryListSkeleton />
+                ) : validEmployees.length === 0 ? (
+                  <div className="text-center p-12 text-gray-500">
+                    No employees found.
+                  </div>
+                ) : (
+                  validEmployees.map((emp) => {
+                    const {
+                      workedDays,
+                      isEpfEnabled,
+                      isLoanEnabled,
+                      otHours,
+                      salaryAdvance,
+                      leaveDays,
+                      sickLeaveDays,
+                      loanDeduction,
+                      hasLoanInstallment,
+                    } = getEmployeeValues(emp.id);
+
+                    return (
+                      <EmployeeSalaryCard
+                        key={emp.id}
+                        emp={emp}
+                        generatedSalary={generatedSalaries[emp.id]}
+                        selectedEmployee={selectedEmployee}
+                        handleSelectEmployee={handleSelectEmployee}
+                        workedDays={workedDays}
+                        isEpfEnabled={isEpfEnabled}
+                        isLoanEnabled={isLoanEnabled}
+                        otHours={otHours}
+                        salaryAdvance={salaryAdvance}
+                        leaveDays={leaveDays}
+                        sickLeaveDays={sickLeaveDays}
+                        loanDeduction={loanDeduction}
+                        companyWorkingDays={companyWorkingDays}
+                        hasLoanInstallment={hasLoanInstallment}
+                        handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
+                        handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
+                        handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}
+                        handleEmployeeLeaveDaysChange={handleEmployeeLeaveDaysChange}
+                        handleEmployeeSickLeaveDaysChange={handleEmployeeSickLeaveDaysChange}
+                        handleToggleLoan={handleToggleLoan}
+                        handleToggleEpfEtf={handleToggleEpfEtf}
+                        handleGeneratePayslip={handleGeneratePayslip}
+                        handleConfirmPayslip={handleConfirmPayslip}
+                        openManageModal={openManageModal}
+                        salaryAllowances={salaryAllowances}
+                        salaryDeductions={salaryDeductions}
+                        isSaving={isSaving}
+                        hasAnyError={hasAnyError}
+                        setTouchedFields={setTouchedFields}
+                        selectedMonth={selectedMonth}
+                        selectedYear={selectedYear}
+                      />
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT SIDE */}
+            <div className={`
+              fixed md:relative inset-0 md:inset-auto z-40 md:z-auto
+              w-full md:w-5/12
+              flex flex-col overflow-y-auto
+              bg-white md:bg-transparent
+              transition-transform duration-300
+              ${selectedEmployee && previewPayslip ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+            `}>
+
+              <PayslipPreview
+                previewPayslip={previewPayslip}
+                selectedEmployee={selectedEmployee}
+                companyName={companyName}
+                selectedYear={selectedYear}
+                selectedMonth={selectedMonth}
+                companyWorkingDays={companyWorkingDays}
+                exportPDF={exportPDF}
+                exportExcel={exportExcel}
+                exportCSV={exportCSV}
+                onClose={() => {
+                  setSelectedEmployee(null);
+                  dispatch(setPreviewPayslip(null));
+                }}
+              />
+            </div>
+          </div>
+
+          {/* MODAL */}
+          <ManageSalaryModal
+            manageModal={manageModal}
+            modalEntries={modalEntries}
+            setModalEntries={setModalEntries}
+            onSave={handleModalSave}
+            onCancel={handleModalCancel}
           />
-        )}
-      </div>
-    </div >
+
+          {/* TOAST */}
+          {toast && (
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => setToast(null)}
+            />
+          )}
+        </div>
+      </div >
+    </div>
   );
 };
 

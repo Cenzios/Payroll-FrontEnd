@@ -59,6 +59,7 @@ const CompanyDrawer = ({ isOpen, onClose, onSubmit, initialData }: CompanyDrawer
         setCompanyData((prev) => ({ ...prev, [field]: value }));
         const error = validateCompanyField(field, value);
         setErrors((prev) => ({ ...prev, [field]: error }));
+        if (value && String(value).trim() !== "") setTouched((prev) => ({ ...prev, [field]: true }));
     };
 
     const handleBlur = (field: string) => {
@@ -153,7 +154,7 @@ const CompanyDrawer = ({ isOpen, onClose, onSubmit, initialData }: CompanyDrawer
                     </div>
 
                     {/* Form */}
-                    <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4">
+                    <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 -mt-7">
                         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
                             <div>
                                 <div className="flex items-center gap-2 mb-4">

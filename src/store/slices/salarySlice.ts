@@ -29,6 +29,8 @@ interface SalaryState {
     // Toggle state helper
     employeeEpfEtf: Record<string, boolean>; // Defaults to true
     employeeLoanEnabled: Record<string, boolean>; // Defaults to true
+    employeeLeaveDays: Record<string, number>;
+    employeeSickLeaveDays: Record<string, number>;
     // Preview data
     previewPayslip: SalaryDetails | null;
 }
@@ -42,6 +44,8 @@ const initialState: SalaryState = {
     employeeSalaryAdvance: {},
     employeeEpfEtf: {},
     employeeLoanEnabled: {},
+    employeeLeaveDays: {},
+    employeeSickLeaveDays: {},
     previewPayslip: null,
 };
 
@@ -79,6 +83,12 @@ const salarySlice = createSlice({
         setYear: (state, action: PayloadAction<number>) => {
             state.selectedYear = action.payload;
         },
+        setEmployeeLeaveDays: (state, action: PayloadAction<{ id: string; days: number }>) => {
+            state.employeeLeaveDays[action.payload.id] = action.payload.days;
+        },
+        setEmployeeSickLeaveDays: (state, action: PayloadAction<{ id: string; days: number }>) => {
+            state.employeeSickLeaveDays[action.payload.id] = action.payload.days;
+        },
         setPreviewPayslip: (state, action: PayloadAction<SalaryDetails | null>) => {
             state.previewPayslip = action.payload;
         },
@@ -99,6 +109,8 @@ export const {
     toggleLoanEnabled,
     setMonth,
     setYear,
+    setEmployeeLeaveDays,
+    setEmployeeSickLeaveDays,
     setPreviewPayslip,
     resetSalaryState
 } = salarySlice.actions;

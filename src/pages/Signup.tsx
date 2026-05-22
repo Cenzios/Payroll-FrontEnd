@@ -114,6 +114,13 @@ const Signup = () => {
             <GoogleIcon />
             Continue with Google
           </button>
+
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <hr className="flex-1 border-gray-300" />
+            <p className="text-gray-500">or</p>
+            <hr className="flex-1 border-gray-300" />
+          </div>
+
           <label
             htmlFor="fullName"
             className="block text-sm font-medium text-gray-700 mt-6 mb-2"
@@ -173,7 +180,8 @@ const Signup = () => {
              focus:ring-2 focus:ring-[#3A8BFF] focus:ring-offset-2 
              transition-all duration-200 
              disabled:opacity-50 disabled:cursor-not-allowed 
-             flex items-center justify-center"
+             flex items-center justify-center
+             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:text-white max-sm:border-0 max-sm:shadow-blue-200"
         >
           {isLoading ? (
             <>
@@ -186,7 +194,7 @@ const Signup = () => {
         </button>
 
       </form>
-    </AuthLayout>
+    </AuthLayout >
   );
 };
 

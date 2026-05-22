@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, MoreVertical, Phone, Mail, User, Briefcase, Edit, Trash2, Ban } from "lucide-react";
+import { Plus, Search, MoreVertical, Phone, Mail, User, Briefcase, Edit, Trash2, Ban, ArrowLeft } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import EmployeeDetailsCard from "../components/EmployeeDetailsCard";
 import UniversalDrawer from "../components/UniversalDrawer";
 import SuccessModal from "../components/SuccessModal";
-import ConfirmationModal from "../components/ConfirmationModal"; // Import ConfirmationModal
-import AddonModal from "../components/AddonModal"; // Import AddonModal
-import FileUploadModal from "../components/FileUploadModal"; // Import FileUploadModal
+import ConfirmationModal from "../components/ConfirmationModal";
+import AddonModal from "../components/AddonModal";
+import FileUploadModal from "../components/FileUploadModal";
 import { useAppSelector } from "../store/hooks";
 import {
   useGetEmployeesQuery,
@@ -21,10 +21,15 @@ import PageHeader from '../components/PageHeader';
 import Toast from "../components/Toast";
 import TableSkeleton from "../components/skeletons/TableSkeleton";
 import PortalDropdown from "../components/PortalDropdown";
+import AlertBar from "../components/AlertBar";
+import logo from '../assets/images/logo-login.svg';
 
 const Employees = () => {
-  const { selectedCompanyId } = useAppSelector((state) => state.auth);
+  const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
   const [search, setSearch] = useState("");
+
+  // Mobile view state: "list" | "detail"
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
 
   // RTK Query
   const { data, isLoading, isError, error } = useGetEmployeesQuery(
@@ -47,9 +52,7 @@ const Employees = () => {
   const [uploadEmployeeDocument] = useUploadEmployeeDocumentMutation();
   const [deleteEmployeeDocument] = useDeleteEmployeeDocumentMutation();
 
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
-    null,
-  );
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
 
@@ -134,14 +137,20 @@ const Employees = () => {
     }
   }, [activeMenuId]);
 
+  // Handle employee selection — on mobile, also switch to detail view
+  const handleSelectEmployee = (emp: Employee) => {
+    setSelectedEmployee(emp);
+    setMobileView("detail");
+  };
+
   const handleOpenLimitModal = () => {
     setConfirmation({
       isOpen: true,
       type: "warning",
       title: "Employee Limit Reached",
       message:
-        "You’ve reached the maximum number of Employees allowed on your current plan. To add more Employees, please upgrade your plan.",
-      confirmText: "Update Plan", // Reverted to Update Plan as per user request to not change UI
+        "You've reached the maximum number of Employees allowed on your current plan. To add more Employees, please upgrade your plan.",
+      confirmText: "Update Plan",
       onConfirm: () => {
         setIsAddonModalOpen(true);
         setConfirmation((prev) => ({ ...prev, isOpen: false }));
@@ -229,7 +238,6 @@ const Employees = () => {
       }
 
       if (files && files.length > 0 && selectedCompanyId) {
-        // Calculate total count (existing from editingEmployee + new files)
         const existingCount = editingEmployee?.documents?.length || 0;
         const totalAfterUpload = existingCount + files.length;
 
@@ -238,7 +246,7 @@ const Employees = () => {
             message: `Cannot upload. Total documents would exceed the limit of 3 (Existing: ${existingCount}, New: ${files.length})`,
             type: "error"
           });
-          return; // Stop upload if limit exceeded
+          return;
         }
 
         setToast({ message: "Uploading documents...", type: "success" });
@@ -256,8 +264,8 @@ const Employees = () => {
 
       const isEdit = !!editingEmployee;
       setIsDrawerOpen(false);
-      setEditingEmployee(null); // Reset edit state
-      setSelectedEmployee(savedEmployee); // Update profile card instantly
+      setEditingEmployee(null);
+      setSelectedEmployee(savedEmployee);
 
       setModalTitle(isEdit ? "Changes Saved" : "Employee Added");
       setModalMessage(
@@ -269,12 +277,10 @@ const Employees = () => {
       if (!isEdit && selectedCompanyId) {
         localStorage.removeItem(`employee_add_draft_${selectedCompanyId}`);
       }
-      // Cache invalidation handles refresh
     } catch (error: any) {
       if (error.message && error.message.includes("limit reached")) {
         handleOpenLimitModal();
       } else {
-        // Extract meaningful error message from backend
         let errorMessage = "Operation failed";
 
         if (error.data && error.data.message) {
@@ -283,7 +289,6 @@ const Employees = () => {
           errorMessage = error.message;
         }
 
-        // Specifically handle duplicate NIC error for shorter message as requested (If backend doesn't already handle specifically)
         if (errorMessage === "Employee with this NIC already exists in this company" || errorMessage.includes("NIC already exists")) {
           errorMessage = "NIC already exists in this company";
         }
@@ -330,7 +335,6 @@ const Employees = () => {
           if (selectedEmployee?.id === employee.id) {
             setSelectedEmployee(updated);
           }
-          // Cache refresh
         } catch (error: any) {
           setToast({
             message: error.message || "Failed to deactivate",
@@ -364,9 +368,10 @@ const Employees = () => {
             message: "Employee removed successfully",
             type: "success",
           });
-          // Provide feedback - maybe navigate away if selected?
-          if (selectedEmployee?.id === employee.id) setSelectedEmployee(null);
-          // Cache refresh
+          if (selectedEmployee?.id === employee.id) {
+            setSelectedEmployee(null);
+            setMobileView("list"); // Go back to list after removal on mobile
+          }
         } catch (error: any) {
           setToast({
             message: error.message || "Failed to remove",
@@ -401,7 +406,6 @@ const Employees = () => {
           if (selectedEmployee?.id === employee.id) {
             setSelectedEmployee(updated);
           }
-          // Cache refresh
         } catch (error: any) {
           setToast({
             message: error.message || "Failed to activate",
@@ -414,7 +418,6 @@ const Employees = () => {
     });
   };
 
-  // Helper for adding new
   const openAddDrawer = () => {
     setEditingEmployee(null);
     setIsDrawerOpen(true);
@@ -436,59 +439,173 @@ const Employees = () => {
   const activeMenuEmployee = employees.find((e) => e.id === activeMenuId);
 
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
-      <Sidebar />
+    <div className="flex flex-col h-screen overflow-clip bg-gray-50 font-sans">
+      <AlertBar />
 
-      <div className="flex-1 ml-64 p-6 h-screen flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="shrink-0">
-          <PageHeader
-            title="Employees"
-            subtitle="Here's Your Employees Overview"
-            actionElement={
-              <button
-                onClick={() => {
-                  if (!selectedCompanyId) {
-                    setToast({
-                      message: "Please select a company from the Dashboard first.",
-                      type: "error",
-                    });
-                    return;
-                  }
-                  openAddDrawer();
-                }}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
-                title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
-              >
-                Add New Employee
-                <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center ml-1">
-                  <Plus className="w-4 h-4" />
-                </div>
-              </button>
-            }
-          />
-        </div>
+      <div className="-mb-4 shrink-0"></div>
 
-        {/* Table Container */}  {/* Main Content */}
-        {!selectedCompanyId ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                No Company Selected
-              </h3>
-              <p className="text-gray-500">
-                Please go to the Dashboard and select a company to view
-                employees.
-              </p>
+      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
+        <Sidebar />
+
+        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-svh">
+
+          {/* MOBILE HEADER */}
+          <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+            <div>
+              <img src={logo} alt="logo" className='w-40 h-10' />
+            </div>
+            <div className="flex items-center gap-2 ml-6">
+
+              {/* Avatar circle */}
+              <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                {user?.fullName?.charAt(0) || 'U'}
+              </div>
             </div>
           </div>
-        ) : (
-          <div className="flex gap-6 flex-1 overflow-hidden pb-4">
-            {/* Left Column - Employee List */}
-            <div className="w-[60%] flex flex-col pr-6 h-full">
-              {/* Search */}
-              <div className="pb-6 shrink-0">
+
+          {/* ─── DESKTOP layout ─── */}
+          <div className="contents max-sm:hidden">
+            <div className="shrink-0 px-6 pt-6">
+              <PageHeader
+                title="Employees"
+                subtitle="Here's Your Employees Overview"
+                actionElement={
+                  <button
+                    onClick={() => {
+                      if (!selectedCompanyId) {
+                        setToast({
+                          message: "Please select a company from the Dashboard first.",
+                          type: "error",
+                        });
+                        return;
+                      }
+                      openAddDrawer();
+                    }}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                  >
+                    Add New Employee
+                    <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center ml-1">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                  </button>
+                }
+              />
+            </div>
+
+            {!selectedCompanyId ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No Company Selected</h3>
+                  <p className="text-gray-500">Please go to the Dashboard and select a company to view employees.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-6 flex-1 overflow-hidden pb-4 px-6">
+                {/* Left Column */}
+                <div className="w-[60%] flex flex-col pr-6 h-full">
+                  <div className="pb-6 shrink-0">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search users by name"
+                        className="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#F2F4FF] focus:border-blue-400 outline-none transition-all placeholder-gray-400"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Search className="w-4 h-4 text-gray-400" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-y-auto pr-2">
+                    {isLoading ? (
+                      <div className="py-4">
+                        <TableSkeleton rows={5} />
+                      </div>
+                    ) : employees.length === 0 ? (
+                      <div className="py-8 text-center text-gray-500 text-sm">
+                        No employees found.
+                      </div>
+                    ) : (
+                      <div className="space-y-5 pb-20">
+                        {employees.map((emp) => (
+                          <div
+                            key={emp.id}
+                            onClick={() => setSelectedEmployee(emp)}
+                            className={`flex items-center justify-between cursor-pointer transition-all duration-200 rounded-[30px] ${selectedEmployee?.id === emp.id ? "bg-blue-200/40" : "hover:bg-gray-50/80"}`}
+                          >
+                            <div className="flex items-center gap-4 w-[30%] min-w-[250px]">
+                              <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center shrink-0">
+                                <span className="font-semibold text-sm text-blue-700">{emp.fullName.charAt(0).toUpperCase()}</span>
+                              </div>
+                              <h4 className="text-[14px] font-normal text-gray-800 truncate">{emp.fullName}</h4>
+                            </div>
+                            <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[220px]">
+                              <Mail className="w-4 h-4 text-gray-400 shrink-0" />
+                              <span className="truncate">{emp.email || "No email provided"}</span>
+                            </div>
+                            <div className="flex items-center gap-6 shrink-0">
+                              <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[100px]">
+                                <Phone className="w-4 h-4 text-gray-400 shrink-0" />
+                                <span>{emp.contactNumber}</span>
+                              </div>
+                              <button onClick={(e) => handleMenuClick(e, emp.id)}
+                                className="text-gray-500 hover:text-gray-900 p-1 rounded-full transition-colors">
+                                <MoreVertical className="w-5 h-5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <EmployeeDetailsCard
+                  selectedEmployee={selectedEmployee}
+                  setPreviewImage={setPreviewImage}
+                  onAddFileClick={() => setIsFileModalOpen(true)}
+                  onDeleteFileClick={handleDeleteFileClick}
+                  onEditClick={() => selectedEmployee && handleEdit(selectedEmployee)}
+                  isAddFileDisabled={(selectedEmployee?.documents?.length || 0) >= 3}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* MOBILE layout */}
+          <div className="hidden max-sm:flex flex-col flex-1">
+
+            {/* MOBILE: List View */}
+            <div className={`flex flex-col flex-1 ${mobileView === "list" ? "block" : "hidden"}`}>
+              {/* Mobile Header */}
+              <div className="px-7 pb-2 shrink-0">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900">Employees</h1>
+                    <p className="text-xs text-gray-500 mt-0.5">Here's Your Employees Overview</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!selectedCompanyId) {
+                        setToast({ message: "Please select a company from the Dashboard first.", type: "error" });
+                        return;
+                      }
+                      openAddDrawer();
+                    }}
+                    className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors
+                    max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] "
+                  >
+                    <div className="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                    Add
+                  </button>
+                </div>
+
+                {/* Mobile Search */}
                 <div className="relative">
                   <input
                     type="text"
@@ -503,80 +620,89 @@ const Employees = () => {
                 </div>
               </div>
 
-              {/* List */}
-              <div className="flex-1 overflow-y-auto pr-2">
-                {isLoading ? (
-                  <div className="py-4">
-                    <TableSkeleton rows={5} />
+              {/* Mobile Employee List */}
+              {!selectedCompanyId ? (
+                <div className="flex-1 flex items-center justify-center px-4">
+                  <div className="text-center">
+                    <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Company Selected</h3>
+                    <p className="text-gray-500 text-sm">Please go to the Dashboard and select a company to view employees.</p>
                   </div>
-                ) : employees.length === 0 ? (
-                  <div className="py-8 text-center text-gray-500 text-sm">
-                    No employees found.
-                  </div>
-                ) : (
-                  <div className="space-y-5 pb-20">
-                    {employees.map((emp) => (
-                      <div
-                        key={emp.id}
-                        onClick={() => setSelectedEmployee(emp)}
-                        className={` flex items-center justify-between cursor-pointer transition-all duration-200 rounded-[30px] ${selectedEmployee?.id === emp.id
-                          ? "bg-blue-200/40"
-                          : "hover:bg-gray-50/80"
-                          }`}
-                      >
-                        {/* Left side: Avatar + Name */}
-                        <div className="flex items-center gap-4 w-[30%] min-w-[250px]">
-                          {/* Avatar */}
-                          <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center shrink-0">
-                            <span className="font-semibold text-sm text-blue-700">
-                              {emp.fullName.charAt(0).toUpperCase()}
-                            </span>
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto px-4 pb-24">
+                  {isLoading ? (
+                    <div className="py-4"><TableSkeleton rows={5} /></div>
+                  ) : employees.length === 0 ? (
+                    <div className="py-8 text-center text-gray-500 text-sm">No employees found.</div>
+                  ) : (
+                    <div className="space-y-3 pt-2">
+                      {employees.map((emp) => (
+                        <div
+                          key={emp.id}
+                          onClick={() => handleSelectEmployee(emp)}
+                          className={`flex items-center justify-between cursor-pointer transition-all duration-200 rounded-2xl px-3 py-3 ${selectedEmployee?.id === emp.id ? "bg-blue-100/60" : "bg-white hover:bg-gray-50"} shadow-sm`}
+                        >
+                          {/* Avatar + Name + Email */}
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center shrink-0">
+                              <span className="font-semibold text-sm text-blue-700">{emp.fullName.charAt(0).toUpperCase()}</span>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[14px] font-medium text-gray-800 truncate">{emp.fullName}</p>
+                              <p className="text-[12px] text-gray-400 truncate">{emp.email || "No email"}</p>
+                              <p className="text-[12px] text-gray-400 truncate">{emp.contactNumber}</p>
+                            </div>
                           </div>
-                          <h4 className="text-[14px] font-normal text-gray-800 truncate">
-                            {emp.fullName}
-                          </h4>
-                        </div>
 
-                        {/* Middle: Email */}
-                        <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[220px]">
-                          <Mail className="w-4 h-4 text-gray-400 shrink-0" />
-                          <span className="truncate">
-                            {emp.email || "No email provided"}
-                          </span>
-                        </div>
-
-                        {/* Right: Phone + Menu */}
-                        <div className="flex items-center gap-6 shrink-0">
-                          {/* Phone Section */}
-                          <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[100px]">
-                            <Phone className="w-4 h-4 text-gray-400 shrink-0" />
-                            <span>{emp.contactNumber}</span>
+                          {/* Status badge + kebab */}
+                          <div className="flex items-center gap-2 shrink-0 ml-2">
+                            {emp.status === "ACTIVE" && (
+                              <span className="text-[10px] font-semibold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">ACTIVE</span>
+                            )}
+                            {emp.status === "INACTIVE" && (
+                              <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">INACTIVE</span>
+                            )}
+                            {/* {emp.status === "ON_LEAVE" && (
+                              <span className="text-[10px] font-semibold text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full">ON LEAVE</span>
+                            )} */}
+                            <button
+                              onClick={(e) => handleMenuClick(e, emp.id)}
+                              className="text-gray-400 hover:text-gray-700 p-1 rounded-full transition-colors"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
                           </div>
-                          <button
-                            onClick={(e) => handleMenuClick(e, emp.id)}
-                            className="text-gray-500 hover:text-gray-900 p-1 rounded-full transition-colors"
-                          >
-                            <MoreVertical className="w-5 h-5" />
-                          </button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Right Column - Employee Details */}
-            <EmployeeDetailsCard
-              selectedEmployee={selectedEmployee}
-              setPreviewImage={setPreviewImage}
-              onAddFileClick={() => setIsFileModalOpen(true)}
-              onDeleteFileClick={handleDeleteFileClick}
-              onEditClick={() => selectedEmployee && handleEdit(selectedEmployee)}
-              isAddFileDisabled={(selectedEmployee?.documents?.length || 0) >= 3}
-            />
+            {/* MOBILE Detail View */}
+            {mobileView === "detail" && (
+              <>
+                <div
+                  className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+                  onClick={() => { setSelectedEmployee(null); setMobileView("list"); }}
+                />
+
+                <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[88vw] h-[75vh] z-50">
+                  <EmployeeDetailsCard
+                    selectedEmployee={selectedEmployee}
+                    setPreviewImage={setPreviewImage}
+                    onAddFileClick={() => setIsFileModalOpen(true)}
+                    onDeleteFileClick={handleDeleteFileClick}
+                    onEditClick={() => selectedEmployee && handleEdit(selectedEmployee)}
+                    isAddFileDisabled={(selectedEmployee?.documents?.length || 0) >= 3}
+                  />
+                </div>
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Universal Drawer (Add/Edit) */}
@@ -636,17 +762,10 @@ const Employees = () => {
         isOpen={isAddonModalOpen}
         onClose={() => setIsAddonModalOpen(false)}
         onSuccess={() => {
-          setToast({
-            message: "Slots purchased successfully!",
-            type: "success",
-          });
-          // Optionally refresh data - employees not affected directly unless we show limits here?
-          // But we can re-fetch just in case.
-          // fetchEmployees(); // Handled by tags
+          setToast({ message: "Slots purchased successfully!", type: "success" });
         }}
         onUpgradePlan={() => {
           setIsAddonModalOpen(false);
-          // Navigate to subscription
           window.location.href = "/settings?tab=subscription";
         }}
       />
@@ -668,36 +787,20 @@ const Employees = () => {
       >
         {activeMenuEmployee && (
           <>
-            <button
-              onClick={() => handleEdit(activeMenuEmployee)}
-              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-            >
-              <Edit className="w-4 h-4" />
-              Edit
+            <button onClick={() => handleEdit(activeMenuEmployee)} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+              <Edit className="w-4 h-4" /> Edit
             </button>
             {activeMenuEmployee.status === "INACTIVE" ? (
-              <button
-                onClick={() => handleActivate(activeMenuEmployee)}
-                className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
-              >
-                <User className="w-4 h-4" />
-                Activate
+              <button onClick={() => handleActivate(activeMenuEmployee)} className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2">
+                <User className="w-4 h-4" /> Activate
               </button>
             ) : (
-              <button
-                onClick={() => handleDeactivate(activeMenuEmployee)}
-                className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2"
-              >
-                <Ban className="w-4 h-4" />
-                Deactivate
+              <button onClick={() => handleDeactivate(activeMenuEmployee)} className="w-full px-4 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 flex items-center gap-2">
+                <Ban className="w-4 h-4" /> Deactivate
               </button>
             )}
-            <button
-              onClick={() => handleRemove(activeMenuEmployee)}
-              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Remove
+            <button onClick={() => handleRemove(activeMenuEmployee)} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+              <Trash2 className="w-4 h-4" /> Remove
             </button>
           </>
         )}
@@ -707,11 +810,7 @@ const Employees = () => {
       {previewImage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setPreviewImage(null)}>
           <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => setPreviewImage(null)}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300"
-            >
-              <Trash2 className="hidden" /> {/* just to import safely, use X ideally but don't want to mess up imports */}
+            <button onClick={() => setPreviewImage(null)} className="absolute -top-10 right-0 text-white hover:text-gray-300">
               <span className="text-xl font-bold">× Close</span>
             </button>
             <img src={previewImage} alt="Document Preview" className="max-w-full max-h-[85vh] rounded-lg shadow-2xl" />

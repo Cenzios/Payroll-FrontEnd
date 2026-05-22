@@ -3,6 +3,7 @@ import { X, Loader2, FileSpreadsheet, Download } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
 import Toast from './Toast';
 import { exportAllEmployeesSummary } from '../utils/exportService';
+import { useTrialStatus } from '../hooks/useTrialStatus';
 
 interface AllEmployeesSummaryModalProps {
     isOpen: boolean;
@@ -18,6 +19,7 @@ interface EmployeeRow {
     employeeCode: string;
     employeeName: string;
     workingDays: number;
+    basicSalary: number;
     basicPay: number;
     otHours: number;
     otAmount: number;
@@ -40,6 +42,7 @@ interface SummaryData {
     };
     employees: EmployeeRow[];
     totals: {
+        basicSalary?: number;
         basicPay: number;
         otAmount: number;
         grossPay: number;
@@ -62,6 +65,7 @@ const AllEmployeesSummaryModal = ({
     const [isLoading, setIsLoading] = useState(false);
     const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const { handleTrialAction } = useTrialStatus();
 
     useEffect(() => {
         if (isOpen && selectedEmployeeIds.length > 0 && companyId) {
@@ -181,7 +185,7 @@ const AllEmployeesSummaryModal = ({
                                                             <td className="px-3 py-3 text-gray-900 border-x border-gray-200 text-center font-medium">{emp.employeeCode}</td>
                                                             <td className="px-3 py-3 text-gray-700 border-x border-gray-200">{emp.employeeName}</td>
                                                             <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">{emp.workingDays}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {emp.basicPay.toLocaleString()}</td>
+                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {emp.basicSalary.toLocaleString()}</td>
                                                             <td className="px-3 py-3 text-center text-green-600 border-x border-gray-200 font-medium">RS: {emp.otAmount.toLocaleString()}</td>
                                                             <td className="px-3 py-3 text-center text-gray-900 border-x border-gray-200 font-bold">RS: {emp.grossPay.toLocaleString()}</td>
                                                             <td className="px-3 py-3 text-center text-red-600 border-x border-gray-200">RS: {emp.salaryAdvance.toLocaleString()}</td>
@@ -193,7 +197,7 @@ const AllEmployeesSummaryModal = ({
                                                 <tfoot className="bg-[#3b82f6] text-white">
                                                     <tr className="font-bold">
                                                         <td colSpan={3} className="px-3 py-3 uppercase">TOTAL AMOUNTS</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.basicPay.toLocaleString()}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.basicSalary?.toLocaleString() || summaryData.totals.basicPay.toLocaleString()}</td>
                                                         <td className="px-3 py-3 text-center">RS: {summaryData.totals.otAmount.toLocaleString()}</td>
                                                         <td className="px-3 py-3 text-center">RS: {summaryData.totals.grossPay.toLocaleString()}</td>
                                                         <td className="px-3 py-3 text-center">RS: {summaryData.totals.salaryAdvance.toLocaleString()}</td>
@@ -217,7 +221,7 @@ const AllEmployeesSummaryModal = ({
                     {/* Footer Actions */}
                     <div className="px-8 py-6 border-t border-gray-200 flex justify-center gap-4 bg-white">
                         <button
-                            onClick={exportPDF}
+                            onClick={(e) => handleTrialAction(e, exportPDF)}
                             disabled={!summaryData || summaryData.employees.length === 0}
                             className="flex items-center gap-2 px-8 py-2.5 text-sm font-bold text-white bg-[#3b82f6] rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
                         >
@@ -225,7 +229,7 @@ const AllEmployeesSummaryModal = ({
                             Export PDF
                         </button>
                         <button
-                            onClick={exportExcel}
+                            onClick={(e) => handleTrialAction(e, exportExcel)}
                             disabled={!summaryData || summaryData.employees.length === 0}
                             className="flex items-center gap-2 px-8 py-2.5 text-sm font-bold text-white bg-[#22c55e] rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
                         >
@@ -233,7 +237,7 @@ const AllEmployeesSummaryModal = ({
                             Export Excel
                         </button>
                         <button
-                            onClick={exportCSV}
+                            onClick={(e) => handleTrialAction(e, exportCSV)}
                             disabled={!summaryData || summaryData.employees.length === 0}
                             className="flex items-center gap-2 px-8 py-2.5 text-sm font-bold text-white bg-[#6b7280] rounded-lg hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
                         >

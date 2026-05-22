@@ -180,6 +180,7 @@ const authSlice = createSlice({
           fullName: (decodedToken as any).fullName || '',
           email: (decodedToken as any).email || '',
           role: decodedToken.role,
+          isTrialUser: (decodedToken as any).isTrialUser, // ✅ PICK UP FROM TOKEN
         };
 
         // ✅ Update Redux state

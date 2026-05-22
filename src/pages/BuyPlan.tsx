@@ -4,6 +4,7 @@ import { useAppSelector } from '../store/hooks';
 import { Loader2 } from 'lucide-react';
 import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
+import PlanOption from '../components/PlanOption';
 import { PLANS, getPlanById } from '../constants/plans';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 
@@ -24,10 +25,13 @@ const BuyPlan = () => {
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
   const [isFetchingSub, setIsFetchingSub] = useState(true);
 
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "manual" | null>(null);
+
   // Stripe State
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoadingSecret, setIsLoadingSecret] = useState(false);
   const [intentError, setIntentError] = useState<string | null>(null);
+  const [isManualPending, setIsManualPending] = useState(false);
 
   // ✅ Get selected plan dynamically
   const selectedPlanId = localStorage.getItem('reg_planId') || PLANS.BASIC.id;
@@ -57,6 +61,23 @@ const BuyPlan = () => {
     fetchSubscription();
   }, []);
 
+  // ✅ Check for pending manual payments
+  useEffect(() => {
+    const checkManualPending = async () => {
+      try {
+        const { data } = await axiosInstance.get('/user-documents');
+        const hasPending = data.data.some((doc: any) => doc.status === 'PENDING');
+        if (hasPending) {
+          setIsManualPending(true);
+          setPaymentMethod('manual');
+        }
+      } catch (err) {
+        console.warn('Failed to check manual payment status:', err);
+      }
+    };
+    checkManualPending();
+  }, []);
+
   // ✅ Enforce Terms Acceptance
   useEffect(() => {
     const termsAccepted = localStorage.getItem('termsAccepted');
@@ -67,7 +88,11 @@ const BuyPlan = () => {
 
   // ✅ Create Payment Intent on Mount (or when plan/user is ready)
   useEffect(() => {
-    if (!user || isFetchingSub) return;
+    // Only create Stripe Intent if:
+    // 1. User and Sub data are loaded
+    // 2. User has NOT already submitted a manual payment (isManualPending is false)
+    // 3. Current selected method is 'card'
+    if (!user || isFetchingSub || isManualPending || paymentMethod !== 'card') return;
 
     const createPaymentIntent = async () => {
       setIsLoadingSecret(true);
@@ -105,7 +130,7 @@ const BuyPlan = () => {
     };
 
     createPaymentIntent();
-  }, [user, isFetchingSub, isPlanChange, selectedPlan.id]); // Dependencies
+  }, [user, isFetchingSub, isPlanChange, selectedPlan.id, paymentMethod, isManualPending]); // Dependencies updated
 
   return (
     <div
@@ -115,7 +140,8 @@ const BuyPlan = () => {
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
       <div className="w-full max-w-5xl relative z-10">
-        <h1 className="text-4xl font-bold text-center text-gray-900 mb-10">
+        <h1 className="text-4xl font-bold text-center text-gray-900 mb-10
+        max-sm:text-3xl ">
           {isPlanChange ? 'Confirm Plan Change' : 'Complete Registration Payment'}
         </h1>
 
@@ -131,29 +157,39 @@ const BuyPlan = () => {
             <p className="text-gray-600 font-medium">Preparing secure payment...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
+          <div className="grid grid-cols-[1fr_1fr] gap-10">
             {/* Dynamic Plan Card - Shows Selected Plan */}
-            <PlanCard
-              planName={activeSubscription?.planName || selectedPlan.name}
-              price={activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price}
-              registrationFee={activeSubscription?.registrationFee || selectedPlan.registrationFee}
-              description={selectedPlan.description}
-              features={selectedPlan.features}
-              showPerEmployeePrice={true}
-              isHighlighted={true}
-              showButton={false}
-            />
+            <div className='max-sm:hidden'>
+              <PlanCard
+                planName={activeSubscription?.planName || selectedPlan.name}
+                price={activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price}
+                registrationFee={activeSubscription?.registrationFee || selectedPlan.registrationFee}
+                description={selectedPlan.description}
+                features={selectedPlan.features}
+                showPerEmployeePrice={true}
+                isHighlighted={true}
+                showButton={false}
+              />
+            </div>
 
-            <div className="bg-white rounded-2xl shadow-xl p-4 flex flex-col">
+            <div>
+              <PlanOption
+                value={paymentMethod}
+                onChange={setPaymentMethod}
+                initialStep={isManualPending ? 'pay' : 'select'}
+              />
+            </div>
+
+            {/* <div className="bg-white rounded-[2.5rem] shadow-xl p-4 flex flex-col">
               <div className="mb-4 text-center space-y-2">
                 <h2 className="text-xl font-semibold text-gray-900">Secure Payment via Stripe</h2>
                 <p className="text-gray-600 text-sm">
                   Enter your card details to subscribe.
                 </p>
-              </div>
+              </div> */}
 
-              {/* Stripe Elements Provider */}
-              {clientSecret && (
+            {/* Stripe Elements Provider */}
+            {/* {clientSecret && (
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
                   <CheckoutForm
                     amount={activeSubscription?.registrationFee || selectedPlan.registrationFee}
@@ -161,7 +197,7 @@ const BuyPlan = () => {
                   />
                 </Elements>
               )}
-            </div>
+            </div> */}
           </div>
         )}
       </div>

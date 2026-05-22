@@ -65,7 +65,9 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
     };
 
     return (
-        <div className="flex-1 bg-[#FBFBFF] rounded-2xl shadow-sm border border-[#E4E4E7] p-6 h-full overflow-hidden">
+        <div className="flex-1 bg-[#FBFBFF] rounded-2xl shadow-sm border border-[#E4E4E7] p-6 h-full overflow-hidden
+        max-sm:fixed max-sm:top-1/2 max-sm:left-1/2 max-sm:-translate-x-1/2 max-sm:-translate-y-1/2 
+        max-sm:w-[88vw] max-sm:h-[75vh] max-sm:rounded-2xl max-sm:z-50 max-sm:shadow-2xl">
             <div className="max-w-2xl h-full flex flex-col">
                 {/* Profile Header */}
                 <div className="flex items-center gap-4 mb-4 shrink-0 relative">
@@ -108,9 +110,11 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`pb-2 text-[13px] font-semibold transition-colors relative -mb-[2px] ${activeTab === tab
-                                    ? "text-[#4A7DFF]"
-                                    : "text-[#8392A5] hover:text-gray-600"
+                                className={`pb-2 text-[13px] font-semibold transition-colors relative -mb-[2px] 
+                                max-sm:text-[11px]
+                                    ${activeTab === tab
+                                        ? "text-[#4A7DFF] "
+                                        : "text-[#8392A5] hover:text-gray-600"
                                     }`}
                             >
                                 {tab}
@@ -148,6 +152,17 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                             </div>
 
+                            {/* NIC */}
+                            <div className="flex items-center">
+                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
+                                    <Mail className="w-[14px] h-[14px]" />
+                                    <span>NIC</span>
+                                </div>
+                                <div className="text-[13px] font-medium text-gray-800">
+                                    {selectedEmployee.employeeNIC || "N/A"}
+                                </div>
+                            </div>
+
                             {/* Address */}
                             <div className="flex items-center">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
@@ -156,6 +171,17 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800 max-w-[280px] break-words">
                                     {selectedEmployee.address || "N/A"}
+                                </div>
+                            </div>
+
+                            {/* EPF no */}
+                            <div className="flex items-center">
+                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
+                                    <Mail className="w-[14px] h-[14px]" />
+                                    <span>EPF Number</span>
+                                </div>
+                                <div className="text-[13px] font-medium text-gray-800">
+                                    {selectedEmployee.epfNumber || "N/A"}
                                 </div>
                             </div>
 
@@ -217,7 +243,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             </div>
 
                             {/* Salary Rate */}
-                            <div className="flex items-center">
+                            {/* <div className="flex items-center">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
                                     <DollarSign className="w-[14px] h-[14px]" />
                                     <span>
@@ -232,7 +258,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                         maximumFractionDigits: 2,
                                     })}
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* ── FILES SECTION (new design) ── */}
                             <div className="mt-4 pt-3 border-t border-gray-100">
@@ -351,13 +377,31 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             </div>
 
                             {/* Basic Salary */}
-                            <div className="flex items-center">
+                            {/* <div className="flex items-center">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <Wallet2 className="w-[14px] h-[14px]" />
                                     <span>Basic Salary</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.basicSalary.toLocaleString("en-US", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </div>
+                            </div> */}
+
+                            {/* Salary Rate */}
+                            <div className="flex items-center">
+                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                    <DollarSign className="w-[14px] h-[14px]" />
+                                    <span>
+                                        {selectedEmployee.salaryType === "MONTHLY"
+                                            ? "Monthly Rate"
+                                            : "Daily Rate"}
+                                    </span>
+                                </div>
+                                <div className="text-[13px] font-medium text-gray-800">
+                                    {(selectedEmployee.basicSalary ?? 0).toLocaleString("en-US", {
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2,
                                     })}

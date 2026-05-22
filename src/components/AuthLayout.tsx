@@ -93,19 +93,18 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
         <div className="w-full max-w-md mx-auto relative z-10 animate-[fadeInUp_0.6s_ease-out]">
           <div className="mb-8">
             {/* Mobile Logo (visible only on small screens) */}
-            <div className="lg:hidden flex items-center gap-2 mb-8">
+            <div className="lg:hidden fixed top-14 left-8 flex items-start justify-start gap-2">
               <img src={logo} alt="Payroll Logo" className="h-8" />
-              <span className="text-[#3A8BFF] text-[28px] font-medium">ayroll</span>
             </div>
 
             {title && (
-              <h2 className="text-[28px] font-medium text-gray-900 leading-tight">
+              <h2 className="text-[28px] font-medium text-gray-900 leading-tight text-center sm:text-left">
                 {title}
               </h2>
             )}
 
             {subtitle && (
-              <p className="text-gray-500 mt-3 text-[16px] font-normal leading-[1.7]">
+              <p className="text-gray-500 mt-3 text-[16px] font-normal leading-[1.7] text-center sm:text-left">
                 {subtitle}
               </p>
             )}
@@ -114,6 +113,11 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
           <div className="animate-[fadeIn_0.6s_ease-out_0.2s_both]">
             {children}
           </div>
+        </div>
+
+        {/* Background Waves - Bottom Left */}
+        <div className="absolute -bottom-60 -left-28 w-96 h-96 z-0 opacity-100 pointer-events-none sm:hidden ">
+          <img src={bgIllustration} alt="Background Wave" className="w-full h-full object-contain " />
         </div>
       </div>
     </div>

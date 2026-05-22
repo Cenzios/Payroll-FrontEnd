@@ -88,8 +88,9 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm p-8 h-full border border-gray-100">
-            <div className="flex items-center justify-between mb-8">
+        <div className="bg-white rounded-2xl shadow-sm p-8 h-full border border-gray-100 overflow-y-auto
+                        max-sm:p-4">
+            <div className="flex items-center justify-between mb-8 max-sm:mb-1">
                 <h2 className="text-[15px] font-semibold text-gray-900">Salary Paid Summary</h2>
 
                 <div className="relative" ref={dropdownRef}>
@@ -120,7 +121,8 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
                 </div>
             </div>
 
-            <div className="h-[300px] w-full relative">
+            <div className="h-[300px] w-full relative
+                            max-sm:h-[250px] max-sm:-ml-10 max-sm:mt-3">
                 {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-10">
                         <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
