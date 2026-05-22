@@ -576,9 +576,16 @@ const EmployeeSalaryCard = ({
                 <div className="relative">
                     <div className="flex justify-center items-center gap-10 px-5 py-3 text-[12px] bg-[#F8F9FE] text-gray-400 italic">
                         <div className="flex">
-                            <Loader className="w-5 h-5 rounded-full p-[2.5px] bg-[#5C81FE] text-white mr-2" />
-                            <p className="text-[#3D70F5] font-semibold">Click to Calculate Salary</p>
+                            {isLocked ? (
+                                <Eye className="w-5 h-5 rounded-full p-[2.5px] bg-[#5C81FE] text-white mr-2" />
+                            ) : (
+                                <Loader className="w-5 h-5 rounded-full p-[2.5px] bg-[#5C81FE] text-white mr-2" />
+                            )}
+                            <p className="text-[#3D70F5] font-semibold">
+                                {isLocked ? "Click to View Pay-Slip" : "Click to Calculate Salary"}
+                            </p>
                         </div>
+
                         {/* <div className="flex">
                             <p className="text-[#8791A9] font-extralight">Enter OT hours, deductions & generate pay-slip</p>
                             <ChevronDown className="w-4 h-4 text-[#8791A9] ml-1" />
