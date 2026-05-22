@@ -48,6 +48,7 @@ export interface Loan {
     monthlyPremium: number;
     supportingDocId?: string;
     supportingDoc?: EmployeeDocument;
+    supportingDocuments?: EmployeeDocument[];
     createdAt: string;
     employee?: {
         fullName: string;
@@ -70,6 +71,7 @@ export interface CreateLoanRequest {
     interestRate: number;
     monthlyPremium: number;
     supportingDocId?: string;
+    supportingDocIds?: string[];
 }
 
 export interface EmployeeBank {
