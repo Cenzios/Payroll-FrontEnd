@@ -50,8 +50,24 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
         return 'bg-gray-50 text-gray-500';
     };
 
-    const handleDownload = () => {
-        window.open(currentDoc.fileUrl, '_blank');
+    const handleDownload = async () => {
+        try {
+            const response = await fetch(currentDoc.fileUrl);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = currentDoc.fileName || 'document';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+        } catch (error) {
+            console.error('Download failed, falling back to open in new tab', error);
+            window.open(currentDoc.fileUrl, '_blank');
+        }
     };
 
     const handleNext = () => {
