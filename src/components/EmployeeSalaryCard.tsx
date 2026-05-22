@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Loader2, ChevronRight, Lock, Loader, ArrowUpRight, LockKeyhole } from "lucide-react";
+import { Loader2, ChevronRight, Lock, Loader, Eye, ArrowUpRight, LockKeyhole } from "lucide-react";
 import { Employee } from "../types/employee.types";
 import { useAppSelector } from "../store/hooks";
 
