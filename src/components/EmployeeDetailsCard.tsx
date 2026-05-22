@@ -66,7 +66,8 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
 
     return (
         <div className="flex-1 bg-[#FBFBFF] rounded-2xl shadow-sm border border-[#E4E4E7] p-6 h-full overflow-hidden
-        max-sm:mx-3">
+        max-sm:fixed max-sm:top-1/2 max-sm:left-1/2 max-sm:-translate-x-1/2 max-sm:-translate-y-1/2 
+        max-sm:w-[88vw] max-sm:h-[75vh] max-sm:rounded-2xl max-sm:z-50 max-sm:shadow-2xl">
             <div className="max-w-2xl h-full flex flex-col">
                 {/* Profile Header */}
                 <div className="flex items-center gap-4 mb-4 shrink-0 relative">
