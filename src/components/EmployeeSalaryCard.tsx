@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Loader2, ChevronRight, Eye, Lock, ArrowBigDown, ArrowDown, Loader, ChevronDown, ArrowUpRight, LockKeyhole } from "lucide-react";
+import { Loader2, ChevronRight, Lock, Loader, ArrowUpRight, LockKeyhole } from "lucide-react";
 import { Employee } from "../types/employee.types";
 import { useAppSelector } from "../store/hooks";
 
@@ -155,6 +155,7 @@ const EmployeeSalaryCard = ({
             })()
             : displayBasicPay;
 
+
     const nonPaidLeaveDeduction = isLocked && generatedSalary
         ? generatedSalary.nonPaidLeaveDeduction ?? 0
         : emp.salaryType === "MONTHLY" && companyWorkingDays > 0
@@ -172,18 +173,20 @@ const EmployeeSalaryCard = ({
             ? epfBasis * 0.08
             : 0;
 
-    // Gross Earnings uses the FULL display basic pay.
+    // Gross Earnings uses the FULL display basic pay for the UI, 
+    // and we show unpaid leaves as a deduction instead of pro-rating it directly here.
     const totalEarnings = isLocked && generatedSalary
-        ? generatedSalary.grossSalary
+        ? generatedSalary.grossSalary + (generatedSalary.nonPaidLeaveDeduction ?? 0)
         : displayBasicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances;
 
-    // Total Deductions includes the unpaid leave deduction (removed as Gross is now pro-rated)
+    // Total Deductions includes the unpaid leave deduction, epf, advance, and loans.
     const totalDeductions = isLocked && generatedSalary
-        ? generatedSalary.totalDeduction
+        ? generatedSalary.totalDeduction + (generatedSalary.nonPaidLeaveDeduction ?? 0)
         : displaySalaryAdvance +
         epfAmount +
         (hasLoanInstallment && isLoanEnabled ? loanDeduction : 0) +
-        totalDeductions_custom;
+        totalDeductions_custom +
+        nonPaidLeaveDeduction;
 
     // Net Salary is simply Gross - Deductions.
     const netSalary = isLocked && generatedSalary
