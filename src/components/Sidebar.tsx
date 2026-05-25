@@ -14,7 +14,8 @@ import {
     CreditCard,
     Bell,
     MoreHorizontal,
-    X
+    X,
+    ArrowUpFromLine
 } from 'lucide-react';
 
 import { useAppSelector } from '../store/hooks';
@@ -203,7 +204,11 @@ const Sidebar = () => {
                 {/* Settings */}
                 {/* TRIAL EXPIRE LOCK */}
                 <div data-sidebar-nav className="p-4 border-t border-white/10">
-                    {/* <div className="p-4 border-t border-white/10"> */}
+                    <NavLink to="/get-plan" className={({ isActive }) => getItemClass(isActive)}>
+                        <ArrowUpFromLine className="w-[18px] h-[18px]" />
+                        <span>Upgrade Now</span>
+                    </NavLink>
+
                     <NavLink to="/settings" className={({ isActive }) => getItemClass(isActive)}>
                         <Settings className="w-5 h-5" />
                         <span>Settings</span>
