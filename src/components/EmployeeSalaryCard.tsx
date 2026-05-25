@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from 'react-dom';
 import { Loader2, ChevronRight, Lock, Loader, Eye, ArrowUpRight, LockKeyhole } from "lucide-react";
 import { Employee } from "../types/employee.types";
 import { useAppSelector } from "../store/hooks";
@@ -160,14 +161,14 @@ const EmployeeSalaryCard = ({
             ? (basicSalary / companyWorkingDays) * sickLeaveDays
             : 0;
 
-    // EPF is calculated on the actual EARNED amount (excluding allowances), 
-    // unless a custom EPF base amount is specified for the employee.
+    // EPF/ETF always uses the configured epfEtfAmount from the employee form.
+    // No fallback to basic salary — if no amount is configured, EPF/ETF is 0.
     const epfBasis = (emp.epfEtfAmount && emp.epfEtfAmount > 0)
         ? emp.epfEtfAmount
-        : earnedBasicPay;
+        : 0;
     const epfAmount = isLocked && generatedSalary
         ? generatedSalary.employeeEPF
-        : emp.epfEnabled && isEpfEnabled
+        : emp.epfEnabled && isEpfEnabled && epfBasis > 0
             ? epfBasis * 0.08
             : 0;
 
@@ -596,9 +597,9 @@ const EmployeeSalaryCard = ({
             )}
 
             {/* ── Confirm Modal ── */}
-            {isConfirmModalOpen && (
+            {isConfirmModalOpen && createPortal(
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="bg-white rounded-[26px] p-6 w-full max-w-[460px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] animate-in zoom-in duration-200">
@@ -703,10 +704,12 @@ const EmployeeSalaryCard = ({
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
 };
+
 
 export default EmployeeSalaryCard;
