@@ -469,19 +469,19 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><UploadCloud className="h-4 w-4 text-blue-500" /></div>
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Supporting Documents (Max 3)</label>
                                                 </div>
-                                                {initialData?.documents && initialData.documents.length > 0 && (
+                                                {initialData?.documents && initialData.documents.filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE').length > 0 && (
                                                     <div className="mb-2 px-3 py-1.5 bg-gray-50 rounded-xl border border-gray-100">
-                                                        <span className="text-[13px] text-gray-500 font-medium">{initialData.documents.length} document(s) already uploaded</span>
+                                                        <span className="text-[13px] text-gray-500 font-medium">{initialData.documents.filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE').length} document(s) already uploaded</span>
                                                     </div>
                                                 )}
                                                 <button
                                                     type="button"
                                                     onClick={() => setIsUploadModalOpen(true)}
-                                                    disabled={((initialData?.documents?.length || 0) + employeeFiles.length) >= 3}
+                                                    disabled={((initialData?.documents?.filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE').length || 0) + employeeFiles.length) >= 3}
                                                     className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all text-[13px] text-gray-500 font-medium group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent"
                                                 >
                                                     <span className="text-gray-400 text-[13px] font-light">
-                                                        {((initialData?.documents?.length || 0) + employeeFiles.length) >= 3 ? "Document limit reached" : "Upload Employee Documents"}
+                                                        {((initialData?.documents?.filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE').length || 0) + employeeFiles.length) >= 3 ? "Document limit reached" : "Upload Employee Documents"}
                                                     </span>
                                                     <div className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-gray-50 group-hover:bg-blue-100 transition-colors">
                                                         <PlusCircle className="h-3.5 w-3.5 text-gray-400 group-hover:text-blue-600" />
@@ -517,7 +517,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     onFilesChange={setEmployeeFiles}
                                                     fileTitles={employeeFileTitles}
                                                     onTitlesChange={setEmployeeFileTitles}
-                                                    maxFiles={3 - (initialData?.documents?.length || 0)}
+                                                    maxFiles={3 - (initialData?.documents?.filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE').length || 0)}
                                                     onUpload={() => setIsUploadModalOpen(false)}
                                                 />
                                             </div>
