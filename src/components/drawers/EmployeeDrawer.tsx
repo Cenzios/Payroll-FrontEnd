@@ -209,6 +209,10 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     };
 
     const isFormValid = () => {
+        return isTabValid("employee") && isTabValid("payment") && isTabValid("bank");
+    };
+
+    const isFormValidOld = () => {
         const required = ["fullName", "employeeId", "contactNumber", "joinedDate", "employeeNIC", "epfNumber"];
         const bankFields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
         const isBankFilled = bankFields.some((f) => { const v = (employeeData as any)[f]; return v && v.toString().trim() !== ""; });

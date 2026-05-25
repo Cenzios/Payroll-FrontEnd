@@ -516,19 +516,19 @@ const Salary = () => {
       0,
     );
 
-    // Calculations
+    // EPF/ETF always uses the configured epfEtfAmount from the employee form.
+    // No fallback to basic salary — if no amount is configured, EPF/ETF is 0.
     const epfBasis = (emp.epfEtfAmount && emp.epfEtfAmount > 0)
       ? emp.epfEtfAmount
-      : earnedBasicPay;
+      : 0;
     let epfEmployee = 0;
-    let epfEmployer = epfBasis * 0.12;
-    let etfEmployer = epfBasis * 0.03;
+    let epfEmployer = 0;
+    let etfEmployer = 0;
 
-    if (emp.epfEnabled && isEpfEnabled) {
+    if (emp.epfEnabled && isEpfEnabled && epfBasis > 0) {
       epfEmployee = epfBasis * 0.08;
-    } else {
-      epfEmployer = 0;
-      etfEmployer = 0;
+      epfEmployer = epfBasis * 0.12;
+      etfEmployer = epfBasis * 0.03;
     }
 
     const tax = 0; // Tax will be calculated by backend
