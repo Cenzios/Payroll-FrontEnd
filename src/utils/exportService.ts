@@ -507,8 +507,13 @@ currentY += 4;
 
 
         addRow("Rate Type", previewPayslip.salaryType);
-        addRow("Basic Rate", formatCurrency(previewPayslip.basicSalary));
-        addRow("Calculated Basic Pay", formatCurrency(previewPayslip.basicPay));
+        // addRow("Basic Rate", formatCurrency(previewPayslip.basicSalary));
+
+        if (previewPayslip.salaryType === "DAILY") {
+            addRow("Salary Income", formatCurrency(previewPayslip.basicPay));
+        } else {
+            addRow("Monthly Basic Salary", formatCurrency(previewPayslip.basicSalary));
+        }
 
         if (previewPayslip.otAmount > 0) {
             addRow(`OT Amount (${previewPayslip.otHours} hrs)`, formatCurrency(previewPayslip.otAmount));
@@ -525,7 +530,10 @@ currentY += 4;
         doc.line(14, currentY, 196, currentY);
         currentY += 6;
 
-        let gross = previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum, a) => sum + a.amount, 0);
+        let gross =
+ (previewPayslip.salaryType === "DAILY" ? previewPayslip.basicPay : previewPayslip.basicSalary) +
+        previewPayslip.otAmount +
+        (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0);
         addRow("Gross Earnings", formatCurrency(gross), true);
 
         doc.setDrawColor(0, 0, 0);
@@ -579,14 +587,20 @@ currentY += 4;
         doc.setLineWidth(0.2);
         doc.line(14, currentY, 196, currentY);
         currentY += 6;
-        addRow("Total Deductions", formatCurrency(previewPayslip.totalDeductions), true);
+
+        let totalDeductions =
+            (previewPayslip.nonPaidLeaveDeduction || 0) +
+            (previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) +
+            previewPayslip.deductions.reduce((sum: number, d: any) => sum + d.amount, 0);
+        addRow("Total Deductions", formatCurrency(totalDeductions), true);
+        // addRow("Total Deductions", formatCurrency(previewPayslip.totalDeductions), true);
 
         doc.setDrawColor(0, 0, 0);
         doc.setLineWidth(0.6);
         doc.line(14, currentY, 196, currentY);
 
         // 5. NET SALARY BOX
-        currentY += 12;
+        currentY += 10;
         doc.setFillColor(16, 24, 54); // Match top header color
         doc.rect(14, currentY, 182, 14, "F");
 
@@ -651,25 +665,27 @@ currentY += 4;
             ...(previewPayslip.allowances || []).map((a) => [a.name, a.amount]),
             [
                 "Gross Earnings",
-                previewPayslip.basicPay +
-                previewPayslip.otAmount +
-                (previewPayslip.allowances || []).reduce(
-                    (sum, a) => sum + a.amount,
-                    0
-                ),
+                    (previewPayslip.salaryType === "DAILY" ? previewPayslip.basicPay : previewPayslip.basicSalary) +
+                    previewPayslip.otAmount +
+                    (previewPayslip.allowances || []).reduce(
+                        (sum, a) => sum + a.amount,
+                        0
+                    )
             ],
             [],
             ["DEDUCTIONS", "Amount (Rs.)"],
             ...(previewPayslip.isEpfEnabled
                 ? [["EPF Employee (8%)", previewPayslip.epf8]]
                 : []),
-            // ...(previewPayslip.loanDeduction > 0
-            //     ? [["Loan Installment", previewPayslip.loanDeduction]]
-            //     : []),
             ...previewPayslip.deductions
                 .filter((d) => d.amount > 0)
                 .map((d) => [d.name, d.amount]),
-            ["Total Deductions", previewPayslip.totalDeductions],
+            [
+                "Total Deductions", 
+                    (previewPayslip.nonPaidLeaveDeduction || 0) +
+                    (previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) +
+                    previewPayslip.deductions.reduce((sum: number, d: any) => sum + d.amount, 0)
+            ],
             [],
             ["NET SALARY PAYABLE", previewPayslip.netSalary],
             [],
