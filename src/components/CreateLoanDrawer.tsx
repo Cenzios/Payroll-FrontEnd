@@ -71,18 +71,25 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Calculate Monthly Premium
+  // Calculate Monthly Premium (Equated Monthly Installment - Reducing Balance)
   useEffect(() => {
     const p = parseFloat(amount) || 0;
-    const r = parseFloat(interestRate) || 0;
+    const rate = parseFloat(interestRate) || 0;
     const n = parseInt(installmentCount) || 0;
 
     if (p > 0 && n > 0) {
-      const totalInterest = interestRateType === 'ANNUALLY'
-        ? p * (r / 100) * (n / 12)
-        : p * (r / 100) * n;
-      const total = p + totalInterest;
-      setMonthlyPremium(total / n);
+      if (rate === 0) {
+        setMonthlyPremium(p / n);
+      } else {
+        // Convert to monthly decimal rate (r)
+        const r = interestRateType === 'ANNUALLY'
+          ? (rate / 12) / 100
+          : rate / 100;
+
+        // EMI Formula: [P * r * (1 + r)^n] / [(1 + r)^n - 1]
+        const emi = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+        setMonthlyPremium(emi);
+      }
     } else {
       setMonthlyPremium(0);
     }
