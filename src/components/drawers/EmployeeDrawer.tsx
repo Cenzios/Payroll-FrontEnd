@@ -43,7 +43,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     const [deductions, setDeductions] = useState<{ type: string; amount: string }[]>([{ type: "", amount: "" }]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
-    const [isAccountNameEdited, setIsAccountNameEdited] = useState(false);
+    // const [isAccountNameEdited, setIsAccountNameEdited] = useState(false);
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [isVisible, setIsVisible] = useState(false);
 
@@ -147,11 +147,11 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         }
     }, [employeeData, epfEtf, epfEnabled, allowanceEnabled, deductionEnabled, allowances, deductions, initialData, companyId, isOpen]);
 
-    useEffect(() => {
-        if (employeeData.fullName && !isAccountNameEdited) {
-            handleEmployeeChange("accountHolderName", employeeData.fullName);
-        }
-    }, [employeeData.fullName, isAccountNameEdited]);
+    // useEffect(() => {
+    //     if (employeeData.fullName && !isAccountNameEdited) {
+    //         handleEmployeeChange("accountHolderName", employeeData.fullName);
+    //     }
+    // }, [employeeData.fullName, isAccountNameEdited]);
 
     const getValidationContext = () => ({
         epfEnabled,
@@ -703,7 +703,9 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><UserRound className="h-4 w-4 text-blue-500" /></div>
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Account Holder Name</label>
                                                 </div>
-                                                <input type="text" value={employeeData.accountHolderName ?? ""} onChange={(e) => { setIsAccountNameEdited(true); handleEmployeeChange("accountHolderName", e.target.value); }} placeholder="Enter Your Account Holder Name"
+                                                <input type="text" value={employeeData.accountHolderName ?? ""}
+                                                    onChange={(e) => handleEmployeeChange("accountHolderName", e.target.value)}
+                                                    placeholder="Enter Your Account Holder Name"
                                                     className={`text-[13px] w-full pr-4 px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountHolderName && errors.accountHolderName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                 {touched.accountHolderName && errors.accountHolderName && <p className="text-red-500 text-xs mt-1">{errors.accountHolderName}</p>}
                                             </div>
@@ -750,7 +752,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                     {/* Footer */}
                     <div className="p-4 border-t border-gray-200 flex justify-center">
                         {activeTab === "bank" ? (
-                            <button type="submit" onClick={handleSubmit} disabled={isSubmitting || !isFormValid()}
+                            <button type="submit" onClick={handleSubmit} disabled={isSubmitting || !isTabValid("employee") || !isTabValid("payment")}
                                 className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed
                                              max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
                                 {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
