@@ -99,25 +99,23 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                         </span>
                     </div>
 
-                    <div className="flex flex-row gap-16">
+                    <div className="flex flex-row">
                         {/* Summary Info */}
                         <div className="flex flex-col items-center">
                             <div className="text-sm text-gray-500">Employees</div>
-                            <div className="text-base font-medium text-gray-900 max-sm:text-base">{totals.totalEmployees}</div>
+                            <div className="text-base font-medium text-gray-900">{totals.totalEmployees}</div>
                         </div>
-                        <div className="flex flex-col items-end">
+                        <div className="flex flex-col items-end w-44">
                             <div className="text-sm text-gray-500">Employee EPF</div>
-                            <div className="text-base font-medium text-blue-600 max-sm:text-base">Rs {totals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div className="text-base font-medium text-blue-600">Rs {totals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         </div>
-                        <div className="flex flex-col items-end">
+                        <div className="flex flex-col items-end w-44">
                             <div className="text-sm text-gray-500">Company EPF/ETF</div>
-                            <div className="text-base font-medium text-blue-600 max-sm:text-base">Rs {totals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div className="text-base font-medium text-blue-600">Rs {totals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         </div>
-                        <div className="flex flex-col items-end">
-                            <div className="flex flex-col items-end">
-                                <div className="text-sm text-gray-500">Total Net Pay</div>
-                                <div className="text-base font-medium text-blue-600 max-sm:text-base">Rs {totals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                            </div>
+                        <div className="flex flex-col items-end w-44">
+                            <div className="text-sm text-gray-500">Total Net Pay</div>
+                            <div className="text-base font-medium text-blue-600">Rs {totals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         </div>
                     </div>
                 </div>
