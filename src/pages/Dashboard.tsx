@@ -82,10 +82,10 @@ const Dashboard = () => {
     skip: !user || isTokenPending,
   });
 
-  const { data: lastMonthSalary = 0 } = useQuery({
+  const { data: lastMonthData = { totalNetPay: 0, totalCompanyEPFETF: 0, totalEmployeeEPF: 0 } } = useQuery({
     queryKey: ['lastMonthSalary', selectedCompanyId],
     queryFn: async () => {
-      if (!selectedCompanyId) return 0;
+      if (!selectedCompanyId) return { totalNetPay: 0, totalCompanyEPFETF: 0, totalEmployeeEPF: 0 };
       const now = new Date();
       const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
@@ -97,7 +97,13 @@ const Dashboard = () => {
         lastMonthDate.getFullYear()
       );
 
-      return response.data?.monthlyData?.[0]?.totals?.totalNetPay || 0;
+      const totals = response.data?.monthlyData?.[0]?.totals;
+
+      return {
+        totalNetPay: totals?.totalNetPay || 0,
+        totalCompanyEPFETF: (totals?.totalCompanyEPF || 0) + (totals?.totalCompanyETF || 0),
+        totalEmployeeEPF: totals?.totalEmployeeEPF || 0,
+      };
     },
     enabled: !!selectedCompanyId,
   });
@@ -298,7 +304,9 @@ const Dashboard = () => {
               >
                 <Building2 className="w-3 h-3 text-gray-500" />
                 {selectedCompany?.name
-                  ? selectedCompany.name.split(' ').slice(0, 2).join(' ') + ' ...'
+                  ? selectedCompany.name.trim().split(/\s+/).filter(Boolean).length > 2
+                    ? selectedCompany.name.trim().split(/\s+/).filter(Boolean).slice(0, 2).join(' ') + ' ...'
+                    : selectedCompany.name.trim()
                   : 'Select Co'}
                 <ChevronDown className="w-3 h-3 text-gray-400" />
               </button>
@@ -387,8 +395,10 @@ const Dashboard = () => {
                     >
                       <Building2 className="w-4 h-4 text-gray-500" />
                       {selectedCompany?.name
-                        ? selectedCompany.name.split(' ').slice(0, 2).join(' ') + ' ...'
-                        : 'Select Company'}
+                        ? selectedCompany.name.trim().split(/\s+/).filter(Boolean).length > 2
+                          ? selectedCompany.name.trim().split(/\s+/).filter(Boolean).slice(0, 2).join(' ') + ' ...'
+                          : selectedCompany.name.trim()
+                        : 'Select Co'}
                       <ChevronDown className="w-4 h-4 text-gray-400" />
                     </button>
 
@@ -459,23 +469,23 @@ const Dashboard = () => {
                   <StatCard
                     icon={DollarSign}
                     title="Total Salary Paid"
-                    value={`Rs ${lastMonthSalary.toLocaleString()}`}
+                    value={`Rs ${lastMonthData.totalNetPay.toLocaleString()}`}
                     colorTheme="green"
                     showLastMonth={true}
                   />
                   <StatCard
                     icon={Plus}
                     title="Company EPF/ETF Amount"
-                    value={`Rs ${((dashboardData?.totalCompanyEPF || 0) + (dashboardData?.totalCompanyETF || 0)).toLocaleString()}`}
+                    value={`Rs ${lastMonthData.totalCompanyEPFETF.toLocaleString()}`}
                     colorTheme="purple"
-                    showLastMonth={false}
+                    showLastMonth={true}
                   />
                   <StatCard
                     icon={PieChart}
                     title="Total Employee EPF"
-                    value={`Rs ${dashboardData?.totalEmployeeEPF?.toLocaleString() || '0'}`}
+                    value={`Rs ${lastMonthData.totalEmployeeEPF.toLocaleString()}`}
                     colorTheme="orange"
-                    showLastMonth={false}
+                    showLastMonth={true}
                   />
                 </div>
 
