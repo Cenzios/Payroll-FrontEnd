@@ -101,8 +101,13 @@ const salarySlice = createSlice({
         },
         resetSalaryState: (state) => {
             state.employeeWorkedDays = {};
+            state.employeeOtHours = {};
+            state.employeeSalaryAdvance = {};
+            state.employeeEpfEtf = {};
+            state.employeeLoanEnabled = {};
+            state.employeeLeaveDays = {};
+            state.employeeSickLeaveDays = {};
             state.previewPayslip = null;
-            // Keep month/year/companyDays as they might be reusable
         }
     },
 });

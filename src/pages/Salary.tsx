@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Calendar } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -30,6 +30,7 @@ import {
   setEmployeeLeaveDays,
   setEmployeeSickLeaveDays,
   setMonth,
+  resetSalaryState,
 } from "../store/slices/salarySlice";
 import EmployeeSalaryCard from "../components/EmployeeSalaryCard";
 import PayslipPreview from "../components/PayslipPreview";
@@ -217,6 +218,24 @@ const Salary = () => {
       skip: !selectedCompanyId,
     },
   );
+
+  // --- Reset state when month/year changes ---
+  useEffect(() => {
+    // Clear Redux overrides
+    dispatch(resetSalaryState());
+
+    // Clear local functional states
+    setAllowanceToggles({});
+    setDeductionToggles({});
+    setSalaryAllowances({});
+    setSalaryDeductions({});
+    setTouchedFields({
+      month: false,
+      companyDays: false,
+      employeeDays: {},
+    });
+    setSelectedEmployee(null);
+  }, [selectedMonth, selectedYear, dispatch]);
 
   const employees = data?.employees || [];
 

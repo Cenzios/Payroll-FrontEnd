@@ -102,9 +102,7 @@ const EmployeeSalaryCard = ({
     const { accessStatus } = useAppSelector((state) => state.auth);
     const isSelected = selectedEmployee?.id === emp.id;
 
-    // const isLocked = !!generatedSalary;
-    const [isLockedLocal, setIsLockedLocal] = useState(!!generatedSalary);
-    const isLocked = isLockedLocal || !!generatedSalary;
+    const isLocked = !!generatedSalary;
 
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
@@ -699,7 +697,6 @@ const EmployeeSalaryCard = ({
                                 onClick={() => {
                                     handleConfirmPayslip(emp);
                                     setIsConfirmModalOpen(false);
-                                    setIsLockedLocal(true);
                                 }}
                                 className="flex-1 py-3 rounded-xl font-semibold text-white bg-green-600">
                                 Yes Confirm & Lock
