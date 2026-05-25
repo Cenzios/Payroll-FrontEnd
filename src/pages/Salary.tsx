@@ -886,9 +886,9 @@ const Salary = () => {
                     return (
                       <div
                         key={emp.id}
-                        className="animate-in fade-in slide-in-from-bottom-5 duration-500"
+                        className="animate-in fade-in slide-in-from-bottom-5 duration-700"
                         style={{
-                          animationDelay: `${index * 70}ms`,
+                          animationDelay: `${index * 100}ms`,
                           animationFillMode: 'both'
                         }}
                       >
