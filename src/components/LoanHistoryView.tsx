@@ -280,7 +280,7 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
     max-sm:min-h-0 max-sm:p-4 max-sm:rounded-xl max-sm:col-span-2">
                         <div className="flex items-center gap-2 text-[13px] font-semibold text-gray-400">
                             <PieChart className="w-4 h-4" />
-                            Full Amount (w/ Interest)
+                            Full Amount (With Interest)
                         </div>
                         <div>
                             <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">

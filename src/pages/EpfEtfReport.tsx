@@ -307,7 +307,7 @@ const EpfEtfReport = () => {
 
                                     {/* Time Period */}
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Time Period</span>
+                                        <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Month</span>
                                         <SingleMonthPicker
                                             selectedMonth={month}
                                             selectedYear={year}

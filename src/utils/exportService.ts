@@ -565,9 +565,9 @@ currentY += 4;
         if (previewPayslip.isEpfEnabled) {
             addRow("EPF Employee (8%)", formatCurrency(previewPayslip.epf8));
         }
-        if (previewPayslip.loanDeduction > 0) {
-            addRow("Loan Installment", formatCurrency(previewPayslip.loanDeduction));
-        }
+        // if (previewPayslip.loanDeduction > 0) {
+        //     addRow("Loan Installment", formatCurrency(previewPayslip.loanDeduction));
+        // }
         previewPayslip.deductions.forEach(d => {
             if (d.amount > 0) {
                 addRow(d.name, formatCurrency(d.amount));
@@ -663,9 +663,9 @@ currentY += 4;
             ...(previewPayslip.isEpfEnabled
                 ? [["EPF Employee (8%)", previewPayslip.epf8]]
                 : []),
-            ...(previewPayslip.loanDeduction > 0
-                ? [["Loan Installment", previewPayslip.loanDeduction]]
-                : []),
+            // ...(previewPayslip.loanDeduction > 0
+            //     ? [["Loan Installment", previewPayslip.loanDeduction]]
+            //     : []),
             ...previewPayslip.deductions
                 .filter((d) => d.amount > 0)
                 .map((d) => [d.name, d.amount]),
