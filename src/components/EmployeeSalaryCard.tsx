@@ -102,9 +102,7 @@ const EmployeeSalaryCard = ({
     const { accessStatus } = useAppSelector((state) => state.auth);
     const isSelected = selectedEmployee?.id === emp.id;
 
-    // const isLocked = !!generatedSalary;
-    const [isLockedLocal, setIsLockedLocal] = useState(!!generatedSalary);
-    const isLocked = isLockedLocal || !!generatedSalary;
+    const isLocked = !!generatedSalary;
 
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
@@ -219,10 +217,10 @@ const EmployeeSalaryCard = ({
         <div
             onClick={handleCardClick}
 
-            className={`relative bg-[#f0f5ff] rounded-2xl border cursor-pointer transition-all duration-200 overflow-hidden
+            className={`relative bg-[#f0f5ff] rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden
         ${isSelected
                     ? "border-[#407BFF] shadow-lg ring-1 ring-blue-200"
-                    : "border-[#407BFF] border-l-4 border-l-[#407BFF] "
+                    : "border-[#407BFF] border-l-4 border-l-[#407BFF] hover:shadow-[0_15px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1.5 hover:border-blue-400 hover:bg-[#ebf2ff]"
                 }`}
         >
             {/* Full Card Overlay (when not selected) */}
@@ -699,7 +697,6 @@ const EmployeeSalaryCard = ({
                                 onClick={() => {
                                     handleConfirmPayslip(emp);
                                     setIsConfirmModalOpen(false);
-                                    setIsLockedLocal(true);
                                 }}
                                 className="flex-1 py-3 rounded-xl font-semibold text-white bg-green-600">
                                 Yes Confirm & Lock

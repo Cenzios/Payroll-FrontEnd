@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Calendar } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -30,6 +30,7 @@ import {
   setEmployeeLeaveDays,
   setEmployeeSickLeaveDays,
   setMonth,
+  resetSalaryState,
 } from "../store/slices/salarySlice";
 import EmployeeSalaryCard from "../components/EmployeeSalaryCard";
 import PayslipPreview from "../components/PayslipPreview";
@@ -217,6 +218,24 @@ const Salary = () => {
       skip: !selectedCompanyId,
     },
   );
+
+  // --- Reset state when month/year changes ---
+  useEffect(() => {
+    // Clear Redux overrides
+    dispatch(resetSalaryState());
+
+    // Clear local functional states
+    setAllowanceToggles({});
+    setDeductionToggles({});
+    setSalaryAllowances({});
+    setSalaryDeductions({});
+    setTouchedFields({
+      month: false,
+      companyDays: false,
+      employeeDays: {},
+    });
+    setSelectedEmployee(null);
+  }, [selectedMonth, selectedYear, dispatch]);
 
   const employees = data?.employees || [];
 
@@ -840,8 +859,10 @@ const Salary = () => {
                 </div>
               </div>
 
-              {/* EMPLOYEE LIST */}
-              <div className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] max-sm:pb-20">
+              <div
+                key={`${selectedMonth}-${selectedYear}`}
+                className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] max-sm:pb-20"
+              >
                 {isLoading ? (
                   <SalaryListSkeleton />
                 ) : validEmployees.length === 0 ? (
@@ -849,7 +870,7 @@ const Salary = () => {
                     No employees found.
                   </div>
                 ) : (
-                  validEmployees.map((emp) => {
+                  validEmployees.map((emp, index) => {
                     const {
                       workedDays,
                       isEpfEnabled,
@@ -863,40 +884,48 @@ const Salary = () => {
                     } = getEmployeeValues(emp.id);
 
                     return (
-                      <EmployeeSalaryCard
+                      <div
                         key={emp.id}
-                        emp={emp}
-                        generatedSalary={generatedSalaries[emp.id]}
-                        selectedEmployee={selectedEmployee}
-                        handleSelectEmployee={handleSelectEmployee}
-                        workedDays={workedDays}
-                        isEpfEnabled={isEpfEnabled}
-                        isLoanEnabled={isLoanEnabled}
-                        otHours={otHours}
-                        salaryAdvance={salaryAdvance}
-                        leaveDays={leaveDays}
-                        sickLeaveDays={sickLeaveDays}
-                        loanDeduction={loanDeduction}
-                        companyWorkingDays={companyWorkingDays}
-                        hasLoanInstallment={hasLoanInstallment}
-                        handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
-                        handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
-                        handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}
-                        handleEmployeeLeaveDaysChange={handleEmployeeLeaveDaysChange}
-                        handleEmployeeSickLeaveDaysChange={handleEmployeeSickLeaveDaysChange}
-                        handleToggleLoan={handleToggleLoan}
-                        handleToggleEpfEtf={handleToggleEpfEtf}
-                        handleGeneratePayslip={handleGeneratePayslip}
-                        handleConfirmPayslip={handleConfirmPayslip}
-                        openManageModal={openManageModal}
-                        salaryAllowances={salaryAllowances}
-                        salaryDeductions={salaryDeductions}
-                        isSaving={isSaving}
-                        hasAnyError={hasAnyError}
-                        setTouchedFields={setTouchedFields}
-                        selectedMonth={selectedMonth}
-                        selectedYear={selectedYear}
-                      />
+                        className="animate-in fade-in slide-in-from-bottom-5 duration-700"
+                        style={{
+                          animationDelay: `${index * 100}ms`,
+                          animationFillMode: 'both'
+                        }}
+                      >
+                        <EmployeeSalaryCard
+                          emp={emp}
+                          generatedSalary={generatedSalaries[emp.id]}
+                          selectedEmployee={selectedEmployee}
+                          handleSelectEmployee={handleSelectEmployee}
+                          workedDays={workedDays}
+                          isEpfEnabled={isEpfEnabled}
+                          isLoanEnabled={isLoanEnabled}
+                          otHours={otHours}
+                          salaryAdvance={salaryAdvance}
+                          leaveDays={leaveDays}
+                          sickLeaveDays={sickLeaveDays}
+                          loanDeduction={loanDeduction}
+                          companyWorkingDays={companyWorkingDays}
+                          hasLoanInstallment={hasLoanInstallment}
+                          handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
+                          handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
+                          handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}
+                          handleEmployeeLeaveDaysChange={handleEmployeeLeaveDaysChange}
+                          handleEmployeeSickLeaveDaysChange={handleEmployeeSickLeaveDaysChange}
+                          handleToggleLoan={handleToggleLoan}
+                          handleToggleEpfEtf={handleToggleEpfEtf}
+                          handleGeneratePayslip={handleGeneratePayslip}
+                          handleConfirmPayslip={handleConfirmPayslip}
+                          openManageModal={openManageModal}
+                          salaryAllowances={salaryAllowances}
+                          salaryDeductions={salaryDeductions}
+                          isSaving={isSaving}
+                          hasAnyError={hasAnyError}
+                          setTouchedFields={setTouchedFields}
+                          selectedMonth={selectedMonth}
+                          selectedYear={selectedYear}
+                        />
+                      </div>
                     );
                   })
                 )}
