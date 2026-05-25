@@ -52,7 +52,7 @@ const PayslipPreview = ({
     const fmt = (val: number) => (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     const grossEarnings =
-        previewPayslip.basicPay +
+        (previewPayslip.salaryType === "DAILY" ? previewPayslip.basicPay : previewPayslip.basicSalary) +
         previewPayslip.otAmount +
         (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0);
 
@@ -68,8 +68,8 @@ const PayslipPreview = ({
 
     return (
         <div
-            className="bg-black/20 md:bg-transparent p-6 md:p-0 min-h-full md:min-h-0 rounded-xl md:rounded-none
-        flex flex-col items-center justify-center"
+            className="bg-black/20 md:bg-transparent p-6 md:p-0 min-h-0 rounded-xl md:rounded-none
+        flex flex-col items-center justify-start"
             onClick={(e) => {
                 if (e.target === e.currentTarget) {
                     onClose?.();
@@ -132,16 +132,32 @@ const PayslipPreview = ({
 
                     {/* EARNINGS */}
                     <div className="my-4 max-sm:my-1">
-                        <h3 className="text-[10px] font-bold text-[#718096] tracking-widest uppercase mb-4 mt-5 pt-2 flex items-center gap-3 border-t border-gray-100">
+                        {previewPayslip.salaryType === "DAILY" && (
+                            <div className="flex justify-between items-center text-[12px] border-t border-gray-100 py-3">
+                                <span className="text-[#718096]">Daily Basic Salary</span>
+                                <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicSalary)}</span>
+                            </div>
+                        )}
+
+                        <h3 className="text-[10px] font-bold text-[#718096] tracking-widest uppercase mb-4 pt-2 flex items-center gap-3 border-t border-gray-100">
                             EARNINGS
                         </h3>
                         <div className="space-y-2">
-                            <div className="flex justify-between items-center text-[12px]">
-                                <span className="text-[#718096]">
-                                    {previewPayslip.salaryType === "MONTHLY" ? "Monthly Basic Salary" : "Daily Basic Salary"}
-                                </span>
-                                <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicSalary)}</span>
-                            </div>
+                            {previewPayslip.salaryType === "MONTHLY" && (
+                                <div className="flex justify-between items-center text-[12px]">
+                                    <span className="text-[#718096]">Monthly Basic Salary</span>
+                                    <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicSalary)}</span>
+                                </div>
+                            )}
+
+                            {previewPayslip.salaryType === "DAILY" && (
+                                <div className="flex justify-between items-center text-[12px]">
+                                    <span className="text-[#718096]">
+                                        Salary Income ({fmt(previewPayslip.basicSalary)} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
+                                    </span>
+                                    <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicPay)}</span>
+                                </div>
+                            )}
 
                             {previewPayslip.allowances?.map((a: any, i: number) => (
                                 <div key={i} className="flex justify-between items-center text-[12px]">
@@ -149,15 +165,6 @@ const PayslipPreview = ({
                                     <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(a.amount)}</span>
                                 </div>
                             ))}
-
-                            {previewPayslip.salaryType === "DAILY" && (
-                                <div className="flex justify-between items-center text-[12px]">
-                                    <span className="text-[#718096] italic">
-                                        Basic Calculation ({fmt(previewPayslip.basicSalary)} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
-                                    </span>
-                                    <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicPay)}</span>
-                                </div>
-                            )}
 
                             {previewPayslip.otAmount > 0 && (
                                 <div className="flex justify-between items-center text-[12px]">

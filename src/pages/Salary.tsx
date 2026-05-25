@@ -934,13 +934,14 @@ const Salary = () => {
 
             {/* RIGHT SIDE */}
             <div className={`
-              fixed md:relative inset-0 md:inset-auto z-40 md:z-auto
-              w-full md:w-5/12
-              flex flex-col overflow-y-auto
-              bg-white md:bg-transparent
-              transition-transform duration-300
-              ${selectedEmployee && previewPayslip ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
-            `}>
+  fixed md:relative inset-0 md:inset-auto z-40 md:z-auto
+  w-full md:w-5/12
+  h-full
+  flex flex-col overflow-y-auto
+  bg-white md:bg-transparent
+  transition-transform duration-300
+  ${selectedEmployee && previewPayslip ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+`}>
 
               <PayslipPreview
                 previewPayslip={previewPayslip}
