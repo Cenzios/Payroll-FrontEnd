@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import logo from '../assets/images/logo-login.svg';
+import axiosInstance from "../api/axios";
 
 import {
     LayoutDashboard,
@@ -40,7 +41,26 @@ const Sidebar = () => {
     const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] = useState(false);
 
     // ── Notification state ──
-    const { user } = useAppSelector((state) => state.auth);
+    const { user, token } = useAppSelector((state) => state.auth);
+
+    const [isTrial, setIsTrial] = useState(false);
+
+    useEffect(() => {
+        const checkTrial = async () => {
+            try {
+                const { data } = await axiosInstance.get('/subscription/current');
+                if (data?.data) {
+                    setIsTrial(data.data.isTrialUser && !data.data.isPaid);
+                } else {
+                    setIsTrial(!!user?.isTrialUser);
+                }
+            } catch {
+                setIsTrial(!!user?.isTrialUser);
+            }
+        };
+        if (token) checkTrial();
+    }, [token, user]);
+
     const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
     const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
@@ -204,10 +224,12 @@ const Sidebar = () => {
                 {/* Settings */}
                 {/* TRIAL EXPIRE LOCK */}
                 <div data-sidebar-nav className="p-4 border-t border-white/10">
-                    <NavLink to="/get-plan" className={({ isActive }) => getItemClass(isActive)}>
-                        <ArrowUpFromLine className="w-[18px] h-[18px]" />
-                        <span>Upgrade Now</span>
-                    </NavLink>
+                    {isTrial && (
+                        <NavLink to="/get-plan?isUpgrade=true" className={({ isActive }) => getItemClass(isActive)}>
+                            <ArrowUpFromLine className="w-[18px] h-[18px]" />
+                            <span>Upgrade Now</span>
+                        </NavLink>
+                    )}
 
                     <NavLink to="/settings" className={({ isActive }) => getItemClass(isActive)}>
                         <Settings className="w-5 h-5" />
@@ -402,6 +424,22 @@ const Sidebar = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {isTrial && (
+                                <NavLink
+                                    to="/get-plan?isUpgrade=true"
+                                    onClick={() => setIsMobileMoreOpen(false)}
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-4 px-4 py-3.5 border-b border-gray-300 transition-all duration-200 ${isActive
+                                            ? 'bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white'
+                                            : 'text-[#67696C] hover:bg-gray-50'
+                                        }`
+                                    }
+                                >
+                                    <ArrowUpFromLine className="w-5 h-5" />
+                                    <span className="text-[14px] font-semibold">Upgrade Now</span>
+                                </NavLink>
+                            )}
 
                             <NavLink
                                 to="/settings"
