@@ -794,7 +794,7 @@ const Salary = () => {
                 <div className="flex gap-8 max-sm:gap-4">
                   <div className="flex flex-col min-w-[100px]">
                     <label className="text-sm font-medium text-gray-800 mb-2">
-                      Select Period
+                      Select Month
                     </label>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
