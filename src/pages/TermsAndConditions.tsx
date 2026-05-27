@@ -120,7 +120,7 @@ const TermsAndConditions = () => {
                                 <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-gray-600">
                                     <li>Subscription type: Monthly</li>
                                     <li>Subscription auto-renews unless cancelled by the user.</li>
-                                    <li>No free trial is offered.</li>
+                                    {/* <li>No free trial is offered.</li> */}
                                     <li>Failure to make payment may result in account termination after a defined grace period.</li>
                                 </ul>
                             </section>

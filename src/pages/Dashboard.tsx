@@ -97,11 +97,14 @@ const Dashboard = () => {
         lastMonthDate.getFullYear()
       );
 
-      const totals = response.data?.monthlyData?.[0]?.totals;
+      // const totals = response.data?.monthlyData?.[0]?.totals;
+      const payload = response.data || response;
+      const totals = payload?.monthlyData?.[0]?.totals;
 
       return {
         totalNetPay: totals?.totalNetPay || 0,
-        totalCompanyEPFETF: (totals?.totalCompanyEPF || 0) + (totals?.totalCompanyETF || 0),
+        // totalCompanyEPFETF: (totals?.totalCompanyEPF || 0) + (totals?.totalCompanyETF || 0),
+        totalCompanyEPFETF: totals?.totalCompanyEPFETF || 0,
         totalEmployeeEPF: totals?.totalEmployeeEPF || 0,
       };
     },

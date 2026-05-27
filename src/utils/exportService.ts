@@ -31,6 +31,7 @@ export interface PayslipData {
     epf12: number;
     etf3: number;
     leaveDays: number;
+    sickLeaveDays: number;
     nonPaidLeaveDeduction: number;
 }
 
@@ -478,7 +479,10 @@ export const exportPayslip = (
         if (previewPayslip.salaryType === "MONTHLY" && previewPayslip.leaveDays > 0) {
             addRow("Paid Leave Count", previewPayslip.leaveDays.toString());
         }
-currentY += 4;
+        if (previewPayslip.salaryType === "MONTHLY" && (previewPayslip.sickLeaveDays || 0) > 0) {
+    addRow("Unpaid Leave Count", previewPayslip.sickLeaveDays.toString());
+}
+        currentY += 4;
 
         doc.setTextColor(100, 100, 100);
         doc.setFontSize(9);
@@ -506,7 +510,7 @@ currentY += 4;
         currentY += 8;
 
 
-        addRow("Rate Type", previewPayslip.salaryType);
+        addRow("Salary Type", previewPayslip.salaryType);
         // addRow("Basic Rate", formatCurrency(previewPayslip.basicSalary));
 
         if (previewPayslip.salaryType === "DAILY") {
@@ -651,7 +655,7 @@ currentY += 4;
             ...(previewPayslip.salaryType === "MONTHLY" && previewPayslip.leaveDays > 0 ? [["Paid Leave", previewPayslip.leaveDays]] : []),
             [],
             ["EARNINGS", "Amount (Rs.)"],
-            ["Rate Type", previewPayslip.salaryType],
+            ["Salary Type", previewPayslip.salaryType],
             ["Basic Rate", previewPayslip.basicSalary],
             ["Calculated Basic Pay", previewPayslip.basicPay],
             ...(previewPayslip.otAmount > 0
@@ -890,8 +894,7 @@ export const exportPayrollSummaryReport = (
             doc.text(`${monthData.month} ${monthData.year}`, 20, currentY + 6.5);
             doc.setFont("helvetica", "normal");
             doc.setFontSize(9);
-            doc.text(`${monthData.employees.length} employees`, pageWidth - 20, currentY + 6.5, { align: "right" });
-            currentY += 10;
+doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Employee" : "Employees"}`, pageWidth - 20, currentY + 6.5, { align: "right" });            currentY += 10;
 
             const tableBody = monthData.employees.map((emp: ReportEmployee) => [
                 emp.employeeCode || "-",
@@ -925,7 +928,7 @@ export const exportPayrollSummaryReport = (
 
             autoTable(doc, {
                 startY: currentY,
-                head: [["Emp ID", "Name", "Days", "Basic Salary", "OT", "Gross", "EPF (8%)", "Advance", "Net Pay"]],
+                head: [["Emp ID", "Name", "Worked Days", "Basic Salary", "OT", "Gross", "EPF (8%)", "Advance", "Net Pay"]],
                 body: tableBody,
                 theme: "plain",
                 styles: { fontSize: 8, cellPadding: 2 },
