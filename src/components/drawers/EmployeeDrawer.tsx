@@ -630,7 +630,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="space-y-3">
                                                         <div className="grid grid-cols-[1fr_1fr_36px] gap-3">
                                                             <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">Type</span>
-                                                            <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">Amount</span>
+                                                            <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">Amount (Rs)</span>
                                                             <span></span>
                                                         </div>
                                                         {allowances.map((allowance, index) => (

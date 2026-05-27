@@ -522,7 +522,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                     {activeTab === "Bank Details" && (
                         <div className="space-y-3 pt-2">
                             <div className="flex items-center">
-                                <div className="w-[180px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                <div className="w-[160px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <Landmark className="w-[16px] h-[16px]" />
                                     <span>Bank Name</span>
                                 </div>
@@ -531,7 +531,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                             </div>
                             <div className="flex items-center">
-                                <div className="w-[180px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                <div className="w-[160px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <HomeIcon className="w-[16px] h-[16px]" />
                                     <span>Branch</span>
                                 </div>
@@ -540,7 +540,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                             </div>
                             <div className="flex items-center pt-1">
-                                <div className="w-[180px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                <div className="w-[160px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <ListOrdered className="w-[16px] h-[16px]" />
                                     <span>Account Number</span>
                                 </div>
@@ -549,7 +549,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                             </div>
                             <div className="flex items-center pt-1">
-                                <div className="w-[180px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                <div className="w-[160px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <UsersIcon className="w-[16px] h-[16px]" />
                                     <span>Account Name</span>
                                 </div>
