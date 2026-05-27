@@ -789,10 +789,13 @@ export const exportPayrollSummaryReport = (
         doc.setFont("helvetica", "bold");
         doc.text("Payroll Summary Report", 19, 26);
 
+        const isSingleMonth = startMonth === endMonth && startYear === endYear;
+
         doc.setTextColor(180, 180, 180);
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        doc.text(`Here's your Payroll History • ${periodStr}`, 19, 36);
+        // doc.text(`Here's your Payroll History • ${periodStr}`, 19, 36);
+        doc.text(`Here's your Payroll History • ${isSingleMonth ? endPeriodStr : periodStr}`, 19, 36);
 
         // Right Header Texts
         doc.setTextColor(255, 255, 255);
@@ -817,12 +820,13 @@ export const exportPayrollSummaryReport = (
         doc.setTextColor(23, 44, 108);
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text("MULTI-MONTH PAYROLL OVERVIEW", 20, currentY + 8);
+        // doc.text("MULTI-MONTH PAYROLL OVERVIEW", 20, currentY + 8);
+        doc.text(isSingleMonth ? "SINGLE-MONTH PAYROLL OVERVIEW" : "MULTI-MONTH PAYROLL OVERVIEW", 20, currentY + 8);
 
         doc.setTextColor(100, 110, 140);
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        doc.text(`Period: ${periodStr}`, pageWidth - 20, currentY + 8, { align: "right" });
+        doc.text(`${isSingleMonth ? "Month" : "Period"}: ${isSingleMonth ? endPeriodStr : periodStr}`, pageWidth - 20, currentY + 8, { align: "right" });
 
         // 3. PERIOD SUMMARY Section
         currentY += 18;

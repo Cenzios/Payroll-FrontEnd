@@ -295,7 +295,7 @@ const EmployeeSalaryCard = ({
                             disabled={isLocked}
                             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[13px] font-semibold transition-all
               ${isLocked
-                                    ? "border-[#EF444433] bg-[#FFB3B31A] text-[#EF4444] cursor-not-allowed max-sm:text-[10px] max-sm:px-2 max-sm:py-1 max-sm:rounded-lg"
+                                    ? "border-[#EF444433] bg-[#FFB3B31A] text-red-300 cursor-not-allowed max-sm:text-[10px] max-sm:px-2 max-sm:py-1 max-sm:rounded-lg"
                                     : "border-[#EF444433] bg-[#FFB3B31A] text-[#EF4444] hover:bg-red-200 hover:border-red-400 active:scale-95 max-sm:text-[10px] max-sm:px-2 max-sm:py-1 max-sm:rounded-lg"
                                 }`}
                         >
