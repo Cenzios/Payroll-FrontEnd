@@ -953,9 +953,6 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                         data.cell.styles.fillColor = [22, 28, 45]; // Dark background for total
                         data.cell.styles.textColor = [255, 184, 0]; // Yellow text
                         data.cell.styles.fontStyle = "bold";
-                        if (data.column.index === 1) {
-                            data.cell.styles.halign = 'right';
-                        }
                     }
                 },
                 margin: { left: 14, right: 14 }
