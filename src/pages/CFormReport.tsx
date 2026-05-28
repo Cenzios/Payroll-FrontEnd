@@ -286,7 +286,7 @@ const CFormReport = () => {
                                     <span className="text-sm font-semibold text-gray-700">All Employee</span>
                                     {reportData && (
                                         <span className="text-xs text-gray-400">
-                                            Period: {periodLabel} &nbsp;|&nbsp; Employees: {String(rows.length).padStart(2, '0')}
+                                            Month: {periodLabel} &nbsp;|&nbsp; Employees: {String(rows.length).padStart(2, '0')}
                                         </span>
                                     )}
                                 </div>
