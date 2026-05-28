@@ -473,6 +473,9 @@ export const exportPayslip = (
             currentY += 7;
         };
 
+        addRow("Salary Type", previewPayslip.salaryType);
+        // addRow("Basic Rate", formatCurrency(previewPayslip.basicSalary));
+
         addRow("Working Days", companyWorkingDays.toString());
         addRow("Worked Days", previewPayslip.workedDays.toString());
 
@@ -480,8 +483,9 @@ export const exportPayslip = (
             addRow("Paid Leave Count", previewPayslip.leaveDays.toString());
         }
         if (previewPayslip.salaryType === "MONTHLY" && (previewPayslip.sickLeaveDays || 0) > 0) {
-    addRow("Unpaid Leave Count", previewPayslip.sickLeaveDays.toString());
-}
+            addRow("Unpaid Leave Count", previewPayslip.sickLeaveDays.toString());
+        }
+
         currentY += 4;
 
         doc.setTextColor(100, 100, 100);
@@ -509,12 +513,8 @@ export const exportPayslip = (
         doc.setLineDash([], 0);
         currentY += 8;
 
-
-        addRow("Salary Type", previewPayslip.salaryType);
-        // addRow("Basic Rate", formatCurrency(previewPayslip.basicSalary));
-
         if (previewPayslip.salaryType === "DAILY") {
-            addRow("Salary Income", formatCurrency(previewPayslip.basicPay));
+            addRow("Daily Wage Earnings", formatCurrency(previewPayslip.basicPay));
         } else {
             addRow("Monthly Basic Salary", formatCurrency(previewPayslip.basicSalary));
         }
@@ -535,9 +535,9 @@ export const exportPayslip = (
         currentY += 6;
 
         let gross =
- (previewPayslip.salaryType === "DAILY" ? previewPayslip.basicPay : previewPayslip.basicSalary) +
-        previewPayslip.otAmount +
-        (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0);
+            (previewPayslip.salaryType === "DAILY" ? previewPayslip.basicPay : previewPayslip.basicSalary) +
+            previewPayslip.otAmount +
+            (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0);
         addRow("Gross Earnings", formatCurrency(gross), true);
 
         doc.setDrawColor(0, 0, 0);
@@ -936,7 +936,7 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                 columnStyles: {
                     0: { cellWidth: 15 },
                     1: { cellWidth: 45 },
-                    2: { cellWidth: 12, halign: 'center' },
+                    2: { cellWidth: 15, halign: 'center' },
                     3: { halign: 'right' },
                     4: { halign: 'right' },
                     5: { halign: 'right' },
@@ -945,6 +945,10 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                     8: { halign: 'right', fontStyle: 'bold' }
                 },
                 didParseCell: (data) => {
+                    if (data.column.index >= 2) {
+                        data.cell.styles.halign = 'right';
+                    }
+
                     if (data.row.index === tableBody.length - 1) {
                         data.cell.styles.fillColor = [22, 28, 45]; // Dark background for total
                         data.cell.styles.textColor = [255, 184, 0]; // Yellow text
@@ -1491,6 +1495,13 @@ export const exportBankAdviceReport = (
                 4: { cellWidth: 28 },
                 5: { cellWidth: 31, halign: 'right', fontStyle: 'bold' }
             },
+
+            didParseCell: (data) => {
+                if (data.section === "head" && data.column.index === 5) {
+                    data.cell.styles.halign = "right";
+                }
+            },
+    
             margin: { left: 14, right: 14 }
         });
 
