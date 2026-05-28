@@ -120,16 +120,15 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4"
             onClick={onClose}
         >
-            {/* ✅ onSubmit + onKeyDown both call handleSubmit */}
-            <form
+            <div
                 className="bg-white w-full max-w-lg rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 outline-none"
                 onClick={(e) => e.stopPropagation()}
-                onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSubmit();
-                }}
                 onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSubmit();
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSubmit();
+                    }
                 }}
             >
                 {/* Header */}
@@ -222,7 +221,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                         Cancel
                     </button>
                     <button
-                        type="submit"
+                        type="button"
+                        onClick={handleSubmit}
                         disabled={isUploading || files.length === 0 || !files.every((_, idx) => fileTitles[idx] && fileTitles[idx].trim() !== "")}
                         title={!files.every((_, idx) => fileTitles[idx] && fileTitles[idx].trim() !== "") ? 'Please enter a title for all documents' : ''}
                         className="flex-[1.5] py-3.5 px-8 text-[14px] font-bold text-white bg-blue-600 rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:grayscale-[0.5] flex items-center justify-center gap-2"
@@ -237,7 +237,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                         )}
                     </button>
                 </div>
-            </form>
+            </div>
         </div>,
         document.body
     );
