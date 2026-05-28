@@ -124,6 +124,13 @@ const Employees = () => {
   useEffect(() => {
     if (selectedEmployee && employees.length > 0) {
       const updatedEmployee = employees.find(e => e.id === selectedEmployee.id);
+
+      if (!updatedEmployee) {
+        setSelectedEmployee(null);
+        setMobileView("list");
+        return;
+      }
+
       if (updatedEmployee && JSON.stringify(updatedEmployee) !== JSON.stringify(selectedEmployee)) {
         setSelectedEmployee(updatedEmployee);
       }
