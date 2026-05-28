@@ -174,9 +174,17 @@ const EmployeeSalaryCard = ({
 
     // Gross Earnings uses the FULL display basic pay for the UI, 
     // and we show unpaid leaves as a deduction instead of pro-rating it directly here.
+    // const totalEarnings = isLocked && generatedSalary
+    //     ? generatedSalary.grossSalary + (generatedSalary.nonPaidLeaveDeduction ?? 0)
+    //     : displayBasicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances;
+
+    const baseForEarnings = emp.salaryType === "DAILY"
+        ? displayBasicPay        // daily: rate × days
+        : basicSalary;           // monthly: always full basic salary
+
     const totalEarnings = isLocked && generatedSalary
         ? generatedSalary.grossSalary + (generatedSalary.nonPaidLeaveDeduction ?? 0)
-        : displayBasicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances;
+        : baseForEarnings + otAmount + totalAllowances;
 
     // Total Deductions includes the unpaid leave deduction, epf, advance, and loans.
     const totalDeductions = isLocked && generatedSalary

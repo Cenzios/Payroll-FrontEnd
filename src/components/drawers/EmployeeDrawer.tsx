@@ -12,6 +12,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import { Toggle, SRI_LANKAN_BANKS } from "./drawerConstants";
 import { validateEmployeeField } from "./drawerValidation";
+import Toast from "../Toast";
 
 interface EmployeeDrawerProps {
     isOpen: boolean;
@@ -43,9 +44,9 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     const [deductions, setDeductions] = useState<{ type: string; amount: string }[]>([{ type: "", amount: "" }]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
-    // const [isAccountNameEdited, setIsAccountNameEdited] = useState(false);
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [isVisible, setIsVisible] = useState(false);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -522,7 +523,10 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     fileTitles={employeeFileTitles}
                                                     onTitlesChange={setEmployeeFileTitles}
                                                     maxFiles={3 - (initialData?.documents?.filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE').length || 0)}
-                                                    onUpload={() => setIsUploadModalOpen(false)}
+                                                    onUpload={() => {
+                                                        setIsUploadModalOpen(false);
+                                                        setToast({ message: "Uploading documents...", type: "success" });
+                                                    }}
                                                 />
                                             </div>
                                             <input type="hidden" value={employeeData.department} />
@@ -772,6 +776,13 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                     </div>
                 </div>
             </div>
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </>
     );
 };

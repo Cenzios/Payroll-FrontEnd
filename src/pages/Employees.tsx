@@ -251,7 +251,6 @@ const Employees = () => {
           return;
         }
 
-        setToast({ message: "Uploading documents...", type: "success" });
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
           const formData = new FormData();
