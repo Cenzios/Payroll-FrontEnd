@@ -845,12 +845,20 @@ export const exportPayrollSummaryReport = (
             : `${shortMonths[startMonth]} ${startYear} - ${shortMonths[endMonth]} ${endYear}`;
         doc.text(`Period Summary ( ${periodRange} )`, 20, currentY + 5.5);
 
+        // Replaced overallTotals.totalBasicPay in the summary boxes with
+        const computedTotalBasic = monthlyData.reduce(
+            (sum, month) => sum + month.employees.reduce(
+                (s, e) => s + (e.basicSalary || 0), 0
+            ), 0
+        );
+
         // Summary Boxes
         currentY += 8;
         const boxWidth = (pageWidth - 28) / 5;
         const boxHeight = 18;
         const summaries = [
-            { label: "Total Basic", value: `Rs ${overallTotals.totalBasicPay.toLocaleString()}` },
+            // { label: "Total Basic", value: `Rs ${overallTotals.totalBasicPay.toLocaleString()}` },
+            { label: "Total Basic", value: `Rs ${computedTotalBasic.toLocaleString()}` },
             { label: "Total Gross", value: `Rs ${overallTotals.totalGrossPay.toLocaleString()}` },
             { label: "Total EPF (8%)", value: `Rs ${overallTotals.totalEmployeeEPF.toLocaleString()}` },
             { label: "Total Advance", value: `Rs ${overallTotals.totalSalaryAdvance.toLocaleString()}` },
