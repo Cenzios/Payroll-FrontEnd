@@ -25,7 +25,7 @@ const ManageSalaryModal = ({
 
     // Total of all valid entries (excluding the empty last row)
     const total = modalEntries
-        .slice(0, -1)
+        // .slice(0, -1)
         .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
     return (
