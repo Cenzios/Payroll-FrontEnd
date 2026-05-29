@@ -104,13 +104,7 @@ const TermsAndConditions = () => {
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">3. Account Registration</h3>
                                 <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-gray-600">
                                     <li>Users must provide accurate, complete, and current information during registration.</li>
-                                    <li>A one-time registration fee is payable in the first month.</li>
-                                    <li>From the second month onwards, subscription fees are calculated based on:
-                                        <ul className="list-disc list-inside ml-6 mt-1 space-y-1">
-                                            <li>Number of employees</li>
-                                            <li>Selected per-employee package cost</li>
-                                        </ul>
-                                    </li>
+                                    <li>Upon commencement of the billing cycle, the Client agrees to pay a monthly subscription fee of LKR 100 for each active employee account. Clients seeking bespoke features or customized volume pricing may contact our sales department to establish an alternative agreement.</li>
                                 </ul>
                             </section>
 
@@ -120,7 +114,7 @@ const TermsAndConditions = () => {
                                 <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-gray-600">
                                     <li>Subscription type: Monthly</li>
                                     <li>Subscription auto-renews unless cancelled by the user.</li>
-                                    {/* <li>No free trial is offered.</li> */}
+                                    <li>A one-time, three-month free trial period is available exclusively to new customers who have not previously held an active account with us.</li>
                                     <li>Failure to make payment may result in account termination after a defined grace period.</li>
                                 </ul>
                             </section>
@@ -208,7 +202,7 @@ const TermsAndConditions = () => {
                                 <p className="text-sm leading-relaxed mb-2 text-gray-600">For support or legal inquiries:</p>
                                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-1">
                                     <p className="text-sm text-gray-600">📧 <strong>Email:</strong> info@cenzios.com</p>
-                                    <p className="text-sm text-gray-600">📞 <strong>Phone:</strong> +94 71 118 6028</p>
+                                    <p className="text-sm text-gray-600">📞 <strong>Phone:</strong> +94 70 113 4650</p>
                                 </div>
                             </section>
 

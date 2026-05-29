@@ -1710,7 +1710,7 @@ export const exportEpfEtfReport = (
 
         // Add Total row to table body
         tableBody.push([
-            "", "", "Total",
+            "", "Total", "",
             totals.basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2 }),
             totals.empEpf.toLocaleString(undefined, { minimumFractionDigits: 2 }),
             totals.employerEpf.toLocaleString(undefined, { minimumFractionDigits: 2 }),
