@@ -847,10 +847,10 @@ export const exportPayrollSummaryReport = (
 
         // Replaced overallTotals.totalBasicPay in the summary boxes with
         const computedTotalBasic = monthlyData.reduce(
-            (sum, month) => sum + month.employees.reduce(
-                (s, e) => s + (e.basicSalary || 0), 0
-            ), 0
-        );
+    (sum, month) => sum + month.employees.reduce(
+        (s, e) => s + (e.basicPay > e.basicSalary ? e.basicPay : e.basicSalary || 0), 0
+    ), 0
+);
 
         // Summary Boxes
         currentY += 8;
@@ -908,7 +908,8 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                 emp.employeeCode || "-",
                 emp.employeeName || "-",
                 emp.workingDays,
-                (emp.basicSalary || 0).toLocaleString(),
+                // (emp.basicSalary || 0).toLocaleString(),
+    (emp.basicPay > emp.basicSalary ? emp.basicPay : emp.basicSalary || 0).toLocaleString(),
                 (emp.otAmount || 0).toLocaleString(),
                 emp.grossPay.toLocaleString(),
                 emp.employeeEPF.toLocaleString(),
@@ -917,7 +918,10 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
             ]);
 
             // Monthly Totals
-            const mTotalBasic = monthData.employees.reduce((s: number, e: ReportEmployee) => s + (e.basicSalary || 0), 0);
+            // const mTotalBasic = monthData.employees.reduce((s: number, e: ReportEmployee) => s + (e.basicSalary || 0), 0);
+            const mTotalBasic = monthData.employees.reduce(
+                (s: number, e: ReportEmployee) => s + (e.basicPay > e.basicSalary ? e.basicPay : e.basicSalary || 0), 0
+            );
             const mTotalOT = monthData.employees.reduce((s: number, e: ReportEmployee) => s + (e.otAmount || 0), 0);
             const mTotalGross = monthData.employees.reduce((s: number, e: ReportEmployee) => s + e.grossPay, 0);
             const mTotalEPF = monthData.employees.reduce((s: number, e: ReportEmployee) => s + e.employeeEPF, 0);

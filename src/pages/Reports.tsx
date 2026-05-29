@@ -203,7 +203,8 @@ const Reports = () => {
 
         filteredMonthlyData.forEach(month => {
             month.employees.forEach((emp: any) => {
-                totalBasicPay += emp.basicPay || 0;
+                // totalBasicPay += emp.basicPay || 0;
+                totalBasicPay += (emp.basicPay > emp.basicSalary ? emp.basicPay : emp.basicSalary) || 0;
                 totalGrossPay += emp.grossPay || 0;
                 totalEmployeeEPF += emp.employeeEPF || 0;
                 totalSalaryAdvance += emp.salaryAdvance || 0;
