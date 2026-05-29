@@ -944,7 +944,7 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                 columnStyles: {
                     0: { cellWidth: 15 },
                     1: { cellWidth: 45 },
-                    2: { cellWidth: 15, halign: 'center' },
+                    2: { cellWidth: 25, halign: 'center' },
                     3: { halign: 'right' },
                     4: { halign: 'right' },
                     5: { halign: 'right' },
