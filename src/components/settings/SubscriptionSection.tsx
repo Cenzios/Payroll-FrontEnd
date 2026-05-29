@@ -112,7 +112,8 @@ const SubscriptionSection = () => {
                                         <div className="flex items-center gap-1 whitespace-nowrap max-sm:whitespace-normal">
                                             <span className="text-xs text-gray-400">Total Employees:</span>
                                             <span className="text-sm font-semibold text-gray-900">
-                                                {subscription.usedEmployees} / {subscription.totalAllowedEmployees}
+                                                {subscription.usedEmployees}
+                                                {/* {subscription.usedEmployees} / {subscription.totalAllowedEmployees} */}
                                             </span>
                                         </div>
                                     </div>

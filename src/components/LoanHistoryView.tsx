@@ -367,28 +367,28 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                 {/* Desktop Table View */}
                 <div className="hidden sm:block -mx-4 sm:mx-0 px-4 sm:px-0">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left min-w-[480px]">
+                        <table className="text-center">
                             <thead>
                                 <tr className="border-b border-gray-100">
-                                    <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Installment</th>
-                                    <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Due Date</th>
-                                    <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Payment Date</th>
-                                    <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Monthly Premium</th>
-                                    <th className="pb-4 px-2 text-xs font-semibold text-[#989FA7]">Status</th>
+                                    <th className="pb-4 text-xs font-semibold text-[#989FA7] min-w-[200px]">Installment</th>
+                                    <th className="pb-4 text-xs font-semibold text-[#989FA7] min-w-[200px]">Due Date</th>
+                                    <th className="pb-4 text-xs font-semibold text-[#989FA7] min-w-[200px]">Payment Date</th>
+                                    <th className="pb-4 text-xs font-semibold text-[#989FA7] min-w-[350px]">Monthly Premium</th>
+                                    <th className="pb-4 text-xs font-semibold text-[#989FA7] min-w-[200px]">Status</th>
                                 </tr>
                             </thead>
                         </table>
 
                         <div className="overflow-y-auto max-h-64">
-                            <table className="w-full text-left min-w-[480px]">
+                            <table className="text-center">
                                 <tbody className="divide-y divide-gray-50">
                                     {installments.map((row: any) => (
                                         <tr key={row.id} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="py-4 px-2 text-[13px] font-semibold text-gray-400">{row.installmentNumber} / {totalInstallmentsCount}</td>
-                                            <td className={`py-4 px-2 text-[13px] font-bold ${row.status === 'PENDING' ? 'text-[#141B3B]' : 'text-gray-500'}`}>{new Date(row.dueDate).toLocaleDateString()}</td>
-                                            <td className="py-4 px-2 text-[13px] font-semibold text-gray-500">{row.status === 'PAID' ? new Date(row.updatedAt).toLocaleDateString() : '-'}</td>
-                                            <td className="py-4 px-2 text-[13px] font-bold text-gray-500">Rs: {row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                                            <td className="py-4 px-2">{getHistoryBadge(row.status)}</td>
+                                            <td className=" min-w-[200px] py-4 px-2 text-[13px] font-semibold text-gray-400">{row.installmentNumber} / {totalInstallmentsCount}</td>
+                                            <td className={` min-w-[200px] py-4 px-2 text-[13px] font-bold ${row.status === 'PENDING' ? 'text-[#141B3B]' : 'text-gray-500'}`}>{new Date(row.dueDate).toLocaleDateString()}</td>
+                                            <td className=" min-w-[200px] py-4 px-2 text-[13px] font-semibold text-gray-500">{row.status === 'PAID' ? new Date(row.updatedAt).toLocaleDateString() : '-'}</td>
+                                            <td className=" min-w-[350px] py-4 px-2 text-[13px] font-bold text-gray-500">Rs: {row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                                            <td className=" min-w-[200px] py-4 px-2">{getHistoryBadge(row.status)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
