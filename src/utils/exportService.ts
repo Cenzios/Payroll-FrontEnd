@@ -1739,6 +1739,9 @@ export const exportEpfEtfReport = (
                 7: { halign: "right", fontStyle: "bold", textColor: [43, 116, 255] }
             },
             didParseCell: (data) => {
+                if (data.section === "head" && data.column.index >= 3) {
+                    data.cell.styles.halign = "right";
+                }
                 if (data.row.index === tableBody.length - 1) {
                     data.cell.styles.fillColor = [15, 23, 42];
                     data.cell.styles.textColor = [255, 184, 0];
