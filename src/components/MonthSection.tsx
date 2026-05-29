@@ -18,6 +18,7 @@ interface EmployeePayrollData {
     allowanceTotal?: number;
     deductionTotal?: number;
     deductions?: number;
+    salaryType?: "DAILY" | "MONTHLY";
 }
 
 interface MonthTotals {
@@ -182,7 +183,11 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                 <td className="px-8 py-3 font-regular text-gray-900 text-left">{employee.employeeCode || '-'}</td>
                                                 <td className="px-6 py-3 text-gray-900 whitespace-nowrap text-left">{employee.employeeName || '-'}</td>
                                                 <td className="px-4 py-3 text-gray-500 text-center">{employee.workingDays}</td>
-                                                <td className="px-4 py-3 text-gray-500 font-medium text-end">{employee.basicSalary?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                {/* <td className="px-4 py-3 text-gray-500 font-medium text-end">{employee.basicSalary?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td> */}
+                                                <td className="px-4 py-3 text-gray-500 font-medium text-end">
+                                                    {(employee.basicPay > employee.basicSalary ? employee.basicPay : employee.basicSalary)
+                                                        ?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </td>
                                                 <td className="px-4 py-3 text-gray-500">
                                                     <div className="font-medium text-gray-500 text-end">{employee.otAmount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                                     {/* <div className="text-[10px] text-gray-400">({employee.otHours} hrs)</div> */}
