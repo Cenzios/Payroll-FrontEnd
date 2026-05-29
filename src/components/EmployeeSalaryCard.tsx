@@ -178,6 +178,8 @@ const EmployeeSalaryCard = ({
     //     ? generatedSalary.grossSalary + (generatedSalary.nonPaidLeaveDeduction ?? 0)
     //     : displayBasicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances;
 
+    console.log(generatedSalary);
+
     const baseForEarnings = emp.salaryType === "DAILY"
         ? displayBasicPay        // daily: rate × days
         : basicSalary;           // monthly: always full basic salary
@@ -339,7 +341,7 @@ const EmployeeSalaryCard = ({
 
                     {/* Period */}
                     <div className="px-4 md:px-6 md:border-r border-gray-200 w-1/2 md:w-auto max-sm:border-none">
-                        <p className="text-[12px] text-gray-400 mb-0.5">Period</p>
+                        <p className="text-[12px] text-gray-400 mb-0.5">Month</p>
                         <p className="text-[15px] font-bold text-gray-800">{periodLabel}</p>
                     </div>
 
@@ -666,7 +668,7 @@ const EmployeeSalaryCard = ({
                                 <div className="text-right">
                                     <p className="text-gray-500">Deductions</p>
                                     <p className="text-red-500 font-semibold">
-                                        - {fmt(totalDeductions)}
+                                        {fmt(totalDeductions)}
                                     </p>
                                 </div>
                             </div>

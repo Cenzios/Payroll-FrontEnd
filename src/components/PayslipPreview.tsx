@@ -59,7 +59,10 @@ const PayslipPreview = ({
     const totalDeductions =
         (previewPayslip.nonPaidLeaveDeduction || 0) +
         (previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) +
-        previewPayslip.deductions.reduce((sum: number, d: any) => sum + d.amount, 0);
+        // previewPayslip.deductions.reduce((sum: number, d: any) => sum + d.amount, 0);
+        previewPayslip.deductions
+            .filter((d: any) => d.name !== "Loan Deduction")
+            .reduce((sum: number, d: any) => sum + d.amount, 0);
 
     const monthLabel = new Date(selectedYear, selectedMonth).toLocaleString("default", {
         month: "long",
@@ -194,7 +197,13 @@ const PayslipPreview = ({
                                     <span className="text-[#E11D48] font-bold tracking-tight">{fmt(previewPayslip.epf8)}</span>
                                 </div>
                             )}
-                            {previewPayslip.deductions?.filter((d: any) => d.amount > 0).map((d: any, i: number) => (
+                            {/* {previewPayslip.deductions?.filter((d: any) => d.amount > 0).map((d: any, i: number) => (
+                                <div key={i} className="flex justify-between items-center text-[12px]">
+                                    <span className="text-[#718096]">{d.name}</span>
+                                    <span className="text-[#E11D48] font-bold tracking-tight">{fmt(d.amount)}</span>
+                                </div>
+                            ))} */}
+                            {previewPayslip.deductions?.filter((d: any) => d.amount > 0 && d.name !== "Loan Deduction").map((d: any, i: number) => (
                                 <div key={i} className="flex justify-between items-center text-[12px]">
                                     <span className="text-[#718096]">{d.name}</span>
                                     <span className="text-[#E11D48] font-bold tracking-tight">{fmt(d.amount)}</span>
