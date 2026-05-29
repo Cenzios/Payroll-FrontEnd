@@ -11,18 +11,21 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
     const [status, setStatus] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
 
     // Fetch user documents to check for rejection
-    const { data: documentsData, refetch: refetchDocs } = useGetUserDocumentsQuery();
+    // const { data: documentsData, refetch: refetchDocs } = useGetUserDocumentsQuery();
 
     useEffect(() => {
         const checkStatus = async () => {
             try {
-                // 1. Check Subscription Status
-                const subRes = await axiosInstance.get('/subscription/current');
+                // Fetch fresh documents directly via axios, not refetchDocs
+                const [subRes, docsRes] = await Promise.all([
+                    axiosInstance.get('/subscription/current'),
+                    axiosInstance.get('/user-documents') // ← use your actual documents endpoint
+                ]);
+
                 const subStatus = subRes.data?.data?.status;
+                const latestDoc = docsRes.data?.data?.[0]; // ← always fresh, no RTK cache issue
 
                 if (subStatus === 'ACTIVE') {
-                    // But check if there's a recent rejection that takes precedence for the UI
-                    const latestDoc = documentsData?.data?.[0];
                     if (latestDoc && latestDoc.status === 'REJECTED') {
                         setStatus("REJECTED");
                     } else {
@@ -31,8 +34,6 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
                     return;
                 }
 
-                // 2. Check Document Status if subscription is not active
-                const latestDoc = documentsData?.data?.[0];
                 if (latestDoc) {
                     if (latestDoc.status === 'APPROVED') {
                         setStatus("APPROVED");
@@ -48,12 +49,9 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
         };
 
         checkStatus();
-        const intervalId = setInterval(() => {
-            checkStatus();
-            refetchDocs();
-        }, 5000);
+        const intervalId = setInterval(checkStatus, 5000);
         return () => clearInterval(intervalId);
-    }, [documentsData, refetchDocs]);
+    }, []); // ← empty deps
 
 
     return (
@@ -153,7 +151,7 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
                     <button
                         onClick={() => {
                             // Reset state and allow re-upload
-                            navigate('/buy-plan?isUpgrade=true');
+                            navigate('/get-plan');
                         }}
                         className="flex-1 bg-red-600 text-white rounded-xl py-3 text-sm font-bold hover:bg-red-700 shadow-lg shadow-red-200 flex items-center justify-center gap-2"
                     >

@@ -32,6 +32,8 @@ const CFormReport = () => {
     const [hasApplied, setHasApplied] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+    const [appliedPeriod, setAppliedPeriod] = useState({ month: selectedMonth, year: selectedYear });
+
     const [getCFormReport] = useLazyGetCFormReportQuery();
     const years = Array.from({ length: 10 }, (_, i) => currentDate.getFullYear() - i);
 
@@ -39,6 +41,7 @@ const CFormReport = () => {
         if (!selectedCompanyId) return;
         setIsLoading(true);
         setHasApplied(true);
+        setAppliedPeriod({ month: selectedMonth, year: selectedYear });
         try {
             const res = await getCFormReport({
                 companyId: selectedCompanyId,
@@ -62,6 +65,7 @@ const CFormReport = () => {
         setSelectedMonth(currentDate.getMonth() + 1);
         setReportData(null);
         setHasApplied(false);
+        setAppliedPeriod({ month: currentDate.getMonth() + 1, year: currentDate.getFullYear() });
     };
 
     // Auto-fetch current month on initial load
@@ -73,7 +77,7 @@ const CFormReport = () => {
 
     const rows: any[] = reportData?.rows || [];
     const totals = reportData?.totals;
-    const periodLabel = `${MONTHS[selectedMonth - 1]} ${selectedYear}`;
+    const appliedPeriodLabel = `${MONTHS[appliedPeriod.month - 1]} ${appliedPeriod.year}`;
 
     // ── Export PDF (fills official EPF Form C template) ───────────
     const exportPDF = async () => {
@@ -286,7 +290,7 @@ const CFormReport = () => {
                                     <span className="text-sm font-semibold text-gray-700">All Employee</span>
                                     {reportData && (
                                         <span className="text-xs text-gray-400">
-                                            Month: {periodLabel} &nbsp;|&nbsp; Employees: {String(rows.length).padStart(2, '0')}
+                                            Month: {appliedPeriodLabel} &nbsp;|&nbsp; Employees: {String(rows.length).padStart(2, '0')}
                                         </span>
                                     )}
                                 </div>
@@ -302,7 +306,7 @@ const CFormReport = () => {
                                     </div>
                                 ) : rows.length === 0 ? (
                                     <div className="text-center py-24 text-gray-400 text-sm">
-                                        No salary records found for <span className="font-semibold">{periodLabel}</span>.
+                                        No salary records found for <span className="font-semibold">{appliedPeriodLabel}</span>.
                                     </div>
                                 ) : (
                                     <div className="overflow-x-auto">

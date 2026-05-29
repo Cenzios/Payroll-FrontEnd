@@ -135,7 +135,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
                 <div className="border-t border-gray-100/60 mb-8 w-full max-sm:mb-4" />
 
                 {/* Features List */}
-                <div className="space-y-4 mb-8 max-sm:space-y-3 max-sm:mb-5">
+                <div className="space-y-4 mb-6 max-sm:space-y-3 max-sm:mb-5">
                     {features.map((feature, index) => (
                         <div key={index} className="flex items-center gap-4 group">
                             <div className="
