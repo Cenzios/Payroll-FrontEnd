@@ -156,7 +156,7 @@ const PayslipPreview = ({
                             {previewPayslip.salaryType === "DAILY" && (
                                 <div className="flex justify-between items-center text-[12px]">
                                     <span className="text-[#718096]">
-                                        Salary Income ({fmt(previewPayslip.basicSalary)} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
+                                        Daily Wage Earnings ({fmt(previewPayslip.basicSalary)} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
                                     </span>
                                     <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicPay)}</span>
                                 </div>

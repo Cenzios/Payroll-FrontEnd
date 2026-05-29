@@ -256,7 +256,7 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
                     </div>
 
                     {/* Selected Range Display */}
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 flex gap-64">
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 flex gap-48">
                         <div>
                             <div className="text-xs text-blue-600 font-medium mb-1">Selected Range</div>
                             <div className="text-sm text-blue-900 font-semibold">

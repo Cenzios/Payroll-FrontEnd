@@ -10,7 +10,7 @@ const PlanPaymentManual = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [rejectionReason, setRejectionReason] = useState<string | null>(null);
 
-    const accountNumber = "1234567890";
+    const accountNumber = "052020386231";
 
     // ✅ Check for existing docs on mount
     useEffect(() => {
@@ -125,14 +125,14 @@ const PlanPaymentManual = () => {
                 <div className="flex justify-between">
                     <span className="text-gray-400 text-xs">BANK NAME</span>
                     <span className="font-semibold text-gray-800 text-sm">
-                        Commercial Bank PLC
+                        HNB Bank
                     </span>
                 </div>
 
                 <div className="flex justify-between">
                     <span className="text-gray-400 text-xs">ACCOUNT NAME</span>
                     <span className="font-semibold text-gray-800 text-sm">
-                        L.D.S.Pathum Udayanga
+                        Cenzios Pvt Ltd.
                     </span>
                 </div>
 
@@ -151,7 +151,7 @@ const PlanPaymentManual = () => {
                 <div className="flex justify-between">
                     <span className="text-gray-400 text-xs">BRANCH</span>
                     <span className="font-semibold text-gray-800 text-sm">
-                        Colombo City Branch
+                        Horana
                     </span>
                 </div>
             </div>

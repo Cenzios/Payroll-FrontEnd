@@ -98,7 +98,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
                         max-sm:mt-2
                     ">
                         <p className="text-xl text-white font-semibold max-sm:text-base">RS:</p>
-                        <span className="text-5xl text-white font-bold max-sm:text-4xl">{price}</span>
+                        <span className="text-5xl text-white font-bold max-sm:text-4xl">100</span>
                         <span className="text-[13px] text-white opacity-80 lowercase font-light ml-1 max-sm:text-[11px]">
                             / employee / mo
                         </span>
