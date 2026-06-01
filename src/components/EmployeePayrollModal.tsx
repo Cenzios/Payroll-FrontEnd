@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
 import { exportPayslip } from '../utils/exportService';
-import { useGetCompaniesQuery } from '../store/apiSlice';
+import { useGetCompaniesQuery, useGetSalaryHistoryQuery } from '../store/apiSlice';
 import Toast from './Toast';
 import PayslipPreview from './PayslipPreview';
 
@@ -17,6 +17,7 @@ interface EmployeePayrollModalProps {
 
 interface MonthlyData {
     month: string;
+    salaryType?: string;
     workedDays: number;
     companyWorkingDays?: number;
     basicPay: number;
@@ -32,6 +33,8 @@ interface MonthlyData {
     loanDeduction?: number;
     allowances?: { type: string; amount: number }[];
     customDeductions?: { type: string; amount: number }[];
+    leaveDays?: number;
+    sickLeaveDays?: number;
 }
 
 interface EmployeeData {
@@ -68,6 +71,10 @@ const EmployeePayrollModal = ({
     const [employeeData, setEmployeeData] = useState<EmployeeData | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const { data: companies } = useGetCompaniesQuery();
+    const { data: salaryHistoryResponse } = useGetSalaryHistoryQuery(
+        { companyId, employeeId, month, year },
+        { skip: !isOpen || !companyId || !employeeId || !month || !year }
+    );
 
     useEffect(() => {
         if (isOpen && employeeId && companyId && month && year) {
@@ -94,6 +101,7 @@ const EmployeePayrollModal = ({
     if (!isOpen) return null;
 
     const row: MonthlyData | undefined = employeeData?.monthlyBreakdown?.[0];
+    const rawSalary = salaryHistoryResponse?.data?.[0] || salaryHistoryResponse?.[0];
     const selectedCompany = companies?.find(c => c.id === companyId);
     const companyName = selectedCompany?.name || 'Company Name';
     const companyAddress = selectedCompany?.address || '';
@@ -101,6 +109,25 @@ const EmployeePayrollModal = ({
     // Data Mapper for PayslipPreview
     const getPayslipData = () => {
         if (!employeeData || !row) return null;
+
+        const getMaxAllowedDays = (y: number, m: number) => {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+            if (y > currentYear || (y === currentYear && m > currentMonth)) return 0;
+            if (y === currentYear && m === currentMonth) return now.getDate();
+            return new Date(y, m + 1, 0).getDate();
+        };
+
+        const cWorkingDays = row.companyWorkingDays || getMaxAllowedDays(year, month - 1) || row.workedDays || 0;
+
+        const actualSalaryType = row.salaryType || rawSalary?.salaryType || employeeData.salaryType || 'MONTHLY';
+        const actualSickLeaveDays = row.sickLeaveDays || rawSalary?.sickLeaveDays || 0;
+        const actualLeaveDays = row.leaveDays || rawSalary?.leaveDays || 0;
+
+        const nonPaidLeaveDeduction = actualSalaryType === 'MONTHLY' && cWorkingDays > 0
+            ? ((employeeData.basicSalary || row.basicPay) / cWorkingDays) * actualSickLeaveDays
+            : 0;
 
         const payslipDeductions = [
             ...(row.customDeductions || []).map(d => ({ name: d.type, amount: d.amount })),
@@ -110,7 +137,7 @@ const EmployeePayrollModal = ({
 
         return {
             previewPayslip: {
-                salaryType: employeeData.salaryType || 'MONTHLY',
+                salaryType: row.salaryType || employeeData.salaryType || 'MONTHLY',
                 basicSalary: employeeData.basicSalary || row.basicPay,
                 workedDays: row.workedDays,
                 basicPay: row.basicPay,
@@ -125,9 +152,10 @@ const EmployeePayrollModal = ({
                 netSalary: row.netPay,
                 epf12: row.companyEPFETF * (12 / 15),
                 etf3: row.companyEPFETF * (3 / 15),
-                leaveDays: 0,
-                nonPaidLeaveDeduction: 0,
-                workingDays: row.workedDays // fallback for workedDays in some parts of PayslipPreview
+                leaveDays: actualLeaveDays,
+                sickLeaveDays: actualSickLeaveDays,
+                nonPaidLeaveDeduction: nonPaidLeaveDeduction,
+                workingDays: cWorkingDays
             },
             selectedEmployee: {
                 id: employeeId,
@@ -150,7 +178,7 @@ const EmployeePayrollModal = ({
             companyAddress,
             selectedMonth: month - 1, // 0-indexed for export service
             selectedYear: year,
-            companyWorkingDays: row?.companyWorkingDays || row?.workedDays || 0
+            companyWorkingDays: payslipData.previewPayslip.workingDays
         });
     };
 
@@ -182,7 +210,7 @@ const EmployeePayrollModal = ({
                                 companyName={companyName}
                                 selectedYear={year}
                                 selectedMonth={month - 1} // 0-indexed for component
-                                companyWorkingDays={row.companyWorkingDays || row.workedDays || 0}
+                                companyWorkingDays={payslipData.previewPayslip.workingDays}
                                 exportPDF={() => handleExport('pdf')}
                                 exportExcel={() => handleExport('excel')}
                                 exportCSV={() => handleExport('csv')}
