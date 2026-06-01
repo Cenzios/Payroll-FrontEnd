@@ -87,7 +87,7 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
                 {status === 'APPROVED' ? (
                     "Your payment has been successfully approved! You can now access your dashboard and manage your subscriptions."
                 ) : status === 'REJECTED' ? (
-                    "Your payment proof was rejected by the admin. Please review your submission and upload a valid bank slip."
+                    "Your previous payment proof was rejected. Please review your submission and upload a valid bank slip."
                 ) : (
                     "We've successfully received your bank slip. Our admin team is currently reviewing your payment details."
                 )}

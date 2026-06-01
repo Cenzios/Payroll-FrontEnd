@@ -131,7 +131,6 @@ const EmployeePayrollModal = ({
 
         const payslipDeductions = [
             ...(row.customDeductions || []).map(d => ({ name: d.type, amount: d.amount })),
-            ...(row.loanDeduction && row.loanDeduction > 0 ? [{ name: 'Loan Installment', amount: row.loanDeduction }] : []),
             ...(row.salaryAdvance && row.salaryAdvance > 0 ? [{ name: 'Salary Advance', amount: row.salaryAdvance }] : []),
         ];
 

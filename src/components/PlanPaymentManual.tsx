@@ -24,7 +24,7 @@ const PlanPaymentManual = () => {
                     setReference(latestDoc.referenceId || "");
                     setIsSubmitted(true);
                 } else if (latestDoc?.status === "REJECTED") {
-                    setRejectionReason("Your previous payment proof was rejected by the admin. Please upload a clear bank slip for verification.");
+                    setRejectionReason("Your previous payment proof was rejected. Please review your submission and upload a valid bank slip.");
                 }
             } catch (err) {
                 console.warn("Failed to fetch existing user documents", err);
