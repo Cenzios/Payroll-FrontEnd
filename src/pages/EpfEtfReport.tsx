@@ -107,6 +107,12 @@ const EpfEtfReport = () => {
                 const empEpf = emp.employeeEPF || emp.employeeEpf || 0;
                 const employerEpf = emp.employerEPF || emp.employerEpf || 0;
                 const etf = emp.etfAmount || emp.etf || 0;
+                const companyEPFETF = emp.companyEPFETF || 0;
+
+                // Use direct fields if available, otherwise split companyEPFETF by ratio (12:3)
+                const resolvedEmployerEpf = employerEpf > 0 ? employerEpf : Math.round((companyEPFETF * 12) / 15);
+                const resolvedEtf = etf > 0 ? etf : Math.round((companyEPFETF * 3) / 15);
+
 
                 // Fallback calculations if they are missing but EPF is enabled
                 const isEpfEnabled = emp.epfEnabled ?? employeeInfo?.epfEnabled ?? (empEpf > 0);
@@ -117,14 +123,15 @@ const EpfEtfReport = () => {
 
                 if (empEpf > 0) {
                     record.empEpf += empEpf;
-                    record.employerEpf += employerEpf || (basicPay * 0.12);
-                    record.etf += etf || (basicPay * 0.03);
-                } else if (isEpfEnabled && basicPay > 0) {
-                    // If EPF is enabled but fields are missing, calculate them
-                    record.empEpf += basicPay * 0.08;
-                    record.employerEpf += basicPay * 0.12;
-                    record.etf += basicPay * 0.03;
+                    record.employerEpf += resolvedEmployerEpf;
+                    record.etf += resolvedEtf;
                 }
+                // else if (isEpfEnabled && basicPay > 0) {
+                //     // If EPF is enabled but fields are missing, calculate them
+                //     record.empEpf += basicPay * 0.08;
+                //     record.employerEpf += basicPay * 0.12;
+                //     record.etf += basicPay * 0.03;
+                // }
 
                 record.totalContribution = record.empEpf + record.employerEpf + record.etf;
             });
