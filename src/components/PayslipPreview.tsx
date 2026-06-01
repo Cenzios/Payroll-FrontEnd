@@ -15,6 +15,7 @@ interface PayslipPreviewProps {
     exportExcel: () => void;
     exportCSV: () => void;
     onClose?: () => void;
+    title?: string;
 }
 
 
@@ -30,6 +31,7 @@ const PayslipPreview = ({
     exportExcel,
     exportCSV,
     onClose,
+    title = "PAY SLIP",
 }: PayslipPreviewProps) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const downloadBtnRef = useRef<HTMLButtonElement>(null);
@@ -83,7 +85,7 @@ const PayslipPreview = ({
                 <div className="text-center mt-2 md:mt-3">
                     <h1 className="text-sm font-bold text-[#1D1F24]">{companyName}</h1>
                     <p className="text-xs font-bold text-[#718096] tracking-[0.15em] mt-1 mb-5 uppercase">
-                        PAY SLIP • {monthLabel}
+                        {title} • {monthLabel}
                     </p>
                 </div>
 

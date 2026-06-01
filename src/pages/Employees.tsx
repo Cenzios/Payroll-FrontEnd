@@ -114,15 +114,16 @@ const Employees = () => {
     }
   }, [isError, error]);
 
-  useEffect(() => {
-    if (employees.length > 0 && !selectedEmployee) {
-      setSelectedEmployee(employees[0]);
-    }
-  }, [employees, selectedEmployee]);
+  // useEffect(() => {
+  //     if (employees.length > 0 && !selectedEmployee) {
+  //       setSelectedEmployee(employees[0]);
+  //     }
+  //   }, [employees, selectedEmployee]);
 
   // Sync selected employee when list updates (e.g. after document upload)
   useEffect(() => {
-    if (selectedEmployee && employees.length > 0) {
+    // if (selectedEmployee && employees.length > 0) {
+    if (selectedEmployee) {
       const updatedEmployee = employees.find(e => e.id === selectedEmployee.id);
 
       if (!updatedEmployee) {
@@ -130,12 +131,13 @@ const Employees = () => {
         setMobileView("list");
         return;
       }
-
-      if (updatedEmployee && JSON.stringify(updatedEmployee) !== JSON.stringify(selectedEmployee)) {
+      // if (updatedEmployee && JSON.stringify(updatedEmployee) !== JSON.stringify(selectedEmployee)) {
+      if (JSON.stringify(updatedEmployee) !== JSON.stringify(selectedEmployee)) {
         setSelectedEmployee(updatedEmployee);
       }
     }
-  }, [employees]);
+    // }, [employees]);
+  }, [employees, selectedEmployee]);
 
   // Sync menu anchor with activeMenuId
   useEffect(() => {
