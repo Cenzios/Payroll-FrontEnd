@@ -205,6 +205,7 @@ const EmployeePayrollModal = ({
                             <div className="text-center py-20 text-gray-400 text-sm">No record available for this period.</div>
                         ) : (
                             <PayslipPreview
+                                title="SALARY DETAIL"
                                 previewPayslip={payslipData.previewPayslip}
                                 selectedEmployee={payslipData.selectedEmployee as any}
                                 companyName={companyName}
