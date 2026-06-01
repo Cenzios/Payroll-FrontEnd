@@ -18,14 +18,34 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
 
 const BuyPlan = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isPlanChange = searchParams.get('isPlanChange') === 'true';
   const { error: authError, user } = useAppSelector((state) => state.auth);
 
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
   const [isFetchingSub, setIsFetchingSub] = useState(true);
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "manual" | null>(null);
+  const urlMethod = searchParams.get('method') as "card" | "manual" | null;
+  const urlStep = searchParams.get('step') as "select" | "pay" | null;
+
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "manual" | null>(urlMethod);
+  const [step, setStep] = useState<"select" | "pay">(urlStep || 'select');
+
+  const handleMethodChange = (method: "card" | "manual") => {
+    setPaymentMethod(method);
+    setSearchParams(prev => {
+      prev.set('method', method);
+      return prev;
+    }, { replace: true });
+  };
+
+  const handleStepChange = (newStep: "select" | "pay") => {
+    setStep(newStep);
+    setSearchParams(prev => {
+      prev.set('step', newStep);
+      return prev;
+    }, { replace: true });
+  };
 
   // Stripe State
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -70,6 +90,12 @@ const BuyPlan = () => {
         if (hasPending) {
           setIsManualPending(true);
           setPaymentMethod('manual');
+          setStep('pay');
+          setSearchParams(prev => {
+            prev.set('method', 'manual');
+            prev.set('step', 'pay');
+            return prev;
+          }, { replace: true });
         }
       } catch (err) {
         console.warn('Failed to check manual payment status:', err);
@@ -175,7 +201,9 @@ const BuyPlan = () => {
             <div>
               <PlanOption
                 value={paymentMethod}
-                onChange={setPaymentMethod}
+                onChange={handleMethodChange}
+                step={step}
+                onStepChange={handleStepChange}
                 initialStep={isManualPending ? 'pay' : 'select'}
               />
             </div>

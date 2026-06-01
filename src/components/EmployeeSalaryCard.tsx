@@ -123,13 +123,15 @@ const EmployeeSalaryCard = ({
     const currentAllowances = salaryAllowances[emp.id] || emp.recurringAllowances || [];
     // const totalAllowances = isLocked
     const totalAllowances = isLocked && generatedSalary
-        ? generatedSalary.allowanceTotal
+        // ? generatedSalary.allowanceTotal
+        ? (generatedSalary.allowances || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0)
         : currentAllowances.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
     const currentDeductions = salaryDeductions[emp.id] || emp.recurringDeductions || [];
     // const totalDeductions_custom = isLocked
     const totalDeductions_custom = isLocked && generatedSalary
-        ? generatedSalary.deductionTotal - (generatedSalary.loanDeduction || 0)
+        // ? generatedSalary.deductionTotal - (generatedSalary.loanDeduction || 0)
+        ? (generatedSalary.deductions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0)
         : currentDeductions.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
     // Display Basic Pay: For Monthly, we show the full basic in Gross Earnings.
@@ -156,7 +158,12 @@ const EmployeeSalaryCard = ({
 
 
     const nonPaidLeaveDeduction = isLocked && generatedSalary
-        ? generatedSalary.nonPaidLeaveDeduction ?? 0
+        // ? generatedSalary.nonPaidLeaveDeduction ?? 0
+        ? generatedSalary.nonPaidLeaveDeduction ?? (
+            emp.salaryType === "MONTHLY" && companyWorkingDays > 0
+                ? ((generatedSalary.basicSalary || basicSalary) / companyWorkingDays) * (generatedSalary.sickLeaveDays || sickLeaveDays || 0)
+                : 0
+        )
         : emp.salaryType === "MONTHLY" && companyWorkingDays > 0
             ? (basicSalary / companyWorkingDays) * sickLeaveDays
             : 0;
@@ -184,13 +191,17 @@ const EmployeeSalaryCard = ({
         ? displayBasicPay        // daily: rate × days
         : basicSalary;           // monthly: always full basic salary
 
-    const totalEarnings = isLocked && generatedSalary
-        ? generatedSalary.grossSalary + (generatedSalary.nonPaidLeaveDeduction ?? 0)
-        : baseForEarnings + otAmount + totalAllowances;
+    // const totalEarnings = isLocked && generatedSalary
+    // ? generatedSalary.grossSalary + (generatedSalary.nonPaidLeaveDeduction ?? 0)
+    // : baseForEarnings + otAmount + totalAllowances;
+    const totalEarnings = baseForEarnings + otAmount + totalAllowances;
 
     // Total Deductions includes the unpaid leave deduction, epf, advance, and loans.
     const totalDeductions = isLocked && generatedSalary
-        ? generatedSalary.totalDeduction + (generatedSalary.nonPaidLeaveDeduction ?? 0)
+        // ? generatedSalary.totalDeduction + (generatedSalary.nonPaidLeaveDeduction ?? 0)
+        ? (generatedSalary.totalDeduction != null
+            ? generatedSalary.totalDeduction + nonPaidLeaveDeduction
+            : displaySalaryAdvance + epfAmount + (generatedSalary.loanDeduction || 0) + totalDeductions_custom + nonPaidLeaveDeduction)
         : displaySalaryAdvance +
         epfAmount +
         (hasLoanInstallment && isLoanEnabled ? loanDeduction : 0) +

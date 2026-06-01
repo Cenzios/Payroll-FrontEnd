@@ -6,15 +6,26 @@ import { useState } from "react";
 interface PaymentMethodSelectorProps {
     value: "card" | "manual" | null;
     onChange: (method: "card" | "manual") => void;
+    step?: "select" | "pay";
+    onStepChange?: (step: "select" | "pay") => void;
     initialStep?: "select" | "pay";
 }
 
 const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
     value,
     onChange,
+    step: controlledStep,
+    onStepChange,
     initialStep = "select",
 }) => {
-    const [step, setStep] = useState<"select" | "pay">(initialStep);
+    const [internalStep, setInternalStep] = useState<"select" | "pay">(initialStep);
+
+    const step = controlledStep !== undefined ? controlledStep : internalStep;
+    
+    const handleSetStep = (newStep: "select" | "pay") => {
+        if (onStepChange) onStepChange(newStep);
+        setInternalStep(newStep);
+    };
 
     const options = [
         {
@@ -110,7 +121,7 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                         </div>
 
                         <button
-                            onClick={() => setStep("pay")}
+                            onClick={() => handleSetStep("pay")}
                             disabled={!value}
                             className={`w-full font-semibold text-white mt-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-all
                                 ${!value ? "bg-gray-300 cursor-not-allowed" : "bg-[#3B82F6] hover:bg-blue-600 active:scale-[0.98]"}`}
