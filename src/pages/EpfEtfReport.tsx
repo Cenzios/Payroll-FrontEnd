@@ -90,6 +90,7 @@ const EpfEtfReport = () => {
                         fullName: emp.fullName || employeeInfo?.fullName || '-',
                         epfNo: employeeInfo?.epfNumber || emp.epfNumber || '-',
                         basicSalary: 0,
+                        epfEtfAmount: 0,
                         grossPay: 0,
                         empEpf: 0,
                         employerEpf: 0,
@@ -104,6 +105,7 @@ const EpfEtfReport = () => {
 
                 // Fields from API (try various naming conventions)
                 const basicPay = emp.basicPay || 0;
+                const epfEtfAmount = emp.epfEtfAmount || employeeInfo?.epfEtfAmount || basicPay || 0;
                 const empEpf = emp.employeeEPF || emp.employeeEpf || 0;
                 const employerEpf = emp.employerEPF || emp.employerEpf || 0;
                 const etf = emp.etfAmount || emp.etf || 0;
@@ -118,6 +120,7 @@ const EpfEtfReport = () => {
                 const isEpfEnabled = emp.epfEnabled ?? employeeInfo?.epfEnabled ?? (empEpf > 0);
 
                 record.basicSalary += basicPay;
+                record.epfEtfAmount += epfEtfAmount;
                 record.grossPay += emp.grossPay || 0;
                 record.netPay += emp.netPay || emp.netSalary || 0;
 
@@ -231,6 +234,7 @@ const EpfEtfReport = () => {
                         {[
                             { label: 'EPF No', value: item.epfNo },
                             { label: 'Basic Salary', value: fmt(item.basicSalary) },
+                            { label: 'Applicable EPF/ETF Amount', value: fmt(item.epfEtfAmount) },
                             { label: 'Emp EPF (8%)', value: fmt(item.empEpf) },
                             { label: 'Employer EPF (12%)', value: fmt(item.employerEpf) },
                             { label: 'ETF (3%)', value: fmt(item.etf) },
@@ -398,14 +402,15 @@ const EpfEtfReport = () => {
                                     <table className="w-full text-left border-collapse">
                                         <thead className="sticky top-0 bg-gray-50 z-10">
                                             <tr className="border-b border-gray-200">
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900">Employee ID</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900">Employee Name</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900">EPF No</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Basic Salary</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Emp EPF (8%)</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Employer EPF (12%)</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">ETF (3%)</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-[#2b74ff] text-right">Total Contribution</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900">Employee ID</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900">Employee Name</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900">EPF No</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Basic Salary</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Applicable EPF/ETF Amount</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Emp EPF (8%)</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Employer EPF (12%)</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">ETF (3%)</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-[#2b74ff] text-right">Total Contribution</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
@@ -427,14 +432,15 @@ const EpfEtfReport = () => {
                                             ) : (
                                                 filteredData.map((item) => (
                                                     <tr key={item.employeeId} className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-6 py-4 text-sm font-medium text-[#2b74ff]">{item.employeeCode}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-700">{item.fullName}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-400">{item.epfNo}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.basicSalary)}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.empEpf)}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.employerEpf)}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.etf)}</td>
-                                                        <td className="px-6 py-4 text-sm font-bold text-[#2b74ff] text-right">{fmt(item.totalContribution)}</td>
+                                                        <td className="px-4 py-4 text-sm font-medium text-[#2b74ff]">{item.employeeCode}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-700">{item.fullName}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400">{item.epfNo}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.basicSalary)}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.epfEtfAmount)}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.empEpf)}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.employerEpf)}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.etf)}</td>
+                                                        <td className="px-4 py-4 text-sm font-bold text-[#2b74ff] text-right">{fmt(item.totalContribution)}</td>
                                                     </tr>
                                                 ))
                                             )}

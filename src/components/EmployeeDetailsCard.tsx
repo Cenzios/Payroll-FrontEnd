@@ -366,7 +366,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                     {activeTab === "Salary Information" && (
                         <div className="space-y-3 pt-2 pb-2">
                             {/* Salary Mode */}
-                            <div className="flex items-center">
+                            <div className="flex items-center  gap-4">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <Wallet className="w-[14px] h-[14px]" />
                                     <span>Salary Mode</span>
@@ -391,7 +391,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             </div> */}
 
                             {/* Salary Rate */}
-                            <div className="flex items-center">
+                            <div className="flex items-center  gap-4">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <DollarSign className="w-[14px] h-[14px]" />
                                     <span>
@@ -409,7 +409,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             </div>
 
                             {/* OT Rate */}
-                            <div className="flex items-center">
+                            <div className="flex items-center  gap-4">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <Banknote className="w-[14px] h-[14px]" />
                                     <span>OT Rate</span>
@@ -425,10 +425,10 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             </div>
 
                             {/* EPF/ETF */}
-                            <div className="flex items-center">
-                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
-                                    <Banknote className="w-[14px] h-[14px]" />
-                                    <span>EPF/ETF</span>
+                            <div className="flex gap-4">
+                                <div className="w-[150px] flex gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                    <Banknote className="w-[18px] h-[18px]" />
+                                    <span>EPF/ETF Applicable Amount</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.epfEnabled
@@ -441,10 +441,10 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             </div>
 
                             {/* Paid Leave */}
-                            <div className="flex items-center">
+                            <div className="flex items-center  gap-4">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <Calendar className="w-[14px] h-[14px]" />
-                                    <span>Paid Leave</span>
+                                    <span>Annual Leave Days</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.paidLeave && selectedEmployee.paidLeave > 0
@@ -465,7 +465,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     {selectedEmployee.recurringAllowances &&
                                         selectedEmployee.recurringAllowances.length > 0 ? (
                                         selectedEmployee.recurringAllowances.map((allowance, index) => (
-                                            <div key={index} className="flex items-center">
+                                            <div key={index} className="flex items-center  gap-4">
                                                 <div className="w-[150px] pl-[22px] text-[12px] font-medium text-gray-600">
                                                     {allowance.type}
                                                 </div>
@@ -497,7 +497,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     {selectedEmployee.recurringDeductions &&
                                         selectedEmployee.recurringDeductions.length > 0 ? (
                                         selectedEmployee.recurringDeductions.map((deduction, index) => (
-                                            <div key={index} className="flex items-center">
+                                            <div key={index} className="flex items-center  gap-4">
                                                 <div className="w-[150px] pl-[22px] text-[12px] font-medium text-gray-600">
                                                     {deduction.type}
                                                 </div>

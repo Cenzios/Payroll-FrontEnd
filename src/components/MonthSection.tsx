@@ -18,6 +18,7 @@ interface EmployeePayrollData {
     allowanceTotal?: number;
     deductionTotal?: number;
     deductions?: number;
+    loanDeduction?: number;
     salaryType?: "DAILY" | "MONTHLY";
 }
 
@@ -170,7 +171,19 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {filteredEmployees.map((employee, index) => (
+                                        {filteredEmployees.map((employee, index) => {
+                                            // Mirror the PayslipPreview / Salary page calculation:
+                                            // Gross = max(basicPay, basicSalary) + otAmount + allowanceTotal
+                                            // Total Deductions = EPF + salaryAdvance + custom deductions + nonPaidLeaveDeduction
+                                            //   (loan is excluded, same as PayslipPreview which filters out "Loan Deduction")
+                                            const displayBasic = (employee.basicPay > employee.basicSalary ? employee.basicPay : employee.basicSalary) || 0;
+                                            const grossEarnings = displayBasic + (employee.otAmount || 0) + (employee.allowanceTotal || 0);
+                                            const netPay = employee.netPay || 0;
+                                            const loanDeduction = employee.loanDeduction || 0;
+                                            // grossEarnings - netPay gives ALL deductions including loan; remove loan to match PayslipPreview
+                                            const totalDeductions = grossEarnings - netPay - loanDeduction;
+
+                                            return (
                                             <tr key={index} className="hover:bg-gray-50 transition-colors">
                                                 {/* <td className="px-4 py-3">
                                                     <input
@@ -185,17 +198,16 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                 <td className="px-4 py-3 text-gray-500 text-center">{employee.workingDays}</td>
                                                 {/* <td className="px-4 py-3 text-gray-500 font-medium text-end">{employee.basicSalary?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td> */}
                                                 <td className="px-4 py-3 text-gray-500 font-medium text-end">
-                                                    {(employee.basicPay > employee.basicSalary ? employee.basicPay : employee.basicSalary)
-                                                        ?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    {displayBasic.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-500">
-                                                    <div className="font-medium text-gray-500 text-end">{employee.otAmount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                                    <div className="font-medium text-gray-500 text-end">{(employee.otAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                                     {/* <div className="text-[10px] text-gray-400">({employee.otHours} hrs)</div> */}
                                                 </td>
                                                 <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{(employee.allowanceTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-4 py-3 font-regular text-gray-500 whitespace-nowrap text-end">{employee.grossPay?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{(employee.deductionTotal ?? employee.deductions ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-4 py-3 font-regular text-blue-600 whitespace-nowrap text-end">{employee.netPay?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                <td className="px-4 py-3 font-regular text-gray-500 whitespace-nowrap text-end">{grossEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                <td className="px-4 py-3 font-regular text-blue-600 whitespace-nowrap text-end">{netPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                                 <td className="px-4 py-3 text-end">
                                                     <button
                                                         onClick={() => onViewEmployee(employee.employeeId, companyId)}
@@ -205,7 +217,8 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                     </button>
                                                 </td>
                                             </tr>
-                                        ))}
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
