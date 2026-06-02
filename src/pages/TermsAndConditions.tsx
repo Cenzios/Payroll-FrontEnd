@@ -102,7 +102,7 @@ const TermsAndConditions = () => {
                             {/* 3. Account Registration */}
                             <section>
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">3. Account Registration</h3>
-                                <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-gray-600">
+                                <ul className="list-disc  space-y-2 text-sm leading-relaxed text-gray-600 ml-4">
                                     <li>Users must provide accurate, complete, and current information during registration.</li>
                                     <li>Upon commencement of the billing cycle, the Client agrees to pay a monthly subscription fee of LKR 100 for each active employee account. Clients seeking bespoke features or customized volume pricing may contact our sales department to establish an alternative agreement.</li>
                                 </ul>
@@ -111,7 +111,7 @@ const TermsAndConditions = () => {
                             {/* 4. Subscription & Payment */}
                             <section>
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">4. Subscription & Payment</h3>
-                                <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-gray-600">
+                                <ul className="list-disc space-y-2 text-sm leading-relaxed text-gray-600  ml-4">
                                     <li>Subscription type: Monthly</li>
                                     <li>Subscription auto-renews unless cancelled by the user.</li>
                                     <li>A one-time, three-month free trial period is available exclusively to new customers who have not previously held an active account with us.</li>
