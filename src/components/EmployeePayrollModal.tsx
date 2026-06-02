@@ -110,16 +110,18 @@ const EmployeePayrollModal = ({
     const getPayslipData = () => {
         if (!employeeData || !row) return null;
 
-        const getMaxAllowedDays = (y: number, m: number) => {
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth();
-            if (y > currentYear || (y === currentYear && m > currentMonth)) return 0;
-            if (y === currentYear && m === currentMonth) return now.getDate();
-            return new Date(y, m + 1, 0).getDate();
-        };
-
-        const cWorkingDays = row.companyWorkingDays || getMaxAllowedDays(year, month - 1) || row.workedDays || 0;
+        // Use the saved companyWorkingDays from the generated salary record (same value the Salary page used).
+        // rawSalary?.companyWorkingDays is the direct salary history record fallback.
+        // Never fall back to calendar days — that caused the mismatch with the Salary page payslip.
+        // const cWorkingDays = row.companyWorkingDays || rawSalary?.companyWorkingDays || 0;
+        const cWorkingDays =
+            row.companyWorkingDays ??
+            rawSalary?.companyWorkingDays ??
+            (
+                (row.workedDays || 0) +
+                (row.leaveDays || 0) +
+                (row.sickLeaveDays || 0)
+            );
 
         const actualSalaryType = row.salaryType || rawSalary?.salaryType || employeeData.salaryType || 'MONTHLY';
         const actualSickLeaveDays = row.sickLeaveDays || rawSalary?.sickLeaveDays || 0;
