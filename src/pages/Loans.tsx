@@ -13,6 +13,7 @@ import loanPayment from '../assets/images/loan-payment-icon.svg';
 import { DollarSign, HandCoins, CircleDotDashed, Shapes } from 'lucide-react';
 import AlertBar from '../components/AlertBar';
 import logo from '../assets/images/logo-login.svg';
+import { useSearchParams } from 'react-router-dom';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -33,13 +34,24 @@ const getStatusBadge = (status: string) => {
 const Loans = () => {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [selectedLoan, setSelectedLoan] = useState<any | null>(null);
+  // const [selectedLoan, setSelectedLoan] = useState<any | null>(null);
   const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedLoanId = searchParams.get('loanId');
 
   const { data: loans = [], isLoading, isError } = useGetLoansQuery(
     { companyId: selectedCompanyId || "" },
     { skip: !selectedCompanyId }
   );
+
+  const handleSelectLoan = (loan: any) => {
+    setSearchParams({ loanId: loan.id });
+  };
+
+  const handleBack = () => {
+    setSearchParams({});
+  };
 
   // Summary Calculations
   const totalLoanAmount = loans.reduce((sum: number, l: any) => sum + (l.amount || 0), 0);
@@ -77,7 +89,7 @@ const Loans = () => {
   const MobileLoanCard = ({ loan }: { loan: any }) => (
     <div
       className="bg-white rounded-2xl border border-[#EBEBEB] p-4 cursor-pointer active:bg-gray-50 transition-colors shadow-[0_1px_6px_rgba(0,0,0,0.04)]"
-      onClick={() => setSelectedLoan(loan)}
+      onClick={() => handleSelectLoan(loan)}
     >
       {/* Employee row */}
       <div className="flex items-center justify-between mb-3">
@@ -144,8 +156,8 @@ const Loans = () => {
         <Sidebar />
         <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-svh">
 
-          {selectedLoan ? (
-            <LoanHistoryView loan={selectedLoan} onBack={() => setSelectedLoan(null)} />
+          {selectedLoanId ? (
+            <LoanHistoryView loan={{ id: selectedLoanId }} onBack={handleBack} />
           ) : (
             <>
               {/* MOBILE HEADER */}
@@ -304,7 +316,7 @@ const Loans = () => {
                               <tr
                                 key={loan.id}
                                 className="hover:bg-gray-50 transition-colors cursor-pointer"
-                                onClick={() => setSelectedLoan(loan)}
+                                onClick={() => handleSelectLoan(loan)}
                               >
                                 <td className="py-4 px-6">
                                   <div className="flex items-center gap-3">
