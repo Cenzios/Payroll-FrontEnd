@@ -88,16 +88,36 @@ const Reports = () => {
             const reportData = response;
             console.log('✅ Report Data Received:', reportData);
 
-            setMonthlyData(reportData.monthlyData || []);
-            setOverallTotals(reportData.overallTotals || {
-                totalMonths: 0,
-                totalEmployees: 0,
-                totalGrossPay: 0,
-                totalNetPay: 0,
-                totalEmployeeEPF: 0,
-                totalCompanyEPFETF: 0,
-                totalAllowance: 0,
-                totalDeduction: 0
+            let computedOverallGross = 0;
+            const updatedMonthlyData = (reportData.monthlyData || []).map((month: any) => {
+                let computedMonthGross = 0;
+                const updatedEmployees = (month.employees || []).map((emp: any) => {
+                    const displayBasic = (emp.basicPay > emp.basicSalary ? emp.basicPay : emp.basicSalary) || 0;
+                    const grossEarnings = displayBasic + (emp.otAmount || 0) + (emp.allowanceTotal || 0);
+                    computedMonthGross += grossEarnings;
+                    return { ...emp, grossPay: grossEarnings };
+                });
+                computedOverallGross += computedMonthGross;
+                return {
+                    ...month,
+                    employees: updatedEmployees,
+                    totals: { ...month.totals, totalGrossPay: computedMonthGross }
+                };
+            });
+
+            setMonthlyData(updatedMonthlyData);
+            setOverallTotals({
+                ...(reportData.overallTotals || {
+                    totalMonths: 0,
+                    totalEmployees: 0,
+                    totalGrossPay: 0,
+                    totalNetPay: 0,
+                    totalEmployeeEPF: 0,
+                    totalCompanyEPFETF: 0,
+                    totalAllowance: 0,
+                    totalDeduction: 0
+                }),
+                totalGrossPay: computedOverallGross || reportData.overallTotals?.totalGrossPay || 0
             });
 
         } catch (error: any) {

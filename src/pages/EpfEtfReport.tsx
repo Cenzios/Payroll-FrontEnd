@@ -104,8 +104,11 @@ const EpfEtfReport = () => {
                 const employeeInfo = employeesData?.employees.find(e => e.id === emp.employeeId);
 
                 // Fields from API (try various naming conventions)
-                const basicPay = emp.basicPay || 0;
-                const epfEtfAmount = emp.epfEtfAmount || employeeInfo?.epfEtfAmount || basicPay || 0;
+                const displayBasic = (emp.basicPay > emp.basicSalary ? emp.basicPay : emp.basicSalary) || 0;
+                const computedGross = displayBasic + (emp.otAmount || 0) + (emp.allowanceTotal || 0);
+
+                const basicPay = displayBasic;
+                const epfEtfAmount = emp.epfEtfAmount || employeeInfo?.epfEtfAmount || emp.basicPay || 0;
                 const empEpf = emp.employeeEPF || emp.employeeEpf || 0;
                 const employerEpf = emp.employerEPF || emp.employerEpf || 0;
                 const etf = emp.etfAmount || emp.etf || 0;
@@ -121,7 +124,8 @@ const EpfEtfReport = () => {
 
                 record.basicSalary += basicPay;
                 record.epfEtfAmount += epfEtfAmount;
-                record.grossPay += emp.grossPay || 0;
+                // record.grossPay += emp.grossPay || 0;
+                record.grossPay += computedGross;
                 record.netPay += emp.netPay || emp.netSalary || 0;
 
                 if (empEpf > 0) {
