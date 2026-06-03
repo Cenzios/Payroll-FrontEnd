@@ -102,6 +102,8 @@ const SetCompany = () => {
         const trimmed = value.trim();
         if (!trimmed || trimmed.length < 3 || trimmed.length > 50)
           return 'Company name must be between 3 and 50 characters';
+        else if (!/[a-zA-Z0-9]/.test(value.trim()))
+          return 'Name must contain letters or numbers';
         return '';
       }
       case 'companyEmail': {
@@ -130,6 +132,8 @@ const SetCompany = () => {
       case 'companyAddress': {
         if (!value.trim())
           return 'Company address is required';
+        if (!/[a-zA-Z0-9]/.test(value.trim()))
+          return 'Address must contain letters and numbers';
         return '';
       }
       default:
