@@ -8,8 +8,11 @@ export const validateCompanyField = (field: string, value: any): string => {
     let error = "";
     switch (field) {
         case "name":
-            if (!value || value.trim().length < 3 || value.trim().length > 50)
+            if (!value)
+                return 'Company name is required';
+            else if (!value || value.trim().length < 3 || value.trim().length > 50)
                 error = "Name must be between 3 and 50 characters";
+            // name validation
             else if (!/[a-zA-Z0-9]/.test(value.trim()))
                 error = "Name must contain letters or numbers";
             break;
@@ -38,6 +41,7 @@ export const validateCompanyField = (field: string, value: any): string => {
             if (!value || !value.trim())
                 error = "Address is required";
             else if (!/[a-zA-Z0-9]/.test(value.trim()))
+                // address validation
                 error = "Address must contain letters or numbers";
             break;
     }

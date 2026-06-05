@@ -85,18 +85,31 @@ const AccountTab = () => {
     const validateCompany = (field: string, value: string) => {
         switch (field) {
             case 'name':
-                if (!value.trim()) return 'Company name is required';
-                if (value.trim().length < 3 || value.trim().length > 50) return 'Name must be between 3 and 50 characters';
+                if (!value.trim())
+                    return 'Company name is required';
+                if (value.trim().length < 3 || value.trim().length > 50)
+                    return 'Name must be between 3 and 50 characters';
+                if (!/[a-zA-Z0-9]/.test(value.trim()))
+                    return 'Name must contain letters or numbers';
                 break;
             case 'email':
-                if (!value.trim()) return 'Email is required';
-                if (!/^(?!.*\.\.)[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$/.test(value)) return 'Invalid email format';
+                if (!value.trim())
+                    return 'Email is required';
+                if (!/^(?!.*\.\.)[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$/.test(value))
+                    return 'Invalid email format';
                 break;
             case 'contactNumber':
-                if (!value.trim()) return 'Contact number is required';
-                if (!phoneRegex.test(value)) return 'Must be +94 format';
+                if (!value.trim())
+                    return 'Contact number is required';
+                if (!phoneRegex.test(value))
+                    return 'Must be +94 format';
                 break;
-            case 'address': if (!value.trim()) return 'Address is required'; break;
+            case 'address':
+                if (!value.trim())
+                    return 'Address is required';
+                if (!/[a-zA-Z0-9]/.test(value.trim()))
+                    return 'Address must contain letters and numbers';
+                break;
         }
         return '';
     };
