@@ -31,6 +31,9 @@ const BuyPlan = () => {
   const [paymentMethod, setPaymentMethod] = useState<"card" | "manual" | null>(urlMethod);
   const [step, setStep] = useState<"select" | "pay">(urlStep || 'select');
 
+  const [employeeCount, setEmployeeCount] = useState(1);
+
+
   const handleMethodChange = (method: "card" | "manual") => {
     setPaymentMethod(method);
     setSearchParams(prev => {
@@ -205,6 +208,9 @@ const BuyPlan = () => {
                 step={step}
                 onStepChange={handleStepChange}
                 initialStep={isManualPending ? 'pay' : 'select'}
+                pricePerEmployee={activeSubscription?.pricePerEmployee || 100}
+                employeeCount={employeeCount}
+                onEmployeeCountChange={setEmployeeCount}
               />
             </div>
 

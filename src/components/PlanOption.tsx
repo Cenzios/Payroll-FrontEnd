@@ -9,6 +9,9 @@ interface PaymentMethodSelectorProps {
     step?: "select" | "pay";
     onStepChange?: (step: "select" | "pay") => void;
     initialStep?: "select" | "pay";
+    pricePerEmployee: number;
+    employeeCount: number;
+    onEmployeeCountChange: (count: number) => void;
 }
 
 const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
@@ -17,11 +20,14 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
     step: controlledStep,
     onStepChange,
     initialStep = "select",
+    pricePerEmployee,
+    employeeCount,
+    onEmployeeCountChange,
 }) => {
     const [internalStep, setInternalStep] = useState<"select" | "pay">(initialStep);
 
     const step = controlledStep !== undefined ? controlledStep : internalStep;
-    
+
     const handleSetStep = (newStep: "select" | "pay") => {
         if (onStepChange) onStepChange(newStep);
         setInternalStep(newStep);
@@ -44,6 +50,45 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
 
     return (
         <>
+            <div className="bg-white rounded-3xl shadow-md p-5 mb-2">
+                <div className="bg-[#F8FAFC] border border-[#F1F5F9] rounded-xl p-3 flex items-center justify-between">
+                    <div>
+                        <p className="text-[13px] font-semibold text-gray-800 uppercase tracking-wide">
+                            Number of Employees
+                        </p>
+                        <p className="text-xs text-gray-400">Scale your plan as your team grows</p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => onEmployeeCountChange(Math.max(1, employeeCount - 1))}
+                            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100"
+                        >
+                            −
+                        </button>
+
+                        <input
+                            type="number"
+                            min={1}
+                            value={employeeCount}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                if (!isNaN(val) && val >= 1) onEmployeeCountChange(val);
+                            }}
+                            className="text-lg font-bold w-12 text-center bg-[#F8FAFC] 
+    [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+
+                        <button
+                            onClick={() => onEmployeeCountChange(employeeCount + 1)}
+                            className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600"
+                        >
+                            +
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             {step === "select" && (
                 <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-3
                                 max-sm:w-[22rem]">
@@ -106,18 +151,23 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                     {/* TOTAL + BUTTON */}
                     <div className="flex flex-col gap-2 mt-6">
                         <div className="flex justify-between">
-                            <p className="text-sm text-gray-500">Subtotal</p>
-                            <span className="font-semibold">Rs: 100.00</span>
+                            <p className="text-sm text-gray-500">Subscription Subtotal</p>
+                            {/* <span className="font-semibold">Rs: 100.00</span> */}
+                            <div className="text-right">
+                                <p className="font-semibold">Rs.{pricePerEmployee.toFixed(2)} X {employeeCount}</p>
+                                <span className="font-semibold">Rs.{(pricePerEmployee * employeeCount).toFixed(2)}</span>
+                            </div>
                         </div>
 
                         <div className="flex justify-between">
-                            <p className="text-sm text-gray-500">Tax (0%)</p>
+                            <p className="text-sm text-gray-500">Applicable Tax (0%)</p>
                             <span className="font-semibold">Rs: 0.00</span>
                         </div>
 
                         <div className="flex justify-between mt-4">
                             <h3 className="font-bold">Total</h3>
-                            <h3 className="font-bold text-blue-500">Rs: 100.00</h3>
+                            {/* <h3 className="font-bold text-blue-500">Rs: 100.00</h3> */}
+                            <h3 className="font-bold text-blue-500">Rs. {(pricePerEmployee * employeeCount).toFixed(2)}</h3>
                         </div>
 
                         <button
