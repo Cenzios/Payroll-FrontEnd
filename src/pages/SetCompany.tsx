@@ -100,9 +100,11 @@ const SetCompany = () => {
     switch (field) {
       case 'companyName': {
         const trimmed = value.trim();
+        if (!trimmed)
+          return 'Company name is required';
         if (!trimmed || trimmed.length < 3 || trimmed.length > 50)
           return 'Company name must be between 3 and 50 characters';
-        else if (!/[a-zA-Z0-9]/.test(value.trim()))
+        if (!/[a-zA-Z0-9]/.test(value.trim()))
           return 'Name must contain letters or numbers';
         return '';
       }
