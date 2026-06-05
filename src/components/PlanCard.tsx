@@ -42,7 +42,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
             ${showButton ? 'hover:shadow-3xl hover:-translate-y-1' : ''}
             ${isHighlighted ? 'ring-1 ring-blue-100' : ''}
             ${className}
-            w-full max-w-md
+            w-full max-w-md h-full
             max-sm:rounded-2xl max-sm:shadow-md max-sm:max-w-full
         `}>
 
@@ -122,7 +122,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
 
             {/* Plan Details & Features */}
             <div className={`
-                px-10
+                    px-10 flex flex-col justify-between h-[calc(100%-220px)]
                 max-sm:px-4
                 max-sm:overflow-hidden
                 max-sm:transition-all max-sm:duration-300 max-sm:ease-in-out
@@ -135,7 +135,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
                 <div className="border-t border-gray-100/60 mb-8 w-full max-sm:mb-4" />
 
                 {/* Features List */}
-                <div className="space-y-4 mb-6 max-sm:space-y-3 max-sm:mb-5">
+                <div className="flex flex-col justify-around flex-1 mb-6 max-sm:mb-5">
                     {features.map((feature, index) => (
                         <div key={index} className="flex items-center gap-4 group">
                             <div className="

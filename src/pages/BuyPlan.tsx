@@ -186,7 +186,7 @@ const BuyPlan = () => {
             <p className="text-gray-600 font-medium">Preparing secure payment...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-[1fr_1fr] gap-10">
+          <div className="grid grid-cols-[1fr_1fr] gap-10 items-stretch">
             {/* Dynamic Plan Card - Shows Selected Plan */}
             <div className='max-sm:hidden'>
               <PlanCard
