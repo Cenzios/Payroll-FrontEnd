@@ -208,6 +208,15 @@ export const apiSlice = createApi({
             invalidatesTags: ['Subscription', 'Dashboard']
         }),
 
+        updateSubscriptionEmployeeCount: builder.mutation<any, { employeeCount: number }>({
+            query: (data) => ({
+                url: '/subscription/employee-count',
+                method: 'PATCH',
+                data,
+            }),
+            invalidatesTags: ['Subscription', 'Dashboard'],
+        }),
+
         // --- NOTIFICATIONS ---
         getNotifications: builder.query<Notification[], { includeRead?: boolean } | void>({
             query: (params) => ({
@@ -372,6 +381,7 @@ export const {
     useChangePlanMutation,
     useAddAddonMutation,
     useCancelSubscriptionMutation,
+    useUpdateSubscriptionEmployeeCountMutation,
     useGetNotificationsQuery,
     useGetUnreadCountQuery,
     useMarkNotificationAsReadMutation,

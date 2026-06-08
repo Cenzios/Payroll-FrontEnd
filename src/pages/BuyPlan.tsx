@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
 import { Loader2 } from 'lucide-react';
@@ -6,6 +6,7 @@ import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
 import PlanOption from '../components/PlanOption';
 import { PLANS, getPlanById } from '../constants/plans';
+import { useUpdateSubscriptionEmployeeCountMutation } from '../store/apiSlice';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 
 // Stripe Imports
@@ -32,6 +33,21 @@ const BuyPlan = () => {
   const [step, setStep] = useState<"select" | "pay">(urlStep || 'select');
 
   const [employeeCount, setEmployeeCount] = useState(1);
+  const [updateEmployeeCount] = useUpdateSubscriptionEmployeeCountMutation();
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced save: whenever employeeCount changes, persist it to the backend
+  useEffect(() => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      updateEmployeeCount({ employeeCount }).catch((err) =>
+        console.error('Failed to update employee count:', err)
+      );
+    }, 600);
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [employeeCount]);
 
 
   const handleMethodChange = (method: "card" | "manual") => {
