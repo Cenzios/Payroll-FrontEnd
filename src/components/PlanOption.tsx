@@ -1,11 +1,12 @@
-import { CreditCard, Landmark, MoveRight } from "lucide-react";
+import { CreditCard, Landmark, MoveRight, Wallet } from "lucide-react";
 import PlanPaymentCard from "./PlanPaymentCard";
 import PlanPaymentManual from "./PlanPaymentManual";
 import { useState } from "react";
+import PlanPaymentPayhere from "./PlanPaymentPayhere";
 
 interface PaymentMethodSelectorProps {
-    value: "card" | "manual" | null;
-    onChange: (method: "card" | "manual") => void;
+    value: "card" | "manual" | "payhere" | null;
+    onChange: (method: "card" | "manual" | "payhere") => void;
     step?: "select" | "pay";
     onStepChange?: (step: "select" | "pay") => void;
     initialStep?: "select" | "pay";
@@ -45,6 +46,12 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
             title: "Manual Payment",
             subtitle: "Bank deposit",
             icon: Landmark,
+        },
+        {
+            type: "payhere" as const,
+            title: "PayHere",
+            subtitle: "Local online payment",
+            icon: Wallet,
         },
     ];
 
@@ -190,6 +197,7 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                 <>
                     {value === "card" && <PlanPaymentCard />}
                     {value === "manual" && <PlanPaymentManual />}
+                    {value === "payhere" && <PlanPaymentPayhere />}
                 </>
             )}
         </>

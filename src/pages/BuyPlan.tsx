@@ -26,10 +26,10 @@ const BuyPlan = () => {
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
   const [isFetchingSub, setIsFetchingSub] = useState(true);
 
-  const urlMethod = searchParams.get('method') as "card" | "manual" | null;
+  const urlMethod = searchParams.get('method') as "card" | "manual" | "payhere" | null;
   const urlStep = searchParams.get('step') as "select" | "pay" | null;
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "manual" | null>(urlMethod);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "manual" | "payhere" | null>(urlMethod);
   const [step, setStep] = useState<"select" | "pay">(urlStep || 'select');
 
   const [employeeCount, setEmployeeCount] = useState(1);
