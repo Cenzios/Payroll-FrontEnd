@@ -45,7 +45,7 @@ const PayslipPreview = ({
                 </div>
                 <h3 className="text-lg font-semibold text-gray-600">No Payslip Generated</h3>
                 <p className="max-w-xs mt-2 text-sm">
-                    Select an employee from the left and click "Generate Pay Slip" to preview.
+                    Select an employee from the left and click "Generate" button to preview Payslip.
                 </p>
             </div>
         );
