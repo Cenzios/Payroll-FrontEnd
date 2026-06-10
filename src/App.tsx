@@ -29,6 +29,8 @@ import EpfEtfReport from './pages/EpfEtfReport';
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { checkAccessStatus } from './store/slices/authSlice';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function App() {
   const dispatch = useAppDispatch();
@@ -59,6 +61,8 @@ function App() {
         <Route path="/payment/success" element={<Confirmation />} />
         <Route path="/payment/cancel" element={<ConfirmationFail />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
         <Route path="/settle-invoice" element={<SettleInvoice />} />
         <Route path="/plan-verify" element={<PlanVerifyPage />} />
