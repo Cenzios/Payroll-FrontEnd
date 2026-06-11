@@ -6,8 +6,8 @@ import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
 import PlanOption from '../components/PlanOption';
 import { PLANS, getPlanById } from '../constants/plans';
-import { useUpdateSubscriptionEmployeeCountMutation } from '../store/apiSlice';
 import bgIllustration from '../assets/images/Background-illustration.svg';
+import { useUpdateSubscriptionEmployeeCountMutation, useGetDashboardSummaryQuery } from '../store/apiSlice';
 
 // Stripe Imports
 import { loadStripe } from '@stripe/stripe-js';
@@ -32,8 +32,22 @@ const BuyPlan = () => {
   const [paymentMethod, setPaymentMethod] = useState<"card" | "manual" | "payhere" | null>(urlMethod);
   const [step, setStep] = useState<"select" | "pay">(urlStep || 'select');
 
-  const [employeeCount, setEmployeeCount] = useState(1);
   const [updateEmployeeCount] = useUpdateSubscriptionEmployeeCountMutation();
+
+  const { selectedCompanyId } = useAppSelector((state) => state.auth);
+  const { data: dashboardData } = useGetDashboardSummaryQuery(selectedCompanyId || undefined, {
+    skip: !selectedCompanyId,
+  });
+
+
+  const [employeeCount, setEmployeeCount] = useState(1);
+
+  useEffect(() => {
+    if (dashboardData?.totalEmployees) {
+      setEmployeeCount(dashboardData.totalEmployees);
+    }
+  }, [dashboardData?.totalEmployees]);
+
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounced save: whenever employeeCount changes, persist it to the backend
