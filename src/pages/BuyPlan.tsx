@@ -45,6 +45,7 @@ const BuyPlan = () => {
   useEffect(() => {
     if (dashboardData?.totalEmployees) {
       setEmployeeCount(dashboardData.totalEmployees);
+      localStorage.setItem('paid_employee_limit', String(dashboardData.totalEmployees));
     }
   }, [dashboardData?.totalEmployees]);
 
