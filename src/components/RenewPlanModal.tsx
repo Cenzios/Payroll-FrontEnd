@@ -21,7 +21,8 @@ const RenewPlanModal = () => {
             setIsOpen(false);
             setIsLoading(false);
             // navigate('/settle-invoice');
-            navigate('/get-plan?isUpgrade=true');
+            // navigate('/get-plan?isUpgrade=true');
+            navigate('/buy-plan?isPlanChange=false');
         }, 500);
     };
 

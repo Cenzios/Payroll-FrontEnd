@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import EmployeeDrawer from "./drawers/EmployeeDrawer";
 import CompanyDrawer from "./drawers/CompanyDrawer";
 import { useGetDashboardSummaryQuery } from "../store/apiSlice";
+import { AlertTriangle } from "lucide-react";
 
 interface UniversalDrawerProps {
   isOpen: boolean;
@@ -21,13 +22,15 @@ interface UniversalDrawerProps {
 
 const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialData }: UniversalDrawerProps) => {
   const { data: dashboardData } = useGetDashboardSummaryQuery(companyId, { skip: !companyId || mode !== "employee" });
-  
+
   const [showLimitWarning, setShowLimitWarning] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const paidLimit = parseInt(localStorage.getItem('paid_employee_limit') || '0');
 
   useEffect(() => {
     if (isOpen && mode === "employee" && !initialData && dashboardData) {
-      if (dashboardData.totalEmployees >= dashboardData.maxEmployees && !isConfirmed) {
+      // if (dashboardData.totalEmployees >= dashboardData.maxEmployees && !isConfirmed) {
+      if (paidLimit > 0 && dashboardData.totalEmployees >= paidLimit && !isConfirmed) {
         setShowLimitWarning(true);
       }
     } else if (!isOpen) {
@@ -50,32 +53,32 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
   if (showLimitWarning) {
     return (
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60]">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-[340px] flex flex-col items-center text-center gap-4">
-          
+        <div className="bg-white rounded-2xl shadow-xl p-9 w-[400px] flex flex-col items-center text-center gap-4">
+
           {/* Icon */}
-          <div className="w-14 h-14 rounded-full bg-yellow-50 flex items-center justify-center">
-            <span className="text-3xl">⚠️</span>
+          <div className="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center">
+            <AlertTriangle className="text-yellow-500" size={30} />
           </div>
 
           {/* Title */}
-          <h3 className="text-lg font-bold text-gray-900">Just a heads-up!</h3>
+          <h3 className="text-xl font-bold text-gray-900">Just heads-up!</h3>
 
           {/* Message */}
-          <p className="text-sm text-gray-500 leading-relaxed">
-            Each new employee adds Rs.100 to your upcoming monthly bills. 
+          <p className="text-[15px] text-gray-500 leading-relaxed">
+            Each new employee adds Rs.100 to your upcoming monthly bills.
             This will show up on your next billing cycle.
           </p>
 
           {/* Buttons */}
           <div className="flex gap-3 w-full mt-2">
-            <button 
+            <button
               type="button"
               onClick={handleCancel}
-              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50"
+              className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-800 font-semibold text-sm hover:bg-gray-50"
             >
               Cancel
             </button>
-            <button 
+            <button
               type="button"
               onClick={handleConfirm}
               className="flex-1 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-white font-semibold text-sm"
