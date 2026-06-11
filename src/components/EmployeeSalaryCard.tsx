@@ -474,7 +474,11 @@ const EmployeeSalaryCard = ({
                                         type="number"
                                         step="1"
                                         value={leaveDays === 0 ? "" : leaveDays}
-                                        onChange={(e) => handleEmployeeLeaveDaysChange(emp.id, parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value) || 0;
+                                            const capped = Math.min(val, emp.paidLeave ?? 0);
+                                            handleEmployeeLeaveDaysChange(emp.id, capped);
+                                        }}
                                         onWheel={(e) => e.currentTarget.blur()}
                                         onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
                                         className={inputClass(isLocked || (emp.paidLeave ?? 0) === 0)}

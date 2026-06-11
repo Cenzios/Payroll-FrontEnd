@@ -69,7 +69,11 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <button
+                                <p className="text-lg font-bold w-12 text-center bg-[#F8FAFC]">
+                                    {employeeCount}
+                                </p>
+
+                                {/* <button
                                     onClick={() => onEmployeeCountChange(Math.max(1, employeeCount - 1))}
                                     className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100"
                                 >
@@ -85,7 +89,7 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                                         if (!isNaN(val) && val >= 1) onEmployeeCountChange(val);
                                     }}
                                     className="text-lg font-bold w-12 text-center bg-[#F8FAFC] 
-    [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
 
                                 <button
@@ -93,7 +97,7 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                                     className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600"
                                 >
                                     +
-                                </button>
+                                </button> */}
                             </div>
                         </div>
                     </div>
