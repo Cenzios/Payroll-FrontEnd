@@ -24,11 +24,30 @@ const ForgotPassword = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
             });
-            const data = await res.json();
-            if (!data.success) throw new Error(data.message);
+
+            const contentType = res.headers.get('content-type');
+            let data: any = null;
+
+            if (contentType && contentType.includes('application/json')) {
+                data = await res.json();
+            }
+
+            if (!res.ok) {
+                const errMsg = data?.message || (res.status === 404 ? 'No account found with this email address.' : 'Something went wrong. Please try again.');
+                throw new Error(errMsg);
+            }
+
+            if (data && !data.success) {
+                throw new Error(data.message);
+            }
+
             setSent(true);
         } catch (err: any) {
-            setError(err.message || 'Something went wrong. Please try again.');
+            if (err instanceof SyntaxError || err.message?.includes('is not valid JSON') || err.message?.includes('Unexpected token')) {
+                setError('No account found with this email address.');
+            } else {
+                setError(err.message || 'Something went wrong. Please try again.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -58,7 +77,11 @@ const ForgotPassword = () => {
     }
 
     return (
-        <AuthLayout title="Forgot Password?" subtitle="Enter your email and we'll send you a reset link.">
+        <AuthLayout
+            title="Forgot Password?"
+            subtitle="Enter your email and we'll send you a reset link."
+        >
+
             {error && (
                 <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                     {error}
@@ -80,7 +103,7 @@ const ForgotPassword = () => {
                             value={email}
                             onChange={(e) => { setEmail(e.target.value); setError(''); }}
                             className={`block w-full pl-10 pr-3 py-3 border ${error ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                                 } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                             placeholder="you@example.com"
                             autoFocus
