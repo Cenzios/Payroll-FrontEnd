@@ -293,6 +293,10 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     const isEdit = !!initialData;
     const title = isEdit ? "Edit Employee" : "Add New Employee";
 
+    const blockInvalidNumericKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (['+', '-', 'e', 'E', 'ArrowUp', 'ArrowDown'].includes(e.key)) e.preventDefault();
+    };
+
     return (
         <>
             <div
@@ -593,7 +597,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     onChange={(e) => handleEmployeeChange("otRate", parseFloat(e.target.value) || 0)}
                                                     onBlur={() => handleBlur("otRate")}
                                                     onWheel={(e) => e.currentTarget.blur()}
-                                                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                                    onKeyDown={blockInvalidNumericKeys}
                                                     placeholder="Enter OT Rate (Rs)"
                                                     className={`text-[13px] w-full px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                 {touched.otRate && errors.otRate && <p className="text-red-500 text-xs mt-1">{errors.otRate}</p>}
@@ -615,7 +619,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                                 onChange={(e) => { const val = e.target.value; setEpfEtf(val); const err = validateEmployeeField("epfEtf", val, getValidationContext()); setErrors((prev) => ({ ...prev, epfEtf: err })); }}
                                                                 onBlur={() => { setTouched((prev) => ({ ...prev, epfEtf: true })); const err = validateEmployeeField("epfEtf", epfEtf, getValidationContext()); setErrors((prev) => ({ ...prev, epfEtf: err })); }}
                                                                 onWheel={(e) => e.currentTarget.blur()}
-                                                                onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                                                onKeyDown={blockInvalidNumericKeys}
                                                                 placeholder="Enter Employee's EPF/ETF Applicable Amount"
                                                                 className={`text-[13px] w-[330px] px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.epfEtf && errors.epfEtf ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                             {touched.epfEtf && errors.epfEtf && <p className="text-red-500 text-[11px] absolute top-full mt-1 left-0 whitespace-nowrap">{errors.epfEtf}</p>}
@@ -639,10 +643,10 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                         </div>
                                                         {allowances.map((allowance, index) => (
                                                             <div key={index} className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center">
-                                                                <input type="text" value={allowance.type} onChange={(e) => { const u = [...allowances]; u[index].type = e.target.value; setAllowances(u); }} placeholder="Travelling" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all" />
+                                                                <input type="text" value={allowance.type} onChange={(e) => { const u = [...allowances]; u[index].type = e.target.value.replace(/[^a-zA-Z\s]/g, ''); setAllowances(u); }} placeholder="Travelling" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all" />
                                                                 <input type="number" min="0" value={allowance.amount} onChange={(e) => { const u = [...allowances]; u[index].amount = e.target.value; setAllowances(u); }}
                                                                     onWheel={(e) => e.currentTarget.blur()}
-                                                                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                                                    onKeyDown={blockInvalidNumericKeys}
                                                                     placeholder="15,000.00" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                                                 <button type="button" onClick={() => { if (allowances.length > 1) setAllowances(allowances.filter((_, i) => i !== index)); }} disabled={allowances.length <= 1} className="flex items-center justify-center">
                                                                     <MinusCircle className={`w-5 h-5 ${allowances.length <= 1 ? "text-gray-300" : "text-red-400 hover:text-red-600 cursor-pointer"} transition-colors`} />
@@ -677,10 +681,10 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                         </div>
                                                         {deductions.map((deduction, index) => (
                                                             <div key={index} className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center">
-                                                                <input type="text" value={deduction.type} onChange={(e) => { const u = [...deductions]; u[index].type = e.target.value; setDeductions(u); }} placeholder="Loan" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all" />
+                                                                <input type="text" value={deduction.type} onChange={(e) => { const u = [...deductions]; u[index].type = e.target.value.replace(/[^a-zA-Z\s]/g, ''); setDeductions(u); }} placeholder="Food" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all" />
                                                                 <input type="number" min="0" value={deduction.amount} onChange={(e) => { const u = [...deductions]; u[index].amount = e.target.value; setDeductions(u); }}
                                                                     onWheel={(e) => e.currentTarget.blur()}
-                                                                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                                                    onKeyDown={blockInvalidNumericKeys}
                                                                     placeholder="Amount" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                                                 <button type="button" onClick={() => { if (deductions.length > 1) setDeductions(deductions.filter((_, i) => i !== index)); }} disabled={deductions.length <= 1} className="flex items-center justify-center">
                                                                     <MinusCircle className={`w-5 h-5 ${deductions.length <= 1 ? "text-gray-300" : "text-red-400 hover:text-red-600 cursor-pointer"} transition-colors`} />
