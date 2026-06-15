@@ -2,7 +2,7 @@
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const phoneRegex = /^\+94\s?\d{9}$/;
-const employeePhoneRegex = /^(\+94\d{9}|0\d{9})$/;
+const employeePhoneRegex = /^(?:\+94|0)(11|7[012568])\d{7}$/;
 
 export const validateCompanyField = (field: string, value: any): string => {
     let error = "";
@@ -84,7 +84,7 @@ export const validateEmployeeField = (
         case "contactNumber":
             if (!value) error = "Contact number is required";
             else if (!employeePhoneRegex.test(value))
-                error = "Must be +94XXXXXXXXX or 0XXXXXXXXX (10 digits)";
+                error = "Enter a valid Sri Lankan number (e.g. 0771234567 or +94771234567)";
             break;
         case "designation": {
             const designationRegex = /^[A-Za-z\s\-&.()\\/]+$/;
@@ -159,8 +159,8 @@ export const validateEmployeeField = (
                 const epf = value.trim();
                 if (epf.length > 10)
                     error = "EPF Number cannot exceed 10 characters";
-                else if (/[^a-zA-Z0-9-]/.test(epf))
-                    error = "EPF Number can only contain letters, numbers, and dashes";
+                else if (/[^0-9/]/.test(epf))
+                    error = "EPF Number can only contain numbers and slashes";
             }
             break;
     }
