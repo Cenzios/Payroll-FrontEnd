@@ -299,8 +299,15 @@ const Employees = () => {
           errorMessage = error.message;
         }
 
-        if (errorMessage === "Employee with this NIC already exists in this company" || errorMessage.includes("NIC already exists")) {
+        const isNicDuplicate = errorMessage.includes("NIC already exists");
+        const isIdDuplicate = errorMessage.includes("Employee ID already exists") || errorMessage.includes("employeeId") || errorMessage.includes("Unique constraint");
+
+        if (isNicDuplicate && isIdDuplicate) {
+          errorMessage = "Employee ID and NIC already exist in this company";
+        } else if (isNicDuplicate) {
           errorMessage = "NIC already exists in this company";
+        } else if (isIdDuplicate) {
+          errorMessage = "Employee ID already exists in this company";
         }
 
         setToast({
