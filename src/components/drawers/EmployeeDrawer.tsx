@@ -34,6 +34,10 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeTab, setActiveTab] = useState<"employee" | "payment" | "bank">("employee");
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [duplicateErrors, setDuplicateErrors] = useState<{ employeeId?: string; employeeNIC?: string }>({});
+    const [isCheckingId, setIsCheckingId] = useState(false);
+    const [isCheckingNic, setIsCheckingNic] = useState(false);
+    const isCheckingDuplicate = isCheckingId || isCheckingNic;
     const [employeeFiles, setEmployeeFiles] = useState<File[]>([]);
     const [employeeFileTitles, setEmployeeFileTitles] = useState<Record<number, string>>({});
     const [epfEtf, setEpfEtf] = useState("");
@@ -169,6 +173,9 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
             const epfError = validateEmployeeField("epfEtf", epfEtf, getValidationContext());
             setErrors((prev) => ({ ...prev, epfEtf: epfError }));
         }
+        if (field === 'employeeId' || field === 'employeeNIC') {
+            setDuplicateErrors(prev => ({ ...prev, [field]: undefined }));
+        }
         if (value && String(value).trim() !== "") setTouched((prev) => ({ ...prev, [field]: true }));
     };
 
@@ -177,7 +184,75 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         const value = (employeeData as any)[field];
         const error = validateEmployeeField(field, value, getValidationContext());
         setErrors((prev) => ({ ...prev, [field]: error }));
+
+        if (field === 'employeeId' || field === 'employeeNIC') {
+            checkDuplicate(field as 'employeeId' | 'employeeNIC', value);
+        }
     };
+
+    const checkDuplicate = async (field: 'employeeId' | 'employeeNIC', value: string) => {
+        if (!value?.trim() || !companyId) return;
+        if (validateEmployeeField(field, value, getValidationContext())) return;
+
+        if (field === 'employeeId') setIsCheckingId(true);
+        else setIsCheckingNic(true);
+        try {
+            const params = new URLSearchParams({ companyId });
+            if (field === 'employeeId') params.append('employeeId', value.trim());
+            if (field === 'employeeNIC') params.append('employeeNIC', value.trim());
+            if (initialData?.id) params.append('excludeId', initialData.id);
+
+            const token = localStorage.getItem('token');
+            const res = await fetch(
+                `${import.meta.env.VITE_API_BASE_URL}/employees/check-duplicate?${params}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const data = await res.json();
+            if (!data.success) return;
+
+            setDuplicateErrors(prev => ({
+                ...prev,
+                employeeId: field === 'employeeId'
+                    ? (data.data.employeeIdExists ? 'Employee ID already exists in this company' : undefined)
+                    : prev.employeeId,
+                employeeNIC: field === 'employeeNIC'
+                    ? (data.data.nicExists ? 'NIC already exists in this company' : undefined)
+                    : prev.employeeNIC,
+            }));
+        } catch (_) { /* */ }
+        finally {
+            if (field === 'employeeId') setIsCheckingId(false);
+            else setIsCheckingNic(false);
+        }
+    };
+
+    useEffect(() => {
+        const id = employeeData.employeeId?.trim();
+        if (!id || validateEmployeeField('employeeId', id, getValidationContext())) {
+            setDuplicateErrors(prev => ({ ...prev, employeeId: undefined }));
+            setIsCheckingId(false);
+            return;
+        }
+        setIsCheckingId(true);
+        const timer = setTimeout(() => {
+            checkDuplicate('employeeId', id);
+        }, 600);
+        return () => { clearTimeout(timer); setIsCheckingId(false); };
+    }, [employeeData.employeeId]);
+
+    useEffect(() => {
+        const nic = employeeData.employeeNIC?.trim();
+        if (!nic || validateEmployeeField('employeeNIC', nic, getValidationContext())) {
+            setDuplicateErrors(prev => ({ ...prev, employeeNIC: undefined }));
+            setIsCheckingNic(false);
+            return;
+        }
+        setIsCheckingNic(true);
+        const timer = setTimeout(() => {
+            checkDuplicate('employeeNIC', nic);
+        }, 600);
+        return () => { clearTimeout(timer); setIsCheckingNic(false); };
+    }, [employeeData.employeeNIC]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
@@ -192,10 +267,17 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     };
 
     const isTabValid = (tab: typeof activeTab) => {
+        // if (tab === "employee") {
+        //     return ["fullName", "employeeId", "contactNumber", "joinedDate", "employeeNIC", "epfNumber"].every(
+        //         (f) => !validateEmployeeField(f, (employeeData as any)[f], getValidationContext())
+        //     );
+        // }
         if (tab === "employee") {
-            return ["fullName", "employeeId", "contactNumber", "joinedDate", "employeeNIC", "epfNumber"].every(
-                (f) => !validateEmployeeField(f, (employeeData as any)[f], getValidationContext())
+            const hasFormatErrors = ["fullName", "employeeId", "contactNumber", "joinedDate", "employeeNIC", "epfNumber"].some(
+                (f) => !!validateEmployeeField(f, (employeeData as any)[f], getValidationContext())
             );
+            const hasDuplicateErrors = !!(duplicateErrors.employeeId || duplicateErrors.employeeNIC);
+            return !hasFormatErrors && !hasDuplicateErrors && !isCheckingDuplicate;
         }
         if (tab === "payment") {
             return !validateEmployeeField("basicSalary", employeeData.basicSalary, getValidationContext()) &&
@@ -359,8 +441,12 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Employee ID <strong className="text-red-600 text-[15px]">*</strong></label>
                                                 </div>
                                                 <input type="text" value={employeeData.employeeId} onChange={(e) => handleEmployeeChange("employeeId", e.target.value)} onBlur={() => handleBlur("employeeId")} placeholder="Enter Employee ID"
-                                                    className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeId && errors.employeeId ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
-                                                {touched.employeeId && errors.employeeId && <p className="text-red-500 text-xs mt-1">{errors.employeeId}</p>}
+                                                    className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${(touched.employeeId && errors.employeeId) || duplicateErrors.employeeId ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
+                                                {(touched.employeeId && errors.employeeId) || duplicateErrors.employeeId ? (
+                                                    <p className="text-red-500 text-xs mt-1">
+                                                        {errors.employeeId || duplicateErrors.employeeId}
+                                                    </p>
+                                                ) : null}
                                             </div>
 
                                             {/* Name */}
@@ -381,8 +467,12 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">NIC <strong className="text-red-600 text-[15px]">*</strong></label>
                                                 </div>
                                                 <input type="text" value={employeeData.employeeNIC || ""} onChange={(e) => handleEmployeeChange("employeeNIC", e.target.value)} onBlur={() => handleBlur("employeeNIC")} placeholder="Enter Employee NIC Number"
-                                                    className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeNIC && errors.employeeNIC ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
-                                                {touched.employeeNIC && errors.employeeNIC && <p className="text-red-500 text-xs mt-1">{errors.employeeNIC}</p>}
+                                                    className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${(touched.employeeNIC && errors.employeeNIC) || duplicateErrors.employeeNIC ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
+                                                {(touched.employeeNIC && errors.employeeNIC) || duplicateErrors.employeeNIC ? (
+                                                    <p className="text-red-500 text-xs mt-1">
+                                                        {errors.employeeNIC || duplicateErrors.employeeNIC}
+                                                    </p>
+                                                ) : null}
                                             </div>
 
                                             {/* Address */}
@@ -774,7 +864,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                 disabled={!isTabValid(activeTab)}
                                 className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed
                                              max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
-                                Next
+                                {isCheckingDuplicate ? "Checking..." : "Next"}
                             </button>
                         )}
                     </div>

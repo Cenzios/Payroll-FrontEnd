@@ -135,7 +135,10 @@ export const validateEmployeeField = (
                 error = "Account number must be at least 6 digits";
             break;
         case "branchName":
-            if (!value || !value.trim()) error = "Branch name is required";
+            if (!value || !value.trim()) 
+                error = "Branch name is required";
+            else if (/[^a-zA-Z0-9\s]/.test(value.trim()))
+                error = "Branch name can only contain letters, numbers, and spaces";
             break;
         case "accountHolderName":
             if (!value || value.trim().length < 2)
