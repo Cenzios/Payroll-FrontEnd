@@ -15,7 +15,8 @@ import {
   ChevronDown,
   Building2,
   AlertTriangle,
-  LogOut
+  LogOut,
+  CalendarClock
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
@@ -431,7 +432,7 @@ const Dashboard = () => {
                       openAddEmployee();
                     }}
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
-                    title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
+                    title={!selectedCompanyId ? "Please select a company from the Dashboard first" : "Add New Employee"}
                   >
                     <span className="hidden sm:inline whitespace-nowrap">Add New Employee</span>
                     <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
@@ -477,7 +478,7 @@ const Dashboard = () => {
                     showLastMonth={true}
                   />
                   <StatCard
-                    icon={Plus}
+                    icon={CalendarClock}
                     title="Company EPF/ETF Amount"
                     value={`Rs ${lastMonthData.totalCompanyEPFETF.toLocaleString()}`}
                     colorTheme="purple"
