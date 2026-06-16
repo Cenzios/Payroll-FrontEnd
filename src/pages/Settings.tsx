@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import PageHeader from '../components/PageHeader';
 import AccountTab from '../components/settings/AccountTab';
@@ -9,7 +10,12 @@ import { useAppSelector } from '../store/hooks';
 
 const Settings = () => {
     const { user } = useAppSelector((state) => state.auth);
-    const [activeTab, setActiveTab] = useState<'account' | 'payment'>('account');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = (searchParams.get('tab') as 'account' | 'payment') ?? 'account';
+
+    const setActiveTab = (tab: 'account' | 'payment') => {
+        setSearchParams({ tab });
+    };
 
     const tabs = [
         { key: 'account' as const, label: 'Account' },

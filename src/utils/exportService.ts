@@ -384,7 +384,7 @@ export const exportPayslip = (
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(180, 180, 180);
-        doc.text(`• Period: ${periodStr}`, 18, 33);
+        doc.text(`• Month: ${periodStr}`, 18, 33);
 
         // Header Texts - Right
         doc.setTextColor(255, 255, 255);
@@ -419,7 +419,7 @@ export const exportPayslip = (
         doc.text("Employee Name", 14, 70);
         doc.text("Employee No", 75, 70);
         doc.text("Designation", 125, 70);
-        doc.text("Pay Period", 175, 70);
+        doc.text("Month", 175, 70);
 
         doc.setFontSize(10);
         doc.setTextColor(0, 0, 0);
@@ -1678,6 +1678,7 @@ export const exportEpfEtfReport = (
         doc.setFont("helvetica", "bold");
         doc.text("CenzHRM", 19, 13);
 
+        doc.setTextColor(255, 184, 0);
         doc.setFontSize(18);
         doc.text("EPF / ETF Summary Report", 19, 28);
 
