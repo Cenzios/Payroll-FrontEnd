@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from 'react-dom';
 import { Loader2, ChevronRight, Lock, Loader, Eye, ArrowUpRight, LockKeyhole } from "lucide-react";
 import { Employee } from "../types/employee.types";
@@ -52,7 +52,10 @@ const Toggle = ({
     disabled?: boolean;
 }) => (
     <button
-        onClick={onToggle}
+        onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+        }}
         disabled={disabled}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0
       ${enabled ? (disabled ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500") : "bg-gray-300"}
@@ -220,6 +223,24 @@ const EmployeeSalaryCard = ({
     //     year: "numeric",
     // });
 
+    const isEpfEnabledRef = useRef(isEpfEnabled);
+    useEffect(() => {
+        isEpfEnabledRef.current = isEpfEnabled;
+    }, [isEpfEnabled]);
+
+    // Auto-disable EPF/ETF when unpaid leave === working days
+    useEffect(() => {
+        if (
+            emp.epfEnabled &&
+            isEpfEnabledRef.current &&
+            !isLocked &&
+            companyWorkingDays > 0 &&
+            sickLeaveDays === companyWorkingDays
+        ) {
+            handleToggleEpfEtf(emp.id);
+        }
+    }, [sickLeaveDays, companyWorkingDays, isLocked, emp.epfEnabled, emp.id]);
+
     const inputClass = (locked: boolean) =>
         `w-full px-3 py-2 border rounded-xl text-[14px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner font-semibold
     ${locked
@@ -233,6 +254,12 @@ const EmployeeSalaryCard = ({
             return;
         }
         handleSelectEmployee(emp);
+    };
+
+    const blockInvalidNumberKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (['+', '-', 'e', 'E', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+            e.preventDefault();
+        }
     };
 
     return (
@@ -420,7 +447,7 @@ const EmployeeSalaryCard = ({
                                 onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
                                 onBlur={() => setTouchedFields((prev: any) => ({ ...prev, employeeDays: { ...prev.employeeDays, [emp.id]: true } }))}
                                 onWheel={(e) => e.currentTarget.blur()}
-                                onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                onKeyDown={blockInvalidNumberKeys}
                                 className={inputClass(isLocked)}
                                 min="0"
                                 max={companyWorkingDays}
@@ -439,7 +466,7 @@ const EmployeeSalaryCard = ({
                                     value={displayOtHours === 0 ? "" : displayOtHours}
                                     onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
                                     onWheel={(e) => e.currentTarget.blur()}
-                                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                    onKeyDown={blockInvalidNumberKeys}
                                     className={inputClass(isLocked)}
                                     min="0"
                                     disabled={isLocked || emp.otRate <= 0}
@@ -457,7 +484,7 @@ const EmployeeSalaryCard = ({
                                 value={displaySalaryAdvance === 0 ? "" : displaySalaryAdvance}
                                 onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
                                 onWheel={(e) => e.currentTarget.blur()}
-                                onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                onKeyDown={blockInvalidNumberKeys}
                                 className={inputClass(isLocked)}
                                 min="0"
                                 disabled={isLocked}
@@ -480,7 +507,7 @@ const EmployeeSalaryCard = ({
                                             handleEmployeeLeaveDaysChange(emp.id, capped);
                                         }}
                                         onWheel={(e) => e.currentTarget.blur()}
-                                        onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                        onKeyDown={blockInvalidNumberKeys}
                                         className={inputClass(isLocked || (emp.paidLeave ?? 0) === 0)}
                                         min="0"
                                         max={emp.paidLeave}
@@ -502,7 +529,7 @@ const EmployeeSalaryCard = ({
                                     value={sickLeaveDays === 0 ? "" : sickLeaveDays}
                                     onChange={(e) => handleEmployeeSickLeaveDaysChange(emp.id, parseFloat(e.target.value) || 0)}
                                     onWheel={(e) => e.currentTarget.blur()}
-                                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                    onKeyDown={blockInvalidNumberKeys}
                                     className={inputClass(isLocked)}
                                     min="0"
                                     disabled={isLocked}
