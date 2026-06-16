@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, logout } from '../store/slices/authSlice';
-import { Mail, Lock, Loader2 } from 'lucide-react';
+import { Mail, Lock, Loader2, EyeOff, Eye } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 
 
@@ -23,6 +23,7 @@ const Login = () => {
   };
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [showPassword, setShowPassword] = useState(false);
   const { isLoading, error, token } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
@@ -177,7 +178,7 @@ const Login = () => {
               <Lock className="h-5 w-5 text-gray-400" />
             </div>
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               id="password"
               name="password"
               value={formData.password}
@@ -188,6 +189,17 @@ const Login = () => {
                 } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
               placeholder="••••••••"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+              ) : (
+                <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+              )}
+            </button>
           </div>
           {validationErrors.password && (
             <p className="mt-1 text-sm text-red-600">
@@ -202,7 +214,7 @@ const Login = () => {
               to="/forgot-password"
               className="font-medium text-blue-600 hover:text-blue-700 transition-colors"
             >
-              Forget Password
+              Forgot Password
             </Link>
           </p>
         </div>

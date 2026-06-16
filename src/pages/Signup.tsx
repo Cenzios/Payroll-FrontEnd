@@ -55,6 +55,10 @@ const Signup = () => {
 
     if (!formData.fullName) {
       errors.fullName = 'Full name is required';
+    } else if (!/^[a-zA-Z\s]+$/.test(formData.fullName.trim())) {
+      errors.fullName = 'Full name must contain letters only';
+    } else if (formData.fullName.trim().length < 3) {
+      errors.fullName = 'Full name must be at least 3 characters';
     }
 
     if (!formData.email) {
@@ -69,14 +73,35 @@ const Signup = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setValidationErrors((prev) => ({
-      ...prev,
-      [name]: '',
-    }));
+
+    if (name === 'fullName') {
+      // Block non-letter characters entirely
+      if (value && !/^[a-zA-Z\s]*$/.test(value)) {
+        setValidationErrors(prev => ({ ...prev, fullName: 'Full name must contain letters only' }));
+        return; // Don't update formData — character is rejected
+      }
+      setFormData(prev => ({ ...prev, fullName: value }));
+      // Live length feedback once they start typing
+      if (value.trim().length > 0 && value.trim().length < 3) {
+        setValidationErrors(prev => ({ ...prev, fullName: 'Full name must be at least 3 characters' }));
+      } else {
+        setValidationErrors(prev => ({ ...prev, fullName: '' }));
+      }
+      return;
+    }
+
+    if (name === 'email') {
+      setFormData(prev => ({ ...prev, email: value }));
+      if (value && !/\S+@\S+\.\S+/.test(value)) {
+        setValidationErrors(prev => ({ ...prev, email: 'Email is invalid' }));
+      } else {
+        setValidationErrors(prev => ({ ...prev, email: '' }));
+      }
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setValidationErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -192,6 +217,16 @@ const Signup = () => {
             'Next'
           )}
         </button>
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Back to Login
+          </button>
+        </div>
 
       </form>
     </AuthLayout >
