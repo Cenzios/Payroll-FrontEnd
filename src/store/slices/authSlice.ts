@@ -13,6 +13,8 @@ import {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  ResendVerificationRequest,
+  ResendVerificationResponse,
 } from '../../types/auth.types';
 
 const initialState: AuthState = {
@@ -48,12 +50,16 @@ export const startSignup = createAsyncThunk(
       );
       // ✅ Store in localStorage
       localStorage.setItem('reg_email', userData.email);
-      if (response.data.signupToken) {
-        localStorage.setItem('signup_token', response.data.signupToken);
-      }
+      // if (response.data.signupToken) {
+      //   localStorage.setItem('signup_token', response.data.signupToken);
+      // }
+      if (response.data.data?.signupToken) {
+       localStorage.setItem('signup_token', response.data.data.signupToken);
+     }
       return {
         email: userData.email,
-        signupToken: response.data.signupToken,
+        // signupToken: response.data.signupToken,
+        signupToken: response.data.data?.signupToken,
         message: response.data.message
       };
     } catch (error: any) {
@@ -61,6 +67,35 @@ export const startSignup = createAsyncThunk(
         error.response?.data?.message ||
         error.message ||
         'Signup failed';
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const resendVerificationEmail = createAsyncThunk(
+  'auth/resendVerificationEmail',
+  async (data: ResendVerificationRequest, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post<ResendVerificationResponse>(
+        '/auth/resend-verification',
+        data
+      );
+      // if (response.data.signupToken) {
+      //   localStorage.setItem('signup_token', response.data.signupToken);
+      // }
+      if (response.data.data?.signupToken) {
+       localStorage.setItem('signup_token', response.data.data.signupToken);
+     }
+      return {
+        // signupToken: response.data.signupToken,
+        signupToken: response.data.data?.signupToken,
+        message: response.data.message
+      };
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to resend verification email';
       return rejectWithValue(message);
     }
   }
@@ -256,6 +291,19 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(startSignup.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(resendVerificationEmail.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(resendVerificationEmail.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.signupToken = action.payload.signupToken || state.signupToken;
+        state.error = null;
+      })
+      .addCase(resendVerificationEmail.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })

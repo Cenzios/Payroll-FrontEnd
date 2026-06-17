@@ -60,7 +60,11 @@ const ResetPassword = () => {
     };
 
     return (
-        <AuthLayout title="Set New Password" subtitle="Choose a strong password for your account.">
+        <AuthLayout
+            title="Set New Password"
+            subtitle="Choose a strong password for your account."
+        >
+            <p className='text-xs text-gray-500 mb-8 -mt-8'>(Ex: Minimum 6 characters including Uppercase Letters, Lowercase Letters, Numbers and Special Characters.)</p>
             {apiError && (
                 <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                     {apiError}{' '}
@@ -88,7 +92,7 @@ const ResetPassword = () => {
                             value={formData.password}
                             onChange={handleChange}
                             className={`block w-full pl-10 pr-12 py-3 border ${errors.password ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                                 } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                             placeholder="••••••••"
                         />
@@ -115,7 +119,7 @@ const ResetPassword = () => {
                             value={formData.confirmPassword}
                             onChange={handleChange}
                             className={`block w-full pl-10 pr-12 py-3 border ${errors.confirmPassword ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                                 } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                             placeholder="••••••••"
                         />
@@ -135,7 +139,7 @@ const ResetPassword = () => {
                 >
                     {isLoading ? (
                         <><Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />Saving...</>
-                    ) : 'Confirm New Password'}
+                    ) : 'Reset Password'}
                 </button>
             </form>
         </AuthLayout>
