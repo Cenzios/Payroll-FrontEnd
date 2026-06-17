@@ -85,6 +85,7 @@ const HeaderActions = ({ showLogout = true }: HeaderActionsProps = {}) => {
         {/* Notification Bell */}
         <div className="relative">
           <button
+            title="Notifications"
             onClick={() => {
               const nextState = !isNotificationDropdownOpen;
               setIsNotificationDropdownOpen(nextState);
@@ -135,6 +136,7 @@ const HeaderActions = ({ showLogout = true }: HeaderActionsProps = {}) => {
           <button
             data-logout-btn
             onClick={handleLogout}
+            title="Log Out"
             className="w-10 h-10 rounded-xl hover:bg-gray-100 flex items-center justify-center"
           >
             <LogOut className="w-5 h-5 text-gray-600" />

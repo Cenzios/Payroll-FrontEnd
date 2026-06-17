@@ -1,8 +1,7 @@
 // Validation logic extracted from UniversalDrawer for both company and employee forms
-
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const phoneRegex = /^\+94\s?\d{9}$/;
-const employeePhoneRegex = /^(?:\+94|0)(11|7[012568])\d{7}$/;
+const employeePhoneRegex = /^(?:\+94|0)(11|7[0125678])\d{7}$/;
 
 export const validateCompanyField = (field: string, value: any): string => {
     let error = "";
@@ -83,6 +82,8 @@ export const validateEmployeeField = (
         }
         case "contactNumber":
             if (!value) error = "Contact number is required";
+            else if (value.replace(/^(\+94|0)/, "").length > 9)
+                error = "Must be followed by 9 digits";
             else if (!employeePhoneRegex.test(value))
                 error = "Enter a valid Sri Lankan number (e.g. 0771234567 or +94771234567)";
             break;
