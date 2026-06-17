@@ -15,7 +15,23 @@ export interface StartSignupRequest {
 export interface StartSignupResponse {
   success: boolean;
   message: string;
-  signupToken?: string; // ✅ ADD
+  // signupToken?: string; 
+  data?: {
+      signupToken?: string;
+    };
+}
+
+export interface ResendVerificationRequest {
+  signupToken: string;
+}
+
+export interface ResendVerificationResponse {
+  success: boolean;
+  message: string;
+  // signupToken?: string;
+  data?: {
+      signupToken?: string;
+    };
 }
 
 export interface VerifyEmailResponse {
