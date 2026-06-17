@@ -64,6 +64,8 @@ const salarySlice = createSlice({
             state.companyWorkingDays = action.payload;
             // Clear overrides when company default changes to sync all
             state.employeeWorkedDays = {};
+            state.employeeLeaveDays = {};
+            state.employeeSickLeaveDays = {};
         },
         setEmployeeWorkedDays: (state, action: PayloadAction<{ id: string; days: number }>) => {
             state.employeeWorkedDays[action.payload.id] = action.payload.days;

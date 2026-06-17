@@ -378,13 +378,16 @@ const Salary = () => {
       ...prev,
       employeeDays: { ...prev.employeeDays, [empId]: true },
     }));
-    const { sickLeaveDays } = getEmployeeValues(empId);
+    // const { sickLeaveDays } = getEmployeeValues(empId);
+    const { leaveDays } = getEmployeeValues(empId);
     const clippedVal = Math.min(Math.max(0, val), companyWorkingDays);
     dispatch(setEmployeeWorkedDays({ id: empId, days: clippedVal }));
 
     // Recalc paid leave = total - worked - unpaid (not the other way)
-    const autoPaidLeave = Math.max(0, companyWorkingDays - clippedVal - sickLeaveDays);
-    dispatch(setEmployeeLeaveDays({ id: empId, days: autoPaidLeave }));
+    // const autoPaidLeave = Math.max(0, companyWorkingDays - clippedVal - sickLeaveDays);
+    // dispatch(setEmployeeLeaveDays({ id: empId, days: autoPaidLeave }));
+    const autoUnpaidLeave = Math.max(0, companyWorkingDays - clippedVal - leaveDays);
+    dispatch(setEmployeeSickLeaveDays({ id: empId, days: autoUnpaidLeave }));
   };
 
   const handleMonthChange = (month: number) => {
