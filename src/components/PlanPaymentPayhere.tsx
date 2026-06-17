@@ -66,7 +66,7 @@ const PlanPaymentPayhere = () => {
     };
 
     return (
-        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 flex flex-col gap-6">
+        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-4 max-sm:w-[22rem]">
             <div className="text-center space-y-2">
                 <h2 className="text-xl font-semibold text-gray-900">Pay with PayHere</h2>
                 <p className="text-gray-500 text-sm">

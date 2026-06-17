@@ -42,7 +42,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
             ${showButton ? 'hover:shadow-3xl hover:-translate-y-1' : ''}
             ${isHighlighted ? 'ring-1 ring-blue-100' : ''}
             ${className}
-            w-full max-w-md h-full
+            w-full max-w-md 
             max-sm:rounded-2xl max-sm:shadow-md max-sm:max-w-full
         `}>
 
@@ -97,10 +97,10 @@ const PlanCard: React.FC<PlanCardProps> = ({
                         flex items-baseline gap-1 mt-1
                         max-sm:mt-2
                     ">
-                        <p className="text-xl text-white font-semibold max-sm:text-base">RS:</p>
+                        <p className="text-xl text-white font-semibold max-sm:text-base">Rs:</p>
                         <span className="text-5xl text-white font-bold max-sm:text-4xl">100</span>
                         <span className="text-[13px] text-white opacity-80 lowercase font-light ml-1 max-sm:text-[11px]">
-                            / employee / mo
+                            / employee / month
                         </span>
                     </div>
                 </div>
@@ -122,10 +122,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
 
             {/* Plan Details & Features */}
             <div className={`
-                    px-10 flex flex-col justify-between h-[calc(100%-220px)]
-                max-sm:px-4
-                max-sm:overflow-hidden
-                max-sm:transition-all max-sm:duration-300 max-sm:ease-in-out
+                    px-10 flex flex-col justify-start max-sm:px-4 max-sm:overflow-hidden max-sm:transition-all max-sm:duration-300 max-sm:ease-in-out
                 ${isMobileExpanded
                     ? 'max-sm:max-h-[700px] max-sm:opacity-100 max-sm:pt-4 max-sm:pb-2'
                     : 'max-sm:max-h-0 max-sm:opacity-0 max-sm:pt-0 max-sm:pb-0'
@@ -135,7 +132,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
                 <div className="border-t border-gray-100/60 mb-8 w-full max-sm:mb-4" />
 
                 {/* Features List */}
-                <div className="flex flex-col justify-around flex-1 mb-6 max-sm:mb-5">
+                <div className="flex flex-col gap-4 max-sm:gap-3 mb-6 max-sm:mb-5">
                     {features.map((feature, index) => (
                         <div key={index} className="flex items-center gap-4 group">
                             <div className="
