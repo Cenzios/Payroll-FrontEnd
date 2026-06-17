@@ -219,7 +219,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                     ? (data.data.nicExists ? 'NIC already exists in this company' : undefined)
                     : prev.employeeNIC,
             }));
-        } catch (_) { /* */ }
+        } catch (_) { /*  */ }
         finally {
             if (field === 'employeeId') setIsCheckingId(false);
             else setIsCheckingNic(false);

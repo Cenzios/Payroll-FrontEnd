@@ -301,6 +301,7 @@ const Dashboard = () => {
               <img src={logo} alt="logo" />
             </div>
             <div className="flex items-center gap-2 ml-6">
+
               {/* Company switcher pill */}
               <button
                 onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
@@ -314,6 +315,7 @@ const Dashboard = () => {
                   : 'Select Co'}
                 <ChevronDown className="w-3 h-3 text-gray-400" />
               </button>
+
               <CompanySwitcher
                 isOpen={isCompanyDropdownOpen}
                 onClose={() => setIsCompanyDropdownOpen(false)}

@@ -57,10 +57,9 @@ const NotificationModal = ({ isOpen, onClose, notification, onDelete }: Notifica
                     <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div className="sm:flex sm:items-start">
                             <div className={`mx-auto flex size-12 shrink-0 items-center justify-center rounded-xl ${getIconBg()} sm:mx-0 sm:size-10 shadow-sm border border-black/5`}>
-                                <div className={`
-                    ${notification.type === 'alert' ? 'text-red-600' :
-                                        notification.type === 'warning' ? 'text-orange-600' : 'text-blue-600'}
-                `}>
+                                <div className={`${notification.type === 'alert' ? 'text-red-600' :
+                                    notification.type === 'warning' ? 'text-orange-600' : 'text-blue-600'}
+                                `}>
                                     {getIcon()}
                                 </div>
                             </div>

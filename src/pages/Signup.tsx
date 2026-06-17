@@ -218,13 +218,14 @@ const Signup = () => {
           )}
         </button>
 
-        <div className="text-center">
+        <div className="text-center text-sm text-gray-600">
+          Already have an account? {' '}
           <button
             type="button"
             onClick={() => navigate('/login')}
             className="text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
-            Back to Login
+            Sign In
           </button>
         </div>
 
