@@ -194,14 +194,11 @@ const BuyPlan = () => {
 
   return (
     <div
-      className="relative min-h-screen overflow-y-auto  bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
-  flex items-center justify-center px-4 py-10 scroll-smooth"
-    >
+      className="relative min-h-screen overflow-y-auto  bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-10 scroll-smooth">
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
-      <div className="w-full max-w-5xl relative z-10">
-        <h1 className="text-4xl font-bold text-center text-gray-900 mb-10
-        max-sm:text-3xl ">
+      <div className="w-full max-w-5xl relative z-10 mx-auto">
+        <h1 className="text-4xl font-bold text-center text-gray-900 mb-10 max-sm:text-3xl ">
           {isPlanChange ? 'Confirm Plan Change' : 'Complete Registration Payment'}
         </h1>
 

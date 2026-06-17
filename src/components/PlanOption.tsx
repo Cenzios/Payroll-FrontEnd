@@ -44,13 +44,13 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
         {
             type: "manual" as const,
             title: "Manual Payment",
-            subtitle: "Bank deposit",
+            subtitle: "Bank Deposit",
             icon: Landmark,
         },
         {
             type: "payhere" as const,
             title: "PayHere",
-            subtitle: "Local online payment",
+            subtitle: "Local Online Payment",
             icon: Wallet,
         },
     ];
@@ -107,7 +107,7 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
 
                         <h3 className="text-lg font-bold text-gray-900
                     max-sm:flex max-sm:justify-center">
-                            Payment Method
+                            Payment Methods
                         </h3>
 
                         <p className="text-sm text-gray-500">
@@ -166,14 +166,14 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                                 <p className="text-sm text-gray-500">Subscription Subtotal</p>
                                 {/* <span className="font-semibold">Rs: 100.00</span> */}
                                 <div className="text-right">
-                                    <p className="font-semibold">Rs.{pricePerEmployee.toFixed(2)} X {employeeCount}</p>
-                                    <span className="font-semibold">Rs.{(pricePerEmployee * employeeCount).toFixed(2)}</span>
+                                    <p className="font-semibold">Rs. {pricePerEmployee.toFixed(2)} X {employeeCount}</p>
+                                    <span className="font-semibold">Rs. {(pricePerEmployee * employeeCount).toFixed(2)}</span>
                                 </div>
                             </div>
 
                             <div className="flex justify-between">
                                 <p className="text-sm text-gray-500">Applicable Tax (0%)</p>
-                                <span className="font-semibold">Rs: 0.00</span>
+                                <span className="font-semibold">Rs. 0.00</span>
                             </div>
 
                             <div className="flex justify-between mt-4">
