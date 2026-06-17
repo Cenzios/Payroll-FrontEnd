@@ -62,14 +62,14 @@ const ForgotPassword = () => {
                     </div>
                     <p className="text-gray-600 text-sm">
                         We've sent a password reset link to <strong>{email}</strong>.
-                        Check your inbox and click the link to reset your password.
+                        Check your inbox to reset your password.
                     </p>
                     <p className="text-xs text-gray-400">The link expires in 15 minutes.</p>
                     <button
                         onClick={() => navigate('/login')}
                         className="mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium"
                     >
-                        Back to Login
+                        Sign In
                     </button>
                 </div>
             </AuthLayout>
@@ -130,7 +130,7 @@ const ForgotPassword = () => {
                         onClick={() => navigate('/login')}
                         className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                     >
-                        Back to Login
+                        Sign In
                     </button>
                 </div>
             </form>
