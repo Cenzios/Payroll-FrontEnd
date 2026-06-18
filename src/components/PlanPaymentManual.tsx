@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { UploadCloud, Copy, Loader2, X, AlertCircle } from "lucide-react";
+import { UploadCloud, Copy, Check, Loader2, X, AlertCircle } from "lucide-react";
 import PlanVerify from "./PlanVerify";
 import axiosInstance from "../api/axios";
 
@@ -9,6 +9,7 @@ const PlanPaymentManual = () => {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
 
     const accountNumber = "052020386231";
 
@@ -64,6 +65,7 @@ const PlanPaymentManual = () => {
 
             if (validateFile(selectedFile)) {
                 setFile(selectedFile);
+                setRejectionReason(null);
             } else {
                 e.target.value = ""; // Clear the input
             }
@@ -72,6 +74,8 @@ const PlanPaymentManual = () => {
 
     const handleCopy = () => {
         navigator.clipboard.writeText(accountNumber);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     const handleSubmit = async () => {
@@ -105,7 +109,7 @@ const PlanPaymentManual = () => {
     }
 
     return (
-        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-4 max-sm:w-[22rem]">
+        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-2 max-sm:w-[22rem]">
 
             <h3 className="text-lg font-bold text-gray-900 max-sm:flex max-sm:justify-center">
                 Bank Deposit & Slip Upload
@@ -142,8 +146,17 @@ const PlanPaymentManual = () => {
                         <span className="font-semibold text-gray-800 text-sm">
                             {accountNumber}
                         </span>
-                        <button onClick={handleCopy}>
-                            <Copy className="w-4 h-4 text-blue-500" />
+                        <button onClick={handleCopy} className="relative">
+                            {copied ? (
+                                <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                                <Copy className="w-4 h-4 text-blue-500" />
+                            )}
+                            {copied && (
+                                <span className="absolute top-[14px] right-0 bg-gray-800 text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-md">
+                                    Copied!
+                                </span>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -176,6 +189,7 @@ const PlanPaymentManual = () => {
 
                         if (validateFile(droppedFile)) {
                             setFile(droppedFile);
+                            setRejectionReason(null);
                         }
                     }
                 }}
@@ -222,7 +236,7 @@ const PlanPaymentManual = () => {
                     type="text"
                     placeholder="e.g. TXN-987654321"
                     value={reference}
-                    onChange={(e) => setReference(e.target.value)}
+                    onChange={(e) => setReference(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
             </div>
