@@ -131,10 +131,12 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
                         <span className="font-normal text-end">{referenceId || "TRX-8923-AB"}</span>
                     </div>
 
-                    <div className="flex justify-between">
-                        <span className="text-gray-500">Est. Approval Time</span>
-                        <span className="font-semibold text-end">1–2 Business Hours</span>
-                    </div>
+                    {status === 'PENDING' && (
+                        <div className="flex justify-between">
+                            <span className="text-gray-500">Est. Approval Time</span>
+                            <span className="font-semibold text-end">1–2 Business Hours</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
