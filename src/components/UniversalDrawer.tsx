@@ -24,25 +24,25 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
   const { data: dashboardData } = useGetDashboardSummaryQuery(companyId, { skip: !companyId || mode !== "employee" });
 
   const [showLimitWarning, setShowLimitWarning] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
+  // const [isConfirmed, setIsConfirmed] = useState(false);
   const paidLimit = parseInt(localStorage.getItem('paid_employee_limit') || '0');
-
+  const warningConfirmKey = `employee_limit_warning_confirmed_${companyId}_${paidLimit}`;
   useEffect(() => {
     if (isOpen && mode === "employee" && !initialData && dashboardData) {
+      const alreadyConfirmed = localStorage.getItem(warningConfirmKey) === 'true';
       // if (dashboardData.totalEmployees >= dashboardData.maxEmployees && !isConfirmed) {
-      if (paidLimit > 0 && dashboardData.totalEmployees >= paidLimit && !isConfirmed) {
+      if (paidLimit > 0 && dashboardData.totalEmployees >= paidLimit && !alreadyConfirmed) {
         setShowLimitWarning(true);
       }
     } else if (!isOpen) {
-      // Reset when closed
+      // Just close the modal state not clear the confirmation flag 
       setShowLimitWarning(false);
-      setIsConfirmed(false);
     }
-  }, [isOpen, mode, initialData, dashboardData, isConfirmed]);
+  }, [isOpen, mode, initialData, dashboardData, paidLimit, warningConfirmKey]);
 
   const handleConfirm = () => {
     setShowLimitWarning(false);
-    setIsConfirmed(true);
+    localStorage.setItem(warningConfirmKey, 'true');
   };
 
   const handleCancel = () => {
