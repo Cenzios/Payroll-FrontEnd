@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { UploadCloud, Copy, Check, Loader2, X, AlertCircle } from "lucide-react";
 import PlanVerify from "./PlanVerify";
 import axiosInstance from "../api/axios";
@@ -10,6 +10,8 @@ const PlanPaymentManual = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [rejectionReason, setRejectionReason] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [dragError, setDragError] = useState<string | null>(null);
 
     const accountNumber = "052020386231";
 
@@ -66,6 +68,7 @@ const PlanPaymentManual = () => {
             if (validateFile(selectedFile)) {
                 setFile(selectedFile);
                 setRejectionReason(null);
+                setDragError(null);
             } else {
                 e.target.value = ""; // Clear the input
             }
@@ -170,8 +173,9 @@ const PlanPaymentManual = () => {
             </div>
 
             {/* Upload Box */}
-            <label
-                className="border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-blue-400 transition"
+            <div onClick={() => { if (!file) fileInputRef.current?.click(); }}
+                className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center transition
+        ${file ? "border-blue-400 bg-blue-50 cursor-default" : "border-gray-300 hover:border-blue-400 cursor-pointer"}`}
                 onDragOver={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -179,14 +183,19 @@ const PlanPaymentManual = () => {
                 onDrop={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const droppedFile = e.dataTransfer.files?.[0];
 
+                    if (e.dataTransfer.files.length > 1) {
+                        setDragError("Only one file can be uploaded at a time. Please drop a single file.");
+                        return;
+                    }
+
+                    setDragError(null);
+                    const droppedFile = e.dataTransfer.files?.[0];
                     if (droppedFile) {
                         if (file) {
                             const confirmReplace = window.confirm("You have already selected a file. Do you want to replace it with the new one?");
                             if (!confirmReplace) return;
                         }
-
                         if (validateFile(droppedFile)) {
                             setFile(droppedFile);
                             setRejectionReason(null);
@@ -194,8 +203,12 @@ const PlanPaymentManual = () => {
                     }
                 }}
             >
-                <UploadCloud className="w-8 h-8 text-blue-500 mb-2" />
 
+                {file ? (
+                    <Check className="w-8 h-8 text-blue-500 mb-2" />
+                ) : (
+                    <UploadCloud className="w-8 h-8 text-blue-500 mb-2" />
+                )}
                 <div className="flex flex-col items-center">
                     <p className="text-sm text-gray-700">
                         {file ? file.name : "Choose a file or Drag & Drop"}
@@ -207,25 +220,45 @@ const PlanPaymentManual = () => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 setFile(null);
+                                if (fileInputRef.current) fileInputRef.current.value = "";
                             }}
                             className="mt-2 text-xs text-red-500 font-medium flex items-center gap-1 hover:text-red-600"
                         >
                             <X className="w-3 h-3" /> Remove File
                         </button>
                     )}
+                    {!file && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                fileInputRef.current?.click();
+                            }}
+                            className="mt-1 text-xs text-blue-500 font-medium hover:text-blue-600"
+                        >
+                            Browse
+                        </button>
+                    )}
                 </div>
 
                 <p className="text-xs text-gray-400 mt-1">
-                    Accepted: PNG, JPG, PDF (Max 10MB)
+                    Only 1 file can be uploaded. Format PNG, JPG, PDF (Max 10MB)
                 </p>
+                {dragError && (
+                    <div className="mt-2 flex items-center gap-1.5 text-red-500">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <p className="text-xs font-medium">{dragError}</p>
+                    </div>
+                )}
 
                 <input
+                    ref={fileInputRef}
                     type="file"
                     className="hidden"
                     accept=".png,.jpg,.jpeg,.pdf"
                     onChange={handleFileChange}
                 />
-            </label>
+            </div>
 
             {/* Reference Input */}
             <div>

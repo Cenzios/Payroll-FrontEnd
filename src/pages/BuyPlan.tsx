@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
-import { Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
 import PlanOption from '../components/PlanOption';
@@ -198,7 +198,19 @@ const BuyPlan = () => {
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
       <div className="w-full max-w-5xl relative z-10 mx-auto">
-        <h1 className="text-4xl font-bold text-center text-gray-900 mb-10 max-sm:text-3xl ">
+
+        {/* Back Button - page level */}
+        {step === 'pay' && (
+          <button
+            onClick={() => handleStepChange('select')}
+            className="fixed top-8 left-20 flex items-center gap-1.5 text-sm text-blue-800 hover:text-blue-900 border-2 border-blue-200 hover:border-blue-900 hover:bg-blue-50 transition px-4 py-2 rounded-full"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+        )}
+
+        <h1 className="text-4xl font-bold text-center text-gray-900 mb-10 max-sm:text-3xl">
           {isPlanChange ? 'Confirm Plan Change' : 'Complete Registration Payment'}
         </h1>
 
@@ -208,41 +220,41 @@ const BuyPlan = () => {
           </div>
         )}
 
-        {isFetchingSub || isLoadingSecret ? (
+        {/* {isFetchingSub || isLoadingSecret ? (
           <div className="flex flex-col items-center justify-center py-10 bg-white rounded-2xl shadow-xl">
             <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
             <p className="text-gray-600 font-medium">Preparing secure payment...</p>
           </div>
-        ) : (
-          <div className="grid grid-cols-[1fr_1fr] gap-10 items-stretch">
-            {/* Dynamic Plan Card - Shows Selected Plan */}
-            <div className='max-sm:hidden'>
-              <PlanCard
-                planName={activeSubscription?.planName || selectedPlan.name}
-                price={activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price}
-                registrationFee={activeSubscription?.registrationFee || selectedPlan.registrationFee}
-                description={selectedPlan.description}
-                features={selectedPlan.features}
-                showPerEmployeePrice={true}
-                isHighlighted={true}
-                showButton={false}
-              />
-            </div>
+        ) : ( */}
+        <div className="grid grid-cols-[1fr_1fr] gap-10 items-stretch">
+          {/* Dynamic Plan Card - Shows Selected Plan */}
+          <div className='max-sm:hidden'>
+            <PlanCard
+              planName={activeSubscription?.planName || selectedPlan.name}
+              price={activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price}
+              registrationFee={activeSubscription?.registrationFee || selectedPlan.registrationFee}
+              description={selectedPlan.description}
+              features={selectedPlan.features}
+              showPerEmployeePrice={true}
+              isHighlighted={true}
+              showButton={false}
+            />
+          </div>
 
-            <div>
-              <PlanOption
-                value={paymentMethod}
-                onChange={handleMethodChange}
-                step={step}
-                onStepChange={handleStepChange}
-                initialStep={isManualPending ? 'pay' : 'select'}
-                pricePerEmployee={activeSubscription?.pricePerEmployee || 100}
-                employeeCount={employeeCount}
-                onEmployeeCountChange={setEmployeeCount}
-              />
-            </div>
+          <div>
+            <PlanOption
+              value={paymentMethod}
+              onChange={handleMethodChange}
+              step={step}
+              onStepChange={handleStepChange}
+              initialStep={isManualPending ? 'pay' : 'select'}
+              pricePerEmployee={activeSubscription?.pricePerEmployee || 100}
+              employeeCount={employeeCount}
+              onEmployeeCountChange={setEmployeeCount}
+            />
+          </div>
 
-            {/* <div className="bg-white rounded-[2.5rem] shadow-xl p-4 flex flex-col">
+          {/* <div className="bg-white rounded-[2.5rem] shadow-xl p-4 flex flex-col">
               <div className="mb-4 text-center space-y-2">
                 <h2 className="text-xl font-semibold text-gray-900">Secure Payment via Stripe</h2>
                 <p className="text-gray-600 text-sm">
@@ -250,8 +262,8 @@ const BuyPlan = () => {
                 </p>
               </div> */}
 
-            {/* Stripe Elements Provider */}
-            {/* {clientSecret && (
+          {/* Stripe Elements Provider */}
+          {/* {clientSecret && (
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
                   <CheckoutForm
                     amount={activeSubscription?.registrationFee || selectedPlan.registrationFee}
@@ -260,8 +272,8 @@ const BuyPlan = () => {
                 </Elements>
               )}
             </div> */}
-          </div>
-        )}
+        </div>
+
       </div>
 
       {/* Background Wave - Bottom Right */}
