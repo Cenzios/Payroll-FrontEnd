@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { useAppSelector } from '../store/hooks';
 import axiosInstance from '../api/axios';
 import { PLANS, getPlanById } from '../constants/plans';
@@ -23,7 +23,6 @@ const PlanPaymentPayhere = () => {
 
             const checkout = data.data;
 
-            // Build and submit form to PayHere
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = checkout.checkoutUrl;
@@ -41,7 +40,6 @@ const PlanPaymentPayhere = () => {
                 first_name: user?.fullName?.split(' ')[0] || 'Customer',
                 last_name: user?.fullName?.split(' ')[1] || '-',
                 email: user?.email || '',
-                // phone: user?.phone || '0000000000',
                 address: 'N/A',
                 city: 'Colombo',
                 country: 'Sri Lanka',
@@ -59,7 +57,12 @@ const PlanPaymentPayhere = () => {
             form.submit();
 
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to initiate PayHere payment.');
+            const status = err.response?.status;
+            if (status >= 500 || !err.response) {
+                setError('Payment service is temporarily unavailable. Please try again later or use a different payment method.');
+            } else {
+                setError(err.response?.data?.message || 'Failed to initiate PayHere payment.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -75,14 +78,23 @@ const PlanPaymentPayhere = () => {
             </div>
 
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm text-center">
-                    {error}
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm text-center space-y-2">
+                    <div className="flex items-center justify-center gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <p>{error}</p>
+                    </div>
+                    <button
+                        onClick={() => setError(null)}
+                        className="text-xs text-red-500 underline hover:text-red-700"
+                    >
+                        Try again
+                    </button>
                 </div>
             )}
 
             <button
                 onClick={handlePayhere}
-                disabled={isLoading}
+                disabled={isLoading || !!error}
                 className="w-full bg-[#0C3080] text-white font-bold py-3 rounded-xl
                     flex items-center justify-center gap-2 transition-all
                     hover:bg-blue-800 active:scale-[0.98]
