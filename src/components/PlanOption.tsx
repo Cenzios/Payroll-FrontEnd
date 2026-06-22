@@ -102,11 +102,9 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-3
-                                max-sm:w-[22rem]">
+                    <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-3 max-sm:w-[22rem]">
 
-                        <h3 className="text-lg font-bold text-gray-900
-                    max-sm:flex max-sm:justify-center">
+                        <h3 className="text-lg font-bold text-gray-900 max-sm:flex max-sm:justify-center">
                             Payment Methods
                         </h3>
 
@@ -196,13 +194,18 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                 </>
             )}
 
-            {/* 🔥 REPLACED VIEW */}
             {step === "pay" && (
-                <>
-                    {value === "card" && <PlanPaymentCard />}
-                    {value === "manual" && <PlanPaymentManual />}
-                    {value === "payhere" && <PlanPaymentPayhere />}
-                </>
+                <div>
+                    <div style={{ display: value === "card" ? "block" : "none" }}>
+                        <PlanPaymentCard />
+                    </div>
+                    <div style={{ display: value === "manual" ? "block" : "none" }}>
+                        <PlanPaymentManual />
+                    </div>
+                    <div style={{ display: value === "payhere" ? "block" : "none" }}>
+                        <PlanPaymentPayhere />
+                    </div>
+                </div>
             )}
         </>
     );
