@@ -219,7 +219,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     <span>Designation</span>
                                 </div>
                                 <div className="text-[13px] font-normal text-[#4A7DFF]">
-                                    {selectedEmployee.designation || "None"}
+                                    {selectedEmployee.designation || "N/A"}
                                 </div>
                             </div>
 
@@ -266,7 +266,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2 text-[#AAAEBF]">
                                         <FileText className="w-[15px] h-[15px]" />
-                                        <span className="text-[12px] font-semibold">Files</span>
+                                        <span className="text-[12px] font-semibold">Documents</span>
                                     </div>
                                     {/* Add file button */}
                                     <button
@@ -278,7 +278,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                             : "border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
                                             }`}>
                                         <Plus className="w-3.5 h-3.5" />
-                                        {isAddFileDisabled ? "Limit reached" : "Add file"}
+                                        {isAddFileDisabled ? "Limit reached" : "Add Documents"}
                                     </button>
                                 </div>
 

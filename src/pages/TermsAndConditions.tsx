@@ -2,6 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 import axiosInstance from '../api/axios'; // ✅ ADDED
+import { Info } from 'lucide-react';
 
 
 const TermsAndConditions = () => {
@@ -303,10 +304,11 @@ const TermsAndConditions = () => {
             {showConfirmModal && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
                     <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center">
-                        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-amber-100 flex items-center justify-center">
-                            <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <div className="w-16 h-16 mx-auto mb-6 rounded-3xl bg-blue-100 flex items-center justify-center">
+                            {/* <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.008M10.29 3.86l-8.18 14.18A1.5 1.5 0 003.5 20.5h17a1.5 1.5 0 001.39-2.46L13.71 3.86a1.5 1.5 0 00-2.42 0z" />
-                            </svg>
+                            </svg> */}
+                            <Info className='w-8 h-8 text-blue-600' />
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">You're all set to go !</h2>
                         <p className="text-sm leading-relaxed text-gray-500 mb-8">
@@ -326,7 +328,7 @@ const TermsAndConditions = () => {
                                 type="button"
                                 onClick={handleConfirmActivation}
                                 disabled={isProcessing}
-                                className="flex-1 px-6 py-3 bg-yellow-500 text-white font-semibold rounded-2xl hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-amber-300 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                                className="flex-1 px-6 py-3 bg-blue-500 text-white font-semibold rounded-2xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
                             >
                                 {isProcessing ? (
                                     <>
