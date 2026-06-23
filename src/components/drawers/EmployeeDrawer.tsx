@@ -51,10 +51,12 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [isVisible, setIsVisible] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+    const [isEdit, setIsEdit] = useState(!!initialData);
 
     useEffect(() => {
         if (isOpen) {
             setShouldRender(true);
+            setIsEdit(!!initialData);
             const timer = setTimeout(() => setIsVisible(true), 10);
             return () => clearTimeout(timer);
         } else {
@@ -372,7 +374,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
 
     if (!shouldRender) return null;
 
-    const isEdit = !!initialData;
+    // const isEdit = !!initialData;
     const title = isEdit ? "Edit Employee" : "Add New Employee";
 
     const blockInvalidNumericKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {

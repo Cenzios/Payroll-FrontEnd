@@ -336,7 +336,7 @@ const Employees = () => {
       isOpen: true,
       type: "warning",
       title: "Deactivate Employee?",
-      message: `Are you sure you want to deactivate ${employee.fullName}? They will not be able to log in.`,
+      message: `Are you sure you want to deactivate ${employee.fullName}? `,
       onConfirm: async () => {
         try {
           if (!selectedCompanyId) return;
@@ -407,7 +407,7 @@ const Employees = () => {
       isOpen: true,
       type: "info",
       title: "Activate Employee?",
-      message: `Are you sure you want to activate ${employee.fullName}? They will be able to log in.`,
+      message: `Are you sure you want to activate ${employee.fullName}?`,
       onConfirm: async () => {
         try {
           if (!selectedCompanyId) return;
@@ -482,7 +482,7 @@ const Employees = () => {
 
           {/* ─── DESKTOP layout ─── */}
           <div className="contents max-sm:hidden">
-            <div className="shrink-0 px-6 pt-6">
+            <div className="shrink-0">
               <PageHeader
                 title="Employees"
                 subtitle="Here's Your Employees Overview"
@@ -518,7 +518,7 @@ const Employees = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex gap-6 flex-1 overflow-hidden pb-4 px-6">
+              <div className="flex gap-6 flex-1 overflow-hidden pb-4">
                 {/* Left Column */}
                 <div className="w-[60%] flex flex-col pr-6 h-full">
                   <div className="pb-6 shrink-0">
@@ -527,7 +527,7 @@ const Employees = () => {
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search users by name"
+                        placeholder="Search employees by name"
                         className="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#F2F4FF] focus:border-blue-400 outline-none transition-all placeholder-gray-400"
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">

@@ -159,6 +159,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                         <div className="text-center">
                             <p className="text-[15px] font-semibold text-gray-900">Click to upload or drag and drop</p>
                             <p className="text-[13px] text-gray-400 mt-1">Upload 1 file at a time (JPG, PNG)</p>
+                            <p className="text-[11px] text-gray-400 mt-1">e.g., NIC Copy, Certificates, Agreements, Supporting Records</p>
                         </div>
                     </div>
 
@@ -207,7 +208,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                                 </div>
                             ))
                         ) : (
-                            <div className="py-4 text-center text-sm text-gray-400 italic">No files selected</div>
+                            <div className="py-4 text-center text-sm text-gray-400 italic">No Documents Selected</div>
                         )}
                     </div>
                 </div>

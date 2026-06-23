@@ -102,7 +102,7 @@ const AccountTab = () => {
                 if (!value.trim())
                     return 'Contact number is required';
                 if (!phoneRegex.test(value))
-                    return 'Must be +94 format';
+                    return 'Must be +94 followed by 9 digits';
                 break;
             case 'address':
                 if (!value.trim())
@@ -149,15 +149,24 @@ const AccountTab = () => {
         if (!passwordData.currentPassword) errors.currentPassword = 'Required';
         if (passwordData.newPassword.length < 6) errors.newPassword = 'At least 6 characters';
         if (passwordData.newPassword !== passwordData.confirmPassword) errors.confirmPassword = 'Passwords do not match';
+        if (passwordData.newPassword && passwordData.currentPassword && passwordData.newPassword === passwordData.currentPassword) {
+            errors.newPassword = 'New password must be different from your current password';
+        }
         if (Object.keys(errors).length > 0) { setPasswordErrors(errors); return; }
         setIsSavingPassword(true);
         try {
             await changePassword({ currentPassword: passwordData.currentPassword, newPassword: passwordData.newPassword });
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            setPasswordErrors({});
+            setShowPasswords({ current: false, new: false, confirm: false });
             alert('Password changed successfully');
         } catch (err: any) {
-            setPasswordErrors({ currentPassword: err.message || 'Failed to change password' });
-        } finally { setIsSavingPassword(false); }
+            setPasswordErrors({
+                currentPassword: 'The current password you entered is incorrect.'
+            });
+        } finally {
+            setIsSavingPassword(false);
+        }
     };
 
     // Input field style helper
@@ -191,7 +200,7 @@ const AccountTab = () => {
                 <div className="flex gap-8 max-sm:flex-col max-sm:gap-3">                    {/* Left Description */}
                     <div className="w-[200px] shrink-0 px-2 max-sm:w-full max-sm:px-0">
                         <h3 className="text-[14px] font-semibold text-gray-900 mb-1">Personal Info</h3>
-                        <p className="text-[12px] text-gray-500 leading-relaxed">You can change your personal information settings here.</p>
+                        <p className="text-[12px] text-gray-500 leading-relaxed">You can change your personal information here.</p>
                     </div>
                     {/* Right Content */}
                     <div className="flex-1 space-y-4 max-sm:border max-sm:border-gray-200 max-sm:p-3 max-sm:rounded-lg">
@@ -242,7 +251,11 @@ const AccountTab = () => {
                             ) : (
                                 <div className="flex gap-2 max-sm:w-full">
                                     <button
-                                        onClick={() => setIsEditingPersonal(false)}
+                                        onClick={() => {
+                                            setIsEditingPersonal(false)
+                                            setPersonalData({ fullName: user?.fullName || '', email: user?.email || '' })
+                                            setPersonalErrors({})
+                                        }}
                                         className="px-4 py-2 text-gray-600 hover:bg-gray-100 text-[12px] rounded-lg font-medium transition-all max-sm:flex-1 max-sm:text-center max-sm:py-2.5"
                                     >
                                         Cancel
@@ -366,7 +379,18 @@ const AccountTab = () => {
                             ) : (
                                 <div className="flex gap-2 max-sm:w-full">
                                     <button
-                                        onClick={() => setIsEditingCompany(false)}
+                                        onClick={() => {
+                                            setIsEditingCompany(false)
+                                            if (selectedCompany) {
+                                                setCompanyData({
+                                                    name: selectedCompany.name,
+                                                    email: selectedCompany.email,
+                                                    contactNumber: selectedCompany.contactNumber,
+                                                    address: selectedCompany.address,
+                                                });
+                                            }
+                                            setCompanyErrors({});
+                                        }}
                                         className="px-4 py-2 text-gray-600 hover:bg-gray-100 text-[12px] rounded-lg font-medium transition-all max-sm:flex-1 max-sm:text-center max-sm:py-2.5"
                                     >
                                         Cancel
@@ -387,7 +411,7 @@ const AccountTab = () => {
             </section>
 
             {/* Change Password Section */}
-            <section className="py-8 max-sm:py-5">
+            <section className="py-6 max-sm:py-5">
                 <div className="flex gap-8 max-sm:flex-col max-sm:gap-3">
                     {/* Left Description */}
                     <div className="w-[200px] shrink-0 px-2 max-sm:w-full max-sm:px-0">
@@ -406,7 +430,14 @@ const AccountTab = () => {
                                     <input
                                         type={showPasswords.current ? 'text' : 'password'}
                                         value={passwordData.currentPassword}
-                                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setPasswordData({ ...passwordData, currentPassword: val });
+                                            setPasswordErrors(prev => ({
+                                                ...prev,
+                                                currentPassword: val ? '' : 'Required',
+                                            }));
+                                        }}
                                         placeholder="Enter Current Password"
                                         className={`w-full pl-10 pr-10 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-[13px] ${passwordErrors.currentPassword ? 'border-red-400' : ''
                                             }`}
@@ -431,7 +462,21 @@ const AccountTab = () => {
                                     <input
                                         type={showPasswords.new ? 'text' : 'password'}
                                         value={passwordData.newPassword}
-                                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setPasswordData({ ...passwordData, newPassword: val });
+                                            setPasswordErrors(prev => ({
+                                                ...prev,
+                                                newPassword: val.length > 0 && val.length < 6
+                                                    ? 'At least 6 characters'
+                                                    : val && passwordData.currentPassword && val === passwordData.currentPassword
+                                                        ? 'New password must be different from your current password'
+                                                        : '',
+                                                confirmPassword: passwordData.confirmPassword && val !== passwordData.confirmPassword
+                                                    ? 'Passwords do not match'
+                                                    : '',
+                                            }));
+                                        }}
                                         placeholder="Enter New Password"
                                         className={`w-full pl-10 pr-10 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-[13px] ${passwordErrors.newPassword ? 'border-red-400' : ''
                                             }`}
@@ -454,7 +499,16 @@ const AccountTab = () => {
                                     <input
                                         type={showPasswords.confirm ? 'text' : 'password'}
                                         value={passwordData.confirmPassword}
-                                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setPasswordData({ ...passwordData, confirmPassword: val });
+                                            setPasswordErrors(prev => ({
+                                                ...prev,
+                                                confirmPassword: val && val !== passwordData.newPassword
+                                                    ? 'Passwords do not match'
+                                                    : '',
+                                            }));
+                                        }}
                                         placeholder="Confirm New Password"
                                         className={`w-full pl-10 pr-10 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-[13px] ${passwordErrors.confirmPassword ? 'border-red-400' : ''
                                             }`}
