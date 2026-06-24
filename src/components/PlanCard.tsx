@@ -97,7 +97,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
                         flex items-baseline gap-1 mt-1
                         max-sm:mt-2
                     ">
-                        <p className="text-xl text-white font-semibold max-sm:text-base">Rs:</p>
+                        <p className="text-xl text-white font-semibold max-sm:text-base">Rs.</p>
                         <span className="text-5xl text-white font-bold max-sm:text-4xl">100</span>
                         <span className="text-[13px] text-white opacity-80 lowercase font-light ml-1 max-sm:text-[11px]">
                             / employee / month

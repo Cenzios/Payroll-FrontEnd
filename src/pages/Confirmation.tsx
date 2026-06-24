@@ -196,10 +196,10 @@ const Confirmation = () => {
 
                 <div className="mb-8 space-y-2">
                   <p className="text-gray-700 font-medium">
-                    Your PayHere payment was successful!
+                    Your Stripe payment was successful!
                   </p>
                   <p className="text-gray-600">
-                    and your Cenzios account is now active.
+                    and your CenzHRM account is now active.
                   </p>
                 </div>
 

@@ -112,7 +112,7 @@ const PlanPaymentManual = () => {
     }
 
     return (
-        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-2 max-sm:w-[22rem]">
+        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-1 max-sm:w-[22rem]">
 
             <h3 className="text-lg font-bold text-gray-900 max-sm:flex max-sm:justify-center">
                 Bank Deposit & Slip Upload
