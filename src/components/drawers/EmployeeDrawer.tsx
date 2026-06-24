@@ -85,34 +85,49 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                 setAllowances([{ type: "", amount: "" }]);
                 setDeductions([{ type: "", amount: "" }]);
             } else {
-                const draftKey = `employee_add_draft_${companyId}`;
-                const savedDraft = localStorage.getItem(draftKey);
-                if (savedDraft) {
-                    try {
-                        const draft = JSON.parse(savedDraft);
-                        setEmployeeData(draft.employeeData || {});
-                        setEpfEnabled(draft.epfEnabled ?? true);
-                        setEpfEtf(draft.epfEtf || "");
-                        setAllowanceEnabled(draft.allowanceEnabled ?? false);
-                        setDeductionEnabled(draft.deductionEnabled ?? false);
-                        setAllowances(draft.allowances || [{ type: "", amount: "" }]);
-                        setDeductions(draft.deductions || [{ type: "", amount: "" }]);
-                    } catch (e) { console.error("Failed to parse draft", e); }
-                } else {
-                    setEmployeeData({
-                        fullName: "", address: "", employeeId: "", contactNumber: "",
-                        joinedDate: new Date().toISOString().split("T")[0],
-                        designation: "", department: "General", email: "",
-                        basicSalary: 0, salaryType: "DAILY", paidLeave: 0, otRate: 0,
-                        epfEnabled: true, allowanceEnabled: false, deductionEnabled: false,
-                    });
-                    setEpfEnabled(true);
-                    setEpfEtf("");
-                    setAllowanceEnabled(false);
-                    setDeductionEnabled(false);
-                    setAllowances([{ type: "", amount: "" }]);
-                    setDeductions([{ type: "", amount: "" }]);
-                }
+                // const draftKey = `employee_add_draft_${companyId}`;
+                // const savedDraft = localStorage.getItem(draftKey);
+                // if (savedDraft) {
+                //     try {
+                //         const draft = JSON.parse(savedDraft);
+                //         setEmployeeData(draft.employeeData || {});
+                //         setEpfEnabled(draft.epfEnabled ?? true);
+                //         setEpfEtf(draft.epfEtf || "");
+                //         setAllowanceEnabled(draft.allowanceEnabled ?? false);
+                //         setDeductionEnabled(draft.deductionEnabled ?? false);
+                //         setAllowances(draft.allowances || [{ type: "", amount: "" }]);
+                //         setDeductions(draft.deductions || [{ type: "", amount: "" }]);
+                //     } catch (e) { console.error("Failed to parse draft", e); }
+                // } else {
+                //     setEmployeeData({
+                //         fullName: "", address: "", employeeId: "", contactNumber: "",
+                //         joinedDate: new Date().toISOString().split("T")[0],
+                //         designation: "", department: "General", email: "",
+                //         basicSalary: 0, salaryType: "DAILY", paidLeave: 0, otRate: 0,
+                //         epfEnabled: true, allowanceEnabled: false, deductionEnabled: false,
+                //     });
+                //     setEpfEnabled(true);
+                //     setEpfEtf("");
+                //     setAllowanceEnabled(false);
+                //     setDeductionEnabled(false);
+                //     setAllowances([{ type: "", amount: "" }]);
+                //     setDeductions([{ type: "", amount: "" }]);
+                // }
+                // setEmployeeFiles([]);
+
+                setEmployeeData({
+                    fullName: "", address: "", employeeId: "", contactNumber: "",
+                    joinedDate: new Date().toISOString().split("T")[0],
+                    designation: "", department: "General", email: "",
+                    basicSalary: 0, salaryType: "DAILY", paidLeave: 0, otRate: 0,
+                    epfEnabled: true, allowanceEnabled: false, deductionEnabled: false,
+                });
+                setEpfEnabled(true);
+                setEpfEtf("");
+                setAllowanceEnabled(false);
+                setDeductionEnabled(false);
+                setAllowances([{ type: "", amount: "" }]);
+                setDeductions([{ type: "", amount: "" }]);
                 setEmployeeFiles([]);
             }
         }
@@ -140,19 +155,19 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         }
     }, [isOpen, initialData]);
 
-    useEffect(() => {
-        if (isOpen && !initialData && companyId) {
-            const draftKey = `employee_add_draft_${companyId}`;
-            const isDirty = employeeData.fullName || employeeData.employeeId || employeeData.contactNumber || employeeData.email ||
-                (allowances.length > 1 || allowances[0].type || allowances[0].amount) ||
-                (deductions.length > 1 || deductions[0].type || deductions[0].amount);
-            if (isDirty) {
-                localStorage.setItem(draftKey, JSON.stringify({ employeeData, epfEtf, epfEnabled, allowanceEnabled, deductionEnabled, allowances, deductions }));
-            } else {
-                localStorage.removeItem(draftKey);
-            }
-        }
-    }, [employeeData, epfEtf, epfEnabled, allowanceEnabled, deductionEnabled, allowances, deductions, initialData, companyId, isOpen]);
+    // useEffect(() => {
+    //     if (isOpen && !initialData && companyId) {
+    //         const draftKey = `employee_add_draft_${companyId}`;
+    //         const isDirty = employeeData.fullName || employeeData.employeeId || employeeData.contactNumber || employeeData.email ||
+    //             (allowances.length > 1 || allowances[0].type || allowances[0].amount) ||
+    //             (deductions.length > 1 || deductions[0].type || deductions[0].amount);
+    //         if (isDirty) {
+    //             localStorage.setItem(draftKey, JSON.stringify({ employeeData, epfEtf, epfEnabled, allowanceEnabled, deductionEnabled, allowances, deductions }));
+    //         } else {
+    //             localStorage.removeItem(draftKey);
+    //         }
+    //     }
+    // }, [employeeData, epfEtf, epfEnabled, allowanceEnabled, deductionEnabled, allowances, deductions, initialData, companyId, isOpen]);
 
     // useEffect(() => {
     //     if (employeeData.fullName && !isAccountNameEdited) {
