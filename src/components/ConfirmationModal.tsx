@@ -10,6 +10,7 @@ interface ConfirmationModalProps {
     cancelText?: string;
     type?: 'danger' | 'warning' | 'info';
     isLoading?: boolean;
+    showCancel?: boolean;
 }
 
 const ConfirmationModal = ({
@@ -21,7 +22,8 @@ const ConfirmationModal = ({
     confirmText = 'Confirm',
     cancelText = 'Cancel',
     type = 'danger',
-    isLoading = false
+    isLoading = false,
+    showCancel = true
 }: ConfirmationModalProps) => {
     if (!isOpen) return null;
 
@@ -45,13 +47,15 @@ const ConfirmationModal = ({
                 </p>
 
                 <div className="flex gap-3">
-                    <button
-                        onClick={onClose}
-                        disabled={isLoading}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {cancelText}
-                    </button>
+                    {showCancel && (
+                        <button
+                            onClick={onClose}
+                            disabled={isLoading}
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {cancelText}
+                        </button>
+                    )}
                     <button
                         onClick={onConfirm}
                         disabled={isLoading}

@@ -3,13 +3,14 @@ import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { updateUser } from '../../store/slices/authSlice';
 import { updateProfile, changePassword } from '../../api/authApi';
 import { companyApi } from '../../api/companyApi';
-import { useGetSubscriptionQuery } from '../../store/apiSlice';
+import { useGetSubscriptionQuery, useGetCompaniesQuery, apiSlice } from '../../store/apiSlice';
 import { User, Building2, Loader2, Mail, Phone, MapPin, Lock, Eye, EyeOff, ArrowRight, Edit2 } from 'lucide-react';
 
 const AccountTab = () => {
     const dispatch = useAppDispatch();
     const { user, selectedCompanyId } = useAppSelector((state) => state.auth);
-    const [companies, setCompanies] = useState<any[]>([]);
+    // const [companies, setCompanies] = useState<any[]>([]);
+    const { data: companies = [] } = useGetCompaniesQuery();
 
     // Subscription for employee usage
     const { data: subscription } = useGetSubscriptionQuery();
@@ -78,6 +79,7 @@ const AccountTab = () => {
         if (field === 'fullName') {
             if (!value.trim()) return 'Full name is required';
             if (value.trim().length < 3 || value.trim().length > 20) return 'Name must be between 3 and 20 characters';
+            if (!/^[a-zA-Z\s]+$/.test(value.trim())) return 'Full name must contain letters only';
         }
         return '';
     };
@@ -138,6 +140,7 @@ const AccountTab = () => {
         setIsSavingCompany(true);
         try {
             await companyApi.updateCompanyProfile(selectedCompany.id, companyData);
+            dispatch(apiSlice.util.invalidateTags(['Company']));
             setIsEditingCompany(false);
         } catch (err: any) {
             setCompanyErrors({ name: err.message || 'Failed to update' });
