@@ -175,9 +175,9 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
             const epfError = validateEmployeeField("epfEtf", epfEtf, getValidationContext());
             setErrors((prev) => ({ ...prev, epfEtf: epfError }));
         }
-        if (field === 'employeeId' || field === 'employeeNIC') {
-            setDuplicateErrors(prev => ({ ...prev, [field]: undefined }));
-        }
+        // if (field === 'employeeId' || field === 'employeeNIC') {
+        //     setDuplicateErrors(prev => ({ ...prev, [field]: undefined }));
+        // }
         if (value && String(value).trim() !== "") setTouched((prev) => ({ ...prev, [field]: true }));
     };
 
@@ -206,7 +206,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
 
             const token = localStorage.getItem('token');
             const res = await fetch(
-                `${import.meta.env.VITE_API_BASE_URL}/employees/check-duplicate?${params}`,
+                `${import.meta.env.VITE_API_BASE_URL}/employee/check-duplicate?${params}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             const data = await res.json();
@@ -221,6 +221,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                     ? (data.data.nicExists ? 'NIC already exists in this company' : undefined)
                     : prev.employeeNIC,
             }));
+            setTouched(prev => ({ ...prev, [field]: true }));
         } catch (_) { /*  */ }
         finally {
             if (field === 'employeeId') setIsCheckingId(false);
@@ -239,7 +240,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         const timer = setTimeout(() => {
             checkDuplicate('employeeId', id);
         }, 600);
-        return () => { clearTimeout(timer); setIsCheckingId(false); };
+        return () => clearTimeout(timer);
     }, [employeeData.employeeId]);
 
     useEffect(() => {
@@ -253,7 +254,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         const timer = setTimeout(() => {
             checkDuplicate('employeeNIC', nic);
         }, 600);
-        return () => { clearTimeout(timer); setIsCheckingNic(false); };
+        return () => clearTimeout(timer);
     }, [employeeData.employeeNIC]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
