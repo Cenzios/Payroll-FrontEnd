@@ -43,7 +43,9 @@ const CheckoutForm = ({ amount, currency }: CheckoutFormProps) => {
     return (
         <form onSubmit={handleSubmit} className="space-y-2">
             <div className="bg-white p-2 rounded-lg border border-gray-200">
-                <PaymentElement />
+                <PaymentElement
+                    onChange={() => setErrorMessage(null)}
+                />
             </div>
 
             {errorMessage && (

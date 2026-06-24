@@ -69,7 +69,7 @@ const ForgotPassword = () => {
                         onClick={() => navigate('/login')}
                         className="mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium"
                     >
-                        Sign In
+                        Back to Sign In Page
                     </button>
                 </div>
             </AuthLayout>
@@ -130,7 +130,7 @@ const ForgotPassword = () => {
                         onClick={() => navigate('/login')}
                         className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                     >
-                        Sign In
+                        Back to Sign In Page
                     </button>
                 </div>
             </form>

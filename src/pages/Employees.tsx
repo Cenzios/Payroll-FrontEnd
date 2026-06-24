@@ -15,6 +15,7 @@ import {
   useDeleteEmployeeMutation,
   useUploadEmployeeDocumentMutation,
   useDeleteEmployeeDocumentMutation,
+  useGetLoansQuery,
 } from "../store/apiSlice";
 import { Employee } from '../types/employee.types';
 import PageHeader from '../components/PageHeader';
@@ -46,6 +47,11 @@ const Employees = () => {
 
   const employees = data?.employees || [];
 
+  const { data: loans = [] } = useGetLoansQuery(
+    { companyId: selectedCompanyId || "" },
+    { skip: !selectedCompanyId }
+  );
+
   const [createEmployee] = useCreateEmployeeMutation();
   const [updateEmployee] = useUpdateEmployeeMutation();
   const [deleteEmployee] = useDeleteEmployeeMutation();
@@ -67,8 +73,10 @@ const Employees = () => {
     title: string;
     message: string;
     confirmText?: string;
+    cancelText?: string;
     onConfirm: () => void;
     isLoading?: boolean;
+    showCancel?: boolean;
   }>({
     isOpen: false,
     type: "danger",
@@ -76,6 +84,7 @@ const Employees = () => {
     message: "",
     onConfirm: () => { },
     isLoading: false,
+    showCancel: true,
   });
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -366,15 +375,41 @@ const Employees = () => {
 
   const handleRemove = (employee: Employee) => {
     closeMenu();
+
+    const hasActiveLoan = loans.some((l: any) => {
+      if (l.employeeId !== employee.id) return false;
+      const status = (l.status || 'Active').toUpperCase();
+      const hasActiveStatus = status === 'ACTIVE' || status === 'PENDING';
+      const hasActiveInstallments = l.installments?.some(
+        (inst: any) => inst.status === "PENDING" || inst.status === "PARTIAL"
+      );
+      return hasActiveStatus || hasActiveInstallments;
+    });
+
+    if (hasActiveLoan) {
+      setConfirmation({
+        isOpen: true,
+        type: "warning",
+        title: "Cannot Delete Employee",
+        message: "can not delete users with active/pending loan",
+        confirmText: "OK",
+        showCancel: false,
+        onConfirm: () => setConfirmation((prev) => ({ ...prev, isOpen: false })),
+      });
+      return;
+    }
+
     setConfirmation({
       isOpen: true,
       type: "danger",
       title: "Remove Employee?",
       message: `Are you sure you want to permanently remove ${employee.fullName}? This action cannot be undone.`,
+      showCancel: true,
       onConfirm: async () => {
         try {
           if (!selectedCompanyId) {
             setToast({ message: "Company ID is missing", type: "error" });
+            setConfirmation((prev) => ({ ...prev, isOpen: false }));
             return;
           }
           await deleteEmployee({
@@ -389,13 +424,26 @@ const Employees = () => {
             setSelectedEmployee(null);
             setMobileView("list"); // Go back to list after removal on mobile
           }
-        } catch (error: any) {
-          setToast({
-            message: error.message || "Failed to remove",
-            type: "error",
-          });
-        } finally {
           setConfirmation((prev) => ({ ...prev, isOpen: false }));
+        } catch (error: any) {
+          const errMsg = error?.data?.message || error?.message || "";
+          if (errMsg.includes("can not delete users with active/pending loan") || errMsg.includes("active/pending loan")) {
+            setConfirmation({
+              isOpen: true,
+              type: "warning",
+              title: "Cannot Delete Employee",
+              message: "can not delete users with active/pending loan",
+              confirmText: "OK",
+              showCancel: false,
+              onConfirm: () => setConfirmation((prev) => ({ ...prev, isOpen: false })),
+            });
+          } else {
+            setToast({
+              message: errMsg || "Failed to remove",
+              type: "error",
+            });
+            setConfirmation((prev) => ({ ...prev, isOpen: false }));
+          }
         }
       },
     });
@@ -771,7 +819,9 @@ const Employees = () => {
         message={confirmation.message}
         type={confirmation.type}
         confirmText={confirmation.confirmText}
+        cancelText={confirmation.cancelText}
         isLoading={confirmation.isLoading}
+        showCancel={confirmation.showCancel}
       />
 
       {/* Addon Modal */}
