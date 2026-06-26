@@ -104,8 +104,10 @@ const SetCompany = () => {
           return 'Company name is required';
         if (!trimmed || trimmed.length < 3 || trimmed.length > 50)
           return 'Company name must be between 3 and 50 characters';
-        if (!/[a-zA-Z0-9]/.test(value.trim()))
-          return 'Name must contain letters or numbers';
+        // if (!/[a-zA-Z0-9]/.test(value.trim()))
+        //   return 'Name must contain letters or numbers';
+        else if (/[^a-zA-Z0-9]{6,}/.test(value.trim()))
+          return "Name must not contain more than 5 consecutive special characters";
         return '';
       }
       case 'companyEmail': {

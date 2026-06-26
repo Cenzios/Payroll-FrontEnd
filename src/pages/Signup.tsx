@@ -57,8 +57,8 @@ const Signup = () => {
       errors.fullName = 'Full name is required';
     } else if (!/^[a-zA-Z\s]+$/.test(formData.fullName.trim())) {
       errors.fullName = 'Full name must contain letters only';
-    } else if (formData.fullName.trim().length < 3) {
-      errors.fullName = 'Full name must be at least 3 characters';
+    } else if (formData.fullName.trim().length < 3 || formData.fullName.trim().length > 50) {
+      errors.fullName = 'Full name must be between 3 and 50 characters';
     }
 
     if (!formData.email) {

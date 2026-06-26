@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import Toast from "../components/Toast";
 
 interface MonthRangePickerProps {
     startMonth: number;
@@ -27,6 +28,7 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
     const [tempEndMonth, setTempEndMonth] = useState(endMonth);
     const [startPanelYear, setStartPanelYear] = useState(startYear);
     const [endPanelYear, setEndPanelYear] = useState(endYear);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
     const popupRef = useRef<HTMLDivElement>(null);
 
     const months = [
@@ -109,11 +111,11 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
         const currentDateValue = currentYear * 12 + currentMonth;
 
         if (startDate > endDate) {
-            alert("Start date must be before end date");
+            setToast({ message: "Start date must be before end date", type: "error" });
             return;
         }
         if (endDate > currentDateValue) {
-            alert("Cannot select future months");
+            setToast({ message: "Cannot select future months", type: "error" });
             return;
         }
         onStartChange(tempStartMonth, startPanelYear);
@@ -274,6 +276,14 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
                         </div>
                     </div>
                 </div>
+            )}
+
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
             )}
         </div>
     );

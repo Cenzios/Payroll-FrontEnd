@@ -423,7 +423,8 @@ const Salary = () => {
   };
 
   const handleEmployeeOtHoursChange = (empId: string, val: number) => {
-    dispatch(setEmployeeOtHours({ id: empId, hours: Math.max(0, val) }));
+    const capped = Math.min(Math.max(0, val), 744);
+    dispatch(setEmployeeOtHours({ id: empId, hours: capped }));
   };
 
   const handleEmployeeSalaryAdvanceChange = (empId: string, val: number) => {

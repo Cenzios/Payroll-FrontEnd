@@ -661,8 +661,16 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                         onWheel={(e) => e.currentTarget.blur()}
                                                         onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
                                                         placeholder={employeeData.salaryType === "MONTHLY" ? "Enter Employee's Monthly Basic" : "Enter Employee's Daily Basic"}
-                                                        className={`text-[13px] w-full px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.basicSalary && errors.basicSalary ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`} />
-                                                    <select value={employeeData.salaryType || "DAILY"} onChange={(e) => handleEmployeeChange("salaryType", e.target.value as "DAILY" | "MONTHLY")}
+                                                        className={`text-[13px] w-full px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none 
+                                                        ${touched.basicSalary && errors.basicSalary
+                                                                ? "border-red-500 focus:ring-red-100"
+                                                                : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                                    />
+
+                                                    <select value={employeeData.salaryType || "DAILY"}
+                                                        onChange={(e) =>
+                                                            handleEmployeeChange("salaryType", e.target.value as "DAILY" | "MONTHLY")
+                                                        }
                                                         className="ml-2 px-4 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 bg-white focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none cursor-pointer">
                                                         <option value="MONTHLY">Monthly</option>
                                                         <option value="DAILY">Daily</option>

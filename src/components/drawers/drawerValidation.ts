@@ -12,8 +12,10 @@ export const validateCompanyField = (field: string, value: any): string => {
             else if (!value || value.trim().length < 3 || value.trim().length > 50)
                 error = "Name must be between 3 and 50 characters";
             // name validation
-            else if (!/[a-zA-Z0-9]/.test(value.trim()))
-                error = "Name must contain letters or numbers";
+            // else if (!/[a-zA-Z0-9]/.test(value.trim()))
+            //     error = "Name must contain letters or numbers";
+             else if (/[^a-zA-Z0-9]{6,}/.test(value.trim()))
+                error = "Name must not contain more than 5 consecutive special characters";
             break;
         case "email": {
             const email = value?.trim();
@@ -59,11 +61,16 @@ export const validateEmployeeField = (
         case "fullName":
             if (!value || value.trim().length < 3 || value.trim().length > 50)
                 error = "Name must be between 3 and 50 characters";
-            else if (/[^a-zA-Z\s.-]/.test(value))
-                error = "Full name can only contain letters, spaces, dots, and hyphens";
+            else if (/[^a-zA-Z\s]/.test(value))
+                error = "Full name can only contain letters.";
             break;
         case "employeeId":
-            if (!value || !value.trim()) error = "Employee ID is required";
+            if (!value || !value.trim())
+                error = "Employee ID is required";
+            else if (!/^[a-zA-Z0-9\-\/,\.#()\s]+$/.test(value.trim()))
+                error = "Employee ID may only contain letters, numbers, and - / , . # ( )";
+            else if (/[\-\/,\.#()]{4,}/.test(value.trim()))
+                error = "Employee ID must not contain more than 3 consecutive special characters";
             break;
         case "email": {
             const email = value?.trim();
@@ -101,6 +108,8 @@ export const validateEmployeeField = (
         case "paidLeave":
             if (value !== undefined && value !== null && value !== "" && Number(value) < 0)
                 error = "Paid leave cannot be negative";
+            else if (value !== undefined && value !== null && value !== "" && Number(value) > 50)
+                error = "Paid leave days cannot exceed 50";
             break;
         case "otRate":
             if (value !== undefined && value !== null && value !== "" && isNaN(Number(value)))
@@ -132,8 +141,8 @@ export const validateEmployeeField = (
             if (!value || !value.trim()) error = "Account number is required";
             else if (!/^\d+$/.test(value.trim()))
                 error = "Account number must contain only digits";
-            else if (value.trim().length < 6)
-                error = "Account number must be at least 6 digits";
+            else if (value.trim().length < 6 || value.trim().length > 20)
+                error = "Account number must be between 6 and 20 digits";
             break;
         case "branchName":
             if (!value || !value.trim()) 

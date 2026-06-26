@@ -5,6 +5,7 @@ import { updateProfile, changePassword } from '../../api/authApi';
 import { companyApi } from '../../api/companyApi';
 import { useGetSubscriptionQuery, useGetCompaniesQuery, apiSlice } from '../../store/apiSlice';
 import { User, Building2, Loader2, Mail, Phone, MapPin, Lock, Eye, EyeOff, ArrowRight, Edit2 } from 'lucide-react';
+import Toast from "../../components/Toast";
 
 const AccountTab = () => {
     const dispatch = useAppDispatch();
@@ -44,6 +45,7 @@ const AccountTab = () => {
 
     // Derived State
     const selectedCompany = companies.find(c => c.id === selectedCompanyId);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
     useEffect(() => {
         const fetchCompanies = async () => {
@@ -78,7 +80,7 @@ const AccountTab = () => {
     const validatePersonal = (field: string, value: string) => {
         if (field === 'fullName') {
             if (!value.trim()) return 'Full name is required';
-            if (value.trim().length < 3 || value.trim().length > 20) return 'Name must be between 3 and 20 characters';
+            if (value.trim().length < 3 || value.trim().length > 50) return 'Name must be between 3 and 50 characters';
             if (!/^[a-zA-Z\s]+$/.test(value.trim())) return 'Full name must contain letters only';
         }
         return '';
@@ -91,8 +93,8 @@ const AccountTab = () => {
                     return 'Company name is required';
                 if (value.trim().length < 3 || value.trim().length > 50)
                     return 'Name must be between 3 and 50 characters';
-                if (!/[a-zA-Z0-9]/.test(value.trim()))
-                    return 'Name must contain letters or numbers';
+                else if (/[^a-zA-Z0-9]{6,}/.test(value.trim()))
+                    return "Name must not contain more than 5 consecutive special characters";
                 break;
             case 'email':
                 if (!value.trim())
@@ -124,8 +126,10 @@ const AccountTab = () => {
             const response = await updateProfile({ fullName: personalData.fullName });
             if (response.data) dispatch(updateUser(response.data));
             setIsEditingPersonal(false);
+            setToast({ message: "Personal info updated successfully", type: "success" });
         } catch (err: any) {
             setPersonalErrors({ fullName: err.message || 'Failed to update' });
+            setToast({ message: err.message || "Failed to update personal info", type: "error" });
         } finally { setIsSavingPersonal(false); }
     };
 
@@ -142,8 +146,10 @@ const AccountTab = () => {
             await companyApi.updateCompanyProfile(selectedCompany.id, companyData);
             dispatch(apiSlice.util.invalidateTags(['Company']));
             setIsEditingCompany(false);
+            setToast({ message: "Company info updated successfully", type: "success" });
         } catch (err: any) {
             setCompanyErrors({ name: err.message || 'Failed to update' });
+            setToast({ message: err.message || "Failed to update company info", type: "error" });
         } finally { setIsSavingCompany(false); }
     };
 
@@ -162,11 +168,12 @@ const AccountTab = () => {
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
             setPasswordErrors({});
             setShowPasswords({ current: false, new: false, confirm: false });
-            alert('Password changed successfully');
+            setToast({ message: "Password changed successfully", type: "success" });
         } catch (err: any) {
             setPasswordErrors({
                 currentPassword: 'The current password you entered is incorrect.'
             });
+            setToast({ message: err.message || "Failed to change password", type: "error" });
         } finally {
             setIsSavingPassword(false);
         }
@@ -537,6 +544,14 @@ const AccountTab = () => {
                     </div>
                 </div>
             </section>
+
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </div>
     );
 };
