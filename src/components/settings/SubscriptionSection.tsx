@@ -8,6 +8,7 @@ import PaymentPlanSkeleton from '../../components/skeletons/PaymentPlanSkeleton'
 import ConfirmationModal from '../../components/ConfirmationModal';
 import Toast from '../../components/Toast';
 import logo from '../../assets/images/logo-login.svg';
+import { apiSlice } from '../../store/apiSlice';
 
 const SubscriptionSection = () => {
     const navigate = useNavigate();
@@ -22,9 +23,10 @@ const SubscriptionSection = () => {
         try {
             await cancelSubscription().unwrap();
             setShowCancelModal(false);
-            // Automatically log out and redirect to signup after cancellation
+            // Clear RTK Query cache so subscription data doesn't persist into next login
+            dispatch(apiSlice.util.resetApiState());
             dispatch(logout());
-            navigate('/signup', { replace: true });
+            navigate('/login', { replace: true });
         } catch (error: any) {
             setToast({ message: error?.data?.message || 'Failed to cancel subscription', type: 'error' });
             setShowCancelModal(false);
