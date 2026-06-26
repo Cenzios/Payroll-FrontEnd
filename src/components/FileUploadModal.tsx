@@ -59,10 +59,10 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         }
 
         const valid = newFiles.filter(file => {
-            const isValidType = ['image/png', 'image/jpeg'].includes(file.type);
+            const isValidType = ['image/png', 'image/jpeg', 'application/pdf'].includes(file.type);
             const isValidSize = file.size <= 5 * 1024 * 1024;
 
-            if (!isValidType) alert(`File ${file.name} is not a supported format.`);
+            if (!isValidType) alert(`File ${file.name} is not a supported format. Please upload JPG, PNG, or PDF files.`);
             if (!isValidSize) alert(`File ${file.name} exceeds 5MB limit.`);
 
             return isValidType && isValidSize;
@@ -109,8 +109,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     };
 
     const getFileIcon = (type: string) => {
-        if (type.startsWith('image/')) return <FileImage className="w-5 h-5 text-blue-500" />;
-        return <File className="w-5 h-5 text-gray-500" />;
+        if (type.startsWith('image/')) return
+        <FileImage className="w-5 h-5 text-blue-500" />;
+        if (type === 'application/pdf') return
+        <File className="w-5 h-5 text-red-500" />;
+        return
+        <File className="w-5 h-5 text-gray-500" />;
     };
 
     if (!isOpen) return null;
@@ -150,7 +154,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                             type="file"
                             ref={fileInputRef}
                             onChange={handleFileSelect}
-                            accept=".png,.jpg,.jpeg"
+                            accept=".png,.jpg,.jpeg,.pdf"
                             className="hidden"
                         />
                         <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center shadow-sm">
@@ -158,7 +162,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                         </div>
                         <div className="text-center">
                             <p className="text-[15px] font-semibold text-gray-900">Click to upload or drag and drop</p>
-                            <p className="text-[13px] text-gray-400 mt-1">Upload 1 file at a time (JPG, PNG)</p>
+                            <p className="text-[13px] text-gray-400 mt-1">Upload 1 file at a time (JPG, PNG, PDF)</p>
                             <p className="text-[11px] text-gray-400 mt-1">e.g., NIC Copy, Certificates, Agreements, Supporting Records</p>
                         </div>
                     </div>

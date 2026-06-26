@@ -308,7 +308,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                                         key={doc.id}
                                                         className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-100 bg-white hover:border-blue-100 hover:bg-blue-50/30 transition-all group cursor-pointer"
                                                         onClick={() => {
-                                                            if (isPdf) {
+                                                            if (ext === "pdf") {
                                                                 window.open(doc.fileUrl, "_blank", "noopener,noreferrer");
                                                             } else {
                                                                 setPreviewImage(doc.fileUrl);
