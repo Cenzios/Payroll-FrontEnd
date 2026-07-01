@@ -52,7 +52,11 @@ const CompanySwitcher = ({
                     <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold mb-3 text-lg">
                         {selectedCompany.name.charAt(0)}
                     </div>
-                    <h3 className="font-bold text-gray-900 -mb-5">{selectedCompany.name}</h3>
+                    <h3 className="font-bold text-gray-900 -mb-5 break-words">
+                        {selectedCompany.name.match(/.{1,25}/g)?.map((chunk, i) => (
+                            <div key={i}>{chunk}</div>
+                        ))}
+                    </h3>
 
                     {/* <button className="mt-3 px-4 py-1.5 text-xs font-semibold text-gray-500 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors">
                         Manage Your Companies

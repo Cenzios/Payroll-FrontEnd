@@ -41,6 +41,8 @@ export const validateCompanyField = (field: string, value: any): string => {
         case "address":
             if (!value || !value.trim())
                 error = "Address is required";
+            else if (value.trim().length < 5 || value.trim().length > 50)
+                error = "Address must be between 5 and 50 characters";
             else if (!/[a-zA-Z0-9]/.test(value.trim()))
                 // address validation
                 error = "Address must contain letters or numbers";
@@ -94,10 +96,18 @@ export const validateEmployeeField = (
             else if (!employeePhoneRegex.test(value))
                 error = "Enter a valid Sri Lankan number (e.g. 0771234567 or +94771234567)";
             break;
+        case "address":
+            if (value.trim().length > 50)
+                error = "Address must be less than 50 characters";
+            else if (!/[a-zA-Z0-9]/.test(value.trim()))
+                error = "Address must contain letters or numbers";
+            break;
         case "designation": {
             const designationRegex = /^[A-Za-z\s\-&.()\\/]+$/;
             if (value && !designationRegex.test(value))
                 error = "Designation can contain letters, spaces, /, \\, dots, hyphens, &, and parentheses";
+            else if (value.trim().length > 20)
+                error = "Designation must be less than 20 characters";
             break;
         }
         case "basicSalary":
@@ -147,12 +157,14 @@ export const validateEmployeeField = (
         case "branchName":
             if (!value || !value.trim()) 
                 error = "Branch name is required";
+            else if (value.trim().length < 3 || value.trim().length > 15)
+                error = "Branch name must be between 3 and 15 characters";
             else if (/[^a-zA-Z0-9\s]/.test(value.trim()))
                 error = "Branch name can only contain letters, numbers, and spaces";
             break;
         case "accountHolderName":
-            if (!value || value.trim().length < 2)
-                error = "Account holder name must be at least 2 characters";
+            if (!value || value.trim().length < 3 || value.trim().length > 30)
+                error = "Account holder name must be between 3 and 30 characters";
             else if (/[^a-zA-Z\s.-]/.test(value))
                 error = "Account holder name can only contain letters, spaces, dots, and hyphens";
             break;
