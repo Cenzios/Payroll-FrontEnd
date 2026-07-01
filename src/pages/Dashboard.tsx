@@ -282,8 +282,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-clip bg-gray-50 font-sans">
-
+    <div className="flex flex-col h-screen overflow-y-auto bg-gray-50 font-sans">
       <AlertBar />
 
       {/* Margin bottom gap after the banner */}
@@ -293,7 +292,7 @@ const Dashboard = () => {
         <Sidebar />
 
         {/* Main Content */}
-        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-svh max-sm:p-5 max-sm:py-7">
+        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-y-auto flex flex-col max-sm:h-svh max-sm:p-5 max-sm:py-7">
 
           {/* ── MOBILE HEADER (replaces PageHeader on mobile) ── */}
           <div className="hidden max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
@@ -309,8 +308,8 @@ const Dashboard = () => {
               >
                 <Building2 className="w-3 h-3 text-gray-500" />
                 {selectedCompany?.name
-                  ? selectedCompany.name.trim().split(/\s+/).filter(Boolean).length > 2
-                    ? selectedCompany.name.trim().split(/\s+/).filter(Boolean).slice(0, 2).join(' ') + ' ...'
+                  ? selectedCompany.name.trim().length > 10
+                    ? selectedCompany.name.trim().slice(0, 10) + '...'
                     : selectedCompany.name.trim()
                   : 'Select Co'}
                 <ChevronDown className="w-3 h-3 text-gray-400" />
@@ -401,8 +400,8 @@ const Dashboard = () => {
                     >
                       <Building2 className="w-4 h-4 text-gray-500" />
                       {selectedCompany?.name
-                        ? selectedCompany.name.trim().split(/\s+/).filter(Boolean).length > 2
-                          ? selectedCompany.name.trim().split(/\s+/).filter(Boolean).slice(0, 2).join(' ') + ' ...'
+                        ? selectedCompany.name.trim().length > 10
+                          ? selectedCompany.name.trim().slice(0, 10) + '...'
                           : selectedCompany.name.trim()
                         : 'Select Co'}
                       <ChevronDown className="w-4 h-4 text-gray-400" />
@@ -532,7 +531,7 @@ const Dashboard = () => {
                 </div>
 
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start flex-1 overflow-hidden">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start flex-1">
                   {/* Left (2/3) – Salary Paid Summary Chart */}
                   <div className="lg:col-span-2 h-full flex flex-col">
                     <SalaryPaidSummary companyId={selectedCompanyId || ''} />
