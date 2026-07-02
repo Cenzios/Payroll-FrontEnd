@@ -82,8 +82,8 @@ const Signup = () => {
       }
       setFormData(prev => ({ ...prev, fullName: value }));
       // Live length feedback once they start typing
-      if (value.trim().length > 0 && value.trim().length < 3) {
-        setValidationErrors(prev => ({ ...prev, fullName: 'Full name must be at least 3 characters' }));
+      if (value.trim().length < 3 || value.trim().length > 50) {
+        setValidationErrors(prev => ({ ...prev, fullName: 'Full name must be between 3 and 50 characters' }));
       } else {
         setValidationErrors(prev => ({ ...prev, fullName: '' }));
       }
