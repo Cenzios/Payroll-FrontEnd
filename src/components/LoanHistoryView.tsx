@@ -123,7 +123,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
     );
 
     return (
-        <div className="flex-1 flex flex-col pt-6">
+        <div className="flex-1 flex flex-col pt-6 overflow-y-auto">
             {/* Standard Header */}
             <div className="mb-6 -mt-2 max-sm:hidden">
                 <PageHeader
@@ -316,7 +316,7 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
 
             {/* <div className='overflow-y-auto'> */}
             {/* History Table */}
-            <div className='max-sm:mx-5 max-sm:pb-20 max-sm:overflow-y-auto'>
+            <div className='border rounded-2xl p-4 max-sm:mx-5 max-sm:pb-20 max-sm:overflow-y-auto'>
                 <h3 className="text-lg font-bold text-[#141B3B] mb-6">Monthly Payment History</h3>
                 {/* Mobile Card View */}
                 <div className="flex flex-col gap-3 sm:hidden ">
@@ -379,7 +379,7 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                             </thead>
                         </table>
 
-                        <div className="overflow-y-auto max-h-64">
+                        <div className="overflow-y-auto max-h-[143px]">
                             <table className="text-center">
                                 <tbody className="divide-y divide-gray-50">
                                     {installments.map((row: any) => (
