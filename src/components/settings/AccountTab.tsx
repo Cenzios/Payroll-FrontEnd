@@ -10,8 +10,7 @@ import Toast from "../../components/Toast";
 const AccountTab = () => {
     const dispatch = useAppDispatch();
     const { user, selectedCompanyId } = useAppSelector((state) => state.auth);
-    // const [companies, setCompanies] = useState<any[]>([]);
-    const { data: companies = [] } = useGetCompaniesQuery();
+    const { data: companies = [], isLoading: companiesLoading, isFetching: companiesFetching } = useGetCompaniesQuery();
 
     // Subscription for employee usage
     const { data: subscription } = useGetSubscriptionQuery();
@@ -45,22 +44,25 @@ const AccountTab = () => {
 
     // Derived State
     const selectedCompany = companies.find(c => c.id === selectedCompanyId);
+    const companyDataReady = !companiesLoading && !companiesFetching && !!selectedCompany;
+
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-    useEffect(() => {
-        const fetchCompanies = async () => {
-            try {
-                const data = await companyApi.getCompanies();
-                setCompanies(data);
-            } catch (err) {
-                console.error('Failed to fetch companies');
-            }
-        };
-        fetchCompanies();
-    }, []);
+    // useEffect(() => {
+    //     const fetchCompanies = async () => {
+    //         try {
+    //             const data = await companyApi.getCompanies();
+    //             setCompanies(data);
+    //         } catch (err) {
+    //             console.error('Failed to fetch companies');
+    //         }
+    //     };
+    //     fetchCompanies();
+    // }, []);
 
     useEffect(() => {
-        if (user) setPersonalData({ fullName: user.fullName, email: user.email });
+        if (user)
+            setPersonalData({ fullName: user.fullName, email: user.email });
     }, [user]);
 
     useEffect(() => {
@@ -207,7 +209,8 @@ const AccountTab = () => {
 
             {/* Personal Info Section */}
             <section className="py-8 border-b border-gray-200 max-sm:py-5">
-                <div className="flex gap-8 max-sm:flex-col max-sm:gap-3">                    {/* Left Description */}
+                <div className="flex gap-8 max-sm:flex-col max-sm:gap-3">
+                    {/* Left Description */}
                     <div className="w-[200px] shrink-0 px-2 max-sm:w-full max-sm:px-0">
                         <h3 className="text-[14px] font-semibold text-gray-900 mb-1">Personal Info</h3>
                         <p className="text-[12px] text-gray-500 leading-relaxed">You can change your personal information here.</p>
@@ -295,127 +298,142 @@ const AccountTab = () => {
                     </div>
                     {/* Right Content */}
                     <div className="flex-1 space-y-4 max-sm:border max-sm:border-gray-200 max-sm:p-3 max-sm:rounded-lg">
-                        <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-                            <div>
-                                <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Name</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                        <Building2 className="h-4 w-4" />
-                                    </span>
-                                    <input
-                                        type="text"
-                                        value={companyData.name}
-                                        disabled={!isEditingCompany}
-                                        onChange={(e) => {
-                                            setCompanyData({ ...companyData, name: e.target.value });
-                                            setCompanyErrors({ ...companyErrors, name: validateCompany('name', e.target.value) });
-                                        }}
-                                        placeholder="ABC Solutions"
-                                        className={inputClasses(!!companyErrors.name, !isEditingCompany)}
-                                    />
+                        {!companyDataReady ? (
+                            <div className="animate-pulse space-y-4">
+                                <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                                    <div className="h-10 bg-gray-100 rounded-full" />
+                                    <div className="h-10 bg-gray-100 rounded-full" />
                                 </div>
-                                {companyErrors.name && <p className="text-xs text-red-500 mt-1">{companyErrors.name}</p>}
+                                <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                                    <div className="h-10 bg-gray-100 rounded-full" />
+                                    <div className="h-10 bg-gray-100 rounded-full" />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Email Address</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                        <Mail className="h-4 w-4" />
-                                    </span>
-                                    <input
-                                        type="email"
-                                        value={companyData.email}
-                                        disabled={!isEditingCompany}
-                                        onChange={(e) => {
-                                            setCompanyData({ ...companyData, email: e.target.value });
-                                            setCompanyErrors({ ...companyErrors, email: validateCompany('email', e.target.value) });
-                                        }}
-                                        placeholder="abcsolutions@yahoo.com"
-                                        className={inputClasses(!!companyErrors.email, !isEditingCompany)}
-                                    />
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Name</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                <Building2 className="h-4 w-4" />
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={companyData.name}
+                                                disabled={!isEditingCompany}
+                                                onChange={(e) => {
+                                                    setCompanyData({ ...companyData, name: e.target.value });
+                                                    setCompanyErrors({ ...companyErrors, name: validateCompany('name', e.target.value) });
+                                                }}
+                                                placeholder="ABC Solutions"
+                                                className={inputClasses(!!companyErrors.name, !isEditingCompany)}
+                                            />
+                                        </div>
+                                        {companyErrors.name && <p className="text-xs text-red-500 mt-1">{companyErrors.name}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Email Address</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                <Mail className="h-4 w-4" />
+                                            </span>
+                                            <input
+                                                type="email"
+                                                value={companyData.email}
+                                                disabled={!isEditingCompany}
+                                                onChange={(e) => {
+                                                    setCompanyData({ ...companyData, email: e.target.value });
+                                                    setCompanyErrors({ ...companyErrors, email: validateCompany('email', e.target.value) });
+                                                }}
+                                                placeholder="abcsolutions@yahoo.com"
+                                                className={inputClasses(!!companyErrors.email, !isEditingCompany)}
+                                            />
+                                        </div>
+                                        {companyErrors.email && <p className="text-xs text-red-500 mt-1">{companyErrors.email}</p>}
+                                    </div>
                                 </div>
-                                {companyErrors.email && <p className="text-xs text-red-500 mt-1">{companyErrors.email}</p>}
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-                            <div>
-                                <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Phone Number</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                        <Phone className="h-4 w-4" />
-                                    </span>
-                                    <input
-                                        type="text"
-                                        value={companyData.contactNumber}
-                                        disabled={!isEditingCompany}
-                                        onChange={(e) => {
-                                            setCompanyData({ ...companyData, contactNumber: e.target.value });
-                                            setCompanyErrors({ ...companyErrors, contactNumber: validateCompany('contactNumber', e.target.value) });
-                                        }}
-                                        placeholder="+94 771457855"
-                                        className={inputClasses(!!companyErrors.contactNumber, !isEditingCompany)}
-                                    />
+                                <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Phone Number</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                <Phone className="h-4 w-4" />
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={companyData.contactNumber}
+                                                disabled={!isEditingCompany}
+                                                onChange={(e) => {
+                                                    setCompanyData({ ...companyData, contactNumber: e.target.value });
+                                                    setCompanyErrors({ ...companyErrors, contactNumber: validateCompany('contactNumber', e.target.value) });
+                                                }}
+                                                placeholder="+94 771457855"
+                                                className={inputClasses(!!companyErrors.contactNumber, !isEditingCompany)}
+                                            />
+                                        </div>
+                                        {companyErrors.contactNumber && <p className="text-xs text-red-500 mt-1">{companyErrors.contactNumber}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Address</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                <MapPin className="h-4 w-4" />
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={companyData.address}
+                                                disabled={!isEditingCompany}
+                                                onChange={(e) => {
+                                                    setCompanyData({ ...companyData, address: e.target.value });
+                                                    setCompanyErrors({ ...companyErrors, address: validateCompany('address', e.target.value) });
+                                                }}
+                                                placeholder="No. 9/2, Beach Road, Negombo"
+                                                className={inputClasses(!!companyErrors.address, !isEditingCompany)}
+                                            />
+                                        </div>
+                                        {companyErrors.address && <p className="text-xs text-red-500 mt-1">{companyErrors.address}</p>}
+                                    </div>
                                 </div>
-                                {companyErrors.contactNumber && <p className="text-xs text-red-500 mt-1">{companyErrors.contactNumber}</p>}
-                            </div>
-                            <div>
-                                <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Address</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                        <MapPin className="h-4 w-4" />
-                                    </span>
-                                    <input
-                                        type="text"
-                                        value={companyData.address}
-                                        disabled={!isEditingCompany}
-                                        onChange={(e) => {
-                                            setCompanyData({ ...companyData, address: e.target.value });
-                                            setCompanyErrors({ ...companyErrors, address: validateCompany('address', e.target.value) });
-                                        }}
-                                        placeholder="No. 9/2, Beach Road, Negombo"
-                                        className={inputClasses(!!companyErrors.address, !isEditingCompany)}
-                                    />
+                                <div className="flex justify-end max-sm:justify-center">
+                                    {!isEditingCompany ? (
+                                        <button
+                                            onClick={() => setIsEditingCompany(true)}
+                                            className="flex items-center gap-2 bg-blue-600 text-white text-[12px] font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-all max-sm:w-full max-sm:justify-center max-sm:py-2.5"                                >
+                                            Edit Details <Edit2 className="h-3.5 w-3.5" />
+                                        </button>
+                                    ) : (
+                                        <div className="flex gap-2 max-sm:w-full">
+                                            <button
+                                                onClick={() => {
+                                                    setIsEditingCompany(false)
+                                                    if (selectedCompany) {
+                                                        setCompanyData({
+                                                            name: selectedCompany.name,
+                                                            email: selectedCompany.email,
+                                                            contactNumber: selectedCompany.contactNumber,
+                                                            address: selectedCompany.address,
+                                                        });
+                                                    }
+                                                    setCompanyErrors({});
+                                                }}
+                                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 text-[12px] rounded-lg font-medium transition-all max-sm:flex-1 max-sm:text-center max-sm:py-2.5"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleSaveCompany}
+                                                disabled={isSavingCompany}
+                                                className="flex items-center gap-2 bg-blue-600 text-white text-[12px] px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-all max-sm:flex-1 max-sm:justify-center max-sm:py-2.5"
+                                            >
+                                                {isSavingCompany ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                                                Save Changes
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                                {companyErrors.address && <p className="text-xs text-red-500 mt-1">{companyErrors.address}</p>}
-                            </div>
-                        </div>
-                        <div className="flex justify-end max-sm:justify-center">
-                            {!isEditingCompany ? (
-                                <button
-                                    onClick={() => setIsEditingCompany(true)}
-                                    className="flex items-center gap-2 bg-blue-600 text-white text-[12px] font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-all max-sm:w-full max-sm:justify-center max-sm:py-2.5"                                >
-                                    Edit Details <Edit2 className="h-3.5 w-3.5" />
-                                </button>
-                            ) : (
-                                <div className="flex gap-2 max-sm:w-full">
-                                    <button
-                                        onClick={() => {
-                                            setIsEditingCompany(false)
-                                            if (selectedCompany) {
-                                                setCompanyData({
-                                                    name: selectedCompany.name,
-                                                    email: selectedCompany.email,
-                                                    contactNumber: selectedCompany.contactNumber,
-                                                    address: selectedCompany.address,
-                                                });
-                                            }
-                                            setCompanyErrors({});
-                                        }}
-                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 text-[12px] rounded-lg font-medium transition-all max-sm:flex-1 max-sm:text-center max-sm:py-2.5"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleSaveCompany}
-                                        disabled={isSavingCompany}
-                                        className="flex items-center gap-2 bg-blue-600 text-white text-[12px] px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-all max-sm:flex-1 max-sm:justify-center max-sm:py-2.5"
-                                    >
-                                        {isSavingCompany ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                                        Save Changes
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </section>
