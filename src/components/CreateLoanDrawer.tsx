@@ -43,6 +43,16 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
   const [fileTitles, setFileTitles] = useState<Record<number, string>>({});
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
+  const [loanTitleError, setLoanTitleError] = useState('');
+  const LOAN_TITLE_MAX_LENGTH = 50;
+  const validateLoanTitle = (value: string): string => {
+    const trimmed = value.trim();
+    if (!trimmed) return 'Loan title is required';
+    if (trimmed.length > LOAN_TITLE_MAX_LENGTH)
+      return `Loan title must be less than ${LOAN_TITLE_MAX_LENGTH} characters`;
+    return '';
+  };
+
   const { data: employeesData } = useGetEmployeesQuery(
     { companyId: companyId || '' },
     { skip: !companyId }
@@ -109,8 +119,11 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
   }, [startDate, installmentCount]);
 
   const handleSubmit = async () => {
-    if (!companyId || !employeeId || !loanTitle || !amount || !installmentCount) {
-      setToast({ message: 'Please fill in all required fields', type: 'error' });
+    const titleError = validateLoanTitle(loanTitle);
+    setLoanTitleError(titleError);
+
+    if (!companyId || !employeeId || !loanTitle || !amount || !installmentCount || titleError) {
+      setToast({ message: titleError || 'Please fill in all required fields', type: 'error' });
       return;
     }
 
@@ -176,6 +189,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
   const resetForm = () => {
     setLoanTitle('');
+    setLoanTitleError('');
     setDescription('');
     setEmployeeId('');
     setSelectedEmployeeName('');
@@ -294,10 +308,21 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 <input
                   type="text"
                   value={loanTitle}
-                  onChange={(e) => setLoanTitle(e.target.value)}
+                  maxLength={LOAN_TITLE_MAX_LENGTH}
+                  onChange={(e) => {
+                    setLoanTitle(e.target.value);
+                    setLoanTitleError(validateLoanTitle(e.target.value));
+                  }}
                   placeholder="Personal Home Renovation"
-                  className="w-full px-4 py-1.5 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                  className={`w-full px-4 py-1.5 text-[13px] bg-white border rounded-xl focus:outline-none focus:ring-2 transition-all placeholder:text-gray-400 ${loanTitleError
+                    ? 'border-red-500 focus:ring-red-100'
+                    : 'border-gray-200 focus:ring-blue-500/20 focus:border-blue-500'
+                    }`}
                 />
+                <div className="flex justify-between mt-1">
+                  {loanTitleError && <p className="text-red-500 text-xs">{loanTitleError}</p>}
+                  <p className="text-[11px] text-gray-400 ml-auto">{loanTitle.length}/{LOAN_TITLE_MAX_LENGTH}</p>
+                </div>
               </div>
 
               {/* 2. Description */}

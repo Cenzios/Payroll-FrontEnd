@@ -35,9 +35,13 @@ export const validateCompanyField = (field: string, value: any): string => {
         }
         case "contactNumber":
             if (!value) error = "Contact number is required";
+            else if (value.replace(/^(\+94|0)/, "").length > 9)
+                error = "Must be followed by 9 digits";
             else if (!phoneRegex.test(value))
-                error = "Must be +94 followed by 9 digits";
+                error = "Enter a valid Sri Lankan number (e.g. 0771234567 or +94771234567)";
             break;
+
+
         case "address":
             if (!value || !value.trim())
                 error = "Address is required";
@@ -97,7 +101,9 @@ export const validateEmployeeField = (
                 error = "Enter a valid Sri Lankan number (e.g. 0771234567 or +94771234567)";
             break;
         case "address":
-            if (value.trim().length > 50)
+            const address = value?.trim();
+            if (!address) break;
+            else if (value.trim().length > 50)
                 error = "Address must be less than 50 characters";
             else if (!/[a-zA-Z0-9]/.test(value.trim()))
                 error = "Address must contain letters or numbers";
