@@ -127,6 +127,21 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
       return;
     }
 
+    const selectedEmployee = employees.find((emp: Employee) => emp.id === employeeId);
+    if (selectedEmployee) {
+      const monthlySalary = selectedEmployee.salaryType === 'MONTHLY'
+        ? selectedEmployee.basicSalary
+        : selectedEmployee.basicSalary * 20;
+
+      if (monthlyPremium > monthlySalary) {
+        setToast({
+          message: `Monthly installment (Rs. ${monthlyPremium.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) exceeds the employee's monthly salary (Rs. ${monthlySalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}).`,
+          type: 'error'
+        });
+        return;
+      }
+    }
+
     if (supportingDocs.length > 3) {
       setToast({ message: 'Maximum 3 supporting documents are allowed', type: 'error' });
       return;

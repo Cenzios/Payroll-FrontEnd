@@ -18,6 +18,7 @@ interface DecodedToken {
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const phoneRegex = /^\+94\s?\d{9}$/;
+const employeePhoneRegex = /^(?:\+94|0)(11|7[0125678])\d{7}$/;
 
 const SetCompany = () => {
   const navigate = useNavigate();
@@ -129,8 +130,10 @@ const SetCompany = () => {
       case 'companyPhone': {
         if (!value.trim())
           return 'Company phone is required';
-        if (!phoneRegex.test(value.trim()))
-          return 'Must be +94 followed by 9 digits';
+        if (value.trim().replace(/^(\+94|0)/, "").length > 9)
+          return 'Must be followed by 9 digits';
+        if (!employeePhoneRegex.test(value.trim()))
+          return 'Enter a valid Sri Lankan number (e.g. 0771234567 or +94771234567)';
         return '';
       }
       case 'companyAddress': {

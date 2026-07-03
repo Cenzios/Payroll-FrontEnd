@@ -37,7 +37,7 @@ export const validateCompanyField = (field: string, value: any): string => {
             if (!value) error = "Contact number is required";
             else if (value.replace(/^(\+94|0)/, "").length > 9)
                 error = "Must be followed by 9 digits";
-            else if (!phoneRegex.test(value))
+            else if (!employeePhoneRegex.test(value))
                 error = "Enter a valid Sri Lankan number (e.g. 0771234567 or +94771234567)";
             break;
 
