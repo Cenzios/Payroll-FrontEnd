@@ -235,7 +235,7 @@ const AccountTab = () => {
                                             setPersonalData({ ...personalData, fullName: e.target.value });
                                             setPersonalErrors({ ...personalErrors, fullName: validatePersonal('fullName', e.target.value) });
                                         }}
-                                        placeholder="Alex Morgan"
+                                        placeholder="Nimal Kumara"
                                         className={inputClasses(!!personalErrors.fullName, !isEditingPersonal)}
                                     />
                                 </div>
@@ -329,7 +329,7 @@ const AccountTab = () => {
                                                     setCompanyData({ ...companyData, name: e.target.value });
                                                     setCompanyErrors({ ...companyErrors, name: validateCompany('name', e.target.value) });
                                                 }}
-                                                placeholder="ABC Solutions"
+                                                placeholder="Cenzios (Pvt) Ltd"
                                                 className={inputClasses(!!companyErrors.name, !isEditingCompany)}
                                             />
                                         </div>
@@ -349,7 +349,7 @@ const AccountTab = () => {
                                                     setCompanyData({ ...companyData, email: e.target.value });
                                                     setCompanyErrors({ ...companyErrors, email: validateCompany('email', e.target.value) });
                                                 }}
-                                                placeholder="abcsolutions@yahoo.com"
+                                                placeholder="cenzios@gmail.com"
                                                 className={inputClasses(!!companyErrors.email, !isEditingCompany)}
                                             />
                                         </div>
@@ -371,7 +371,7 @@ const AccountTab = () => {
                                                     setCompanyData({ ...companyData, contactNumber: e.target.value });
                                                     setCompanyErrors({ ...companyErrors, contactNumber: validateCompany('contactNumber', e.target.value) });
                                                 }}
-                                                placeholder="+94 771457855"
+                                                placeholder="+94 77 123 4567"
                                                 className={inputClasses(!!companyErrors.contactNumber, !isEditingCompany)}
                                             />
                                         </div>
@@ -391,7 +391,7 @@ const AccountTab = () => {
                                                     setCompanyData({ ...companyData, address: e.target.value });
                                                     setCompanyErrors({ ...companyErrors, address: validateCompany('address', e.target.value) });
                                                 }}
-                                                placeholder="No. 9/2, Beach Road, Negombo"
+                                                placeholder="No 05, Colombo Rd, Baththaramulla"
                                                 className={inputClasses(!!companyErrors.address, !isEditingCompany)}
                                             />
                                         </div>
