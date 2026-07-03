@@ -224,7 +224,7 @@ const SetCompany = () => {
             htmlFor="companyName"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Company name <span className="text-red-500">*</span>
+            Company Name <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <input
