@@ -78,6 +78,7 @@ const AccountTab = () => {
 
     // Validation
     const phoneRegex = /^\+94\d{9}$/;
+    const employeePhoneRegex = /^(?:\+94|0)(11|7[0125678])\d{7}$/;
 
     const validatePersonal = (field: string, value: string) => {
         if (field === 'fullName') {
@@ -107,8 +108,10 @@ const AccountTab = () => {
             case 'contactNumber':
                 if (!value.trim())
                     return 'Contact number is required';
-                if (!phoneRegex.test(value))
-                    return 'Must be +94 followed by 9 digits';
+                if (value.replace(/^(\+94|0)/, "").length > 9)
+                    return 'Must be followed by 9 digits';
+                if (!employeePhoneRegex.test(value))
+                    return 'Enter a valid Sri Lankan number (e.g. 0771234567 or +94771234567)';
                 break;
             case 'address':
                 if (!value.trim())
