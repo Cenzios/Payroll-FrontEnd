@@ -25,23 +25,28 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
                 const subStatus = subRes.data?.data?.status;
                 const latestDoc = docsRes.data?.data?.[0]; // ← always fresh, no RTK cache issue
 
-                if (subStatus === 'ACTIVE') {
-                    if (latestDoc && latestDoc.status === 'REJECTED') {
-                        setStatus("REJECTED");
-                    } else {
-                        setStatus("APPROVED");
-                    }
-                    return;
-                }
-
+                // if (subStatus === 'ACTIVE') {
+                //     if (latestDoc && latestDoc.status === 'REJECTED') {
                 if (latestDoc) {
+                    if (latestDoc.status === 'REJECTED') {
+                        setStatus("REJECTED");
+                        return;
+                    }
+                    if (latestDoc.status === 'PENDING') {
+                        setStatus("PENDING");
+                        return;
+                    }
                     if (latestDoc.status === 'APPROVED') {
                         setStatus("APPROVED");
-                    } else if (latestDoc.status === 'REJECTED') {
-                        setStatus("REJECTED");
-                    } else {
-                        setStatus("PENDING");
+                        return;
                     }
+                }
+
+                // No document found — check subscription status directly
+                if (subStatus === 'ACTIVE') {
+                    setStatus("APPROVED");
+                } else {
+                    setStatus("PENDING");
                 }
             } catch (error) {
                 console.warn("Failed to check approval status", error);
