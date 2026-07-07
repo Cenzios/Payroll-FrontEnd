@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Loader2, ArrowRight } from 'lucide-react';
+import { Mail, Loader2, ArrowRight, RefreshCw } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 
 const ForgotPassword = () => {
@@ -9,6 +9,27 @@ const ForgotPassword = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [sent, setSent] = useState(false);
+    const [countdown, setCountdown] = useState(0);
+    const [isResending, setIsResending] = useState(false);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const startCountdown = useCallback(() => {
+        setCountdown(60);
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    if (timerRef.current) clearInterval(timerRef.current);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    }, []);
+
+    useEffect(() => {
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,6 +63,7 @@ const ForgotPassword = () => {
             }
 
             setSent(true);
+            startCountdown();
         } catch (err: any) {
             if (err instanceof SyntaxError || err.message?.includes('is not valid JSON') || err.message?.includes('Unexpected token')) {
                 setError('No account found with this email address.');
@@ -53,18 +75,64 @@ const ForgotPassword = () => {
         }
     };
 
+    const handleResend = async () => {
+        setIsResending(true);
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+            if (!res.ok) throw new Error('Failed to resend');
+            startCountdown();
+        } catch {
+            // silently fail – user can retry after timer
+        } finally {
+            setIsResending(false);
+        }
+    };
+
     if (sent) {
         return (
             <AuthLayout title="Check Your Email">
-                <div className="text-center space-y-4 max-sm:px-5">
-                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto">
-                        <Mail className="h-8 w-8 text-blue-500" />
-                    </div>
-                    <p className="text-gray-600 text-sm">
-                        We've sent a password reset link to <strong>{email}</strong>.
-                        Check your inbox to reset your password.
+                <div className="mb-6 text-center">
+                    <p className="text-gray-600">
+                        We've sent a password reset link to
                     </p>
-                    <p className="text-xs text-gray-400">The link expires in 15 minutes.</p>
+                    <p className="text-blue-600 font-medium mt-1">
+                        {email}
+                    </p>
+
+                    <div className="my-4 flex items-center justify-center">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex items-center justify-center gap-3">
+                                <Mail className="w-5 h-5 text-blue-600 mt-0.5" />
+                                <div className="flex-1">
+                                    <p className="text-sm text-gray-700">
+                                        Check your inbox to reset your password.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="text-center">
+                        <p className="text-sm text-gray-600 mb-3">
+                            Didn't receive the email?
+                        </p>
+                        <button
+                            type="button"
+                            onClick={handleResend}
+                            disabled={countdown > 0 || isResending}
+                            className="w-full bg-white text-blue-600 border-2 border-blue-600 font-semibold py-3 px-4 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center
+                       max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:text-white max-sm:border-0 max-sm:shadow-blue-200">
+                            {isResending
+                                ? 'Sending...'
+                                : countdown > 0
+                                    ? `Resend available in ${countdown}s`
+                                    : 'Resend Forgot Password Link'}
+                        </button>
+                    </div>
                     <button
                         onClick={() => navigate('/login')}
                         className="mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium"
