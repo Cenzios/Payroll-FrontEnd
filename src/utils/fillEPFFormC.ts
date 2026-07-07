@@ -89,28 +89,44 @@ export async function fillEPFFormC(params: {
 
     // Month and Year of contribution
     const monthYearText = `${MONTH_NAMES[month - 1]} ${year}`;
-    drawText(monthYearText, 415, 94);              // y=94 from top
+    drawText(monthYearText, 470, 88);              // y=94 from top
 
     // ─── 5. Fill employee table rows ────────────────────────────────────────────
     // Table starts at y ≈ 254 from top (i.e. y_from_bottom ≈ 588 on A4)
     // Each row height ≈ 15pt
 
-    const TABLE_START_Y = 262;   // 842 - 580 = 262 from top
-    const ROW_HEIGHT = 18;       // as requested
+    const TABLE_START_Y = 308;   // 842 - 580 = 262 from top
+    const ROW_HEIGHT = 20;       // as requested
 
     // Column x positions (from user prompt)
     const COL = {
-        name: 30,
-        nic: 155,
-        memberNo: 268,
-        total: 322,
-        employer: 378,
-        employee: 435,
-        earnings: 500,
+        name: 50,
+        nic: 240,
+        memberNo: 315,
+        // total: 374,
+        // employer: 437,
+        // employee: 495,
+        // earnings: 536,
+    };
+
+    const COL_RIGHT = {
+        total: 400,     
+        employer: 464,   
+        employee: 522,   
+        earnings: 565,   
+    };
+
+    const drawTextRightAligned = (text: string, rightX: number, yFromTop: number) => {
+        const textWidth = font.widthOfTextAtSize(text, fontSize);
+        const x = rightX - textWidth;
+        const y = height - yFromTop;
+        if (DEBUG) {
+            page.drawCircle({ x: rightX, y, size: 2, color: debugColor });
+        }
+        page.drawText(text, { x, y, size: fontSize, font, color: textColor });
     };
 
     employees.forEach((emp, i) => {
-        const yFromTop = TABLE_START_Y + i * ROW_HEIGHT + 4; // +4 to center within row
 
         // Truncate name so it fits the column
         const nameTrunc = emp.employeeName.length > 22
@@ -119,25 +135,39 @@ export async function fillEPFFormC(params: {
 
         const totalContrib = emp.employerEpf + emp.employeeEpf;
 
+        const yFromTop = TABLE_START_Y + i * ROW_HEIGHT + 2;
+
         drawText(nameTrunc, COL.name, yFromTop);
         drawText(emp.nationalId || '-', COL.nic, yFromTop);
         drawText(emp.memberNo || '-', COL.memberNo, yFromTop);
-        drawText(fmt(totalContrib), COL.total, yFromTop);
-        drawText(fmt(emp.employerEpf), COL.employer, yFromTop);
-        drawText(fmt(emp.employeeEpf), COL.employee, yFromTop);
-        drawText(fmt(emp.basicPay), COL.earnings, yFromTop); // use basicPay here
+
+        drawTextRightAligned(fmt(totalContrib), COL_RIGHT.total, yFromTop);
+        drawTextRightAligned(fmt(emp.employerEpf), COL_RIGHT.employer, yFromTop);
+        drawTextRightAligned(fmt(emp.employeeEpf), COL_RIGHT.employee, yFromTop);
+        drawTextRightAligned(fmt(emp.basicPay), COL_RIGHT.earnings, yFromTop); 
     });
 
     // ─── 6. Fill totals row ─────────────────────────────────────────────────────
     // The totals row is printed below the last employee; the form has a fixed
     // "Total" label line near the bottom of the table at approx y=144 from bottom
-    const TOTALS_Y = 698; // 842 - 144 = 698
-    const totalContribTotal = totals.employerEpf + totals.employeeEpf;
+    // const TOTALS_GAP_ROWS = 1; // adjust based on how many blank/spacer rows the form has before "Total"
+    // const TOTALS_Y = TABLE_START_Y + (employees.length + TOTALS_GAP_ROWS) * ROW_HEIGHT + 4;
+    // const totalContribTotal = totals.employerEpf + totals.employeeEpf;
 
-    drawText(fmt(totalContribTotal), COL.total, TOTALS_Y);
-    drawText(fmt(totals.employerEpf), COL.employer, TOTALS_Y);
-    drawText(fmt(totals.employeeEpf), COL.employee, TOTALS_Y);
-    drawText(fmt(totals.basicPay), COL.earnings, TOTALS_Y);
+
+    // drawText(fmt(totalContribTotal), COL.total, TOTALS_Y);
+    // drawText(fmt(totals.employerEpf), COL.employer, TOTALS_Y);
+    // drawText(fmt(totals.employeeEpf), COL.employee, TOTALS_Y);
+    // drawText(fmt(totals.basicPay), COL.earnings, TOTALS_Y);
+
+     const totalContribTotal = totals.employerEpf + totals.employeeEpf;
+
+    const TOTAL_BOX_Y = 685;  
+
+    drawTextRightAligned(fmt(totalContribTotal), COL_RIGHT.total, TOTAL_BOX_Y);
+    drawTextRightAligned(fmt(totals.employerEpf), COL_RIGHT.employer, TOTAL_BOX_Y);
+    drawTextRightAligned(fmt(totals.employeeEpf), COL_RIGHT.employee, TOTAL_BOX_Y);
+    drawTextRightAligned(fmt(totals.basicPay), COL_RIGHT.earnings, TOTAL_BOX_Y);
 
     // ─── 7. Save & download ─────────────────────────────────────────────────────
     const pdfBytes = await pdfDoc.save();
