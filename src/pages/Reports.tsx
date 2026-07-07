@@ -265,6 +265,8 @@ const Reports = () => {
         setToast({ message: 'CSV exported successfully', type: 'success' });
     };
 
+    const hasData = !isLoading && monthlyData.some(m => m.employees && m.employees.length > 0);
+
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
             <AlertBar />
@@ -358,14 +360,15 @@ const Reports = () => {
                                 {/* Export Dropdown */}
                                 <div className="relative">
                                     <button
+                                        disabled={!hasData}
                                         onClick={() => setIsExportOpen(prev => !prev)}
-                                        className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5"
+                                        className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
                                     >
                                         Export
                                         <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
                                     </button>
 
-                                    {isExportOpen && (
+                                    {isExportOpen && hasData && (
                                         <>
                                             <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
                                             <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">

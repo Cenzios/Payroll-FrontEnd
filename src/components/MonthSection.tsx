@@ -128,7 +128,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                 <div className="border-t border-gray-200">
                     {filteredEmployees.length === 0 ? (
                         <div className="px-6 py-12 text-center text-gray-500">
-                            {employees.length === 0 ? 'No payroll records for this month.' : 'No matching employees found.'}
+                            {employees.length === 0 ? 'No payroll records found for the selected period.' : 'No matching employees found.'}
                         </div>
                     ) : (
                         <>
@@ -184,8 +184,8 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                             const totalDeductions = grossEarnings - netPay - loanDeduction;
 
                                             return (
-                                            <tr key={index} className="hover:bg-gray-50 transition-colors">
-                                                {/* <td className="px-4 py-3">
+                                                <tr key={index} className="hover:bg-gray-50 transition-colors">
+                                                    {/* <td className="px-4 py-3">
                                                     <input
                                                         type="checkbox"
                                                         checked={selectedEmployeeIds.includes(`${employee.employeeId}-${year}-${monthNumber}`)}
@@ -193,30 +193,30 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                     />
                                                 </td> */}
-                                                <td className="px-8 py-3 font-regular text-gray-900 text-left">{employee.employeeCode || '-'}</td>
-                                                <td className="px-6 py-3 text-gray-900 whitespace-nowrap text-left">{employee.employeeName || '-'}</td>
-                                                <td className="px-4 py-3 text-gray-500 text-center">{employee.workingDays}</td>
-                                                {/* <td className="px-4 py-3 text-gray-500 font-medium text-end">{employee.basicSalary?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td> */}
-                                                <td className="px-4 py-3 text-gray-500 font-medium text-end">
-                                                    {displayBasic.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-500">
-                                                    <div className="font-medium text-gray-500 text-end">{(employee.otAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                                                    {/* <div className="text-[10px] text-gray-400">({employee.otHours} hrs)</div> */}
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{(employee.allowanceTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-4 py-3 font-regular text-gray-500 whitespace-nowrap text-end">{grossEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-4 py-3 font-regular text-blue-600 whitespace-nowrap text-end">{netPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-4 py-3 text-end">
-                                                    <button
-                                                        onClick={() => onViewEmployee(employee.employeeId, companyId)}
-                                                        className="px-6 py-2 border border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 text-xs transition-colors"
-                                                    >
-                                                        View
-                                                    </button>
-                                                </td>
-                                            </tr>
+                                                    <td className="px-8 py-3 font-regular text-gray-900 text-left">{employee.employeeCode || '-'}</td>
+                                                    <td className="px-6 py-3 text-gray-900 whitespace-nowrap text-left">{employee.employeeName || '-'}</td>
+                                                    <td className="px-4 py-3 text-gray-500 text-center">{employee.workingDays}</td>
+                                                    {/* <td className="px-4 py-3 text-gray-500 font-medium text-end">{employee.basicSalary?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td> */}
+                                                    <td className="px-4 py-3 text-gray-500 font-medium text-end">
+                                                        {displayBasic.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-gray-500">
+                                                        <div className="font-medium text-gray-500 text-end">{(employee.otAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                                        {/* <div className="text-[10px] text-gray-400">({employee.otHours} hrs)</div> */}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{(employee.allowanceTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                    <td className="px-4 py-3 font-regular text-gray-500 whitespace-nowrap text-end">{grossEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                    <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                    <td className="px-4 py-3 font-regular text-blue-600 whitespace-nowrap text-end">{netPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                    <td className="px-4 py-3 text-end">
+                                                        <button
+                                                            onClick={() => onViewEmployee(employee.employeeId, companyId)}
+                                                            className="px-6 py-2 border border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 text-xs transition-colors"
+                                                        >
+                                                            View
+                                                        </button>
+                                                    </td>
+                                                </tr>
                                             );
                                         })}
                                     </tbody>

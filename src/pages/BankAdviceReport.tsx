@@ -93,6 +93,8 @@ const BankAdviceReport = () => {
         setToast({ message: `${format.toUpperCase()} exported successfully`, type: 'success' });
     };
 
+    const hasData = !isLoadingEmployees && !isLoadingSalary && bankReportData.length > 0;
+
     const months = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
@@ -243,13 +245,14 @@ const BankAdviceReport = () => {
 
                                     <div className="relative">
                                         <button
+                                            disabled={!hasData}
                                             onClick={() => setIsExportOpen(!isExportOpen)}
-                                            className="flex items-center gap-1.5 px-6 py-2 bg-white hover:bg-gray-50 text-green-600 text-sm font-medium rounded-lg border border-green-200 transition-colors max-sm:flex-1 max-sm:py-2.5"
+                                            className="flex items-center gap-1.5 px-6 py-2 bg-white hover:bg-gray-50 text-green-600 text-sm font-medium rounded-lg border border-green-200 transition-colors max-sm:flex-1 max-sm:py-2.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
                                         >
                                             Export
                                             <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
                                         </button>
-                                        {isExportOpen && (
+                                        {isExportOpen && hasData && (
                                             <>
                                                 <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
                                                 <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
@@ -297,7 +300,7 @@ const BankAdviceReport = () => {
                                         ) : bankReportData.length === 0 ? (
                                             <tr>
                                                 <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
-                                                    No bank advice data found for the selected period.
+                                                    No bank advice data found for the selected month.
                                                 </td>
                                             </tr>
                                         ) : (

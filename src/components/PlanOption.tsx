@@ -47,12 +47,12 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
             subtitle: "Bank Deposit",
             icon: Landmark,
         },
-        {
-            type: "payhere" as const,
-            title: "PayHere",
-            subtitle: "Local Online Payment",
-            icon: Wallet,
-        },
+        // {
+        //     type: "payhere" as const,
+        //     title: "PayHere",
+        //     subtitle: "Local Online Payment",
+        //     icon: Wallet,
+        // },
     ];
 
     return (
@@ -202,9 +202,9 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                     <div style={{ display: value === "manual" ? "block" : "none" }}>
                         <PlanPaymentManual />
                     </div>
-                    <div style={{ display: value === "payhere" ? "block" : "none" }}>
+                    {/* <div style={{ display: value === "payhere" ? "block" : "none" }}>
                         <PlanPaymentPayhere />
-                    </div>
+                    </div> */}
                 </div>
             )}
         </>

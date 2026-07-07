@@ -2,7 +2,7 @@ import { useState, FormEvent, useEffect } from "react";
 import {
     PlusCircle, MinusCircle, UploadCloud, Activity, MapPin, Phone, Mail,
     UserRound, Landmark, Home as HomeIcon, ListOrdered, CreditCard, Hotel,
-    ListFilter, X, Award, Calendar, Banknote, Wallet
+    ListFilter, X, Award, Calendar, Banknote, Wallet, ChevronDown, Check
 } from "lucide-react";
 import FileUploadModal from "../FileUploadModal";
 import { CreateEmployeeRequest } from "../../types/employee.types";
@@ -52,6 +52,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     const [isVisible, setIsVisible] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
     const [isEdit, setIsEdit] = useState(!!initialData);
+    const [isSalaryTypeOpen, setIsSalaryTypeOpen] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -654,7 +655,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Wallet className="h-4 w-4 text-blue-500" /></div>
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Basic Salary <strong className="text-red-600 text-[15px]">*</strong></label>
                                                 </div>
-                                                <div className="flex">
+                                                <div className="flex items-center">
                                                     <input type="number" min="0" value={employeeData.basicSalary || ""}
                                                         onChange={(e) => handleEmployeeChange("basicSalary", parseFloat(e.target.value) || 0)}
                                                         onBlur={() => handleBlur("basicSalary")}
@@ -667,14 +668,40 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                                 : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
                                                     />
 
-                                                    <select value={employeeData.salaryType || "DAILY"}
-                                                        onChange={(e) =>
-                                                            handleEmployeeChange("salaryType", e.target.value as "DAILY" | "MONTHLY")
-                                                        }
-                                                        className="ml-2 px-4 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 bg-white focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none cursor-pointer">
-                                                        <option value="MONTHLY">Monthly</option>
-                                                        <option value="DAILY">Daily</option>
-                                                    </select>
+                                                    <div className="relative ml-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setIsSalaryTypeOpen(!isSalaryTypeOpen)}
+                                                            className="flex items-center gap-1.5 px-4 py-1.5 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-600 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none cursor-pointer transition-all whitespace-nowrap"
+                                                        >
+                                                            {employeeData.salaryType === "MONTHLY" ? "Monthly" : "Daily"}
+                                                            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isSalaryTypeOpen ? 'rotate-180' : ''}`} />
+                                                        </button>
+                                                        {isSalaryTypeOpen && (
+                                                            <>
+                                                                <div className="fixed inset-0 z-10" onClick={() => setIsSalaryTypeOpen(false)} />
+                                                                <div className="absolute right-0 mt-1 w-full min-w-[70px] bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
+                                                                    {(["MONTHLY", "DAILY"] as const).map((type) => (
+                                                                        <button
+                                                                            key={type}
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                handleEmployeeChange("salaryType", type);
+                                                                                setIsSalaryTypeOpen(false);
+                                                                            }}
+                                                                            className={`w-full flex items-center justify-between gap-2 px-4 py-2 text-[13px] font-medium transition-colors ${employeeData.salaryType === type
+                                                                                ? 'text-[#367AFF] bg-blue-50'
+                                                                                : 'text-gray-600 hover:bg-gray-50'
+                                                                                }`}
+                                                                        >
+                                                                            {type === "MONTHLY" ? "Monthly" : "Daily"}
+                                                                            {employeeData.salaryType === type}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 {touched.basicSalary && errors.basicSalary && <p className="text-red-500 text-[12px] mt-1">{errors.basicSalary}</p>}
                                             </div>
