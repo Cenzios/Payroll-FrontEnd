@@ -94,7 +94,7 @@ export interface EmployeeModalReportData {
 // --- Helper Functions ---
 
 const formatCurrency = (amount: number) => {
-    return `Rs. ${amount.toLocaleString(undefined, {
+    return `${amount.toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     })}`;
@@ -617,7 +617,7 @@ export const exportPayslip = (
         const amountWidth = doc.getTextWidth(amountStr);
 
         doc.setTextColor(255, 255, 255);
-        doc.text("Net Salary Payable : ", 190 - amountWidth, currentY + 9, { align: "right" });
+        doc.text("", 190 - amountWidth, currentY + 9, { align: "right" });
         doc.setTextColor(252, 163, 17);
         doc.text(amountStr, 190, currentY + 9, { align: "right" });
 

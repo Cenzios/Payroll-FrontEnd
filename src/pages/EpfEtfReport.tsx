@@ -181,6 +181,8 @@ const EpfEtfReport = () => {
         emp.employeeCode.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const hasData = !isLoading && filteredData.length > 0;
+
     const handleExport = (format: 'pdf' | 'excel' | 'csv') => {
         const selectedCompany = companies?.find(c => c.id === selectedCompanyId);
         exportEpfEtfReport(format, {
@@ -343,13 +345,14 @@ const EpfEtfReport = () => {
 
                                     <div className="relative">
                                         <button
+                                            disabled={!hasData}
                                             onClick={() => setIsExportOpen(!isExportOpen)}
-                                            className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5"
+                                            className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
                                         >
                                             Export
                                             <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
                                         </button>
-                                        {isExportOpen && (
+                                        {isExportOpen && hasData && (
                                             <>
                                                 <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
                                                 <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
@@ -430,7 +433,7 @@ const EpfEtfReport = () => {
                                             ) : filteredData.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
-                                                        No EPF/ETF data found for the selected period.
+                                                        No EPF/ETF data found for the selected month.
                                                     </td>
                                                 </tr>
                                             ) : (
