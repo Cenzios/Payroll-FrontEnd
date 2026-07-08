@@ -42,6 +42,8 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
   const [supportingDocs, setSupportingDocs] = useState<File[]>([]);
   const [fileTitles, setFileTitles] = useState<Record<number, string>>({});
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const employeeInputRef = useRef<HTMLInputElement>(null);
+
 
   const [loanTitleError, setLoanTitleError] = useState('');
   const LOAN_TITLE_MAX_LENGTH = 50;
@@ -117,6 +119,12 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
       }
     }
   }, [startDate, installmentCount]);
+
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
 
   const handleSubmit = async () => {
     const titleError = validateLoanTitle(loanTitle);
@@ -372,12 +380,24 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 </div>
 
                 <div
-                  className={`relative flex items-center bg-white border rounded-xl focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all ${isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200'}`}
+                  onClick={() => {
+                    setIsDropdownOpen(prev => {
+                      const next = !prev;
+                      if (next) {
+                        employeeInputRef.current?.focus();
+                      } else {
+                        setSearchTerm('');
+                      }
+                      return next;
+                    });
+                  }}
+                  className={`relative cursor-pointer flex items-center bg-white border rounded-xl focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all ${isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200'}`}
                 >
                   <div className="pl-4 pointer-events-none">
                     <Search className="w-4 h-4 text-gray-400" />
                   </div>
                   <input
+                    ref={employeeInputRef}
                     type="text"
                     value={isDropdownOpen ? searchTerm : (selectedEmployeeName || '')}
                     onChange={(e) => {
@@ -386,9 +406,9 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                     }}
                     onFocus={() => setIsDropdownOpen(true)}
                     placeholder="Search employee by name or ID..."
-                    className="w-full px-3 py-1.5 text-[13px] bg-transparent outline-none  placeholder:text-gray-400"
+                    className="w-full px-3 py-1.5 text-[13px] bg-transparent outline-none  placeholder:text-gray-400 cursor-pointer"
                   />
-                  <div className="pr-4 pointer-events-none">
+                  <div className="pr-4 pointer-events-none cursor-pointer">
                     <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
