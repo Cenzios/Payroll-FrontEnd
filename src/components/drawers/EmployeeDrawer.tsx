@@ -347,6 +347,17 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         return Object.keys(newErrors).length === 0;
     };
 
+    const isBankSectionComplete = () => {
+        const bankFields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
+        const values = bankFields.map((f) => (employeeData as any)[f]);
+        const allEmpty = values.every((v) => !v || String(v).trim() === "");
+        if (allEmpty) return true;
+        const allFilled = values.every((v) => v && String(v).trim() !== "");
+        if (!allFilled) return false;
+        const ctx = getValidationContext();
+        return bankFields.every((f) => !validateEmployeeField(f, (employeeData as any)[f], ctx));
+    };
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!validate()) return;
@@ -485,7 +496,8 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><CreditCard className="h-4 w-4 text-blue-500" /></div>
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">NIC <strong className="text-red-600 text-[15px]">*</strong></label>
                                                 </div>
-                                                <input type="text" value={employeeData.employeeNIC || ""} onChange={(e) => handleEmployeeChange("employeeNIC", e.target.value)} onBlur={() => handleBlur("employeeNIC")} placeholder="Enter Employee NIC Number"
+                                                <input type="text" value={employeeData.employeeNIC || ""}
+                                                    onChange={(e) => handleEmployeeChange("employeeNIC", e.target.value.replace(/[^0-9vVxX]/g, "").replace(/[vx]/g, (c) => c.toUpperCase()))} onBlur={() => handleBlur("employeeNIC")} placeholder="Enter Employee NIC Number"
                                                     className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${(touched.employeeNIC && errors.employeeNIC) || duplicateErrors.employeeNIC ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                 {(touched.employeeNIC && errors.employeeNIC) || duplicateErrors.employeeNIC ? (
                                                     <p className="text-red-500 text-xs mt-1">
@@ -532,7 +544,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                         <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Phone className="h-4 w-4 text-blue-500" /></div>
                                                         <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Phone Number <strong className="text-red-600 text-[15px]">*</strong></label>
                                                     </div>
-                                                    <input type="tel" value={employeeData.contactNumber} onChange={(e) => handleEmployeeChange("contactNumber", e.target.value)} onBlur={() => handleBlur("contactNumber")} placeholder="0771234567"
+                                                    <input type="tel" inputMode="numeric" value={employeeData.contactNumber} onChange={(e) => handleEmployeeChange("contactNumber", e.target.value.replace(/[^0-9]/g, ""))} onBlur={() => handleBlur("contactNumber")} placeholder="0771234567"
                                                         className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                     {touched.contactNumber && errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
                                                 </div>
@@ -660,7 +672,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                         onChange={(e) => handleEmployeeChange("basicSalary", parseFloat(e.target.value) || 0)}
                                                         onBlur={() => handleBlur("basicSalary")}
                                                         onWheel={(e) => e.currentTarget.blur()}
-                                                        onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                                        onKeyDown={blockInvalidNumericKeys}
                                                         placeholder={employeeData.salaryType === "MONTHLY" ? "Enter Employee's Monthly Basic" : "Enter Employee's Daily Basic"}
                                                         className={`text-[13px] w-full px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none 
                                                         ${touched.basicSalary && errors.basicSalary
@@ -734,7 +746,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                             <div>
                                                 <div className="relative mt-4">
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Banknote className="h-4 w-4 text-blue-500" /></div>
-                                                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">OT Rate (Rs/hr)</label>
+                                                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">OT Rate (Rs./hr)</label>
                                                 </div>
                                                 <input type="number" min="0" value={employeeData.otRate || ""}
                                                     onChange={(e) => handleEmployeeChange("otRate", parseFloat(e.target.value) || 0)}
@@ -781,7 +793,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="space-y-3">
                                                         <div className="grid grid-cols-[1fr_1fr_36px] gap-3">
                                                             <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">Type</span>
-                                                            <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">Amount (Rs)</span>
+                                                            <span className="text-[12px] font-medium text-gray-500 tracking-wide">AMOUNT (Rs.)</span>
                                                             <span></span>
                                                         </div>
                                                         {allowances.map((allowance, index) => (
@@ -819,7 +831,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="space-y-3">
                                                         <div className="grid grid-cols-[1fr_1fr_36px] gap-3">
                                                             <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">Type</span>
-                                                            <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">Amount (Rs)</span>
+                                                            <span className="text-[12px] font-medium text-gray-500 tracking-wide">AMOUNT (Rs.)</span>
                                                             <span></span>
                                                         </div>
                                                         {deductions.map((deduction, index) => (
@@ -893,7 +905,9 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><ListOrdered className="h-4 w-4 text-blue-500" /></div>
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Account Number</label>
                                                 </div>
-                                                <input type="text" value={employeeData.accountNumber || ""} onChange={(e) => handleEmployeeChange("accountNumber", e.target.value)} placeholder="Enter Your Account Number"
+                                                <input type="text" inputMode="numeric" value={employeeData.accountNumber || ""}
+                                                    onChange={(e) => handleEmployeeChange("accountNumber", e.target.value.replace(/[^0-9]/g, ""))}
+                                                    placeholder="Enter Your Account Number"
                                                     className={`text-[13px] w-full pr-4 px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountNumber && errors.accountNumber ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                 {touched.accountNumber && errors.accountNumber && <p className="text-red-500 text-xs mt-1">{errors.accountNumber}</p>}
                                             </div>
@@ -907,7 +921,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                     {/* Footer */}
                     <div className="p-4 border-t border-gray-200 flex justify-center">
                         {activeTab === "bank" ? (
-                            <button type="submit" onClick={handleSubmit} disabled={isSubmitting || !isTabValid("employee") || !isTabValid("payment")}
+                            <button type="submit" onClick={handleSubmit} disabled={isSubmitting || !isTabValid("employee") || !isTabValid("payment") || !isBankSectionComplete()}
                                 className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed
                                              max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
                                 {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}

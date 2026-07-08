@@ -160,6 +160,15 @@ const SetCompany = () => {
     return !errors.companyName && !errors.companyEmail && !errors.companyPhone && !errors.companyAddress;
   };
 
+  const isFormValid = (): boolean => {
+    return (
+      !validateField('companyName', formData.companyName) &&
+      !validateField('companyEmail', formData.companyEmail) &&
+      !validateField('companyPhone', formData.companyPhone) &&
+      !validateField('companyAddress', formData.companyAddress)
+    );
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -425,7 +434,7 @@ const SetCompany = () => {
 
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || !isFormValid()}
           className="w-full bg-[#3A8BFF] text-white font-semibold py-3 px-4 rounded-lg 
              hover:bg-[#337AEB] focus:outline-none 
              focus:ring-2 focus:ring-[#3A8BFF] focus:ring-offset-2 

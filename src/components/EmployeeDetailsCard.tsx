@@ -231,7 +231,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             <div className="flex items-center">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
                                     <Calendar className="w-[14px] h-[14px]" />
-                                    <span>Joining Date</span>
+                                    <span>Joined Date</span>
                                 </div>
                                 <div className="text-[13px] font-normal text-gray-800 uppercase">
                                     {selectedEmployee.joinedDate
@@ -416,7 +416,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             <div className="flex items-center  gap-4">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <Banknote className="w-[14px] h-[14px]" />
-                                    <span>OT Rate</span>
+                                    <span>OT Rate (Rs./hr)</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.otRate === 0
@@ -432,7 +432,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             <div className="flex gap-4">
                                 <div className="w-[150px] flex gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <Activity className="w-[18px] h-[18px]" />
-                                    <span>EPF/ETF Applicable Amount</span>
+                                    <span>EPF/ETF Applicable Amount (Rs.)</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.epfEnabled
@@ -462,7 +462,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 <div className="flex items-center mb-2">
                                     <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                         <PlusCircle className="w-[14px] h-[14px]" />
-                                        <span>Allowances (Rs)</span>
+                                        <span>Allowances (Rs.)</span>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -494,7 +494,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 <div className="flex items-center mb-2">
                                     <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                         <MinusCircle className="w-[14px] h-[14px]" />
-                                        <span>Deductions (Rs)</span>
+                                        <span>Deductions (Rs.)</span>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
