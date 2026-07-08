@@ -136,18 +136,18 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                 }}
             >
                 {/* Header */}
-                <div className="px-8 pt-8 pb-4 flex justify-center items-center bg-white border-b border-gray-50">
+                <div className="pt-8 flex justify-center items-center bg-white border-b border-gray-50">
                     <h2 className="text-xl font-bold text-gray-900">Supporting Documents</h2>
                 </div>
 
-                <div className="p-8 space-y-6 bg-white">
+                <div className="p-2 space-y-2 bg-white">
                     {/* Dropzone */}
                     <div
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         onClick={() => fileInputRef.current?.click()}
-                        className={`relative border-2 border-dashed rounded-[24px] p-10 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer
+                        className={`relative border-2 border-dashed rounded-[24px] p-4 mx-5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer
               ${isDragging ? 'border-blue-500 bg-blue-50/50 scale-[1.02]' : 'border-gray-200 hover:border-blue-400 hover:bg-gray-50/50'}`}
                     >
                         <input
@@ -157,27 +157,27 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                             accept=".png,.jpg,.jpeg,.pdf"
                             className="hidden"
                         />
-                        <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center shadow-sm">
-                            <UploadCloud className="w-7 h-7 text-blue-500" />
+                        <div className="w-11 h-11 bg-blue-50 rounded-full flex items-center justify-center shadow-sm">
+                            <UploadCloud className="w-6 h-6 text-blue-500" />
                         </div>
                         <div className="text-center">
                             <p className="text-[15px] font-semibold text-gray-900">Click to upload or drag and drop</p>
-                            <p className="text-[13px] text-gray-400 mt-1">Upload 1 file at a time (JPG, PNG, PDF)</p>
+                            <p className="text-[13px] text-gray-400 mt-1">Upload 1 file at a time (JPG, PNG, PDF). Maximum 3 files allowed.</p>
                             <p className="text-[11px] text-gray-400 mt-1">e.g., NIC Copy, Certificates, Agreements, Supporting Records</p>
                         </div>
                     </div>
 
                     {/* File List */}
-                    <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="space-y-1 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
                         {files.length > 0 ? (
                             files.map((file, idx) => (
-                                <div key={idx} className="group flex items-center gap-4 p-4 border border-gray-100 rounded-[20px] bg-white hover:border-blue-200 hover:shadow-md hover:shadow-blue-500/5 transition-all">
+                                <div key={idx} className="group flex items-center gap-4 mx-6 px-4 py-2 border border-gray-100 rounded-[20px] bg-white hover:border-blue-200 hover:shadow-md hover:shadow-blue-500/5 transition-all">
                                     <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
                                         {getFileIcon(file.type)}
                                     </div>
 
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex flex-col gap-1.5">
+                                        <div className="flex flex-col gap-1">
                                             <div className="flex items-center justify-between">
                                                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Document Title</p>
                                                 <p className="text-[10px] text-gray-400 truncate max-w-[150px]">{file.name}</p>
@@ -218,7 +218,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="px-8 py-6 bg-gray-50/50 flex gap-4 border-t border-gray-100">
+                <div className="px-8 py-4 bg-gray-50/50 flex gap-4 border-t border-gray-100">
                     <button
                         onClick={onClose}
                         className="flex-1 py-3.5 text-[14px] font-bold text-gray-600 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"

@@ -20,7 +20,11 @@ import {
     Banknote,
     Wallet,
     Wallet2,
-    Pencil
+    Pencil,
+    CreditCard,
+    Activity,
+    Award,
+    UploadCloud
 } from "lucide-react";
 import { Employee } from "../types/employee.types";
 
@@ -144,7 +148,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             {/* NIC */}
                             <div className="flex items-center">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
-                                    <Mail className="w-[14px] h-[14px]" />
+                                    <CreditCard className="w-[14px] h-[14px]" />
                                     <span>NIC</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
@@ -182,7 +186,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             {/* EPF no */}
                             <div className="flex items-center">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
-                                    <Mail className="w-[14px] h-[14px]" />
+                                    <Activity className="w-[14px] h-[14px]" />
                                     <span>EPF Number</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
@@ -215,7 +219,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             {/* Designation */}
                             <div className="flex items-center">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
-                                    <Briefcase className="w-[14px] h-[14px]" />
+                                    <Award className="w-[14px] h-[14px]" />
                                     <span>Designation</span>
                                 </div>
                                 <div className="text-[13px] font-normal text-[#4A7DFF]">
@@ -265,7 +269,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 {/* Files header row */}
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2 text-[#AAAEBF]">
-                                        <FileText className="w-[15px] h-[15px]" />
+                                        <UploadCloud className="w-[15px] h-[15px]" />
                                         <span className="text-[12px] font-semibold">Documents</span>
                                     </div>
                                     {/* Add file button */}
@@ -427,7 +431,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             {/* EPF/ETF */}
                             <div className="flex gap-4">
                                 <div className="w-[150px] flex gap-2 text-[12px] font-semibold text-[#8B98A8]">
-                                    <Banknote className="w-[18px] h-[18px]" />
+                                    <Activity className="w-[18px] h-[18px]" />
                                     <span>EPF/ETF Applicable Amount</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
