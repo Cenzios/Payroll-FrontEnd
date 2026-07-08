@@ -803,7 +803,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                                 <span className="text-[12px] text-gray-400 group-hover:text-blue-500 transition-colors">Add Extra Allowances</span>
                                                             </div>
                                                             <div className="px-3 py-1.5 border border-dashed border-gray-200 rounded-xl group-hover:border-blue-300 transition-colors"><span className="text-[12px] text-gray-400">Enter Amount</span></div>
-                                                            <div className="flex items-center justify-center"><PlusCircle className="w-5 h-5 text-blue-400 group-hover:text-[#367AFF] transition-colors" /></div>
+                                                            <div className="flex items-center justify-center" title="Please fill the current row to add another one"><PlusCircle className="w-5 h-5 text-blue-400 group-hover:text-[#367AFF] transition-colors" /></div>
                                                         </div>
                                                     </div>
                                                 )}
@@ -841,7 +841,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                                 <span className="text-[12px] text-gray-400 group-hover:text-red-500 transition-colors">Add Deduction</span>
                                                             </div>
                                                             <div className="px-3 py-1.5 border border-dashed border-red-200 rounded-xl group-hover:border-red-400 transition-colors"><span className="text-[12px] text-gray-400">Enter Amount</span></div>
-                                                            <div className="flex items-center justify-center"><PlusCircle className="w-5 h-5 text-blue-400 group-hover:text-red-500 transition-colors" /></div>
+                                                            <div className="flex items-center justify-center" title="Please fill the current row to add another one"><PlusCircle className="w-5 h-5 text-blue-400 group-hover:text-red-500 transition-colors" /></div>
                                                         </div>
                                                     </div>
                                                 )}

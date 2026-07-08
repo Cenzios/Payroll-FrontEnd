@@ -136,6 +136,13 @@ const Login = () => {
             <GoogleIcon />
             Continue with Google
           </button>
+
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <hr className="flex-1 border-gray-300" />
+            <p className="text-gray-500">or</p>
+            <hr className="flex-1 border-gray-300" />
+          </div>
+
           <label
             htmlFor="email"
             className="block text-sm font-medium text-gray-700 mt-6 mb-2"
