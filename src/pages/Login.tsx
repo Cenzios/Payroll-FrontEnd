@@ -163,7 +163,7 @@ const Login = () => {
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                 } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-              placeholder="you@example.com"
+              placeholder="Enter your Email"
             />
           </div>
           {validationErrors.email && (
@@ -194,7 +194,7 @@ const Login = () => {
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                 } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-              placeholder="••••••••"
+              placeholder="Enter your Password"
             />
             <button
               type="button"
