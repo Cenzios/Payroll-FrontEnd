@@ -527,7 +527,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                         <div className="space-y-3 pt-2">
                             <div className="flex items-center pt-1">
                                 <div className="w-[160px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
-                                    <UsersIcon className="w-[16px] h-[16px]" />
+                                    <User className="w-[16px] h-[16px]" />
                                     <span>Account Name</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
