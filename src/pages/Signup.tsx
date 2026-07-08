@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { startSignup, clearError } from '../store/slices/authSlice';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail, User } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 
 
@@ -152,18 +152,23 @@ const Signup = () => {
           >
             Full Name <span className="text-red-500">*</span>
           </label>
-          <input
-            type="text"
-            id="fullName"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            className={`block w-full px-4 py-3 border ${validationErrors.fullName
-              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-              : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-              } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-            placeholder="Nimal Kumara"
-          />
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <User className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              id="fullName"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.fullName
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+              placeholder="Enter your Full Name"
+            />
+          </div>
           {validationErrors.fullName && (
             <p className="mt-1 text-sm text-red-600">
               {validationErrors.fullName}
@@ -176,20 +181,25 @@ const Signup = () => {
             htmlFor="email"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Email
+            Email <span className="text-red-500">*</span>
           </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className={`block w-full px-4 py-3 border ${validationErrors.email
-              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-              : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-              } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-            placeholder="nimalkumara@mail.com"
-          />
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Mail className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.email
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+              placeholder="Enter your Email"
+            />
+          </div>
           {validationErrors.email && (
             <p className="mt-1 text-sm text-red-600">
               {validationErrors.email}

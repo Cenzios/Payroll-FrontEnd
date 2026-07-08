@@ -431,93 +431,59 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 )}
               </div>
 
-              {/* 4. Start & End Dates */}
+              {/* Amount */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <img src={loanStartIcon} alt="Start Date" className="h-4 w-4 text-blue-500" />
+                      <img src={loanAmountIcon} alt="Loan Amount" className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                      Start Date <strong className="text-red-600 text-[15px]">*</strong>
+                      Amount <strong className="text-red-600 text-[15px]">*</strong>
                     </label>
                   </div>
                   <div className="relative">
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <DatePicker
-                        value={startDate ? dayjs(startDate) : null}
-                        onChange={(newValue) => {
-                          setStartDate(newValue ? newValue.format('YYYY-MM-DD') : '');
-                        }}
-                        slotProps={{
-                          textField: {
-                            size: "small",
-                            sx: {
-                              width: "100%",
-                              backgroundColor: "white",
-                              "& .MuiOutlinedInput-root": {
-                                borderRadius: "0.75rem",
-                                "& fieldset": { borderColor: "#e5e7eb", transition: "all 0.2s" },
-                                "&.Mui-focused fieldset": {
-                                  borderColor: "#3b82f6",
-                                  borderWidth: "1px",
-                                  boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
-                                },
-                              },
-                              "& .MuiInputBase-input": {
-                                paddingY: "9.5px", paddingX: "14px", paddingLeft: "36px", fontSize: "10px", color: "#374151",
-                              }
-                            }
-                          }
-                        }}
-                      />
-                    </LocalizationProvider>
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <span className="text-gray-400 text-[13px] font-medium">Rs</span>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      value={amount}
+                      onChange={handleAmountChange}
+                      placeholder="120000"
+                      onWheel={(e) => e.currentTarget.blur()}
+                      onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                      className="no-spinner w-full pl-11 pr-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
+                    />
                   </div>
                 </div>
+
+                {/* Installments Count */}
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <img src={loanEndIcon} alt="End Date" className="h-4 w-4 text-blue-500" />
+                      <img src={loanInstallmentIcon} alt="Loan Installment" className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                      End Date <strong className="text-red-600 text-[15px]">*</strong>
+                      Installment Count <strong className="text-red-600 text-[15px]">*</strong>
                     </label>
                   </div>
-
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      value={endDate ? dayjs(endDate) : null}
-                      onChange={(newValue) => {
-                        setEndDate(newValue ? newValue.format('YYYY-MM-DD') : '');
-                      }}
-                      slotProps={{
-                        textField: {
-                          size: "small",
-                          sx: {
-                            width: "100%",
-                            backgroundColor: "white",
-                            "& .MuiOutlinedInput-root": {
-                              borderRadius: "0.75rem",
-                              "& fieldset": { borderColor: "#e5e7eb", transition: "all 0.2s" },
-                              "&:hover fieldset": { borderColor: "#d1d5db" },
-                              "&.Mui-focused fieldset": {
-                                borderColor: "#3b82f6",
-                                borderWidth: "1px",
-                                boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
-                              },
-                            },
-                            "& .MuiInputBase-input": {
-                              paddingY: "9.5px", paddingX: "14px", paddingLeft: "36px", fontSize: "14px", color: "#374151",
-                            }
-                          }
-                        }
-                      }}
-                    />
-                  </LocalizationProvider>
+                  <input
+                    type="number"
+                    min="0"
+                    value={installmentCount}
+                    onChange={handleInstallmentChange}
+                    placeholder="12"
+                    onWheel={(e) => e.currentTarget.blur()}
+                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                    className="no-spinner w-full px-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">Maximum 15 installments</p>
                 </div>
               </div>
 
-              {/* 5. Interest Rate Type & Rate */}
+              {/* Interest Rate Type & Rate */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="relative">
@@ -582,55 +548,82 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 </div>
               </div>
 
-              {/* 6.1. Amount */}
+              {/* Start & End Dates */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <img src={loanAmountIcon} alt="Loan Amount" className="h-4 w-4 text-blue-500" />
+                      <img src={loanStartIcon} alt="Start Date" className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                      Amount <strong className="text-red-600 text-[15px]">*</strong>
+                      Start Date <strong className="text-red-600 text-[15px]">*</strong>
                     </label>
                   </div>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <span className="text-gray-400 text-[13px] font-medium">Rs</span>
-                    </div>
-                    <input
-                      type="number"
-                      min="0"
-                      value={amount}
-                      onChange={handleAmountChange}
-                      placeholder="120000"
-                      onWheel={(e) => e.currentTarget.blur()}
-                      onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
-                      className="no-spinner w-full pl-11 pr-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
-                    />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        value={startDate ? dayjs(startDate) : null}
+                        onChange={(newValue) => {
+                          setStartDate(newValue ? newValue.format('YYYY-MM-DD') : '');
+                        }}
+                        slotProps={{
+                          textField: {
+                            size: "small",
+                            sx: {
+                              width: "100%",
+                              backgroundColor: "white",
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: "0.75rem",
+                                "& fieldset": { borderColor: "#e5e7eb", transition: "all 0.2s" },
+                                "&.Mui-focused fieldset": {
+                                  borderColor: "#3b82f6",
+                                  borderWidth: "1px",
+                                  boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
+                                },
+                              },
+                              "& .MuiInputBase-input": {
+                                paddingY: "9.5px", paddingX: "14px", paddingLeft: "36px", fontSize: "10px", color: "#374151",
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </LocalizationProvider>
                   </div>
                 </div>
 
-                {/* 6.2. Installments Count */}
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <img src={loanInstallmentIcon} alt="Loan Installment" className="h-4 w-4 text-blue-500" />
+                      <img src={loanEndIcon} alt="End Date" className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                      Installment Count <strong className="text-red-600 text-[15px]">*</strong>
+                      End Date <strong className="text-red-600 text-[15px]">*</strong>
                     </label>
                   </div>
-                  <input
-                    type="number"
-                    min="0"
-                    value={installmentCount}
-                    onChange={handleInstallmentChange}
-                    placeholder="12"
-                    onWheel={(e) => e.currentTarget.blur()}
-                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
-                    className="no-spinner w-full px-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
-                  />
-                  <p className="text-[11px] text-gray-400 mt-1">Maximum 15 installments</p>
+
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      value={endDate ? dayjs(endDate) : null}
+                      disabled
+                      slotProps={{
+                        textField: {
+                          size: "small",
+                          sx: {
+                            width: "100%",
+                            backgroundColor: "#f9fafb",
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "0.75rem",
+                              "& fieldset": { borderColor: "#e5e7eb", transition: "all 0.2s" },
+                            },
+                            "& .MuiInputBase-input": {
+                              paddingY: "9.5px", paddingX: "14px", paddingLeft: "36px", fontSize: "10px", color: "#374151",
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </LocalizationProvider>
                 </div>
               </div>
 
@@ -665,7 +658,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                   <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
                     <UploadCloud className="h-4 w-4 text-gray-400 group-hover:text-blue-500" />
                   </div>
-                  <span>Upload Employee Documents</span>
+                  <span>Upload Supporting Documents</span>
                   <div className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-gray-50 group-hover:bg-blue-100 transition-colors">
                     <PlusCircle className="h-3.5 w-3.5 text-gray-400 group-hover:text-blue-600" />
                   </div>
