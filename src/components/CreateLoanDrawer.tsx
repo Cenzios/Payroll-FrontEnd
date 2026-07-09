@@ -148,6 +148,18 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
         });
         return;
       }
+
+      if (selectedEmployee.joinedDate && startDate) {
+        const joined = new Date(selectedEmployee.joinedDate);
+        const loanStart = new Date(startDate);
+        if (loanStart < joined) {
+          setToast({
+            message: `Loan start date cannot be before the employee's joined date (${joined.toLocaleDateString()}).`,
+            type: 'error'
+          });
+          return;
+        }
+      }
     }
 
     if (supportingDocs.length > 3) {
@@ -381,15 +393,8 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
                 <div
                   onClick={() => {
-                    setIsDropdownOpen(prev => {
-                      const next = !prev;
-                      if (next) {
-                        employeeInputRef.current?.focus();
-                      } else {
-                        setSearchTerm('');
-                      }
-                      return next;
-                    });
+                    setIsDropdownOpen(true);
+                    employeeInputRef.current?.focus();
                   }}
                   className={`relative cursor-pointer flex items-center bg-white border rounded-xl focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all ${isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200'}`}
                 >
@@ -586,6 +591,11 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                         onChange={(newValue) => {
                           setStartDate(newValue ? newValue.format('YYYY-MM-DD') : '');
                         }}
+                        minDate={
+                          employeeId
+                            ? dayjs(employees.find((emp: Employee) => emp.id === employeeId)?.joinedDate)
+                            : undefined
+                        }
                         slotProps={{
                           textField: {
                             size: "small",
