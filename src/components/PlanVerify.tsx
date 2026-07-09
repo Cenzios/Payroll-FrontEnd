@@ -128,7 +128,7 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
 
                     <div className="flex justify-between">
                         <span className="text-gray-500">Amount Submitted</span>
-                        <span className="font-semibold text-base text-end">Rs 100</span>
+                        <span className="font-semibold text-base text-end">Rs. 100</span>
                     </div>
 
                     <div className="flex justify-between">
