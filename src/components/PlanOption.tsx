@@ -200,7 +200,10 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                         <PlanPaymentCard />
                     </div>
                     <div style={{ display: value === "manual" ? "block" : "none" }}>
-                        <PlanPaymentManual />
+                        <PlanPaymentManual
+                            pricePerEmployee={pricePerEmployee}
+                            employeeCount={employeeCount}
+                        />
                     </div>
                     {/* <div style={{ display: value === "payhere" ? "block" : "none" }}>
                         <PlanPaymentPayhere />

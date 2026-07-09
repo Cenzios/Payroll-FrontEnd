@@ -393,8 +393,13 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
                 <div
                   onClick={() => {
-                    setIsDropdownOpen(true);
-                    employeeInputRef.current?.focus();
+                    const next = !isDropdownOpen;
+                    setIsDropdownOpen(next);
+                    if (next) {
+                      employeeInputRef.current?.focus();
+                    } else {
+                      setSearchTerm('');
+                    }
                   }}
                   className={`relative cursor-pointer flex items-center bg-white border rounded-xl focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all ${isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200'}`}
                 >

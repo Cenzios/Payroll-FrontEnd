@@ -56,7 +56,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                                 <Building2 className="w-5 h-5 text-[#0052CC]" />
                             </div>
                             <div>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Company </p>
+                                <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Company Name</p>
                                 <p className="text-base font-medium text-gray-800">Cenzios (Pvt) Ltd</p>
                             </div>
                         </div>
