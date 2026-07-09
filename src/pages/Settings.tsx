@@ -29,7 +29,7 @@ const Settings = () => {
             {/* Margin bottom gap after the banner */}
             <div className="-mb-4 shrink-0"></div>
 
-            <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
+            <div className="flex flex-1 overflow-hidden relative w-full">
                 <Sidebar />
 
                 <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
