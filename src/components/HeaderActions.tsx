@@ -122,7 +122,9 @@ const HeaderActions = ({ showLogout = true }: HeaderActionsProps = {}) => {
 
         {/* User Profile */}
         <div className="flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-xl">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+          <div
+            onClick={() => navigate('/settings')}
+            className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
             {user?.fullName?.charAt(0) || 'U'}
           </div>
           <div className="leading-tight">

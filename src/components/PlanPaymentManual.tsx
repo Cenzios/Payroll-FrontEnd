@@ -3,7 +3,12 @@ import { UploadCloud, Copy, Check, Loader2, X, AlertCircle } from "lucide-react"
 import PlanVerify from "./PlanVerify";
 import axiosInstance from "../api/axios";
 
-const PlanPaymentManual = () => {
+interface PlanPaymentManualProps {
+    pricePerEmployee: number;
+    employeeCount: number;
+}
+
+const PlanPaymentManual = ({ pricePerEmployee, employeeCount }: PlanPaymentManualProps) => {
     const [file, setFile] = useState<File | null>(null);
     const [reference, setReference] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -108,7 +113,12 @@ const PlanPaymentManual = () => {
     };
 
     if (isSubmitted) {
-        return <PlanVerify referenceId={reference || "N/A"} />;
+        return (
+            <PlanVerify
+                referenceId={reference || "N/A"}
+                totalAmount={pricePerEmployee * employeeCount}
+            />
+        )
     }
 
     return (

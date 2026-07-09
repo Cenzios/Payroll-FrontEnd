@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../api/axios";
 import { useGetUserDocumentsQuery } from "../store/apiSlice";
 
-const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
+const PlanVerify = ({ referenceId, totalAmount }: { referenceId?: string; totalAmount?: number }) => {
     const navigate = useNavigate();
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [status, setStatus] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
@@ -128,7 +128,9 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
 
                     <div className="flex justify-between">
                         <span className="text-gray-500">Amount Submitted</span>
-                        <span className="font-semibold text-base text-end">Rs. 100</span>
+                        <span className="font-semibold text-base text-end">
+                            Rs. {totalAmount !== undefined ? totalAmount.toFixed(2) : "100.00"}
+                        </span>
                     </div>
 
                     <div className="flex justify-between">

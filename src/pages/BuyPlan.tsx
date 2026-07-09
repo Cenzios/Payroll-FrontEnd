@@ -200,15 +200,13 @@ const BuyPlan = () => {
       <div className="w-full max-w-5xl relative z-10 mx-auto">
 
         {/* Back Button - page level */}
-        {step === 'pay' && (
-          <button
-            onClick={() => handleStepChange('select')}
-            className="fixed top-8 left-20 flex items-center gap-1.5 text-sm text-blue-800 hover:text-blue-900 border-2 border-blue-200 hover:border-blue-900 hover:bg-blue-50 transition px-4 py-2 rounded-full"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
-        )}
+        <button
+          onClick={() => step === 'pay' ? handleStepChange('select') : navigate('/get-plan')}
+          className="fixed top-8 left-20 flex items-center gap-1.5 text-sm text-blue-800 hover:text-blue-900 border-2 border-blue-200 hover:border-blue-900 hover:bg-blue-50 transition px-4 py-2 rounded-full"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
 
         <h1 className="text-4xl font-bold text-center text-gray-900 mb-10 max-sm:text-3xl">
           {isPlanChange ? 'Confirm Plan Change' : 'Complete Registration Payment'}
