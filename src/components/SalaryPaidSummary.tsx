@@ -47,7 +47,7 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
             const end = new Date();
             const start = new Date();
 
-            if (timeRange === 'Monthly') start.setMonth(end.getMonth() - 11); // Last 12 months
+            if (timeRange === 'Monthly') start.setMonth(end.getMonth() - 1); // Previous month to current month
             else if (timeRange === '3 monthly') start.setMonth(end.getMonth() - 3);
             else if (timeRange === '6 monthly') start.setMonth(end.getMonth() - 6);
             else if (timeRange === 'yearly') start.setFullYear(end.getFullYear() - 1);
