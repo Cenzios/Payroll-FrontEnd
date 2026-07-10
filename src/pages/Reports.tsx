@@ -173,11 +173,16 @@ const Reports = () => {
 
     const handleReset = () => {
         const currentDate = new Date();
-        setStartMonth(currentDate.getMonth());
-        setStartYear(currentDate.getFullYear());
-        setEndMonth(currentDate.getMonth());
-        setEndYear(currentDate.getFullYear());
+        const newMonth = currentDate.getMonth();
+        const newYear = currentDate.getFullYear();
+        setStartMonth(newMonth);
+        setStartYear(newYear);
+        setEndMonth(newMonth);
+        setEndYear(newYear);
         setSearch('');
+        setSelectedEmployeeIds([]);
+
+        checkAndUpdateData(newMonth, newYear, newMonth, newYear);
     };
 
     const toggleMonth = (monthKey: string) => {
