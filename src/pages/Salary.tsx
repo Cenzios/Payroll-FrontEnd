@@ -12,6 +12,7 @@ import {
   useGetAllPendingLoanInstallmentsQuery,
   useGetSalaryHistoryQuery,
   useSaveSalaryMutation,
+  useUpdateEmployeeMutation,
 } from "../store/apiSlice";
 import { Employee } from "../types/employee.types";
 import Toast from "../components/Toast";
@@ -66,6 +67,7 @@ const Salary = () => {
     null,
   );
   const [saveSalary, { isLoading: isSaving }] = useSaveSalaryMutation();
+  const [updateEmployee] = useUpdateEmployeeMutation();
 
   const [toast, setToast] = useState<{
     message: string;
@@ -167,18 +169,41 @@ const Salary = () => {
     setManageModal({ type, empId });
   };
 
-  const handleModalSave = () => {
+  const handleModalSave = async () => {
     if (!manageModal) return;
     const validEntries = modalEntries.filter(
       (e) => e.type.trim() && e.amount > 0,
     );
-    if (manageModal.type === "allowance") {
-      dispatch(setEmployeeAllowances({ id: manageModal.empId, allowances: validEntries }));
+
+    const { type, empId } = manageModal;
+
+    // Update Redux immediately so the UI reflects the change without waiting on a refetch
+    if (type === "allowance") {
+      dispatch(setEmployeeAllowances({ id: empId, allowances: validEntries }));
     } else {
-      dispatch(setEmployeeDeductions({ id: manageModal.empId, deductions: validEntries }));
+      dispatch(setEmployeeDeductions({ id: empId, deductions: validEntries }));
     }
+
     setManageModal(null);
     setModalEntries([]);
+
+    // Persist to the employee record so it survives refresh / navigation
+    if (!selectedCompanyId) return;
+    try {
+      await updateEmployee({
+        id: empId,
+        companyId: selectedCompanyId,
+        data:
+          type === "allowance"
+            ? { recurringAllowances: validEntries }
+            : { recurringDeductions: validEntries },
+      }).unwrap();
+    } catch (error: any) {
+      setToast({
+        message: error.data?.message || `Failed to save ${type}s`,
+        type: "error",
+      });
+    }
   };
 
   const handleModalCancel = () => {
