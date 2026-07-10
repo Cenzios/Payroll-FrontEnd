@@ -1,6 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, ArrowLeft } from 'lucide-react';
 import { useAppDispatch } from '../store/hooks';
 import { setAuthFromToken, setSignupEmail, setTempPlanId } from '../store/slices/authSlice';
 import { jwtDecode } from 'jwt-decode';
@@ -149,6 +149,16 @@ const GetPlan = () => {
       max-sm:justify-start max-sm:py-10 max-sm:px-8">
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]" />
+
+      {/* Back Button */}
+      <button 
+        onClick={() => navigate(-1)}
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-[#53616A] hover:text-[#0E1D44] transition-colors bg-white/50 hover:bg-white/80 px-4 py-2 rounded-xl shadow-sm backdrop-blur-sm font-medium text-sm
+          max-sm:top-4 max-sm:left-4"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back
+      </button>
 
       {/* Title */}
       <div className="text-center mb-10 relative z-10
