@@ -18,6 +18,7 @@ interface EmployeeSalaryCardProps {
     sickLeaveDays: number;
     loanDeduction: number;
     companyWorkingDays: number;
+    maxWorkedDays: number;
     hasLoanInstallment: boolean;
     handleEmployeeWorkedDaysChange: (empId: string, val: number) => void;
     handleEmployeeOtHoursChange: (empId: string, val: number) => void;
@@ -84,6 +85,7 @@ const EmployeeSalaryCard = ({
     sickLeaveDays,
     loanDeduction,
     companyWorkingDays,
+    maxWorkedDays,
     hasLoanInstallment,
     handleEmployeeWorkedDaysChange,
     handleEmployeeOtHoursChange,
@@ -450,7 +452,7 @@ const EmployeeSalaryCard = ({
                                 onKeyDown={blockInvalidNumberKeys}
                                 className={inputClass(isLocked)}
                                 min="0"
-                                max={companyWorkingDays}
+                                max={maxWorkedDays}
                                 disabled={isLocked}
                             />
                         </div>

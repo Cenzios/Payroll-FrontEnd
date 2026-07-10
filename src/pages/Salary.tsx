@@ -310,6 +310,23 @@ const Salary = () => {
     return new Date(year, month + 1, 0).getDate();
   };
 
+  // Max worked days an employee can log for the selected month, capped by their joined date.
+  const getEmployeeMaxWorkedDays = (emp: Employee, year: number, month: number, maxCompanyDays: number) => {
+    const joinedDate = new Date(emp.joinedDate);
+    const joinedYear = joinedDate.getFullYear();
+    const joinedMonth = joinedDate.getMonth();
+    const joinedDay = joinedDate.getDate();
+
+    // Only relevant if the employee joined in the currently selected month
+    if (year === joinedYear && month === joinedMonth) {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const availableDaysSinceJoining = daysInMonth - joinedDay + 1; // joined day counts as day 1
+      return Math.max(0, Math.min(maxCompanyDays, availableDaysSinceJoining));
+    }
+
+    return maxCompanyDays;
+  };
+
   const maxAllowedCompanyDays = getMaxAllowedDays(selectedYear, selectedMonth);
   const isFutureMonth =
     new Date(selectedYear, selectedMonth) >
@@ -362,7 +379,8 @@ const Salary = () => {
     if (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays)
       return true;
     const { workedDays, otHours, salaryAdvance, isEpfEnabled, isLoanEnabled, loanDeduction, leaveDays, sickLeaveDays } = getEmployeeValues(emp.id);
-    if (workedDays < 0 || workedDays > companyWorkingDays) return true;
+    const maxWorkedDaysForEmp = getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays);
+    if (workedDays < 0 || workedDays > maxWorkedDaysForEmp) return true;
     if (leaveDays < 0 || sickLeaveDays < 0) return true;
     if (workedDays + leaveDays + sickLeaveDays !== companyWorkingDays) return true;
 
@@ -395,7 +413,11 @@ const Salary = () => {
     }));
     // const { sickLeaveDays } = getEmployeeValues(empId);
     const { leaveDays } = getEmployeeValues(empId);
-    const clippedVal = Math.min(Math.max(0, val), companyWorkingDays);
+    const emp = employees.find((e) => e.id === empId);
+    const maxDays = emp
+      ? getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays)
+      : companyWorkingDays;
+    const clippedVal = Math.min(Math.max(0, val), maxDays);
     dispatch(setEmployeeWorkedDays({ id: empId, days: clippedVal }));
 
     // Recalc paid leave = total - worked - unpaid (not the other way)
@@ -901,6 +923,8 @@ const Salary = () => {
                       hasLoanInstallment,
                     } = getEmployeeValues(emp.id);
 
+                    const maxWorkedDaysForEmp = getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays);
+
                     return (
                       <div
                         key={emp.id}
@@ -924,6 +948,7 @@ const Salary = () => {
                           sickLeaveDays={sickLeaveDays}
                           loanDeduction={loanDeduction}
                           companyWorkingDays={companyWorkingDays}
+                          maxWorkedDays={maxWorkedDaysForEmp}
                           hasLoanInstallment={hasLoanInstallment}
                           handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
                           handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
