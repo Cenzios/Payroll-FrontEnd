@@ -223,7 +223,7 @@ const EmployeeSalaryCard = ({
     //     year: "numeric",
     // });
 
-    const isEpfEnabledRef = useRef(isEpfEnabled);
+    {/*const isEpfEnabledRef = useRef(isEpfEnabled);
     useEffect(() => {
         isEpfEnabledRef.current = isEpfEnabled;
     }, [isEpfEnabled]);
@@ -239,7 +239,7 @@ const EmployeeSalaryCard = ({
         ) {
             handleToggleEpfEtf(emp.id);
         }
-    }, [sickLeaveDays, companyWorkingDays, isLocked, emp.epfEnabled, emp.id]);
+    }, [sickLeaveDays, companyWorkingDays, isLocked, emp.epfEnabled, emp.id]);*/}
 
     const inputClass = (locked: boolean) =>
         `w-full px-3 py-2 border rounded-xl text-[14px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner font-semibold
