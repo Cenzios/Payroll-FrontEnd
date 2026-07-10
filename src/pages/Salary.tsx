@@ -58,19 +58,42 @@ const Salary = () => {
         fetchEmployees();
     }, [selectedCompanyId, search]);
 
+    const getMaxWorkedDays = (emp: Employee, year: number, month: number): number => {
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const joined = new Date(emp.joinedDate);
+        const joinedYear = joined.getFullYear();
+        const joinedMonth = joined.getMonth();
+
+        // Employee joins after the selected month — no valid days
+        if (joinedYear > year || (joinedYear === year && joinedMonth > month)) {
+            return 0;
+        }
+
+        // Employee joined during the selected month — cap from join day to month end
+        if (joinedYear === year && joinedMonth === month) {
+            return daysInMonth - joined.getDate() + 1;
+        }
+
+        // Employee joined before the selected month — full month available
+        return daysInMonth;
+    };
+
     // Helper functions for Redux State
-    const getEmployeeValues = (empId: string) => {
-        const workedDays = employeeWorkedDays[empId] ?? companyWorkingDays;
-        const isEpfEnabled = employeeEpfEtf[empId] ?? true;
-        return { workedDays, isEpfEnabled };
+    const getEmployeeValues = (emp: Employee) => {
+        const maxDays = getMaxWorkedDays(emp, selectedYear, selectedMonth);
+        const workedDays = Math.min(employeeWorkedDays[emp.id] ?? companyWorkingDays, maxDays);
+        const isEpfEnabled = employeeEpfEtf[emp.id] ?? true;
+        return { workedDays, isEpfEnabled, maxDays };
     };
 
     const handleCompanyWorkingDaysChange = (val: number) => {
         dispatch(setCompanyWorkingDays(val));
     };
 
-    const handleEmployeeWorkedDaysChange = (empId: string, val: number) => {
-        dispatch(setEmployeeWorkedDays({ id: empId, days: val }));
+    const handleEmployeeWorkedDaysChange = (emp: Employee, val: number) => {
+        const maxDays = getMaxWorkedDays(emp, selectedYear, selectedMonth);
+        const clamped = Math.min(Math.max(val, 0), maxDays);
+        dispatch(setEmployeeWorkedDays({ id: emp.id, days: clamped }));
     };
 
     const handleToggleEpfEtf = (empId: string) => {
@@ -82,10 +105,18 @@ const Salary = () => {
     const handleGeneratePayslip = async (emp: Employee) => {
         setSelectedEmployee(emp);
 
-        const { workedDays, isEpfEnabled } = getEmployeeValues(emp.id);
+        const { workedDays, isEpfEnabled, maxDays } = getEmployeeValues(emp);
         const dailyRate = emp.dailyRate;
         const basicSalary = dailyRate * workedDays;
 
+        if (maxDays === 0) {
+            setToast({ message: `${emp.fullName} joined after the selected month — no salary to generate.`, type: 'error' });
+            return;
+        }
+        if (workedDays > maxDays) {
+            setToast({ message: `Worked days cannot exceed ${maxDays} for this employee this month.`, type: 'error' });
+            return;
+        }
         // Calculations
         let epfEmployee = 0;
         let epfEmployer = basicSalary * 0.12;
@@ -387,7 +418,7 @@ const Salary = () => {
                             <div className="text-center p-12 text-gray-500">No employees found.</div>
                         ) : (
                             employees.map(emp => {
-                                const { workedDays, isEpfEnabled } = getEmployeeValues(emp.id);
+                                const { workedDays, isEpfEnabled, maxDays } = getEmployeeValues(emp);
                                 return (
                                     <div
                                         key={emp.id}
@@ -427,14 +458,16 @@ const Salary = () => {
                                                             <div className="font-semibold text-gray-900">Rs. {emp.dailyRate}</div>
                                                         </div>
                                                         <div>
-                                                            <label className="text-xs text-gray-500 block mb-1">Enter Worked Days</label>
+                                                            <label className="text-xs text-gray-500 block mb-1">
+                                                                Enter Worked Days {maxDays < 31 && <span className="text-orange-500">(max {maxDays}, joined mid-month)</span>}
+                                                            </label>
                                                             <input
                                                                 type="number"
                                                                 value={workedDays}
-                                                                onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
+                                                                onChange={(e) => handleEmployeeWorkedDaysChange(emp, parseFloat(e.target.value) || 0)}
                                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
                                                                 min="0"
-                                                                max="31"
+                                                                max={maxDays}
                                                             />
                                                         </div>
                                                     </div>
