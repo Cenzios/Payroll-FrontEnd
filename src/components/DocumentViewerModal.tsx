@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Download, FileText, Image as ImageIcon, File, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Download, FileText, Image as ImageIcon, File, ExternalLink, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 import { useTrialStatus } from '../hooks/useTrialStatus';
+import { useAppSelector } from '../store/hooks';
+
+// Point react-pdf at the local pdfjs worker bundled via pdfjs-dist (avoids CDN/CORS issues)
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+).toString();
 
 interface DocItem {
     id: string;
@@ -20,13 +30,82 @@ interface DocumentViewerModalProps {
 
 const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClose, docs, initialIndex = 0 }) => {
     const { handleTrialAction } = useTrialStatus();
+    const { token } = useAppSelector((state) => state.auth);
     const [activeIndex, setActiveIndex] = useState(initialIndex);
+    const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+    const [pdfLoading, setPdfLoading] = useState(false);
+    const [pdfError, setPdfError] = useState<string | null>(null);
+    const [numPages, setNumPages] = useState<number | null>(null);
+    const [pageNumber, setPageNumber] = useState(1);
 
     useEffect(() => {
         if (isOpen) {
             setActiveIndex(initialIndex);
         }
     }, [isOpen, initialIndex]);
+
+    useEffect(() => {
+        let objectUrl: string | null = null;
+        let isMounted = true;
+
+        const activeDoc = docs && docs.length > 0 ? (docs[activeIndex] ?? docs[0]) : null;
+
+        // Reset page/error state whenever the active document changes
+        setNumPages(null);
+        setPageNumber(1);
+        setPdfError(null);
+
+        if (isOpen && activeDoc && activeDoc.fileType === 'application/pdf') {
+            const loadPdf = async () => {
+                setPdfLoading(true);
+                try {
+                    const isExternal = activeDoc.fileUrl.includes('cloudinary.com');
+                    const headers: Record<string, string> = {};
+                    if (!isExternal && token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+
+                    const response = await fetch(activeDoc.fileUrl, { headers });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                    const contentType = response.headers.get('content-type') || '';
+                    const blob = await response.blob();
+
+                    // Guard against the backend/dev-proxy returning HTML (e.g. index.html fallback)
+                    // instead of the actual PDF bytes - this is a common cause of silent failures.
+                    if (contentType.includes('text/html') || blob.type.includes('text/html')) {
+                        throw new Error('Server returned HTML instead of a PDF file (check the file URL/route).');
+                    }
+
+                    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+                    objectUrl = URL.createObjectURL(pdfBlob);
+                    if (isMounted) {
+                        setPdfBlobUrl(objectUrl);
+                    }
+                } catch (error: any) {
+                    console.error('Failed to load PDF as blob', error);
+                    if (isMounted) {
+                        setPdfError(error?.message || 'Failed to load PDF.');
+                    }
+                } finally {
+                    if (isMounted) {
+                        setPdfLoading(false);
+                    }
+                }
+            };
+            loadPdf();
+        } else {
+            setPdfBlobUrl(null);
+        }
+
+        return () => {
+            isMounted = false;
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
+            setPdfBlobUrl(null);
+        };
+    }, [isOpen, activeIndex, docs, token]);
 
     if (!isOpen) return null;
 
@@ -52,7 +131,14 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
 
     const handleDownload = async () => {
         try {
-            const response = await fetch(currentDoc.fileUrl);
+            const isExternal = currentDoc.fileUrl.includes('cloudinary.com');
+            const headers: Record<string, string> = {};
+            if (!isExternal && token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(currentDoc.fileUrl, { headers });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const blob = await response.blob();
             const blobUrl = window.URL.createObjectURL(blob);
 
@@ -76,6 +162,16 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
 
     const handlePrev = () => {
         setActiveIndex((prev) => (prev - 1 + allDocs.length) % allDocs.length);
+    };
+
+    const handlePdfLoadSuccess = ({ numPages: n }: { numPages: number }) => {
+        setNumPages(n);
+        setPdfError(null);
+    };
+
+    const handlePdfLoadError = (error: Error) => {
+        console.error('react-pdf failed to render document', error);
+        setPdfError(error.message || 'Failed to render PDF.');
     };
 
     return createPortal(
@@ -108,6 +204,27 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
                         )}
                     </div>
                     <div className="flex items-center gap-3">
+                        {isPDF && numPages && numPages > 1 && (
+                            <div className="flex items-center gap-2 mr-2 bg-gray-50 rounded-xl px-3 py-2">
+                                <button
+                                    onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+                                    disabled={pageNumber <= 1}
+                                    className="p-1 hover:bg-gray-200 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                    <ChevronLeft className="w-4 h-4 text-gray-600" />
+                                </button>
+                                <span className="text-xs font-bold text-gray-600 whitespace-nowrap">
+                                    Page {pageNumber} / {numPages}
+                                </span>
+                                <button
+                                    onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
+                                    disabled={pageNumber >= numPages}
+                                    className="p-1 hover:bg-gray-200 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                    <ChevronRight className="w-4 h-4 text-gray-600" />
+                                </button>
+                            </div>
+                        )}
                         {hasMultiple && (
                             <div className="flex items-center gap-1 mr-2">
                                 <button
@@ -182,11 +299,49 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
                                 className="max-w-full max-h-full object-contain rounded-xl shadow-2xl border border-white"
                             />
                         ) : isPDF ? (
-                            <iframe
-                                src={`${currentDoc.fileUrl}#toolbar=0`}
-                                className="w-full h-full rounded-xl border border-gray-200 shadow-xl bg-white"
-                                title="PDF Viewer"
-                            />
+                            pdfLoading ? (
+                                <div className="flex flex-col items-center justify-center h-full">
+                                    <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
+                                    <p className="text-gray-500 font-medium">Loading PDF...</p>
+                                </div>
+                            ) : pdfError ? (
+                                <div className="flex flex-col items-center justify-center h-full text-red-500 font-medium bg-white w-full rounded-xl shadow-xl p-8 text-center">
+                                    <p className="mb-1">Failed to load PDF.</p>
+                                    <p className="text-xs text-gray-400 font-normal max-w-md">{pdfError}</p>
+                                    <button
+                                        onClick={(e) => handleTrialAction(e, handleDownload)}
+                                        className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                                    >
+                                        Download Instead
+                                    </button>
+                                </div>
+                            ) : pdfBlobUrl ? (
+                                <div className="w-full h-full flex items-start justify-center overflow-auto rounded-xl border border-gray-200 shadow-xl bg-white">
+                                    <Document
+                                        file={pdfBlobUrl}
+                                        onLoadSuccess={handlePdfLoadSuccess}
+                                        onLoadError={handlePdfLoadError}
+                                        loading={
+                                            <div className="flex flex-col items-center justify-center h-full py-20">
+                                                <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-3" />
+                                                <p className="text-gray-500 text-sm">Rendering PDF...</p>
+                                            </div>
+                                        }
+                                        error={
+                                            <div className="flex flex-col items-center justify-center h-full py-20 text-red-500 font-medium">
+                                                <p>Could not render this PDF.</p>
+                                            </div>
+                                        }
+                                    >
+                                        <Page
+                                            pageNumber={pageNumber}
+                                            renderAnnotationLayer={true}
+                                            renderTextLayer={true}
+                                            className="max-w-full"
+                                        />
+                                    </Document>
+                                </div>
+                            ) : null
                         ) : (
                             <div className="text-center py-20 px-10 bg-white rounded-[32px] shadow-xl border border-gray-100 max-w-md w-full">
                                 <div className="w-20 h-20 bg-gray-50 rounded-[24px] flex items-center justify-center mx-auto mb-8 shadow-inner">

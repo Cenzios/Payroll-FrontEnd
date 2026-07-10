@@ -160,7 +160,7 @@ const PlanVerify = ({ referenceId, totalAmount }: { referenceId?: string; totalA
                     <button
                         onClick={() => {
                             // Reset state and allow re-upload
-                            navigate('/get-plan');
+                            navigate('/buy-plan?method=manual&step=pay');
                         }}
                         className="flex-1 bg-red-600 text-white rounded-xl py-3 text-sm font-bold hover:bg-red-700 shadow-lg shadow-red-200 flex items-center justify-center gap-2"
                     >
