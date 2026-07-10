@@ -186,7 +186,7 @@ const EmployeePayrollModal = ({
     return (
         <>
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 max-sm:p-0">
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden max-sm:rounded-none max-sm:h-full max-sm:max-w-full relative">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden max-sm:rounded-none max-sm:h-full max-sm:max-h-full max-sm:max-w-full relative">
 
                     {/* Close Button overlaying the PayslipPreview */}
                     <button
