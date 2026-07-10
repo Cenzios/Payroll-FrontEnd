@@ -22,6 +22,9 @@ interface SalaryDetails {
     etf3: number;
     allowances: { name: string; amount: number }[];
     deductions: { name: string; amount: number }[];
+    leaveDays: number;
+    sickLeaveDays: number;
+    nonPaidLeaveDeduction: number;
 }
 
 interface SalaryState {
