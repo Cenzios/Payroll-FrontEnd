@@ -29,6 +29,8 @@ import {
   setYear,
   setEmployeeLeaveDays,
   setEmployeeSickLeaveDays,
+  setEmployeeAllowances,
+  setEmployeeDeductions,
   setMonth,
   resetSalaryState,
 } from "../store/slices/salarySlice";
@@ -50,6 +52,8 @@ const Salary = () => {
     employeeLoanEnabled,
     employeeLeaveDays,
     employeeSickLeaveDays,
+    employeeAllowances,
+    employeeDeductions,
     previewPayslip,
     selectedMonth,
     selectedYear,
@@ -117,12 +121,6 @@ const Salary = () => {
   const [deductionToggles, setDeductionToggles] = useState<
     Record<string, boolean>
   >({});
-  const [salaryAllowances, setSalaryAllowances] = useState<
-    Record<string, { type: string; amount: number }[]>
-  >({});
-  const [salaryDeductions, setSalaryDeductions] = useState<
-    Record<string, { type: string; amount: number }[]>
-  >({});
 
   // Manage modal state
   const [manageModal, setManageModal] = useState<{
@@ -137,8 +135,8 @@ const Salary = () => {
     const empId = emp.id;
     let existing =
       type === "allowance"
-        ? salaryAllowances[empId] || []
-        : salaryDeductions[empId] || [];
+        ? employeeAllowances[empId] || []
+        : employeeDeductions[empId] || [];
 
     // Populate from DB if not edited locally yet
     if (existing.length === 0) {
@@ -151,7 +149,7 @@ const Salary = () => {
           type: a.type,
           amount: a.amount,
         }));
-        setSalaryAllowances((prev) => ({ ...prev, [empId]: existing }));
+        dispatch(setEmployeeAllowances({ id: empId, allowances: existing }));
       } else if (
         type === "deduction" &&
         emp.recurringDeductions &&
@@ -161,7 +159,7 @@ const Salary = () => {
           type: d.type,
           amount: d.amount,
         }));
-        setSalaryDeductions((prev) => ({ ...prev, [empId]: existing }));
+        dispatch(setEmployeeDeductions({ id: empId, deductions: existing }));
       }
     }
 
@@ -175,15 +173,9 @@ const Salary = () => {
       (e) => e.type.trim() && e.amount > 0,
     );
     if (manageModal.type === "allowance") {
-      setSalaryAllowances((prev) => ({
-        ...prev,
-        [manageModal.empId]: validEntries,
-      }));
+      dispatch(setEmployeeAllowances({ id: manageModal.empId, allowances: validEntries }));
     } else {
-      setSalaryDeductions((prev) => ({
-        ...prev,
-        [manageModal.empId]: validEntries,
-      }));
+      dispatch(setEmployeeDeductions({ id: manageModal.empId, deductions: validEntries }));
     }
     setManageModal(null);
     setModalEntries([]);
@@ -227,8 +219,6 @@ const Salary = () => {
     // Clear local functional states
     setAllowanceToggles({});
     setDeductionToggles({});
-    setSalaryAllowances({});
-    setSalaryDeductions({});
     setTouchedFields({
       month: false,
       companyDays: false,
@@ -359,7 +349,7 @@ const Salary = () => {
       : emp.basicSalary * (workedDays + (Math.min(leaveDays, emp.paidLeave || 0)));
 
     const epfAmount = emp.epfEnabled && isEpfEnabled ? basicPay * 0.08 : 0;
-    const totalEarnings = basicPay + otAmount + (salaryAllowances[emp.id] || emp.recurringAllowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
+    const totalEarnings = basicPay + otAmount + (employeeAllowances[emp.id] || emp.recurringAllowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
     const otherDeductions = epfAmount + (isLoanEnabled ? loanDeduction : 0) + (salaryDeductions[emp.id] || emp.recurringDeductions || []).reduce((s, d) => s + (Number(d.amount) || 0), 0);
 
     if (totalEarnings - (otherDeductions + salaryAdvance) < 0) return true;
@@ -507,8 +497,8 @@ const Salary = () => {
       ? (basicSalaryForCalc / companyWorkingDays) * sickLeaveDays
       : 0;
 
-    const currentAllowances = salaryAllowances[emp.id] || emp.recurringAllowances || [];
-    const currentDeductions = salaryDeductions[emp.id] || emp.recurringDeductions || [];
+    const currentAllowances = employeeAllowances[emp.id] || emp.recurringAllowances || [];
+    const currentDeductions = employeeDeductions[emp.id] || emp.recurringDeductions || [];
 
     const allowanceAmount = currentAllowances.reduce(
       (sum, a) => sum + (Number(a.amount) || 0),
@@ -920,8 +910,8 @@ const Salary = () => {
                           handleGeneratePayslip={handleGeneratePayslip}
                           handleConfirmPayslip={handleConfirmPayslip}
                           openManageModal={openManageModal}
-                          salaryAllowances={salaryAllowances}
-                          salaryDeductions={salaryDeductions}
+                          salaryAllowances={employeeAllowances}
+                          salaryDeductions={employeeDeductions}
                           isSaving={isSaving}
                           hasAnyError={hasAnyError}
                           setTouchedFields={setTouchedFields}

@@ -38,6 +38,9 @@ interface SalaryState {
     employeeLoanEnabled: Record<string, boolean>; // Defaults to true
     employeeLeaveDays: Record<string, number>;
     employeeSickLeaveDays: Record<string, number>;
+    // Recurring Allowances & Deductions
+    employeeAllowances: Record<string, { type: string; amount: number }[]>;
+    employeeDeductions: Record<string, { type: string; amount: number }[]>;
     // Preview data
     previewPayslip: SalaryDetails | null;
 }
@@ -53,6 +56,8 @@ const initialState: SalaryState = {
     employeeLoanEnabled: {},
     employeeLeaveDays: {},
     employeeSickLeaveDays: {},
+    employeeAllowances: {},
+    employeeDeductions: {},
     previewPayslip: null,
 };
 
@@ -98,6 +103,18 @@ const salarySlice = createSlice({
         setEmployeeSickLeaveDays: (state, action: PayloadAction<{ id: string; days: number }>) => {
             state.employeeSickLeaveDays[action.payload.id] = action.payload.days;
         },
+        setEmployeeAllowances: (
+            state,
+            action: PayloadAction<{ id: string; allowances: { type: string; amount: number }[] }>
+        ) => {
+            state.employeeAllowances[action.payload.id] = action.payload.allowances;
+        },
+        setEmployeeDeductions: (
+            state,
+            action: PayloadAction<{ id: string; deductions: { type: string; amount: number }[] }>
+        ) => {
+            state.employeeDeductions[action.payload.id] = action.payload.deductions;
+        },
         setPreviewPayslip: (state, action: PayloadAction<SalaryDetails | null>) => {
             state.previewPayslip = action.payload;
         },
@@ -109,6 +126,8 @@ const salarySlice = createSlice({
             state.employeeLoanEnabled = {};
             state.employeeLeaveDays = {};
             state.employeeSickLeaveDays = {};
+            state.employeeAllowances = {};
+            state.employeeDeductions = {};
             state.previewPayslip = null;
         }
     },
@@ -125,6 +144,8 @@ export const {
     setYear,
     setEmployeeLeaveDays,
     setEmployeeSickLeaveDays,
+    setEmployeeAllowances,
+    setEmployeeDeductions,
     setPreviewPayslip,
     resetSalaryState
 } = salarySlice.actions;
