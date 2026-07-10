@@ -375,7 +375,7 @@ const Salary = () => {
 
     const epfAmount = emp.epfEnabled && isEpfEnabled ? basicPay * 0.08 : 0;
     const totalEarnings = basicPay + otAmount + (employeeAllowances[emp.id] || emp.recurringAllowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
-    const otherDeductions = epfAmount + (isLoanEnabled ? loanDeduction : 0) + (salaryDeductions[emp.id] || emp.recurringDeductions || []).reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    const otherDeductions = epfAmount + (isLoanEnabled ? loanDeduction : 0) + (employeeDeductions[emp.id] || emp.recurringDeductions || []).reduce((s, d) => s + (Number(d.amount) || 0), 0);
 
     if (totalEarnings - (otherDeductions + salaryAdvance) < 0) return true;
     return false;
