@@ -55,6 +55,14 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     return '';
   };
 
+  const [descriptionError, setDescriptionError] = useState('');
+  const LOAN_DESCRIPTION_MAX_LENGTH = 100;
+  const validateDescription = (value: string): string => {
+    if (value.trim().length > LOAN_DESCRIPTION_MAX_LENGTH)
+      return `Description must be less than ${LOAN_DESCRIPTION_MAX_LENGTH} characters`;
+    return '';
+  };
+
   const { data: employeesData } = useGetEmployeesQuery(
     { companyId: companyId || '' },
     { skip: !companyId }
@@ -130,8 +138,11 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     const titleError = validateLoanTitle(loanTitle);
     setLoanTitleError(titleError);
 
-    if (!companyId || !employeeId || !loanTitle || !amount || !installmentCount || titleError) {
-      setToast({ message: titleError || 'Please fill in all required fields', type: 'error' });
+    const descError = validateDescription(description);
+    setDescriptionError(descError);
+
+    if (!companyId || !employeeId || !loanTitle || !amount || !installmentCount || titleError || descError) {
+      setToast({ message: titleError || descError || 'Please fill in all required fields', type: 'error' });
       return;
     }
 
@@ -226,6 +237,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     setLoanTitle('');
     setLoanTitleError('');
     setDescription('');
+    setDescriptionError('');
     setEmployeeId('');
     setSelectedEmployeeName('');
     setSearchTerm('');
@@ -373,11 +385,23 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={LOAN_DESCRIPTION_MAX_LENGTH}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    setDescriptionError(validateDescription(e.target.value));
+                  }}
                   placeholder="Requesting a loan for home improvement projects and general repairs."
                   rows={4}
-                  className="w-full px-4 py-1.5 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-4 resize-none"
+                  className={`w-full px-4 py-1.5 text-[13px] bg-white border rounded-xl focus:outline-none focus:ring-2 transition-all placeholder:text-gray-4 resize-none ${descriptionError
+                    ? 'border-red-500 focus:ring-red-100'
+                    : 'border-gray-200 focus:ring-blue-500/20 focus:border-blue-500'
+                    }`}
                 />
+
+                <div className="flex justify-between mt-1">
+                  {descriptionError && <p className="text-red-500 text-xs">{descriptionError}</p>}
+                  <p className="text-[11px] text-gray-400 ml-auto">{description.length}/{LOAN_DESCRIPTION_MAX_LENGTH}</p>
+                </div>
               </div>
 
               {/* 3. Employee (Searchable Dropdown) */}
