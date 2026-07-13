@@ -182,7 +182,7 @@ const AccountTab = () => {
             setPasswordErrors({
                 currentPassword: 'The current password you entered is incorrect.'
             });
-            setToast({ message: err.message || "Failed to change password", type: "error" });
+            setToast({ message: "The current password you entered is incorrect.", type: "error" });
         } finally {
             setIsSavingPassword(false);
         }
