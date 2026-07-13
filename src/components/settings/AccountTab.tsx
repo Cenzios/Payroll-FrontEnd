@@ -116,8 +116,12 @@ const AccountTab = () => {
             case 'address':
                 if (!value.trim())
                     return 'Address is required';
+                if (value.trim().length < 5 || value.trim().length > 50)
+                    return 'Address must be between 5 and 50 characters';
                 if (!/[a-zA-Z0-9]/.test(value.trim()))
                     return 'Address must contain letters and numbers';
+                if (/[^a-zA-Z0-9\s]{6,}/.test(value.trim()))
+                    return 'Address must not contain more than 5 consecutive special characters';
                 break;
         }
         return '';
