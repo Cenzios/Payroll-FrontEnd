@@ -141,6 +141,10 @@ const SetCompany = () => {
           return 'Company address is required';
         if (!/[a-zA-Z0-9]/.test(value.trim()))
           return 'Address must contain letters and numbers';
+        if (value.trim().length < 5 || value.trim().length > 50)
+          return 'Address must be between 5 and 50 characters';
+        if (/[^a-zA-Z0-9\s]{6,}/.test(value.trim()))
+          return "Address must not contain more than 5 consecutive special characters";
         return '';
       }
       default:

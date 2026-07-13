@@ -42,15 +42,15 @@ export const validateCompanyField = (field: string, value: any): string => {
                 error = "Enter a valid Sri Lankan number (e.g. 0771234567 or +94771234567)";
             break;
 
-
         case "address":
             if (!value || !value.trim())
                 error = "Address is required";
             else if (value.trim().length < 5 || value.trim().length > 50)
                 error = "Address must be between 5 and 50 characters";
             else if (!/[a-zA-Z0-9]/.test(value.trim()))
-                // address validation
-                error = "Address must contain letters or numbers";
+                error = "Address must contain letters and numbers";
+            else if (/[^a-zA-Z0-9\s]{6,}/.test(value.trim()))
+                error = "Address must not contain more than 5 consecutive special characters";
             break;
     }
     return error;
