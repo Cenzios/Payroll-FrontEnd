@@ -1,58 +1,122 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout, setAuthFromToken, setSelectedCompanyId } from '../store/slices/authSlice';
+import axiosInstance from '../api/axios';
 import {
-  LogOut,
   Users,
   DollarSign,
-  TrendingUp,
   FileText,
   UserPlus,
   BarChart3,
-  CreditCard,
   Plus,
+  PieChart,
   ChevronDown,
-  Building2
+  Building2,
+  AlertTriangle,
+  LogOut,
+  CalendarClock
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import QuickAction from '../components/QuickAction';
+import SalaryPaidSummary from '../components/SalaryPaidSummary';
 import UniversalDrawer from '../components/UniversalDrawer';
+
+// import SuccessModal from '../components/SuccessModal';
+// import Employees from './Employees';
+
 import ConfirmationModal from '../components/ConfirmationModal';
 import AddonModal from '../components/AddonModal';
 import Toast from '../components/Toast';
-import { companyApi } from '../api/companyApi';
-import { employeeApi } from '../api/employeeApi';
-import { dashboardApi } from '../api/dashboardApi';
-import { Company, CreateCompanyRequest } from '../types/company.types';
+import { CreateCompanyRequest } from '../types/company.types';
 import { CreateEmployeeRequest } from '../types/employee.types';
+import {
+  useGetDashboardSummaryQuery,
+  useGetCompaniesQuery,
+  useCreateCompanyMutation,
+  useCreateEmployeeMutation,
+  useUploadEmployeeDocumentMutation,
+  apiSlice
+} from '../store/apiSlice';
+import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
+import CompanySwitcher from '../components/CompanySwitcher';
+import PageHeader from '../components/PageHeader';
+import { salaryApi } from '../api/salaryApi';
+import AlertBar from '../components/AlertBar';
+import logo from '../assets/images/logo-login.svg';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
-  const { user, selectedCompanyId } = useAppSelector((state) => state.auth);
+  const { user, selectedCompanyId, token } = useAppSelector((state) => state.auth);
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  const [isAvatarDropdownOpen, setIsAvatarDropdownOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<'company' | 'employee'>('company');
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // company pop up related
+  // const [showSuccessModal, setShowSuccessModal] = useState(false);
+  // const [modalTitle, setModalTitle] = useState("");
+  // const [modalMessage, setModalMessage] = useState("");
+
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error'
+  } | null>(null);
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
 
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const urlToken = searchParams.get('token');
+  const isTokenPending = !!urlToken && urlToken !== token;
+
+  // RTK Query hooks
+  const [createCompanyMutation] = useCreateCompanyMutation(); // ✅ Hook for mutation
+  const { data: companies = [], refetch: refetchCompanies } = useGetCompaniesQuery(undefined, {
+    skip: !user || isTokenPending
+  });
+
+  const { data: dashboardData, isLoading: isDashboardLoading } = useGetDashboardSummaryQuery(selectedCompanyId || undefined, {
+    skip: !user || isTokenPending,
+  });
+
+  const { data: lastMonthData = { totalNetPay: 0, totalCompanyEPFETF: 0, totalEmployeeEPF: 0 } } = useQuery({
+    queryKey: ['lastMonthSalary', selectedCompanyId],
+    queryFn: async () => {
+      if (!selectedCompanyId) return { totalNetPay: 0, totalCompanyEPFETF: 0, totalEmployeeEPF: 0 };
+      const now = new Date();
+      const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+      const response = await salaryApi.getSalaryReport(
+        selectedCompanyId,
+        lastMonthDate.getMonth() + 1,
+        lastMonthDate.getFullYear(),
+        lastMonthDate.getMonth() + 1,
+        lastMonthDate.getFullYear()
+      );
+
+      // const totals = response.data?.monthlyData?.[0]?.totals;
+      const payload = response.data || response;
+      const totals = payload?.monthlyData?.[0]?.totals;
+
+      return {
+        totalNetPay: totals?.totalNetPay || 0,
+        // totalCompanyEPFETF: (totals?.totalCompanyEPF || 0) + (totals?.totalCompanyETF || 0),
+        totalCompanyEPFETF: totals?.totalCompanyEPFETF || 0,
+        totalEmployeeEPF: totals?.totalEmployeeEPF || 0,
+      };
+    },
+    enabled: !!selectedCompanyId,
+  });
+
+  const [createEmployee] = useCreateEmployeeMutation();
+  const [uploadEmployeeDocument] = useUploadEmployeeDocumentMutation();
+
   // Derived state
   const selectedCompany = companies.find(c => c.id === selectedCompanyId) || null;
-
-  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
-
-  const [dashboardData, setDashboardData] = useState<any>({
-    totalEmployees: 0,
-    totalSalaryPaidThisMonth: 0,
-    totalCompanyETF: 0,
-    totalEmployeeEPF: 0,
-    remainingSlots: 0,
-  });
 
   // Handle Google OAuth callback for existing users
   useEffect(() => {
@@ -67,48 +131,48 @@ const Dashboard = () => {
     }
   }, [searchParams, dispatch]);
 
-  // Fetch Companies
-  const fetchCompanies = async () => {
-    try {
-      const data = await companyApi.getCompanies();
-      setCompanies(data);
-      if (data.length > 0 && !selectedCompanyId) {
-        dispatch(setSelectedCompanyId(data[0].id));
-      } else if (data.length > 0 && selectedCompanyId && !data.find(c => c.id === selectedCompanyId)) {
-        // If selected ID exists but provided company is not in the list (e.g. deleted/unauthorized), fallback to first
-        dispatch(setSelectedCompanyId(data[0].id));
+  // ✅ 1. Automatic Company Creation for Trial Users
+  useEffect(() => {
+    const createPendingCompany = async () => {
+      const tempName = localStorage.getItem('temp_companyName');
+      if (tempName && token && user) {
+        try {
+          console.log('🏢 Transitioning Trial User: Creating company detected in localStorage...');
+          const companyData = {
+            name: tempName,
+            email: localStorage.getItem('temp_companyEmail') || user.email,
+            address: localStorage.getItem('temp_companyAddress') || 'Not Provided',
+            contactNumber: localStorage.getItem('temp_companyPhone') || '',
+            departments: [], // ✅ Use empty array
+          };
+
+          await createCompanyMutation(companyData).unwrap();
+          console.log('✅ Trial company created successfully via Mutation');
+
+          // Refresh companies list manually to be absolutely sure
+          refetchCompanies();
+
+          // Clear storage
+          localStorage.removeItem('temp_companyName');
+          localStorage.removeItem('temp_companyEmail');
+          localStorage.removeItem('temp_companyAddress');
+          localStorage.removeItem('temp_companyPhone');
+        } catch (err) {
+          console.error('❌ Failed to create trial company:', err);
+        }
       }
-    } catch (error) {
-      console.error("Failed to load companies");
-    }
-  };
+    };
+    if (token && user) createPendingCompany();
+  }, [token, user, createCompanyMutation, refetchCompanies]);
 
+  // Effect to set default selected company
   useEffect(() => {
-    if (user) {
-      fetchCompanies();
+    if (companies.length > 0 && !selectedCompanyId) {
+      dispatch(setSelectedCompanyId(companies[0].id));
+    } else if (companies.length > 0 && selectedCompanyId && !companies.find(c => c.id === selectedCompanyId)) {
+      dispatch(setSelectedCompanyId(companies[0].id));
     }
-  }, [user]);
-
-  // Fetch Dashboard Summary
-  const fetchSummary = async () => {
-    try {
-      const data = await dashboardApi.getSummary(selectedCompany?.id);
-      setDashboardData(data);
-    } catch (error) {
-      console.error("Failed to load dashboard summary");
-    }
-  };
-
-  useEffect(() => {
-    if (user) { // Fetch global summary even if no company selected initially, or filter if company selected
-      fetchSummary();
-    }
-  }, [selectedCompany, user]);
-
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/login');
-  };
+  }, [companies, selectedCompanyId, dispatch]);
 
   const [confirmation, setConfirmation] = useState<{
     isOpen: boolean;
@@ -125,15 +189,14 @@ const Dashboard = () => {
     onConfirm: () => { },
   });
 
-  const openLimitModal = (type: 'company' | 'employee', limit: number, current: number) => {
+  const openLimitModal = (type: 'company' | 'employee') => {
     setConfirmation({
       isOpen: true,
       type: 'warning',
       title: `${type === 'company' ? 'Companies' : 'Employees'} Limit Reached`,
       message: `You’ve reached the maximum number of ${type === 'company' ? 'Companies' : 'Employees'} allowed on your current plan. To add more ${type === 'company' ? 'Companies' : 'Employees'}, please ${type === 'company' ? 'upgrade your plan' : 'purchase more slots'}.`,
-      confirmText: 'Update Plan', // Kept generic "Update Plan"
+      confirmText: 'Update Plan',
       onConfirm: () => {
-        // For companies, go to settings. For employees, open AddonModal as it's about slots.
         if (type === 'company') {
           navigate('/settings?tab=subscription');
         } else {
@@ -144,25 +207,55 @@ const Dashboard = () => {
     });
   };
 
-  const handleDrawerSubmit = async (data: any) => {
+  const handleDrawerSubmit = async (data: any, files?: File[], fileTitles?: Record<number, string>) => {
     try {
       if (drawerMode === 'company') {
-        await companyApi.createCompany(data as CreateCompanyRequest);
+        // await createCompany(data as CreateCompanyRequest).unwrap();
+        await createCompanyMutation(data as CreateCompanyRequest).unwrap();
         setToast({ message: 'Company created successfully!', type: 'success' });
-        fetchCompanies(); // Refresh list
+
+        // setModalTitle("Company Created");
+        // setModalMessage(
+        //   "You have successfully created a company.",
+        // );
+        // setShowSuccessModal(true);
+
       } else {
-        await employeeApi.createEmployee(data as CreateEmployeeRequest);
+        const savedEmployee = await createEmployee(data as CreateEmployeeRequest).unwrap();
+
+        if (files && files.length > 0) {
+          setToast({ message: 'Uploading documents...', type: 'success' });
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("employeeId", savedEmployee.id);
+            if (fileTitles && fileTitles[i]) {
+              formData.append("docTitle", fileTitles[i]);
+            }
+            await uploadEmployeeDocument(formData).unwrap();
+          }
+        }
+
         setToast({ message: 'Employee created successfully!', type: 'success' });
-        fetchSummary(); // Refresh stats
+
+        if (selectedCompanyId) {
+          localStorage.removeItem(`employee_add_draft_${selectedCompanyId}`);
+        }
       }
       setIsDrawerOpen(false);
     } catch (error: any) {
-      if (error.message && error.message.includes('limit reached')) {
-        // Parse limit if needed or just show generic message based on error
-        // The error message from backend: "Company limit reached (2). Plan allows 2..."
-        openLimitModal(drawerMode, 0, 0);
+      let errorMsg = error?.data?.message || 'Operation failed';
+
+      // Specifically handle duplicate NIC error for shorter message
+      if (errorMsg === "Employee with this NIC already exists in this company") {
+        errorMsg = "NIC already exists in this company";
+      }
+
+      if (errorMsg.includes('limit reached')) {
+        openLimitModal(drawerMode);
       } else {
-        setToast({ message: error.message || 'Operation failed', type: 'error' });
+        setToast({ message: errorMsg, type: 'error' });
       }
     }
   };
@@ -183,237 +276,321 @@ const Dashboard = () => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
+    <div className="flex flex-col h-screen overflow-y-auto bg-gray-50 font-sans">
+      <AlertBar />
 
-      {/* Main Content */}
-      <div className="flex-1 ml-64">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-          <div className="px-8 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {getGreeting()}, {user?.fullName?.split(' ')[0] || 'User'}
-                </h1>
-                <p className="text-sm text-gray-500 mt-0.5">Here's your dashboard overview</p>
-              </div>
+      {/* Margin bottom gap after the banner */}
+      <div className="-mb-4 shrink-0"></div>
+
+      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
+        <Sidebar />
+
+        {/* Main Content */}
+        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-y-auto flex flex-col max-sm:h-svh max-sm:p-5 max-sm:py-7">
+
+          {/* ── MOBILE HEADER (replaces PageHeader on mobile) ── */}
+          <div className="hidden max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
+            <div>
+              <img src={logo} alt="logo" />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 ml-6">
 
-              {/* Company Switcher */}
+              {/* Company switcher pill */}
+              <button
+                onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                className="flex items-center gap-1 px-2 py-1.5 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-700"
+              >
+                <Building2 className="w-3 h-3 text-gray-500" />
+                {selectedCompany?.name
+                  ? selectedCompany.name.trim().length > 10
+                    ? selectedCompany.name.trim().slice(0, 10) + '...'
+                    : selectedCompany.name.trim()
+                  : 'Select Co'}
+                <ChevronDown className="w-3 h-3 text-gray-400" />
+              </button>
+
+              <CompanySwitcher
+                isOpen={isCompanyDropdownOpen}
+                onClose={() => setIsCompanyDropdownOpen(false)}
+                companies={companies}
+                selectedCompanyId={selectedCompanyId}
+                onSelectCompany={(id) => dispatch(setSelectedCompanyId(id))}
+                onAddNew={() => { setIsCompanyDropdownOpen(false); openAddCompany(); }}
+              />
+
+              {/* Avatar circle with dropdown */}
               <div className="relative">
                 <button
-                  onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
-                  className="flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium"
+                  data-logout-btn
+                  onClick={() => setIsAvatarDropdownOpen(!isAvatarDropdownOpen)}
+                  className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0"
                 >
-                  <Building2 className="w-4 h-4 text-gray-500" />
-                  {selectedCompany ? selectedCompany.name : "Select Company"}
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                  {user?.fullName?.charAt(0) || 'U'}
                 </button>
 
-                {isCompanyDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
-                    {companies.map(company => (
+                {isAvatarDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setIsAvatarDropdownOpen(false)}
+                    />
+                    <div className="absolute right-0 top-11 z-20 w-44 bg-white rounded-2xl shadow-lg border border-gray-100 py-2 px-1">
+                      {/* User info */}
+                      <div className="flex items-center gap-2 px-3 py-2">
+                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                          {user?.fullName?.charAt(0) || 'U'}
+                        </div>
+                        <div className="leading-tight">
+                          <div className="text-sm font-medium text-gray-900">{user?.fullName}</div>
+                          <div className="text-xs text-gray-500 uppercase tracking-wide">{user?.role || 'Admin'}</div>
+                        </div>
+                      </div>
+
+                      <div className="mx-3 my-1 border-t border-gray-100" />
+
+                      {/* Sign out */}
                       <button
-                        key={company.id}
+                        data-logout-btn
                         onClick={() => {
-                          dispatch(setSelectedCompanyId(company.id));
-                          setIsCompanyDropdownOpen(false);
+                          setIsAvatarDropdownOpen(false);
+                          dispatch(logout());
+                          dispatch(apiSlice.util.resetApiState());
+                          navigate('/login');
                         }}
-                        className="w-full text-left px-4 py-2 hover:bg-blue-50 text-gray-700 text-sm flex items-center gap-2"
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-red-50 text-sm text-red-700"
                       >
-                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                        {company.name}
-                      </button>
-                    ))}
-                    <div className="border-t border-gray-100 mt-1 pt-1">
-                      <button
-                        onClick={() => {
-                          setIsCompanyDropdownOpen(false);
-                          openAddCompany();
-                        }}
-                        className="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-50 text-sm font-medium flex items-center gap-2"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Add New Company
+                        <div className='bg-red-100 rounded-md p-1'>
+                          <LogOut className="w-4 h-4 text-red-500" />
+                        </div>
+                        Sign Out
                       </button>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
-
-              <button
-                onClick={openAddCompany}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                <Plus className="w-4 h-4" />
-                Add New Company
-              </button>
-
-              <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                  {user?.fullName?.charAt(0) || 'U'}
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium text-gray-900">
-                    {user?.fullName || 'User'}
-                  </div>
-                  <div className="text-xs text-gray-500">{user?.role || 'Admin'}</div>
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Dashboard Content */}
-        <main className="p-8">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatCard
-              icon={Users}
-              title="Total Employees"
-              value={dashboardData.totalEmployees.toString()}
-              subtitle="Current Company"
-              iconBgColor="bg-blue-100"
-              iconColor="text-blue-600"
-            />
-            <StatCard
-              icon={DollarSign}
-              title="Total Salary Paid"
-              value={`Rs ${dashboardData.totalSalaryPaidThisMonth.toLocaleString()}`}
-              subtitle="This Month"
-              iconBgColor="bg-green-100"
-              iconColor="text-green-600"
-            />
-            <StatCard
-              icon={TrendingUp}
-              title="Company EPF Amount"
-              value={`Rs ${dashboardData.totalCompanyETF?.toLocaleString() || '0'}`} // Note: using ETF field for now as per controller
-              subtitle="This Month"
-              iconBgColor="bg-purple-100"
-              iconColor="text-purple-600"
-            />
-            <StatCard
-              icon={CreditCard}
-              title="Total Employee EPF"
-              value={`Rs ${dashboardData.totalEmployeeEPF.toLocaleString()}`}
-              subtitle="This Month"
-              iconBgColor="bg-orange-100"
-              iconColor="text-orange-600"
-            />
-          </div>
-
-          {/* Quick Actions */}
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <QuickAction
-                icon={FileText}
-                title="Generate Payslips"
-                description="Create monthly payslips"
-                bgColor="bg-gradient-to-br from-blue-500 to-blue-600"
-              />
-              <div onClick={openAddEmployee} className="cursor-pointer">
-                <QuickAction
-                  icon={UserPlus}
-                  title="Add Employee"
-                  description="Register new staff member"
-                  bgColor="bg-gradient-to-br from-green-500 to-green-600"
-                />
-              </div>
-              <QuickAction
-                icon={BarChart3}
-                title="View Reports"
-                description="Access detailed analytics"
-                bgColor="bg-gradient-to-br from-purple-500 to-purple-600"
-              />
-              <div onClick={() => setIsAddonModalOpen(true)} className="cursor-pointer">
-                <QuickAction
-                  icon={CreditCard}
-                  title="Change Plan"
-                  description="Change subscription plan"
-                  bgColor="bg-gradient-to-br from-orange-500 to-orange-600"
-                />
-              </div>
             </div>
           </div>
 
-          {/* Employee Usage Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Employee Usage</h3>
-                <span className="text-sm text-gray-500">Current Plan ({dashboardData.planName || 'Unknown'})</span>
-              </div>
-              <div className="flex items-center justify-center py-8">
-                <div className="relative w-48 h-48">
-                  {/* Simple donut chart representation */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-4xl font-bold text-gray-900">{dashboardData.totalEmployees}/{dashboardData.maxEmployees || 0}</div>
-                      <div className="text-sm text-gray-500 mt-1">Employees</div>
-                    </div>
-                  </div>
-                  <svg className="w-full h-full transform -rotate-90">
-                    <circle
-                      cx="96"
-                      cy="96"
-                      r="80"
-                      stroke="#E5E7EB"
-                      strokeWidth="16"
-                      fill="none"
+          <div className="max-sm:hidden">
+            <PageHeader
+              title={`${getGreeting()}, ${user?.fullName?.split(' ')[0] || 'User'}`}
+              subtitle="Here's Your Dashboard Overview"
+              showLogout={true}
+              actionElement={
+                <>
+                  {/* Company Switcher */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                      className="
+                    flex items-center gap-2
+                    px-4 py-2
+                    rounded-xl
+                    border border-gray-200
+                    bg-white
+                    hover:bg-gray-50
+                    text-sm font-medium text-gray-700
+                  "
+                    >
+                      <Building2 className="w-4 h-4 text-gray-500" />
+                      {selectedCompany?.name
+                        ? selectedCompany.name.trim().length > 10
+                          ? selectedCompany.name.trim().slice(0, 10) + '...'
+                          : selectedCompany.name.trim()
+                        : 'Select Co'}
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    </button>
+
+                    <CompanySwitcher
+                      isOpen={isCompanyDropdownOpen}
+                      onClose={() => setIsCompanyDropdownOpen(false)}
+                      companies={companies}
+                      selectedCompanyId={selectedCompanyId}
+                      onSelectCompany={(id) => dispatch(setSelectedCompanyId(id))}
+                      onAddNew={() => {
+                        setIsCompanyDropdownOpen(false);
+                        openAddCompany();
+                      }}
                     />
-                    <circle
-                      cx="96"
-                      cy="96"
-                      r="80"
-                      stroke="#F59E0B"
-                      strokeWidth="16"
-                      fill="none"
-                      strokeDasharray={`${(dashboardData.totalEmployees / (dashboardData.maxEmployees || 1)) * 502.4} 502.4`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
+                  </div>
 
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Remaining Slots</h3>
-              <div className="space-y-4">
-                <div className="text-center py-8">
-                  <div className="text-5xl font-bold text-orange-500 mb-2">{dashboardData.remainingSlots || 0} left</div>
-                  <p className="text-sm text-gray-600 mb-6">
-                    You can add {dashboardData.remainingSlots || 0} more employees to your current plan
-                  </p>
+                  {/* add employee button */}
                   <button
-                    onClick={() => setIsAddonModalOpen(true)}
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    onClick={() => {
+                      if (!selectedCompanyId) {
+                        setToast({
+                          message: "Please select a company from the Dashboard first.",
+                          type: "error",
+                        });
+                        return;
+                      }
+                      openAddEmployee();
+                    }}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                    title={!selectedCompanyId ? "Please select a company from the Dashboard first" : "Add New Employee"}
                   >
-                    Get More Slots
+                    <span className="hidden sm:inline whitespace-nowrap">Add New Employee</span>
+                    <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                  </button>
+
+                  {/* add company button */}
+                  <button
+                    onClick={openAddCompany}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
+                    title="Add New Company"
+                  >
+                    <span className="hidden sm:inline whitespace-nowrap">Add New Company</span>
+                    <span className="sm:hidden whitespace-nowrap">Add</span>
+                    <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                  </button>
+                </>
+              }
+            />
+          </div>
+
+          <main className="flex-1 max-sm:mt-2 max-sm:pb-14">
+            {isDashboardLoading ? <DashboardSkeleton /> : (
+              <>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6
+                max-sm:grid max-sm:grid-cols-2 max-sm:gap-2">
+                  <StatCard
+                    icon={Users}
+                    title="Active Employees"
+                    value={dashboardData?.totalEmployees?.toString() || '0'}
+                    colorTheme="blue"
+                    showLastMonth={false}
+                  />
+                  <StatCard
+                    icon={DollarSign}
+                    title="Total Salary Paid"
+                    value={`Rs ${lastMonthData.totalNetPay.toLocaleString()}`}
+                    colorTheme="green"
+                    showLastMonth={true}
+                  />
+                  <StatCard
+                    icon={CalendarClock}
+                    title="Company EPF/ETF Amount"
+                    value={`Rs ${lastMonthData.totalCompanyEPFETF.toLocaleString()}`}
+                    colorTheme="purple"
+                    showLastMonth={true}
+                  />
+                  <StatCard
+                    icon={PieChart}
+                    title="Total Employee EPF"
+                    value={`Rs ${lastMonthData.totalEmployeeEPF.toLocaleString()}`}
+                    colorTheme="orange"
+                    showLastMonth={true}
+                  />
+                </div>
+
+                {/* add buttons */}
+                <div className='hidden max-sm:flex items-center justify-center gap-6 mb-4'>
+                  {/* add employee button */}
+                  <button
+                    onClick={() => {
+                      if (!selectedCompanyId) {
+                        setToast({
+                          message: "Please select a company from the Dashboard first.",
+                          type: "error",
+                        });
+                        return;
+                      }
+                      openAddEmployee();
+                    }}
+                    className="w-[160px] flex items-center gap-2 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] text-white pl-5 pr-2 py-2 rounded-lg text-sm font-normal transition-colors"
+                    title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
+                  >
+                    <span className="whitespace-nowrap">Add Employee</span>
+                    <div className="bg-white/20 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                      <Plus className="w-4 h-4" />
+                    </div>
+                  </button>
+
+                  {/* add company button */}
+                  <button
+                    onClick={openAddCompany}
+                    className="w-[160px] flex items-center gap-2 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] text-white pl-5 pr-2 py-2 rounded-lg text-sm font-normal transition-colors"
+                    title="Add New Company"
+                  >
+                    <span className="whitespace-nowrap">Add Company</span>
+                    <div className="bg-white/20 text-white rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
+                      <Plus className="w-4 h-4" />
+                    </div>
                   </button>
                 </div>
-              </div>
-            </div>
-          </div>
-        </main>
+
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start flex-1">
+                  {/* Left (2/3) – Salary Paid Summary Chart */}
+                  <div className="lg:col-span-2 h-full flex flex-col">
+                    <SalaryPaidSummary companyId={selectedCompanyId || ''} />
+                  </div>
+
+                  {/* Right (1/3) – Quick Actions */}
+                  <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col h-full
+                                  max-sm:p-4">
+                    <h2 className="text-[15px] font-semibold text-gray-900 mb-4">
+                      Quick Actions
+                    </h2>
+
+                    <div className="flex flex-col gap-4">
+                      <QuickAction
+                        icon={FileText}
+                        title="Generate Payslips"
+                        description="Create monthly payslips"
+                        bgColor="text-[#4182F9]"
+                        lightBgColor="bg-[#EBF2FF]"
+                        onClick={() => navigate('/salary')}
+                      />
+
+                      <div className='max-sm:hidden'>
+                        <QuickAction
+                          icon={UserPlus}
+                          title="Add Employee"
+                          description="Register new staff member"
+                          bgColor="text-[#4182F9]"
+                          lightBgColor="bg-[#EBF2FF]"
+                          onClick={openAddEmployee}
+                        />
+                      </div>
+
+                      <QuickAction
+                        icon={BarChart3}
+                        title="View Reports"
+                        description="Access detailed analytics"
+                        bgColor="text-[#4182F9]"
+                        lightBgColor="bg-[#EBF2FF]"
+                        onClick={() => navigate('/reports')}
+                      />
+
+                      {/* <QuickAction
+                      icon={CreditCard}
+                      title="Change Plan"
+                      description="Change subscription plan"
+                      bgColor="text-[#4182F9]"
+                      lightBgColor="bg-[#EBF2FF]"
+                      onClick={() => setIsAddonModalOpen(true)}
+                    /> */}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </main>
+        </div>
       </div>
 
-      {/* Universal Drawer */}
       <UniversalDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
@@ -422,7 +599,6 @@ const Dashboard = () => {
         companyId={selectedCompany?.id}
       />
 
-      {/* Toast Notification */}
       {toast && (
         <Toast
           message={toast.message}
@@ -430,7 +606,15 @@ const Dashboard = () => {
           onClose={() => setToast(null)}
         />
       )}
-      {/* Confirmation Modal */}
+
+      {/* Success Modal */}
+      {/* <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title={modalTitle}
+        message={modalMessage}
+      /> */}
+
       <ConfirmationModal
         isOpen={confirmation.isOpen}
         onClose={() => setConfirmation(prev => ({ ...prev, isOpen: false }))}
@@ -441,17 +625,15 @@ const Dashboard = () => {
         confirmText={confirmation.confirmText}
       />
 
-      {/* Addon Modal */}
       <AddonModal
         isOpen={isAddonModalOpen}
         onClose={() => setIsAddonModalOpen(false)}
         onSuccess={() => {
           setToast({ message: 'Slots purchased successfully!', type: 'success' });
-          fetchSummary();
         }}
         onUpgradePlan={() => {
           setIsAddonModalOpen(false);
-          navigate('/settings?tab=subscription');
+          navigate('/settings?tab=payment');
         }}
       />
     </div>

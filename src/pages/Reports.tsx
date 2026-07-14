@@ -1,20 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Search, Loader2, FileText, FileSpreadsheet, Download } from 'lucide-react';
+import { Search, FileText, Download, Loader2, FileSpreadsheet, ChevronDown } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import MonthRangePicker from '../components/MonthRangePicker';
 import MonthSection from '../components/MonthSection';
 import { useAppSelector } from '../store/hooks';
-import { salaryApi } from '../api/salaryApi';
+import { useGetCompaniesQuery, useLazyGetSalaryReportQuery } from '../store/apiSlice';
 import Toast from '../components/Toast';
 import EmployeePayrollModal from '../components/EmployeePayrollModal';
 import AllEmployeesSummaryModal from '../components/AllEmployeesSummaryModal';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import PageHeader from '../components/PageHeader';
+import { exportPayrollSummaryReport } from '../utils/exportService';
+import AlertBar from '../components/AlertBar';
+import { useTrialStatus } from '../hooks/useTrialStatus';
+import logo from '../assets/images/logo-login.svg';
 
 const Reports = () => {
-    const { selectedCompanyId } = useAppSelector((state) => state.auth);
+    const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
     const [isLoading, setIsLoading] = useState(false);
+    const [isExportOpen, setIsExportOpen] = useState(false);
+    const { handleTrialAction } = useTrialStatus();
 
     // Date range filters
     const currentDate = new Date();
@@ -34,7 +38,9 @@ const Reports = () => {
         totalGrossPay: 0,
         totalNetPay: 0,
         totalEmployeeEPF: 0,
-        totalCompanyEPFETF: 0
+        totalCompanyEPFETF: 0,
+        totalAllowance: 0,
+        totalDeduction: 0
     });
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -42,37 +48,85 @@ const Reports = () => {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAllEmployeesModalOpen, setIsAllEmployeesModalOpen] = useState(false);
-    const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; companyId: string } | null>(null);
+    const [selectedEmployee, setSelectedEmployee] = useState<{ id: string; companyId: string; month: number; year: number } | null>(null);
     const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
+    const { data: companies } = useGetCompaniesQuery();
 
     // Expand/collapse state for months
     const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+    const [getSalaryReport] = useLazyGetSalaryReportQuery();
 
-    const checkAndUpdateData = async () => {
+    const checkAndUpdateData = async (sM?: number, sY?: number, eM?: number, eY?: number) => {
         if (!selectedCompanyId) return;
         setIsLoading(true);
-        try {
-            // API expects month 1-12, but our state is 0-11
-            const response = await salaryApi.getSalaryReport(
-                selectedCompanyId,
-                startMonth + 1,
-                startYear,
-                endMonth + 1,
-                endYear
-            );
-            const reportData = response.data;
 
-            setMonthlyData(reportData.monthlyData || []);
-            setOverallTotals(reportData.overallTotals || {
-                totalMonths: 0,
-                totalEmployees: 0,
-                totalGrossPay: 0,
-                totalNetPay: 0,
-                totalEmployeeEPF: 0,
-                totalCompanyEPFETF: 0
+        const currentStartMonth = sM !== undefined ? sM : startMonth;
+        const currentStartYear = sY !== undefined ? sY : startYear;
+        const currentEndMonth = eM !== undefined ? eM : endMonth;
+        const currentEndYear = eY !== undefined ? eY : endYear;
+
+        console.group('📊 Reports Page - Fetching Data');
+        console.log('Selected Company ID:', selectedCompanyId);
+        console.log('Date Range (UI State):', { startMonth, startYear, endMonth, endYear });
+        console.log('Date Range (API Call):', {
+            startMonth: currentStartMonth + 1,
+            startYear: currentStartYear,
+            endMonth: currentEndMonth + 1,
+            endYear: currentEndYear
+        });
+        console.groupEnd();
+
+        try {
+            const response = await getSalaryReport({
+                companyId: selectedCompanyId,
+                startMonth: currentStartMonth + 1,
+                startYear: currentStartYear,
+                endMonth: currentEndMonth + 1,
+                endYear: currentEndYear
+            }).unwrap();
+
+            const reportData = response;
+            console.log('✅ Report Data Received:', reportData);
+
+            let computedOverallGross = 0;
+            const updatedMonthlyData = (reportData.monthlyData || []).map((month: any) => {
+                let computedMonthGross = 0;
+                const updatedEmployees = (month.employees || []).map((emp: any) => {
+                    const displayBasic = (emp.basicPay > emp.basicSalary ? emp.basicPay : emp.basicSalary) || 0;
+                    const grossEarnings = displayBasic + (emp.otAmount || 0) + (emp.allowanceTotal || 0);
+                    computedMonthGross += grossEarnings;
+                    return { ...emp, grossPay: grossEarnings };
+                });
+                computedOverallGross += computedMonthGross;
+                return {
+                    ...month,
+                    employees: updatedEmployees,
+                    totals: { ...month.totals, totalGrossPay: computedMonthGross }
+                };
+            });
+
+            setMonthlyData(updatedMonthlyData);
+            setOverallTotals({
+                ...(reportData.overallTotals || {
+                    totalMonths: 0,
+                    totalEmployees: 0,
+                    totalGrossPay: 0,
+                    totalNetPay: 0,
+                    totalEmployeeEPF: 0,
+                    totalCompanyEPFETF: 0,
+                    totalAllowance: 0,
+                    totalDeduction: 0
+                }),
+                totalGrossPay: computedOverallGross || reportData.overallTotals?.totalGrossPay || 0
             });
 
         } catch (error: any) {
+            console.group('❌ Reports Page Error');
+            console.error('Error Object:', error);
+            console.error('Status:', error.response?.status);
+            console.error('Response Data:', error.response?.data);
+            console.groupEnd();
+
             if (error.response?.status === 404) {
                 setMonthlyData([]);
                 setOverallTotals({
@@ -81,41 +135,54 @@ const Reports = () => {
                     totalGrossPay: 0,
                     totalNetPay: 0,
                     totalEmployeeEPF: 0,
-                    totalCompanyEPFETF: 0
+                    totalCompanyEPFETF: 0,
+                    totalAllowance: 0,
+                    totalDeduction: 0
                 });
             } else {
-                setToast({ message: error.message || 'Failed to fetch report', type: 'error' });
+                setToast({
+                    message: `Error ${error.response?.status}: ${error.response?.data?.message || error.message}`,
+                    type: 'error'
+                });
             }
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Initial Load
     useEffect(() => {
         checkAndUpdateData();
     }, [selectedCompanyId]);
 
-    const handleApply = () => {
-        // Validate date range
-        const startDate = new Date(startYear, startMonth);
-        const endDate = new Date(endYear, endMonth);
 
-        if (startDate > endDate) {
-            setToast({ message: 'Start date must be before or equal to end date', type: 'error' });
-            return;
-        }
+    useEffect(() => {
+        if (monthlyData.length === 0) return;
 
-        checkAndUpdateData();
-    };
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
+        const currentMonthKey = `${currentYear}-${currentMonth}`;
+
+        setExpandedMonths(prev => {
+            if (prev.size > 0) return prev;
+            const newSet = new Set(prev);
+            newSet.add(currentMonthKey);
+            return newSet;
+        });
+    }, [monthlyData]);
 
     const handleReset = () => {
         const currentDate = new Date();
-        setStartMonth(currentDate.getMonth());
-        setStartYear(currentDate.getFullYear());
-        setEndMonth(currentDate.getMonth());
-        setEndYear(currentDate.getFullYear());
+        const newMonth = currentDate.getMonth();
+        const newYear = currentDate.getFullYear();
+        setStartMonth(newMonth);
+        setStartYear(newYear);
+        setEndMonth(newMonth);
+        setEndYear(newYear);
         setSearch('');
+        setSelectedEmployeeIds([]);
+
+        checkAndUpdateData(newMonth, newYear, newMonth, newYear);
     };
 
     const toggleMonth = (monthKey: string) => {
@@ -130,298 +197,345 @@ const Reports = () => {
         });
     };
 
-    const handleSelectEmployee = (employeeId: string) => {
+    const handleSelectEmployee = (employeeId: string, month: number, year: number) => {
+        const compositeKey = `${employeeId}-${year}-${month}`;
         setSelectedEmployeeIds(prev =>
-            prev.includes(employeeId)
-                ? prev.filter(id => id !== employeeId)
-                : [...prev, employeeId]
+            prev.includes(compositeKey)
+                ? prev.filter(id => id !== compositeKey)
+                : [...prev, compositeKey]
         );
     };
 
-    const exportPDF = () => {
-        const doc = new jsPDF();
-        const dateRangeText = `${new Date(startYear, startMonth).toLocaleString('default', { month: 'long', year: 'numeric' })} - ${new Date(endYear, endMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`;
-        doc.text(`Payroll Summary Report`, 14, 15);
-        doc.setFontSize(10);
-        doc.text(dateRangeText, 14, 22);
+    const getFilteredData = () =>
+        monthlyData.map(monthData => ({
+            ...monthData,
+            employees: selectedEmployeeIds.length > 0
+                ? monthData.employees.filter((emp: any) =>
+                    selectedEmployeeIds.includes(`${emp.employeeId}-${monthData.year}-${monthData.monthNumber}`)
+                )
+                : monthData.employees
+        }));
 
-        let startY = 30;
-        monthlyData.forEach((monthData) => {
-            doc.setFontSize(12);
-            doc.text(`${monthData.month} ${monthData.year}`, 14, startY);
-            startY += 5;
+    const getExportData = () => {
+        const filteredMonthlyData = getFilteredData();
+        const selectedCompany = companies?.find(c => c.id === selectedCompanyId);
 
-            const tableBody = monthData.employees.map((emp: any) => [
-                emp.employeeCode || '-',
-                emp.employeeName || '-',
-                emp.workingDays,
-                emp.netPay.toLocaleString(),
-                emp.employeeEPF.toLocaleString(),
-                emp.companyEPFETF.toLocaleString()
-            ]);
+        let totalBasicPay = 0;
+        let totalGrossPay = 0;
+        let totalEmployeeEPF = 0;
+        let totalSalaryAdvance = 0;
+        let totalNetPay = 0;
 
-            autoTable(doc, {
-                startY,
-                head: [['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF']],
-                body: tableBody,
+        filteredMonthlyData.forEach(month => {
+            month.employees.forEach((emp: any) => {
+                // totalBasicPay += emp.basicPay || 0;
+                totalBasicPay += (emp.basicPay > emp.basicSalary ? emp.basicPay : emp.basicSalary) || 0;
+                totalGrossPay += emp.grossPay || 0;
+                totalEmployeeEPF += emp.employeeEPF || 0;
+                totalSalaryAdvance += emp.salaryAdvance || 0;
+                totalNetPay += emp.netPay || 0;
             });
-
-            startY = (doc as any).lastAutoTable.finalY + 10;
         });
 
-        doc.save('Payroll_Summary_Report.pdf');
+        return {
+            companyName: selectedCompany?.name || 'Company Name',
+            companyAddress: selectedCompany?.address || '',
+            monthlyData: filteredMonthlyData,
+            startMonth,
+            startYear,
+            endMonth,
+            endYear,
+            overallTotals: {
+                totalBasicPay,
+                totalGrossPay,
+                totalEmployeeEPF,
+                totalSalaryAdvance,
+                totalNetPay
+            }
+        };
+    };
+
+    const exportPDF = () => {
+        exportPayrollSummaryReport('pdf', getExportData());
+        setToast({ message: 'PDF exported successfully', type: 'success' });
     };
 
     const exportExcel = () => {
-        const wsData: any[] = [
-            ['Payroll Summary Report'],
-            [`${new Date(startYear, startMonth).toLocaleString('default', { month: 'long', year: 'numeric' })} - ${new Date(endYear, endMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
-            []
-        ];
-
-        monthlyData.forEach((monthData) => {
-            wsData.push([`${monthData.month} ${monthData.year}`]);
-            wsData.push(['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF']);
-
-            monthData.employees.forEach((emp: any) => {
-                wsData.push([
-                    emp.employeeCode || '-',
-                    emp.employeeName || '-',
-                    emp.workingDays,
-                    emp.netPay,
-                    emp.employeeEPF,
-                    emp.companyEPFETF
-                ]);
-            });
-            wsData.push([]);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Report");
-        XLSX.writeFile(wb, "Payroll_Summary_Report.xlsx");
+        exportPayrollSummaryReport('excel', getExportData() as any);
+        setToast({ message: 'Excel exported successfully', type: 'success' });
     };
 
     const exportCSV = () => {
-        const wsData: any[] = [
-            ['Payroll Summary Report'],
-            [`${new Date(startYear, startMonth).toLocaleString('default', { month: 'long', year: 'numeric' })} - ${new Date(endYear, endMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
-            []
-        ];
-
-        monthlyData.forEach((monthData) => {
-            wsData.push([`${monthData.month} ${monthData.year}`]);
-            wsData.push(['Emp ID', 'Name', 'Days', 'Net Pay', 'Emp EPF', 'Comp EPF/ETF']);
-
-            monthData.employees.forEach((emp: any) => {
-                wsData.push([
-                    emp.employeeCode || '-',
-                    emp.employeeName || '-',
-                    emp.workingDays,
-                    emp.netPay,
-                    emp.employeeEPF,
-                    emp.companyEPFETF
-                ]);
-            });
-            wsData.push([]);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const csv = XLSX.utils.sheet_to_csv(ws);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", "Payroll_Summary_Report.csv");
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        exportPayrollSummaryReport('csv', getExportData() as any);
+        setToast({ message: 'CSV exported successfully', type: 'success' });
     };
 
-    return (
-        <div className="flex min-h-screen bg-gray-50">
-            <Sidebar />
-            <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
-                <header className="flex justify-between items-center mb-8 shrink-0">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Payroll Summary Report</h1>
-                        <p className="text-sm text-gray-500 mt-1">Here's your Payroll History.</p>
-                    </div>
-                </header>
+    const hasData = !isLoading && monthlyData.some(m => m.employees && m.employees.length > 0);
 
-                {/* Filter Section */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                        <div className="md:col-span-1">
-                            <label className="text-sm font-semibold text-gray-600 block mb-2">Search Employee</label>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Search..."
-                                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none"
-                                />
+    return (
+        <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
+            <AlertBar />
+
+            {/* Margin bottom gap after the banner */}
+            <div className="-mb-4 shrink-0"></div>
+
+            <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
+                <Sidebar />
+
+                <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
+
+                    {/* MOBILE HEADER */}
+                    <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 border-b border-gray-100">
+                        <div>
+                            <img src={logo} alt="logo" className='w-40 h-10' />
+                        </div>
+                        <div className="flex items-center gap-2 ml-6">
+
+                            {/* Avatar circle */}
+                            <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                                {user?.fullName?.charAt(0) || 'U'}
                             </div>
                         </div>
+                    </div>
 
-                        <div className="md:col-span-2">
-                            <label className="text-sm font-semibold text-gray-600 block mb-2">Time Period</label>
-                            <MonthRangePicker
-                                startMonth={startMonth}
-                                startYear={startYear}
-                                endMonth={endMonth}
-                                endYear={endYear}
-                                onStartChange={(month, year) => {
-                                    setStartMonth(month);
-                                    setStartYear(year);
-                                }}
-                                onEndChange={(month, year) => {
-                                    setEndMonth(month);
-                                    setEndYear(year);
-                                }}
-                                className="w-full"  
-                            />
-                        </div>
-
-                        <div className="md:col-span-1 flex gap-3">
-                            <button
-                                onClick={handleApply}
-                                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
-                            >
-                                Apply
-                            </button>
-                            <button
-                                onClick={handleReset}
-                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
-                            >
-                                Reset
-                            </button>
+                    {/* Mobile Title & Action */}
+                    <div className="hidden max-sm:block px-6 py-2 shrink-0">
+                        <div className="flex items-center justify-between mb-1">
+                            <div className='px-3'>
+                                <div className="inline-block rounded-sm">
+                                    <h1 className="text-[22px] font-bold text-[#1D1F24]">Summary Report</h1>
+                                </div>
+                                <p className="text-[13px] text-[#989FA7] font-medium">Here's Your Payroll History.</p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Toolbar */}
-                <div className="bg-white rounded-t-xl shadow-sm border border-gray-200 border-b-0 p-4 flex justify-between items-center">
-                    <h2 className="font-bold text-gray-800">Payroll Summary</h2>
-                    <div className="flex gap-2">
-                        <button onClick={exportPDF} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded hover:bg-red-100 border border-red-100 transition-colors">
-                            <FileText className="w-3.5 h-3.5" /> Export PDF
-                        </button>
-                        <button onClick={exportExcel} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50 rounded hover:bg-green-100 border border-green-100 transition-colors">
-                            <FileSpreadsheet className="w-3.5 h-3.5" /> Export Excel
-                        </button>
-                        <button onClick={exportCSV} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded hover:bg-blue-100 border border-blue-100 transition-colors">
-                            <Download className="w-3.5 h-3.5" /> Export CSV
-                        </button>
-                        <button
-                            onClick={() => setIsAllEmployeesModalOpen(true)}
-                            disabled={selectedEmployeeIds.length === 0}
-                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded hover:bg-indigo-100 border border-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <FileText className="w-3.5 h-3.5" /> View Selected
-                        </button>
+                    {/* Desktop Header */}
+                    <div className="shrink-0 max-sm:hidden">
+                        <PageHeader
+                            title="Summary Report"
+                            subtitle="Here's Your Payroll History."
+                        />
                     </div>
-                </div>
 
-                {/* Main Content */}
-                <div className="bg-white rounded-b-xl shadow-sm border border-gray-200 p-6 flex-1">
-                    {isLoading ? (
-                        <div className="flex justify-center items-center py-20">
-                            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                        </div>
-                    ) : monthlyData.length === 0 ? (
-                        <div className="text-center py-20 text-gray-500">
-                            No payroll records found for the selected period.
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {monthlyData.map((monthData) => {
-                                const monthKey = `${monthData.year}-${monthData.monthNumber}`;
-                                return (
-                                    <MonthSection
-                                        key={monthKey}
-                                        year={monthData.year}
-                                        month={monthData.month}
-                                        monthNumber={monthData.monthNumber}
-                                        status={monthData.status}
-                                        employees={monthData.employees}
-                                        totals={monthData.totals}
-                                        isExpanded={expandedMonths.has(monthKey)}
-                                        onToggle={() => toggleMonth(monthKey)}
-                                        selectedEmployeeIds={selectedEmployeeIds}
-                                        onSelectEmployee={handleSelectEmployee}
-                                        onViewEmployee={(id, companyId) => {
-                                            setSelectedEmployee({ id, companyId });
-                                            setIsModalOpen(true);
-                                        }}
-                                        companyId={selectedCompanyId || ''}
-                                        searchQuery={search}
+                    {/* Filter Bar */}
+                    <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4 max-sm:mx-5">
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 flex-wrap">
+                            <div className='flex flex-row gap-4'>
+                                {/* Search */}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Search Employee</span>
+                                    <div className="relative max-sm:w-full">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
+                                            placeholder="Search..."
+                                            className="pl-9 pr-4 py-2 mr-0 md:mr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm w-full md:w-56 "
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Time Period */}
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Time Period</span>
+                                    <MonthRangePicker
+                                        startMonth={startMonth}
+                                        startYear={startYear}
+                                        endMonth={endMonth}
+                                        endYear={endYear}
+                                        onStartChange={(month, year) => { setStartMonth(month); setStartYear(year); }}
+                                        onEndChange={(month, year) => { setEndMonth(month); setEndYear(year); }}
+                                        onApply={(sM, sY, eM, eY) => checkAndUpdateData(sM, sY, eM, eY)}
+                                        className="w-full"
                                     />
-                                );
-                            })}
+                                </div>
+                            </div>
+                            {/* Buttons */}
+                            <div className="flex gap-3 ml-auto max-sm:ml-0 max-sm:w-full max-sm:items-center max-sm:flex-row">
+
+                                {/* Reset */}
+                                <button
+                                    onClick={handleReset}
+                                    className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors max-sm:flex-1 max-sm:py-2.5"
+                                >
+                                    Reset
+                                </button>
+
+                                {/* Export Dropdown */}
+                                <div className="relative">
+                                    <button
+                                        disabled={!hasData}
+                                        onClick={() => setIsExportOpen(prev => !prev)}
+                                        className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
+                                    >
+                                        Export
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {isExportOpen && hasData && (
+                                        <>
+                                            <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
+                                            <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
+                                                <button
+                                                    onClick={(e) => handleTrialAction(e, () => { exportPDF(); setIsExportOpen(false); })}
+                                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-red-50 transition-colors"
+                                                >
+                                                    <FileText className="w-4 h-4" /> PDF
+                                                </button>
+                                                <div className="border-t border-gray-100" />
+                                                <button
+                                                    onClick={(e) => handleTrialAction(e, () => { exportExcel(); setIsExportOpen(false); })}
+                                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-green-50 transition-colors"
+                                                >
+                                                    <FileSpreadsheet className="w-4 h-4" /> Excel
+                                                </button>
+                                                <div className="border-t border-gray-100" />
+                                                <button
+                                                    onClick={(e) => handleTrialAction(e, () => { exportCSV(); setIsExportOpen(false); })}
+                                                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-regular text-[#407BFF] hover:bg-blue-50 transition-colors"
+                                                >
+                                                    <Download className="w-4 h-4" /> CSV
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
                         </div>
+                    </div>
+
+                    <div className='p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 min-h-0 overflow-hidden max-sm:mx-5  max-sm:pb-20'>
+                        <div className="shrink-0 bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm px-3 md:px-6 py-3 md:py-4 mb-4 whitespace-nowrap">
+                            <div className="overflow-x-auto md:overflow-visible grid grid-cols-5 gap-[150px] md:gap-4 md:divide-x divide-gray-100 max-sm:py-2">
+                                {/* Total Employees */}
+                                <div className="text-center max-sm:border-l-2 max-sm:border-[#F4F8FC] max-sm:pl-4">
+                                    <div className="text-2xl font-regular text-gray-900">
+                                        {overallTotals.totalEmployees}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                        Total Employees
+                                    </div>
+                                </div>
+
+                                {/* Total Gross Pay */}
+                                <div className="text-center max-sm:border-l-2 max-sm:border-black max-sm:pl-4">
+                                    <div className="text-xl font-regular text-[#1f6feb]">
+                                        Rs. {overallTotals.totalGrossPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                        Total Gross Pay
+                                    </div>
+                                </div>
+
+                                {/* Total Net Pay */}
+                                <div className="text-center max-sm:border-l-2 max-sm:border-black max-sm:pl-4">
+                                    <div className="text-xl font-regular text-[#1f6feb]">
+                                        Rs. {overallTotals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                        Total Net Pay
+                                    </div>
+                                </div>
+
+                                {/* Total Employee EPF */}
+                                <div className="text-center max-sm:border-l-2 max-sm:border-black max-sm:pl-4">
+                                    <div className="text-xl font-regular text-[#1f6feb]">
+                                        Rs. {overallTotals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                        Total Employee EPF
+                                    </div>
+                                </div>
+
+                                {/* Total Company EPF/ETF */}
+                                <div className="text-center max-sm:border-l-2 max-sm:border-black max-sm:pl-4">
+                                    <div className="text-xl font-regular text-[#1f6feb]">
+                                        Rs. {overallTotals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
+                                        Total Company EPF/ETF
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto space-y-3 max-sm:pb-10">
+                            {isLoading ? (
+                                <div className="flex justify-center items-center py-20">
+                                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                                </div>
+                            ) : monthlyData.length === 0 ? (
+                                <div className="bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm p-10 text-center text-gray-400 text-sm">
+                                    No payroll records found for the selected period.
+                                </div>
+                            ) : (
+                                monthlyData.map((monthData) => {
+                                    const monthKey = `${monthData.year}-${monthData.monthNumber}`;
+                                    return (
+                                        <MonthSection
+                                            key={monthKey}
+                                            year={monthData.year}
+                                            month={monthData.month}
+                                            monthNumber={monthData.monthNumber}
+                                            status={monthData.status}
+                                            employees={monthData.employees}
+                                            totals={monthData.totals}
+                                            isExpanded={expandedMonths.has(monthKey)}
+                                            onToggle={() => toggleMonth(monthKey)}
+                                            selectedEmployeeIds={selectedEmployeeIds}
+                                            onSelectEmployee={handleSelectEmployee}
+                                            onViewEmployee={(id, companyId) => {
+                                                setSelectedEmployee({
+                                                    id,
+                                                    companyId,
+                                                    month: monthData.monthNumber,
+                                                    year: monthData.year
+                                                });
+                                                setIsModalOpen(true);
+                                            }}
+                                            companyId={selectedCompanyId || ''}
+                                            searchQuery={search}
+                                        />
+                                    );
+                                })
+                            )}
+                        </div>
+                        <p className="text-end text-gray-400 text-[10px] mt-2 mr-4">All values are display in LKR</p>
+
+                    </div>
+                    {toast && (
+                        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
                     )}
                 </div>
 
-                {/* Overall Totals Footer */}
-                {monthlyData.length > 0 && (
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-                        <h3 className="text-sm font-semibold text-gray-600 mb-4 uppercase tracking-wide">Overall Totals ({overallTotals.totalMonths} months)</h3>
-                        <div className="grid grid-cols-5 gap-8">
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900">{overallTotals.totalEmployees}</div>
-                                <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide">Total Employees</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">Rs {overallTotals.totalGrossPay.toLocaleString()}</div>
-                                <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide">Total Gross Pay</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">Rs {overallTotals.totalNetPay.toLocaleString()}</div>
-                                <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide">Total Net Pay</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">Rs {overallTotals.totalEmployeeEPF.toLocaleString()}</div>
-                                <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide">Total Employee EPF</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-600">Rs {overallTotals.totalCompanyEPFETF.toLocaleString()}</div>
-                                <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide">Total Company EPF/ETF</div>
-                            </div>
-                        </div>
-                    </div>
+                {/* Employee Payroll Modal */}
+                {isModalOpen && selectedEmployee && (
+                    <EmployeePayrollModal
+                        isOpen={isModalOpen}
+                        onClose={() => {
+                            setIsModalOpen(false);
+                            setSelectedEmployee(null);
+                        }}
+                        employeeId={selectedEmployee.id}
+                        companyId={selectedEmployee.companyId}
+                        month={selectedEmployee.month}
+                        year={selectedEmployee.year}
+                    />
                 )}
 
-                {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+                {/* All Employees Summary Modal */}
+                {isAllEmployeesModalOpen && (
+                    <AllEmployeesSummaryModal
+                        isOpen={isAllEmployeesModalOpen}
+                        onClose={() => setIsAllEmployeesModalOpen(false)}
+                        selectedEmployeeIds={selectedEmployeeIds}
+                        companyId={selectedCompanyId || ''}
+                        month={startMonth + 1}
+                        year={startYear}
+                    />
+                )}
             </div>
-
-            {/* Employee Payroll Modal */}
-            {isModalOpen && selectedEmployee && (
-                <EmployeePayrollModal
-                    isOpen={isModalOpen}
-                    onClose={() => {
-                        setIsModalOpen(false);
-                        setSelectedEmployee(null);
-                    }}
-                    employeeId={selectedEmployee.id}
-                    companyId={selectedEmployee.companyId}
-                />
-            )}
-
-            {/* All Employees Summary Modal */}
-            {isAllEmployeesModalOpen && (
-                <AllEmployeesSummaryModal
-                    isOpen={isAllEmployeesModalOpen}
-                    onClose={() => setIsAllEmployeesModalOpen(false)}
-                    selectedEmployeeIds={selectedEmployeeIds}
-                    companyId={selectedCompanyId || ''}
-                    month={startMonth + 1}
-                    year={startYear}
-                />
-            )}
         </div>
     );
 };

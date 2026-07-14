@@ -39,21 +39,25 @@ const VerifyEmail = () => {
       hasVerified.current = true;
 
       try {
+        console.log('Initiating email verification with token:', token);
         const result = await dispatch(verifyEmail(token));
 
         if (verifyEmail.fulfilled.match(result)) {
+          console.log('Verification successful:', result.payload);
           setStatus('success');
           setMessage(result.payload.message || 'Email verified successfully!');
 
-          // Redirect after 2 seconds
+          // Redirect after 1.2 seconds
           setTimeout(() => {
             navigate('/set-password', { replace: true });
           }, 1200);
         } else {
+          console.error('Verification failed:', result.payload);
           setStatus('error');
           setMessage(result.payload as string || 'Email verification failed or link expired.');
         }
       } catch (error) {
+        console.error('Unexpected error during verification:', error);
         setStatus('error');
         setMessage('An unexpected error occurred during verification.');
       }
@@ -112,7 +116,9 @@ const VerifyEmail = () => {
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/signup')}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200
+                           max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:text-white max-sm:border-0 max-sm:shadow-blue-200"
+
               >
                 Back to Signup
               </button>

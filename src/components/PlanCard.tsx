@@ -1,94 +1,202 @@
-import React from 'react';
-import { Check } from 'lucide-react';
+import { ArrowBigLeft, ArrowLeft, Check, Loader2, MoveRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface PlanCardProps {
+    planId?: string; // ✅ ADDED
     planName: string;
     price: number;
-    registrationFee: number;
     description: string;
     features: string[];
     isHighlighted?: boolean;
     showButton?: boolean;
+    isLoading?: boolean;
     onSelectPlan?: () => void;
+    showFreeTrial?: boolean;
     className?: string;
+
+    isMobileExpanded?: boolean;
+    onMobileToggle?: () => void;
 }
 
 const PlanCard: React.FC<PlanCardProps> = ({
+    planId, // ✅ ADDED
     planName,
     price,
-    registrationFee,
     description,
     features,
     isHighlighted = false,
     showButton = true,
+    isLoading = false,
     onSelectPlan,
-    className = ''
+    showFreeTrial = true,
+    className = '',
+    isMobileExpanded = false,
+    onMobileToggle
 }) => {
+
+    const navigate = useNavigate();
+
     return (
-        <div className={`bg-white rounded-2xl shadow-xl overflow-hidden transition-transform ${showButton ? 'hover:scale-105' : ''
-            } ${isHighlighted ? 'ring-4 ring-blue-500' : ''} ${className}`}>
-            {/* Registration Fee Header */}
-            <div className={`relative px-6 py-6 text-center text-white overflow-hidden ${isHighlighted
-                    ? 'bg-gradient-to-b from-[#4683fc] to-[#327be2]'
-                    : 'bg-gradient-to-b from-gray-400 to-gray-500'
-                }`}>
-                <div className={`absolute inset-0 ${isHighlighted ? 'bg-blue-400/30' : 'bg-gray-300/30'
-                    } blur-2xl opacity-60`}></div>
+        <div className={`
+            bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300
+            ${showButton ? 'hover:shadow-3xl hover:-translate-y-1' : ''}
+            ${isHighlighted ? 'ring-1 ring-blue-100' : ''}
+            ${className}
+            w-full max-w-md 
+            max-sm:rounded-2xl max-sm:shadow-md max-sm:max-w-full
+        `}>
 
-                <div className="relative z-10">
-                    <p className="text-sm font-medium mb-1">One-time Registration Fee</p>
-                    <p className="text-3xl font-bold">RS. {registrationFee.toLocaleString()}</p>
-                    <p className="text-sm mt-1 opacity-90">
-                        Charged in the first month only
+            {/* Header with Pricing */}
+            {/* <div className={`relative px-10 py-8 text-center text-white overflow-hidden bg-gradient-to-br from-[#2348AA] to-[#0E1D44]`}> */}
+            <div
+                className="
+    relative px-10 py-8 text-center text-white overflow-hidden
+    max-sm:p-7 max-sm:cursor-pointer
+    max-sm:flex max-sm:items-start max-sm:justify-between max-sm:text-left max-sm:h-[220px]"
+                style={{
+                    background: `linear-gradient(
+                        305deg,
+                        #1E3C72 23%,
+                        #1E3C72 28%,
+                        #1E3C72 32%,
+                        #1E3C72 40%,
+                        #1E3C72 40%,
+                        #1E3C72 42%,
+                        #203F77 48%,
+                        #234581 61%,
+                        #1E3C72 62%,
+                        #2A5298 72%
+                    )`
+                }}
+                onClick={onMobileToggle}
+            >
+
+                <div className="max-sm:flex-1">
+
+                    {/* Plan name label */}
+                    <p className="text-xs tracking-widest opacity-80 flex items-start uppercase">
+                        {planName} Plan
                     </p>
-                </div>
-            </div>
 
-            {/* Plan Details */}
-            <div className="px-6 py-8">
-                <div className="mb-5">
-                    <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${isHighlighted ? 'text-blue-600' : 'text-gray-600'
-                        }`}>
-                        {planName} PLAN
+                    <p className="
+                        text-xs font-light flex items-start text-white mt-[18px]
+                        max-sm:mt-3\4 max-sm:text-sm max-sm:opacity-80
+                    ">
+                        No employee limit - scales as your team grows
                     </p>
 
-                    <div className="flex items-baseline gap-2">
-                        <h2 className="text-4xl font-bold text-gray-900">RS: {price}</h2>
-                        <span className="text-gray-600 text-sm">per employee</span>
+                    <p className="
+                        text-[10px] font-medium flex items-start text-white mt-3
+                        bg-white/20 px-5 py-1 rounded-full w-fit border border-white/30
+                        max-sm:mt-4 max-sm:px-3 max-sm:py-0.5 
+                    ">
+                        MOST POPULAR
+                    </p>
+
+                    <div className="
+                        flex items-baseline gap-1 mt-1
+                        max-sm:mt-2
+                    ">
+                        <p className="text-xl text-white font-semibold max-sm:text-base">Rs.</p>
+                        <span className="text-5xl text-white font-bold max-sm:text-4xl">100</span>
+                        <span className="text-[13px] text-white opacity-80 lowercase font-light ml-1 max-sm:text-[11px]">
+                            / employee / month
+                        </span>
                     </div>
                 </div>
 
-                <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-                    {description}
-                </p>
+                {/* drop down icon */}
+                <div className="hidden max-sm:flex items-center justify-center w-8 h-8 rounded-full bg-white/20 shrink-0 ml-auto mt-1 transition-transform duration-300"
+
+
+                    style={{
+                        transform: isMobileExpanded ? 'rotate(180deg)' : 'rotate(0deg)'
+                    }}
+                >
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+
+            </div>
+
+            {/* Plan Details & Features */}
+            <div className={`
+                    px-10 flex flex-col justify-start max-sm:px-4 max-sm:overflow-hidden max-sm:transition-all max-sm:duration-300 max-sm:ease-in-out
+                ${isMobileExpanded
+                    ? 'max-sm:max-h-[700px] max-sm:opacity-100 max-sm:pt-4 max-sm:pb-2'
+                    : 'max-sm:max-h-0 max-sm:opacity-0 max-sm:pt-0 max-sm:pb-0'
+                }
+            `}>
+
+                <div className="border-t border-gray-100/60 mb-8 w-full max-sm:mb-4" />
 
                 {/* Features List */}
-                <div className="space-y-3 mb-7">
+                <div className="flex flex-col gap-4 max-sm:gap-3 mb-6 max-sm:mb-5">
                     {features.map((feature, index) => (
-                        <div key={index} className="flex items-start gap-3">
-                            <div className={`w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${isHighlighted ? 'bg-blue-600' : 'bg-gray-400'
-                                }`}>
-                                <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                        <div key={index} className="flex items-center gap-4 group">
+                            <div className="
+                                w-4 h-4 rounded-full bg-[#255DAD]
+                                flex items-center justify-center shrink-0
+                                shadow-lg shadow-blue-100
+                                transition-transform group-hover:scale-110
+                            ">
+                                <Check className="w-3 h-3 text-white" strokeWidth={4} />
                             </div>
-                            <span className="text-gray-700 text-sm">{feature}</span>
+                            <span className="text-[#334155] text-[13px] font-medium leading-tight">
+                                {feature}
+                            </span>
                         </div>
                     ))}
                 </div>
 
-                {/* Get the Plan Button (conditional) */}
-                {showButton && (
-                    <button
-                        onClick={onSelectPlan}
-                        className={`relative w-full font-semibold py-3.5 rounded-xl overflow-hidden transition-all duration-200 hover:scale-[1.02] ${isHighlighted
-                                ? 'bg-gradient-to-r from-[#4683fc] to-[#327be2] text-white'
-                                : 'bg-gray-400 text-white hover:bg-gray-500'
-                            }`}
-                    >
-                        <span className={`absolute inset-0 ${isHighlighted ? 'bg-blue-400/40' : 'bg-gray-300/40'
-                            } blur-2xl opacity-70`}></span>
-                        <span className="relative z-10">Get the plan</span>
-                    </button>
-                )}
+                {/* Buttons row */}
+                <div className="flex gap-4 text-sm mb-2 max-sm:flex-col max-sm:gap-2 max-sm:mb-4">
+
+                    {/* Get the Plan button */}
+                    {showButton && (
+                        <button
+                            onClick={onSelectPlan}
+                            disabled={isLoading}
+                            className="
+                                w-full bg-[#0C3080] mb-5 text-white font-bold py-3 rounded-xl
+                                shadow-lg shadow-blue-200 transition-all duration-200
+                                active:scale-[0.98] mt-2
+                                flex items-center justify-center
+                                disabled:opacity-70 disabled:cursor-not-allowed
+                                max-sm:mb-0 max-sm:mt-0 max-sm:rounded-xl max-sm:py-3
+                            "
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                    Processing...
+                                </>
+                            ) : (
+                                'Get the Plan'
+                            )}
+                        </button>
+                    )}
+
+                    {/* Start Free Trial Button */}
+                    {showButton && showFreeTrial && (
+                        <button
+                            onClick={() => navigate(`/terms-and-conditions?isTrial=true&planId=${planId}`)}
+                            className="
+                                w-full bg-white mb-5 text-[#0C3080] border border-[#0C3080]
+                                font-bold py-3 rounded-xl shadow-lg shadow-blue-200
+                                transition-all duration-200 active:scale-[0.98] mt-2
+                                flex items-center justify-center
+                                disabled:opacity-70 disabled:cursor-not-allowed
+                                max-sm:mb-0 max-sm:mt-0 max-sm:rounded-xl max-sm:py-3
+                            "
+                        >
+                            Start Free Trial
+                            <MoveRight className="w-4 h-4 ml-2" />
+                        </button>
+                    )}
+                </div>
+
             </div>
         </div>
     );

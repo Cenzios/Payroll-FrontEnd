@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { startSignup, clearError } from '../store/slices/authSlice';
-import { Loader2 } from 'lucide-react';
-import signupIllustration from '../assets/images/signup-illustration.svg';
+import { Loader2, Mail, User } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 
 
@@ -56,6 +55,10 @@ const Signup = () => {
 
     if (!formData.fullName) {
       errors.fullName = 'Full name is required';
+    } else if (!/^[a-zA-Z\s]+$/.test(formData.fullName.trim())) {
+      errors.fullName = 'Full name must contain letters only';
+    } else if (formData.fullName.trim().length < 3 || formData.fullName.trim().length > 50) {
+      errors.fullName = 'Full name must be between 3 and 50 characters';
     }
 
     if (!formData.email) {
@@ -70,14 +73,35 @@ const Signup = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setValidationErrors((prev) => ({
-      ...prev,
-      [name]: '',
-    }));
+
+    if (name === 'fullName') {
+      // Block non-letter characters entirely
+      if (value && !/^[a-zA-Z\s]*$/.test(value)) {
+        setValidationErrors(prev => ({ ...prev, fullName: 'Full name must contain letters only' }));
+        return; // Don't update formData — character is rejected
+      }
+      setFormData(prev => ({ ...prev, fullName: value }));
+      // Live length feedback once they start typing
+      if (value.trim().length < 3 || value.trim().length > 50) {
+        setValidationErrors(prev => ({ ...prev, fullName: 'Full name must be between 3 and 50 characters' }));
+      } else {
+        setValidationErrors(prev => ({ ...prev, fullName: '' }));
+      }
+      return;
+    }
+
+    if (name === 'email') {
+      setFormData(prev => ({ ...prev, email: value }));
+      if (value && !/\S+@\S+\.\S+/.test(value)) {
+        setValidationErrors(prev => ({ ...prev, email: 'Email is invalid' }));
+      } else {
+        setValidationErrors(prev => ({ ...prev, email: '' }));
+      }
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setValidationErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,6 +112,7 @@ const Signup = () => {
 
       const result = await dispatch(startSignup(formData));
       if (startSignup.fulfilled.match(result)) {
+        console.log('Signup initiated, session token stored:', result.payload.signupToken ? 'Yes' : 'No');
         navigate('/verify-info');
       }
     }
@@ -95,8 +120,8 @@ const Signup = () => {
 
   return (
     <AuthLayout
-      illustration={signupIllustration}
-      title="Let's setup your account"
+      title="Create Account"
+      subtitle="Get started with CenzHRM today"
     >
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -106,24 +131,44 @@ const Signup = () => {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className="w-full mt-3 bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center gap-3"
+          >
+            <GoogleIcon />
+            Continue with Google
+          </button>
+
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <hr className="flex-1 border-gray-300" />
+            <p className="text-gray-500">or</p>
+            <hr className="flex-1 border-gray-300" />
+          </div>
+
           <label
             htmlFor="fullName"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-700 mt-6 mb-2"
           >
             Full Name <span className="text-red-500">*</span>
           </label>
-          <input
-            type="text"
-            id="fullName"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            className={`block w-full px-4 py-3 border ${validationErrors.fullName
-              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-              : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-              } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-            placeholder="Nimal Kumara"
-          />
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <User className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              id="fullName"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.fullName
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+              placeholder="Enter your Full Name"
+            />
+          </div>
           {validationErrors.fullName && (
             <p className="mt-1 text-sm text-red-600">
               {validationErrors.fullName}
@@ -136,20 +181,25 @@ const Signup = () => {
             htmlFor="email"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Email
+            Email <span className="text-red-500">*</span>
           </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className={`block w-full px-4 py-3 border ${validationErrors.email
-              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-              : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-              } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-            placeholder="nimalkumara@mail.com"
-          />
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Mail className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.email
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+              placeholder="Enter your Email"
+            />
+          </div>
           {validationErrors.email && (
             <p className="mt-1 text-sm text-red-600">
               {validationErrors.email}
@@ -165,7 +215,8 @@ const Signup = () => {
              focus:ring-2 focus:ring-[#3A8BFF] focus:ring-offset-2 
              transition-all duration-200 
              disabled:opacity-50 disabled:cursor-not-allowed 
-             flex items-center justify-center"
+             flex items-center justify-center
+             max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:text-white max-sm:border-0 max-sm:shadow-blue-200"
         >
           {isLoading ? (
             <>
@@ -176,16 +227,20 @@ const Signup = () => {
             'Next'
           )}
         </button>
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          className="w-full mt-3 bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center gap-3"
-        >
-          <GoogleIcon />
-          Continue with Google
-        </button>
+
+        <div className="text-center text-sm text-gray-600">
+          Already have an account? {' '}
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Sign In
+          </button>
+        </div>
+
       </form>
-    </AuthLayout>
+    </AuthLayout >
   );
 };
 
