@@ -12,11 +12,12 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Companies from './pages/Companies';
 import Employees from './pages/Employees';
-import Salary from './pages/Salary'; // Import Salary
+import Salary from './pages/Salary';
 import Reports from './pages/Reports';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConfirmationFail from './pages/ConfirmationFail';
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess';
+import NotFound from './pages/NotFound';  
 
 function App() {
   return (
@@ -58,7 +59,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/salary"
           element={
@@ -83,10 +83,10 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="*" element={<NotFound />} />  {/* Catch-all route at the bottom */}
       </Routes>
     </Router>
   );
 }
 
-//12/11/2025  1:50PM
 export default App;
