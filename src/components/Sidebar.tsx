@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -8,8 +8,31 @@ import {
     Settings,
     ChevronDown,
     ChevronRight,
-    Circle
+    Circle,
+    Sparkles // Icon for Upgrade Now
 } from 'lucide-react';
+
+// Memoized Upgrade Now Component to prevent re-renders
+const UpgradeNow = memo(() => {
+    return (
+        <div className="mx-4 mb-4 p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg shadow-blue-200">
+            <div className="flex items-start gap-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                    <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                    <p className="text-sm font-semibold text-white">Upgrade Now</p>
+                    <p className="text-xs text-white/80">Get more features</p>
+                </div>
+                <button className="px-3 py-1.5 bg-white text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-50 transition-colors">
+                    Upgrade
+                </button>
+            </div>
+        </div>
+    );
+});
+
+UpgradeNow.displayName = 'UpgradeNow';
 
 const Sidebar = () => {
     const location = useLocation();
@@ -89,8 +112,12 @@ const Sidebar = () => {
                         </div>
                     )}
                 </div>
-
             </nav>
+
+            {/* Upgrade Now Component - Rendered outside nav, won't re-render on navigation */}
+            <div className="mt-auto">
+                <UpgradeNow />
+            </div>
 
             {/* Settings at Bottom */}
             <div className="p-4 border-t border-gray-200">
