@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import logo from '../assets/images/logo-login.svg';
 import axiosInstance from "../api/axios";
@@ -44,7 +44,7 @@ const UpgradeNow = memo(({ isTrial }: { isTrial: boolean }) => {
 
 UpgradeNow.displayName = 'UpgradeNow';
 
-// Helper function moved outside component to avoid re-creation
+// Helper functions moved outside component to avoid re-creation
 const getItemClass = (isActive: boolean) =>
     `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${isActive
         ? 'bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white font-semibold'
@@ -93,6 +93,9 @@ const Sidebar = () => {
         };
         if (token) checkTrial();
     }, [token, user]);
+
+    // Memoize the UpgradeNow element so it only updates when isTrial changes
+    const upgradeNowElement = useMemo(() => <UpgradeNow isTrial={isTrial} />, [isTrial]);
 
     const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
@@ -235,8 +238,8 @@ const Sidebar = () => {
 
                 {/* Settings */}
                 <div data-sidebar-nav className="p-4 border-t border-white/10">
-                    {/* Memoized Upgrade Now - Won't re-render on navigation */}
-                    <UpgradeNow isTrial={isTrial} />
+                    {/* Use memoized UpgradeNow element */}
+                    {upgradeNowElement}
 
                     <NavLink to="/settings" className={({ isActive }) => getItemClass(isActive)}>
                         <Settings className="w-5 h-5" />
@@ -432,22 +435,8 @@ const Sidebar = () => {
                                 )}
                             </div>
 
-                            {/* Memoized Upgrade Now - Won't re-render on navigation */}
-                            {isTrial && (
-                                <NavLink
-                                    to="/get-plan?isUpgrade=true"
-                                    onClick={() => setIsMobileMoreOpen(false)}
-                                    className={({ isActive }) =>
-                                        `flex items-center gap-4 px-4 py-3.5 border-b border-gray-300 transition-all duration-200 ${isActive
-                                            ? 'bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white'
-                                            : 'text-[#67696C] hover:bg-gray-50'
-                                        }`
-                                    }
-                                >
-                                    <ArrowUpFromLine className="w-5 h-5" />
-                                    <span className="text-[14px] font-semibold">Upgrade Now</span>
-                                </NavLink>
-                            )}
+                            {/* Use memoized UpgradeNow element in mobile drawer */}
+                            {isTrial && upgradeNowElement}
 
                             <NavLink
                                 to="/settings"
