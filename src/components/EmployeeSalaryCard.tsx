@@ -381,7 +381,7 @@ const EmployeeSalaryCard = ({
 
                     {/* Period */}
                     <div className="px-4 md:px-6 md:border-r border-gray-200 w-1/2 md:w-auto max-sm:border-none">
-                        <p className="text-[12px] text-gray-400 mb-0.5">Month</p>
+                        <p className="text-[12px] text-gray-400 mb-0.5">Pay Period</p>
                         <p className="text-[15px] font-bold text-gray-800">{periodLabel}</p>
                     </div>
 
