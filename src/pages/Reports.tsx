@@ -282,6 +282,7 @@ const Reports = () => {
                                     setEndMonth(month);
                                     setEndYear(year);
                                 }}
+                                className="w-full"  
                             />
                         </div>
 
