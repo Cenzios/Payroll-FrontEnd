@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../api/axios";
 import { useGetUserDocumentsQuery } from "../store/apiSlice";
 
-const PlanVerify = ({ referenceId, totalAmount }: { referenceId?: string; totalAmount?: number }) => {
+const PlanVerify = ({ referenceId, totalAmount, onResubmit }: { referenceId?: string; totalAmount?: number; onResubmit?: () => void }) => {
     const navigate = useNavigate();
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [status, setStatus] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
@@ -160,7 +160,11 @@ const PlanVerify = ({ referenceId, totalAmount }: { referenceId?: string; totalA
                     <button
                         onClick={() => {
                             // Reset state and allow re-upload
-                            navigate('/buy-plan?method=manual&step=pay');
+                            if (onResubmit) {
+                                onResubmit();
+                            } else {
+                                navigate('/buy-plan?method=manual&step=pay');
+                            }
                         }}
                         className="flex-1 bg-red-600 text-white rounded-xl py-3 text-sm font-bold hover:bg-red-700 shadow-lg shadow-red-200 flex items-center justify-center gap-2"
                     >
