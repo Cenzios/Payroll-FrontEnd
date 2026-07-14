@@ -7,11 +7,7 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import { useAppSelector } from '../store/hooks';
 
-// Point react-pdf at the local pdfjs worker bundled via pdfjs-dist (avoids CDN/CORS issues)
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url
-).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface DocItem {
     id: string;
