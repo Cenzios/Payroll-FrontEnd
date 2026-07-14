@@ -814,7 +814,7 @@ const Salary = () => {
             <div className="w-full md:w-10/12 flex flex-col overflow-hidden">
 
               {/* FILTER BOX */}
-              <div className="bg-white gap-4 md:gap-14 p-4 md:p-7 w-full rounded-xl mb-6 flex flex-col md:flex-row border border-gray-200">
+              <div className="bg-white gap-4 md:gap-8 p-4 md:p-7 w-full rounded-xl mb-6 flex flex-col md:flex-row md:flex-wrap border border-gray-200">
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-800 mb-2">
                     Search Employee
@@ -831,7 +831,7 @@ const Salary = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-8 max-sm:gap-4">
+                <div className="flex flex-wrap gap-8 max-sm:gap-4">
                   <div className="flex flex-col min-w-[100px]">
                     <label className="text-sm font-medium text-gray-800 mb-2">
                       Select Month
