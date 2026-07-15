@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import logo from '../assets/images/logo-login.svg';
 import axiosInstance from "../api/axios";
@@ -30,10 +30,10 @@ import NotificationDropdown, { Notification } from './NotificationDropdown';
 import NotificationModal from './NotificationModal';
 import Toast from './Toast';
 
-// Memoized Upgrade Now Component to prevent re-renders
-const UpgradeNow = memo(({ isTrial }: { isTrial: boolean }) => {
+// Memoized Upgrade Now Component - prevents re-renders on navigation
+const UpgradeNowButton = memo(({ isTrial }: { isTrial: boolean }) => {
     if (!isTrial) return null;
-    
+
     return (
         <NavLink to="/get-plan?isUpgrade=true" className={({ isActive }) => getItemClass(isActive)}>
             <ArrowUpFromLine className="w-[18px] h-[18px]" />
@@ -42,9 +42,9 @@ const UpgradeNow = memo(({ isTrial }: { isTrial: boolean }) => {
     );
 });
 
-UpgradeNow.displayName = 'UpgradeNow';
+UpgradeNowButton.displayName = 'UpgradeNowButton';
 
-// Helper functions moved outside component to avoid re-creation
+// Helper functions 
 const getItemClass = (isActive: boolean) =>
     `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${isActive
         ? 'bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white font-semibold'
@@ -94,8 +94,8 @@ const Sidebar = () => {
         if (token) checkTrial();
     }, [token, user]);
 
-    // Memoize the UpgradeNow element so it only updates when isTrial changes
-    const upgradeNowElement = useMemo(() => <UpgradeNow isTrial={isTrial} />, [isTrial]);
+    // Memoize the UpgradeNow element – it only updates when isTrial changes
+    const upgradeNowElement = useMemo(() => <UpgradeNowButton isTrial={isTrial} />, [isTrial]);
 
     const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
@@ -187,7 +187,9 @@ const Sidebar = () => {
                 </div>
 
                 {/* Nav Items */}
+                {/* TRIAL EXPIRE LOCK */}
                 <nav data-sidebar-nav className="flex-1 px-4 py-6 space-y-2">
+                    {/* <nav className="flex-1 px-4 py-6 space-y-2"> */}
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}
@@ -237,8 +239,9 @@ const Sidebar = () => {
                 </nav>
 
                 {/* Settings */}
+                {/* TRIAL EXPIRE LOCK */}
                 <div data-sidebar-nav className="p-4 border-t border-white/10">
-                    {/* Use memoized UpgradeNow element */}
+                    {/* Use memoized UpgradeNow element - won't re-render on navigation */}
                     {upgradeNowElement}
 
                     <NavLink to="/settings" className={({ isActive }) => getItemClass(isActive)}>
@@ -435,7 +438,7 @@ const Sidebar = () => {
                                 )}
                             </div>
 
-                            {/* Use memoized UpgradeNow element in mobile drawer */}
+                            {/* Memoized UpgradeNow in mobile drawer */}
                             {isTrial && upgradeNowElement}
 
                             <NavLink

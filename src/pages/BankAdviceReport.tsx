@@ -211,7 +211,7 @@ const BankAdviceReport = () => {
                                         <select
                                             value={selectedYear}
                                             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
+                                            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
                                         >
                                             {years.map(y => <option key={y} value={y}>{y}</option>)}
                                         </select>
@@ -222,7 +222,7 @@ const BankAdviceReport = () => {
                                         <select
                                             value={selectedMonth}
                                             onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
+                                            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
                                         >
                                             {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
                                         </select>

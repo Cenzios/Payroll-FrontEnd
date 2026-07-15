@@ -211,7 +211,7 @@ const CFormReport = () => {
                                         <select
                                             value={selectedYear}
                                             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
+                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
                                         >
                                             {years.map((y) => (
                                                 <option key={y} value={y}>{y}</option>
@@ -225,7 +225,7 @@ const CFormReport = () => {
                                         <select
                                             value={selectedMonth}
                                             onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
+                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
                                         >
                                             {MONTHS.map((m, i) => (
                                                 <option key={i + 1} value={i + 1}>{m}</option>
