@@ -10,6 +10,7 @@ import { fillEPFFormC } from '../utils/fillEPFFormC';
 import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import logo from '../assets/images/logo-login.svg';
+import RoundedSelect from '../components/RoundedSelect'; 
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -36,6 +37,10 @@ const CFormReport = () => {
 
     const [getCFormReport] = useLazyGetCFormReportQuery();
     const years = Array.from({ length: 10 }, (_, i) => currentDate.getFullYear() - i);
+
+    // Prepare options for RoundedSelect
+    const yearsOptions = years.map(y => ({ value: y, label: String(y) }));
+    const monthsOptions = MONTHS.map((m, i) => ({ value: i + 1, label: m }));
 
     const handleApply = async () => {
         if (!selectedCompanyId) return;
@@ -79,7 +84,7 @@ const CFormReport = () => {
     const totals = reportData?.totals;
     const appliedPeriodLabel = `${MONTHS[appliedPeriod.month - 1]} ${appliedPeriod.year}`;
 
-    // ── Export PDF (fills official EPF Form C template) ───────────
+    // ── Export PDF ───────────
     const exportPDF = async () => {
         if (!reportData || rows.length === 0) return;
         try {
@@ -91,13 +96,13 @@ const CFormReport = () => {
                     basicPay: r.basicPay,
                     employerEpf: r.employerEpf,
                     employeeEpf: r.employeeEpf,
-                    totalEarnings: r.totalEarnings,  // gross: basicPay + OT + allowances
+                    totalEarnings: r.totalEarnings,
                 })),
                 totals: {
                     basicPay: totals?.basicPay ?? 0,
                     employerEpf: totals?.employerEpf ?? 0,
                     employeeEpf: totals?.employeeEpf ?? 0,
-                    totalEarnings: totals?.totalEarnings ?? 0,  // gross total
+                    totalEarnings: totals?.totalEarnings ?? 0,
                 },
                 month: selectedMonth,
                 year: selectedYear,
@@ -109,7 +114,7 @@ const CFormReport = () => {
         }
     };
 
-    // ── Export Excel ──────────────────────────────────────────────
+    // ── Export Excel ──────────────
     const exportExcel = () => {
         const wsData: any[] = [
             ['C-Form Summary Report'],
@@ -130,7 +135,7 @@ const CFormReport = () => {
         XLSX.writeFile(wb, `C-Form_${MONTHS[selectedMonth - 1]}_${selectedYear}.xlsx`);
     };
 
-    // ── Export CSV ────────────────────────────────────────────────
+    // ── Export CSV ────────────────
     const exportCSV = () => {
         const wsData: any[] = [
             ['C-Form Summary Report'],
@@ -158,7 +163,6 @@ const CFormReport = () => {
         <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
             <AlertBar />
 
-            {/* Margin bottom gap after the banner */}
             <div className="-mb-4 shrink-0"></div>
 
             <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
@@ -173,7 +177,6 @@ const CFormReport = () => {
                         </div>
                         <div className="flex items-center gap-2 ml-6">
 
-                            {/* Avatar circle */}
                             <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
                                 {user?.fullName?.charAt(0) || 'U'}
                             </div>
@@ -208,29 +211,23 @@ const CFormReport = () => {
                                     {/* Year */}
                                     <div className="flex items-center gap-3 max-sm:flex-1">
                                         <label className="text-sm font-semibold text-gray-600 whitespace-nowrap">Year</label>
-                                        <select
+                                        <RoundedSelect
                                             value={selectedYear}
-                                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
-                                        >
-                                            {years.map((y) => (
-                                                <option key={y} value={y}>{y}</option>
-                                            ))}
-                                        </select>
+                                            onChange={(val) => setSelectedYear(val)}
+                                            options={yearsOptions}
+                                            className="min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
+                                        />
                                     </div>
 
                                     {/* Month */}
                                     <div className="flex items-center gap-3 max-sm:flex-1">
                                         <label className="text-sm font-semibold text-gray-600 whitespace-nowrap">Month</label>
-                                        <select
+                                        <RoundedSelect
                                             value={selectedMonth}
-                                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-100 outline-none min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
-                                        >
-                                            {MONTHS.map((m, i) => (
-                                                <option key={i + 1} value={i + 1}>{m}</option>
-                                            ))}
-                                        </select>
+                                            onChange={(val) => setSelectedMonth(val)}
+                                            options={monthsOptions}
+                                            className="min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
+                                        />
                                     </div>
                                 </div>
 
@@ -316,7 +313,6 @@ const CFormReport = () => {
                                                     <th className="px-4 py-3 text-xs font-semibold text-gray-500 w-[220px]">Employee's Name</th>
                                                     <th className="px-4 py-3 text-xs font-semibold text-gray-500">National Idt. No.</th>
                                                     <th className="px-4 py-3 text-xs font-semibold text-gray-500">Member No</th>
-                                                    {/* Grouped header */}
                                                     <th className="px-4 py-3 text-xs font-semibold text-gray-500 text-right">Total (Rs.)</th>
                                                     <th colSpan={2} className="px-0 py-3 text-xs font-semibold text-gray-500 text-center border-l border-gray-100">
                                                         Contributions (Rs.)
