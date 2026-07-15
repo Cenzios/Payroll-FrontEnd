@@ -76,7 +76,8 @@ const Sidebar = () => {
     // ── Notification state ──
     const { user, token } = useAppSelector((state) => state.auth);
 
-    const [isTrial, setIsTrial] = useState(false);
+    // Initialize isTrial from Redux user data (if available)
+    const [isTrial, setIsTrial] = useState(!!user?.isTrialUser);
 
     useEffect(() => {
         const checkTrial = async () => {
@@ -189,7 +190,6 @@ const Sidebar = () => {
                 {/* Nav Items */}
                 {/* TRIAL EXPIRE LOCK */}
                 <nav data-sidebar-nav className="flex-1 px-4 py-6 space-y-2">
-                    {/* <nav className="flex-1 px-4 py-6 space-y-2"> */}
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}
