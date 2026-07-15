@@ -606,29 +606,6 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><UploadCloud className="h-4 w-4 text-blue-500" /></div>
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Supporting Documents (Max 3)</label>
                                                 </div>
-                                                {initialData?.documents && initialData.documents.filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE').length > 0 && (
-                                                    <div className="mb-2 space-y-2">
-                                                        {initialData.documents
-                                                            .filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE')
-                                                            .map((doc: any) => {
-                                                                const ext = doc.fileName?.split(".").pop()?.toLowerCase();
-                                                                const fileType = fileTypes[ext] || { label: "FILE", style: "bg-gray-100 text-gray-500" };
-                                                                return (
-                                                                    <div
-                                                                        key={doc.id}
-                                                                        className="flex items-center gap-3 px-3 py-2 rounded-xl border border-gray-100 bg-gray-50"
-                                                                    >
-                                                                        <span className={`text-[11px] font-bold px-2 py-1 rounded-md ${fileType.style}`}>
-                                                                            {fileType.label}
-                                                                        </span>
-                                                                        <span className="text-[13px] font-medium text-gray-800 truncate">
-                                                                            {doc.docTitle || doc.fileName}
-                                                                        </span>
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                    </div>
-                                                )}
                                                 <button
                                                     type="button"
                                                     onClick={() => setIsUploadModalOpen(true)}
@@ -678,6 +655,30 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                         setToast({ message: "Uploading documents...", type: "success" });
                                                     }}
                                                 />
+
+                                                {initialData?.documents && initialData.documents.filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE').length > 0 && (
+                                                    <div className="mb-2 space-y-2">
+                                                        {initialData.documents
+                                                            .filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE')
+                                                            .map((doc: any) => {
+                                                                const ext = doc.fileName?.split(".").pop()?.toLowerCase();
+                                                                const fileType = fileTypes[ext] || { label: "FILE", style: "bg-gray-100 text-gray-500" };
+                                                                return (
+                                                                    <div
+                                                                        key={doc.id}
+                                                                        className="flex items-center gap-3 px-3 py-2 rounded-xl border border-gray-100 bg-gray-50"
+                                                                    >
+                                                                        <span className={`text-[11px] font-bold px-2 py-1 rounded-md ${fileType.style}`}>
+                                                                            {fileType.label}
+                                                                        </span>
+                                                                        <span className="text-[13px] font-medium text-gray-800 truncate">
+                                                                            {doc.docTitle || doc.fileName}
+                                                                        </span>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                    </div>
+                                                )}
                                             </div>
                                             <input type="hidden" value={employeeData.department} />
                                         </div>
