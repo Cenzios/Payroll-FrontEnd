@@ -82,7 +82,7 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
       {/* Dropdown List – rendered via portal to avoid clipping */}
       {isOpen && position && createPortal(
         <div
-          className="fixed z-[999] bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto"
+          className="fixed z-[999] bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto overflow-x-hidden whitespace-nowrap"
           style={{
             top: position.top,
             left: position.left,
@@ -93,7 +93,8 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
             <button
               key={opt.value}
               type="button"
-              onClick={() => {
+              onMouseDown={(e) => {
+                e.preventDefault(); // Prevent outside-click from closing before selection
                 onChange(opt.value);
                 setIsOpen(false);
               }}
