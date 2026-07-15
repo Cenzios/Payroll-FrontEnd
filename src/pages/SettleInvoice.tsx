@@ -67,6 +67,10 @@ const SettleInvoice = () => {
         ? new Date(invoice.dueDate).toLocaleDateString('en-GB').replace(/\//g, '.')
         : "20.05.2023"; // Default fallback for visual consistency
 
+    const formattedBillingMonth = invoice?.billingMonth 
+        ? new Date(`${invoice.billingMonth}-01`).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        : '';
+
     return (
         <div
             className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col pt-12 px-4 pb-12"
@@ -138,7 +142,7 @@ const SettleInvoice = () => {
                                             Payment Overdue – Immediate Action Required
                                         </h2>
                                         <p className="text-gray-500 mt-3 leading-relaxed text-[15px]">
-                                            Your payment for the {invoice.billingMonth} period was due on {formattedDueDate}. Late fees may apply. Please clear your outstanding balance as soon as possible to avoid further penalties or service disruption.
+                                            Your payment for the {formattedBillingMonth} period was due on {formattedDueDate}. Late fees may apply. Please clear your outstanding balance as soon as possible to avoid further penalties or service disruption.
                                         </p>
                                     </div>
                                 </div>
@@ -150,9 +154,8 @@ const SettleInvoice = () => {
                                         <p className="text-[28px] font-semibold text-[#EF4444]">
                                             Rs. {invoice.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </p>
-                                        <p className="text-[#64748B] text-[14px] mt-4">
-                                            {/* Includes platform fees + {invoice.employeeCount} active members */}
-                                            Includes principal + Interest + Late fee
+                                        <p className="text-[#64748B] text-[14px] mt-4 font-medium">
+                                            Payment for {invoice.employeeCount} employee(s) in {formattedBillingMonth}.
                                         </p>
                                     </div>
                                     <div className="text-right flex flex-col items-end">
