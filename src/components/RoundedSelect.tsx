@@ -94,7 +94,7 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
               key={opt.value}
               type="button"
               onMouseDown={(e) => {
-                e.preventDefault(); // Prevent outside-click from closing before selection
+                e.preventDefault(); // Prevents outside-click from closing before selection
                 onChange(opt.value);
                 setIsOpen(false);
               }}
