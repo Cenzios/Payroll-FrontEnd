@@ -103,8 +103,16 @@ const BuyPlan = () => {
           headers: { Authorization: `Bearer ${authToken}` }
         });
 
-        setActiveSubscription(response.data.data);
-        console.log('✅ Subscription fetched:', response.data.data);
+        const sub = response.data.data;
+        setActiveSubscription(sub);
+        console.log('✅ Subscription fetched:', sub);
+
+        // ✅ Prevent accessing /buy-plan if user already has an active subscription (e.g. Free Trial or completed payment)
+        if (sub?.status === 'ACTIVE' && !isPlanChange) {
+          console.warn('User already has an ACTIVE subscription. Redirecting to dashboard.');
+          navigate('/dashboard', { replace: true });
+          return;
+        }
       } catch (err) {
         console.error('❌ Failed to fetch subscription:', err);
       } finally {
