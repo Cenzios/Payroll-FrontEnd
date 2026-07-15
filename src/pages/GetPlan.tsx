@@ -115,6 +115,10 @@ const GetPlan = () => {
       // ✅ Navigate to terms-and-conditions page (pass the flag forward)
       navigate(`/terms-and-conditions?isPlanChange=${isPlanChange}`);
     } catch (error: any) {
+      if (error.response?.data?.message === 'PENDING_ARREARS') {
+        navigate('/settle-invoice');
+        return;
+      }
       console.error('❌ Failed to select plan:', error);
       alert(error.response?.data?.message || 'Plan selection failed. Please try again.');
     } finally {
