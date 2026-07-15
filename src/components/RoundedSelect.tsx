@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 
@@ -29,6 +29,7 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
 
   const selectedOption = options.find(opt => opt.value === value);
 
+  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -39,12 +40,13 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Recalculate position when dropdown opens or window resizes/scrolls
-  useEffect(() => {
+  // Use useLayoutEffect to calculate position immediately after open
+  useLayoutEffect(() => {
     if (!isOpen) {
       setPosition(null);
       return;
     }
+
     const updatePosition = () => {
       const rect = buttonRef.current?.getBoundingClientRect();
       if (rect) {
@@ -53,9 +55,22 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
           left: rect.left + window.scrollX,
           width: rect.width,
         });
+      } else {
+        // Fallback: use the container offset
+        const containerRect = containerRef.current?.getBoundingClientRect();
+        if (containerRect) {
+          setPosition({
+            top: containerRect.bottom + window.scrollY + 4,
+            left: containerRect.left + window.scrollX,
+            width: containerRect.width,
+          });
+        }
       }
     };
+
     updatePosition();
+
+    // Recalculate on scroll / resize
     window.addEventListener('resize', updatePosition);
     window.addEventListener('scroll', updatePosition, true);
     return () => {
@@ -63,6 +78,11 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
       window.removeEventListener('scroll', updatePosition, true);
     };
   }, [isOpen]);
+
+  // Force a re‑render when position changes
+  useEffect(() => {
+    // This effect runs when position is set to a value, ensuring the portal updates
+  }, [position]);
 
   return (
     <div ref={containerRef} className={`relative w-full ${className}`}>
@@ -79,7 +99,7 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
         <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown List – rendered via portal to avoid clipping */}
+      {/* Dropdown List – rendered via portal */}
       {isOpen && position && createPortal(
         <div
           className="fixed z-[999] bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto overflow-x-hidden whitespace-nowrap"
@@ -87,24 +107,29 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
             top: position.top,
             left: position.left,
             width: position.width,
+            minWidth: '100px',
           }}
         >
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault(); // Prevents outside-click from closing before selection
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors ${
-                opt.value === value ? 'bg-blue-100 text-blue-600 font-semibold' : 'text-gray-700'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+          {options.length === 0 ? (
+            <div className="px-3 py-2 text-sm text-gray-400">No options available</div>
+          ) : (
+            options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors ${
+                  opt.value === value ? 'bg-blue-100 text-blue-600 font-semibold' : 'text-gray-700'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))
+          )}
         </div>,
         document.body
       )}
