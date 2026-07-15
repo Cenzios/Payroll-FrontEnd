@@ -117,6 +117,11 @@ const PlanPaymentManual = ({ pricePerEmployee, employeeCount }: PlanPaymentManua
             <PlanVerify
                 referenceId={reference || "N/A"}
                 totalAmount={pricePerEmployee * employeeCount}
+                onResubmit={() => {
+                    setIsSubmitted(false);
+                    setFile(null);
+                    setRejectionReason("Your previous payment proof was rejected. Please review your submission and upload a valid bank slip.");
+                }}
             />
         )
     }

@@ -31,6 +31,8 @@ const AlertBar = () => {
     const [remainingDays, setRemainingDays] = useState<number | null>(null);
 
     const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+    const [isCancelled, setIsCancelled] = useState(false);
+    const [cancelledEndDate, setCancelledEndDate] = useState<Date | null>(null);
 
     // ✅ Robust Trial Status & Banner Logic
     useEffect(() => {
@@ -55,6 +57,15 @@ const AlertBar = () => {
                     const isTrialUser = data.data.isTrialUser;
                     const isPaid = data.data.isPaid;
                     setSubscriptionStatus(data.data.status ?? null);
+
+                    // Detect cancelled subscriptions
+                    if (data.data.isCancelled && data.data.cancelledEndDate) {
+                        setIsCancelled(true);
+                        setCancelledEndDate(new Date(data.data.cancelledEndDate));
+                    } else {
+                        setIsCancelled(false);
+                        setCancelledEndDate(null);
+                    }
 
                     // Only show trial banner if user is a trial user AND it's not a paid active/pending plan
                     if (isTrialUser && !isPaid) {
@@ -100,6 +111,13 @@ const AlertBar = () => {
             document.body.removeAttribute('data-trial-expired');
         }
     }, [isTrial, remainingDays]);
+
+    // Redirect to /buy-plan if cancelled subscription's end date has passed
+    useEffect(() => {
+        if (isCancelled && cancelledEndDate && new Date() > cancelledEndDate) {
+            navigate('/buy-plan', { replace: true });
+        }
+    }, [isCancelled, cancelledEndDate, navigate]);
 
     // TRIAL EXPIRE LOCK
     //  global interceptor effect
@@ -178,6 +196,25 @@ const AlertBar = () => {
 
     return (
         <div>
+            {/* Cancelled subscription access banner */}
+            {isCancelled && cancelledEndDate && new Date() <= cancelledEndDate && (
+                <div className='flex shrink-0 items-center justify-center relative py-1 bg-amber-500 text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
+                    <p className="text-white">
+                        Your subscription is cancelled. Access ends on{' '}
+                        <span className="font-bold">
+                            {cancelledEndDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                    </p>
+                    <span className='text-amber-200 text-2xl'>| </span>
+                    <button
+                        data-upgrade-btn
+                        onClick={() => navigate('/buy-plan')}
+                        className='font-extrabold underline cursor-pointer'>
+                        Renew Now
+                    </button>
+                </div>
+            )}
+
             {isTrial && remainingDays !== null && remainingDays <= 7 && (
                 <div className='flex shrink-0 items-center justify-center relative py-1 bg-[#438FEF] text-[11px] text-white h-7 w-full z-50 gap-2 tracking-wider'>
                     <p className="text-white">

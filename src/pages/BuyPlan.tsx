@@ -182,6 +182,10 @@ const BuyPlan = () => {
         }
 
       } catch (err: any) {
+        if (err.response?.data?.message === 'PENDING_ARREARS') {
+          navigate('/settle-invoice');
+          return;
+        }
         console.error('❌ Failed to create Payment Intent:', err);
         setIntentError(err.response?.data?.message || 'Failed to initialize payment.');
       } finally {
