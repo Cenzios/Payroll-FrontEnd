@@ -35,6 +35,7 @@ interface MonthlyData {
     customDeductions?: { type: string; amount: number }[];
     leaveDays?: number;
     sickLeaveDays?: number;
+    nonPaidLeaveDeduction?: number;
 }
 
 interface EmployeeData {
@@ -127,9 +128,9 @@ const EmployeePayrollModal = ({
         const actualSickLeaveDays = row.sickLeaveDays || rawSalary?.sickLeaveDays || 0;
         const actualLeaveDays = row.leaveDays || rawSalary?.leaveDays || 0;
 
-        const nonPaidLeaveDeduction = actualSalaryType === 'MONTHLY' && cWorkingDays > 0
+        const nonPaidLeaveDeduction = row.nonPaidLeaveDeduction ?? (actualSalaryType === 'MONTHLY' && cWorkingDays > 0
             ? ((employeeData.basicSalary || row.basicPay) / cWorkingDays) * actualSickLeaveDays
-            : 0;
+            : 0);
 
         const payslipDeductions = [
             ...(row.customDeductions || []).map(d => ({ name: d.type, amount: d.amount })),
