@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 
 interface Option {
@@ -23,9 +22,7 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
   placeholder = 'Select...'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const selectedOption = options.find(opt => opt.value === value);
 
@@ -39,36 +36,10 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Update position when open or on resize/scroll
-  useEffect(() => {
-    if (!isOpen) {
-      setPosition(null);
-      return;
-    }
-    const updatePosition = () => {
-      const rect = buttonRef.current?.getBoundingClientRect();
-      if (rect) {
-        setPosition({
-          top: rect.bottom + window.scrollY + 4,
-          left: rect.left + window.scrollX,
-          width: rect.width,
-        });
-      }
-    };
-    updatePosition();
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
-    return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
-    };
-  }, [isOpen]);
-
   return (
     <div ref={containerRef} className={`relative w-full ${className}`}>
-      {/* Trigger Button */}
+      {/* Trigger Button – fully rounded */}
       <button
-        ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 transition-all"
@@ -79,16 +50,9 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
         <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown List – rendered via portal with fixed positioning */}
-      {isOpen && position && createPortal(
-        <div
-          className="fixed z-[999] bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto"
-          style={{
-            top: position.top,
-            left: position.left,
-            width: position.width,
-          }}
-        >
+      {/* Dropdown List – rounded container with overflow-hidden */}
+      {isOpen && (
+        <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto overflow-hidden">
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -104,8 +68,7 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
               {opt.label}
             </button>
           ))}
-        </div>,
-        document.body
+        </div>
       )}
     </div>
   );
