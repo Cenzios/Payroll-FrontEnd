@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, logout } from '../store/slices/authSlice';
 import { Mail, Lock, Loader2, EyeOff, Eye } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
-import Toast from '../components/Toast';   
+import Toast from '../components/Toast';
 
 const GoogleIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 48 48">
@@ -130,7 +130,8 @@ const Login = () => {
       title="Welcome back!"
       subtitle="Please login to access your account."
     >
-      {error && (
+      {/* Inline error – hide if it's a suspension message */}
+      {error && !error.toLowerCase().includes('suspended') && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
         </div>
