@@ -34,9 +34,15 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
 
   const selectedOption = options.find((opt) => opt.value === value);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside (but not on portal content)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Check if click is inside the portal container (the dropdown list)
+      const portalEl = document.querySelector('.rounded-select-portal');
+      if (portalEl && portalEl.contains(event.target as Node)) {
+        return; // Don't close if clicking inside the portal
+      }
+
       if (
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
@@ -46,15 +52,12 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-
-    return () =>
-      document.removeEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Calculate dropdown position
   const updatePosition = useCallback(() => {
     const rect = buttonRef.current?.getBoundingClientRect();
-
     if (!rect) return;
 
     setPosition({
@@ -86,29 +89,20 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
     if (!isOpen) {
       updatePosition();
     }
-
     setIsOpen((prev) => !prev);
   };
 
   return (
-    <div
-      ref={containerRef}
-      className={`relative w-full ${className}`}
-    >
+    <div ref={containerRef} className={`relative w-full ${className}`}>
       <button
         ref={buttonRef}
         type="button"
         onClick={handleToggle}
         className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 transition-all"
       >
-        <span
-          className={
-            selectedOption ? 'text-gray-900' : 'text-gray-400'
-          }
-        >
+        <span className={selectedOption ? 'text-gray-900' : 'text-gray-400'}>
           {selectedOption?.label || placeholder}
         </span>
-
         <ChevronDown
           className={`w-4 h-4 text-gray-400 transition-transform ${
             isOpen ? 'rotate-180' : ''
@@ -120,11 +114,12 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
         position &&
         createPortal(
           <div
-            className="fixed z-[9999] bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto"
+            className="fixed z-[9999] bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto overflow-x-hidden whitespace-nowrap rounded-select-portal"
             style={{
               top: position.top,
               left: position.left,
               width: position.width,
+              minWidth: '120px',
             }}
           >
             {options.length === 0 ? (
@@ -136,7 +131,9 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => {
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // Prevent outside-click from closing
+                    e.stopPropagation(); // Stop event from bubbling
                     onChange(opt.value);
                     setIsOpen(false);
                   }}
