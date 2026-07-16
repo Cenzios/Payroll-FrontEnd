@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, logout } from '../store/slices/authSlice';
 import { Mail, Lock, Loader2, EyeOff, Eye } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
-
+import Toast from '../components/Toast';   
 
 const GoogleIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 48 48">
@@ -16,7 +16,6 @@ const GoogleIcon = () => (
 );
 
 const Login = () => {
-
   const handleGoogleLogin = () => {
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
     window.location.href = `${apiBaseUrl}/auth/google`;
@@ -40,21 +39,25 @@ const Login = () => {
     password: '',
   });
 
-  // ── Determine suspension message ──
-  const getSuspensionMessage = () => {
+  // ── Toast state ──
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // ── Show toast on suspension redirect ──
+  useEffect(() => {
     if (reason === 'suspended' || errorParam === 'account_suspended') {
-      return 'Your account has been suspended. Please contact support for assistance.';
+      setToast({
+        message: 'Your account has been suspended. Please contact support for assistance.',
+        type: 'error'
+      });
     }
-    return null;
-  };
-  const suspensionMessage = getSuspensionMessage();
+  }, [reason, errorParam]);
 
   // Clear any existing session when user visits login page
   useEffect(() => {
     if (token) {
       dispatch(logout());
     }
-  }, []); // Only run once on mount
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -99,7 +102,6 @@ const Login = () => {
     if (validateForm()) {
       const result = await dispatch(loginUser(formData));
 
-      // Check if login was successful
       if (loginUser.fulfilled.match(result)) {
         const { hasActivePlan, hasCompany } = result.payload;
 
@@ -110,16 +112,12 @@ const Login = () => {
         });
 
         if (hasActivePlan) {
-          // User has an active subscription → go to dashboard
           console.log('✅ Has subscription → Redirecting to Dashboard');
           navigate('/dashboard');
         } else if (hasCompany) {
-          // User has company (and employee data) but no active subscription
-          // → skip SetCompany, go straight to GetPlan
           console.log('🏢 Has company but no subscription → Redirecting to GetPlan');
           navigate('/get-plan');
         } else {
-          // Brand new user — no company, no subscription → start setup flow
           console.log('🆕 No company, no subscription → Redirecting to SetCompany');
           navigate('/set-company');
         }
@@ -132,12 +130,6 @@ const Login = () => {
       title="Welcome back!"
       subtitle="Please login to access your account."
     >
-      {suspensionMessage && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          {suspensionMessage}
-        </div>
-      )}
-
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
@@ -146,7 +138,6 @@ const Login = () => {
 
       <form onSubmit={handleSubmit} className="space-y-5 max-sm:px-5">
         <div>
-          {/* ✅ GOOGLE LOGIN BUTTON */}
           <button
             type="button"
             onClick={handleGoogleLogin}
@@ -273,6 +264,15 @@ const Login = () => {
           </Link>
         </p>
       </div>
+
+      {/* ── Toast Notification ── */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </AuthLayout>
   );
 };
