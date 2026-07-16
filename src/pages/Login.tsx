@@ -4,12 +4,15 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, logout } from '../store/slices/authSlice';
 import { Mail, Lock, Loader2, EyeOff, Eye } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
-import Toast from '../components/Toast';
 
-const GoogleIcon = () => ( /* ... unchanged ... */ );
-
-// Module‑level flag – persists across mounts
-let toastShown = false;
+const GoogleIcon = () => (
+  <svg className="h-5 w-5" viewBox="0 0 48 48">
+    <path fill="#EA4335" d="M24 9.5c3.1 0 5.9 1.1 8.1 3l6-6C34.2 2.5 29.4 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7 5.4C11.5 13.3 17.3 9.5 24 9.5z" />
+    <path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-2.8-.4-4.1H24v7.8h12.7c-.3 2-1.8 5-5 7l7.7 6c4.5-4.1 7-10.2 7-16.7z" />
+    <path fill="#FBBC05" d="M9.7 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7-5.4C.9 17 .3 20.4.3 24s.6 7 2.4 10.1l7-5.4z" />
+    <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16-5.7l-7.7-6c-2.1 1.4-4.8 2.3-8.3 2.3-6.7 0-12.5-3.8-15.4-9.3l-7 5.4C6.6 42.6 14.6 48 24 48z" />
+  </svg>
+);
 
 const Login = () => {
   const handleGoogleLogin = () => {
@@ -35,8 +38,8 @@ const Login = () => {
     password: '',
   });
 
-  // ── Toast state ──
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  // ── Banner state ──
+  const [showBanner, setShowBanner] = useState(false);
 
   // ── Determine if this is a suspension redirect ──
   const isSuspension = reason === 'suspended' || errorParam === 'account_suspended';
@@ -48,14 +51,17 @@ const Login = () => {
     }
   }, [isSuspension, dispatch]);
 
-  // ── Show toast once – module‑level flag ensures it runs only once ──
+  // ── Show banner and auto‑hide after 5 seconds ──
   useEffect(() => {
-    if (isSuspension && !toastShown) {
-      toastShown = true;
-      setToast({
-        message: 'Your account has been suspended. Please contact support for assistance.',
-        type: 'error',
-      });
+    if (isSuspension) {
+      setShowBanner(true);
+      const timer = setTimeout(() => {
+        setShowBanner(false);
+      }, 5000); // 5 seconds
+
+      return () => clearTimeout(timer);
+    } else {
+      setShowBanner(false);
     }
   }, [isSuspension]);
 
@@ -137,7 +143,14 @@ const Login = () => {
       title="Welcome back!"
       subtitle="Please login to access your account."
     >
-      {/* Inline error – hidden during suspension to avoid duplication */}
+      {/* Suspension banner – auto‑dismisses after 5 seconds */}
+      {isSuspension && showBanner && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg animate-in slide-in-from-top-2 duration-300">
+          Your account has been suspended. Please contact support for assistance.
+        </div>
+      )}
+
+      {/* Inline error – for other login errors (e.g., wrong password) */}
       {error && !isSuspension && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
@@ -145,6 +158,7 @@ const Login = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5 max-sm:px-5">
+        {/* ... (unchanged form fields) ... */}
         <div>
           <button
             type="button"
@@ -272,15 +286,6 @@ const Login = () => {
           </Link>
         </p>
       </div>
-
-      {/* ── Toast Notification ── */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
     </AuthLayout>
   );
 };
