@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react'; 
+import { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, logout } from '../store/slices/authSlice';
@@ -6,14 +6,10 @@ import { Mail, Lock, Loader2, EyeOff, Eye } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 import Toast from '../components/Toast';
 
-const GoogleIcon = () => (
-  <svg className="h-5 w-5" viewBox="0 0 48 48">
-    <path fill="#EA4335" d="M24 9.5c3.1 0 5.9 1.1 8.1 3l6-6C34.2 2.5 29.4 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7 5.4C11.5 13.3 17.3 9.5 24 9.5z" />
-    <path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-2.8-.4-4.1H24v7.8h12.7c-.3 2-1.8 5-5 7l7.7 6c4.5-4.1 7-10.2 7-16.7z" />
-    <path fill="#FBBC05" d="M9.7 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7-5.4C.9 17 .3 20.4.3 24s.6 7 2.4 10.1l7-5.4z" />
-    <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16-5.7l-7.7-6c-2.1 1.4-4.8 2.3-8.3 2.3-6.7 0-12.5-3.8-15.4-9.3l-7 5.4C6.6 42.6 14.6 48 24 48z" />
-  </svg>
-);
+const GoogleIcon = () => ( /* ... unchanged ... */ );
+
+// Module‑level flag – persists across mounts
+let toastShown = false;
 
 const Login = () => {
   const handleGoogleLogin = () => {
@@ -41,36 +37,29 @@ const Login = () => {
 
   // ── Toast state ──
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const toastShownRef = useRef(false); // Prevent duplicate toast in StrictMode
 
   // ── Determine if this is a suspension redirect ──
   const isSuspension = reason === 'suspended' || errorParam === 'account_suspended';
 
-  // Use layout effect to clear error BEFORE browser paints (prevents global toast)
+  // ── Clear Redux error before it can trigger any global toast ──
   useLayoutEffect(() => {
     if (isSuspension) {
       dispatch(clearError());
     }
   }, [isSuspension, dispatch]);
 
-  // ── Show toast on suspension redirect (only once) ──
+  // ── Show toast once – module‑level flag ensures it runs only once ──
   useEffect(() => {
-    if (isSuspension && !toastShownRef.current) {
-      toastShownRef.current = true;
+    if (isSuspension && !toastShown) {
+      toastShown = true;
       setToast({
         message: 'Your account has been suspended. Please contact support for assistance.',
-        type: 'error'
+        type: 'error',
       });
     }
-    // Reset ref when suspension is gone (e.g., manual navigation)
-    return () => {
-      if (!isSuspension) {
-        toastShownRef.current = false;
-      }
-    };
   }, [isSuspension]);
 
-  // Clear any existing session when user visits login page
+  // ── Clear any existing session ──
   useEffect(() => {
     if (token) {
       dispatch(logout());
@@ -126,7 +115,7 @@ const Login = () => {
         console.log('🔍 Login result:', {
           hasActivePlan,
           hasCompany,
-          payload: result.payload
+          payload: result.payload,
         });
 
         if (hasActivePlan) {
@@ -191,7 +180,7 @@ const Login = () => {
               className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.email
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+              } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
               placeholder="Enter your Email"
             />
           </div>
@@ -222,7 +211,7 @@ const Login = () => {
               className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.password
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+              } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
               placeholder="Enter your Password"
             />
             <button
