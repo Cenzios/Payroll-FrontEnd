@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react'; 
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, logout } from '../store/slices/authSlice';
@@ -45,6 +45,14 @@ const Login = () => {
   // ── Determine if this is a suspension redirect ──
   const isSuspension = reason === 'suspended' || errorParam === 'account_suspended';
 
+  // Use layout effect to clear error BEFORE browser paints
+  useLayoutEffect(() => {
+    if (isSuspension) {
+      // Clear Redux error immediately – prevents global toast from appearing
+      dispatch(clearError());
+    }
+  }, [isSuspension, dispatch]);
+
   // ── Show toast on suspension redirect ──
   useEffect(() => {
     if (isSuspension) {
@@ -52,10 +60,8 @@ const Login = () => {
         message: 'Your account has been suspended. Please contact support for assistance.',
         type: 'error'
       });
-      // Clear any Redux error so it doesn't show inline
-      dispatch(clearError());
     }
-  }, [isSuspension, dispatch]);
+  }, [isSuspension]);
 
   // Clear any existing session when user visits login page
   useEffect(() => {
@@ -135,7 +141,7 @@ const Login = () => {
       title="Welcome back!"
       subtitle="Please login to access your account."
     >
-      {/* ✅ Inline error – hidden during suspension to avoid duplication */}
+      {/* Inline error – hidden during suspension to avoid duplication */}
       {error && !isSuspension && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
