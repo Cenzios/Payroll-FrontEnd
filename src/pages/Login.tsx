@@ -42,19 +42,20 @@ const Login = () => {
   // ── Toast state ──
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  // ── Show toast on suspension redirect and clear Redux error ──
+  // ── Determine if this is a suspension redirect ──
+  const isSuspension = reason === 'suspended' || errorParam === 'account_suspended';
+
+  // ── Show toast on suspension redirect ──
   useEffect(() => {
-    if (reason === 'suspended' || errorParam === 'account_suspended') {
+    if (isSuspension) {
       setToast({
         message: 'Your account has been suspended. Please contact support for assistance.',
         type: 'error'
       });
-      // Clear any lingering Redux error to prevent inline banner from flashing
-      if (error && error.toLowerCase().includes('suspended')) {
-        dispatch(clearError());
-      }
+      // Clear any Redux error so it doesn't show inline
+      dispatch(clearError());
     }
-  }, [reason, errorParam, error, dispatch]);
+  }, [isSuspension, dispatch]);
 
   // Clear any existing session when user visits login page
   useEffect(() => {
@@ -134,8 +135,8 @@ const Login = () => {
       title="Welcome back!"
       subtitle="Please login to access your account."
     >
-      {/* Inline error – hidden when it's a suspension message */}
-      {error && !error.toLowerCase().includes('suspended') && (
+      {/* ✅ Inline error – hidden during suspension to avoid duplication */}
+      {error && !isSuspension && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
         </div>
