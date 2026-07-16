@@ -40,6 +40,7 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
   const selectedOption = options.find((opt) => opt.value === value);
   const selectedIndex = options.findIndex((opt) => opt.value === value);
 
+  // Only one updatePosition (with flip logic)
   const updatePosition = useCallback(() => {
     const rect = buttonRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -117,7 +118,7 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
     [isOpen, toggleDropdown, closeDropdown, options, focusedIndex, selectOption, disabled]
   );
 
-  // Click outside
+  // Only one outside‑click handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const portalEl = document.querySelector('.rounded-select-portal');
@@ -132,7 +133,7 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [closeDropdown]);
 
-  // Update position on open / resize / scroll
+  // Only one position‑update effect
   useEffect(() => {
     if (!isOpen) {
       setPosition(null);
@@ -149,7 +150,7 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
     };
   }, [isOpen, updatePosition]);
 
-  // Reset focused index when options change or open
+  // Reset focused index when options change
   useEffect(() => {
     if (isOpen) {
       setFocusedIndex(selectedIndex >= 0 ? selectedIndex : 0);

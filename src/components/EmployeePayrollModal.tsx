@@ -35,6 +35,7 @@ interface MonthlyData {
     customDeductions?: { type: string; amount: number }[];
     leaveDays?: number;
     sickLeaveDays?: number;
+    nonPaidLeaveDeduction?: number;
 }
 
 interface EmployeeData {
@@ -115,8 +116,8 @@ const EmployeePayrollModal = ({
         // Never fall back to calendar days — that caused the mismatch with the Salary page payslip.
         // const cWorkingDays = row.companyWorkingDays || rawSalary?.companyWorkingDays || 0;
         const cWorkingDays =
-            row.companyWorkingDays ??
-            rawSalary?.companyWorkingDays ??
+            row.companyWorkingDays ||
+            rawSalary?.companyWorkingDays ||
             (
                 (row.workedDays || 0) +
                 (row.leaveDays || 0) +
@@ -127,9 +128,9 @@ const EmployeePayrollModal = ({
         const actualSickLeaveDays = row.sickLeaveDays || rawSalary?.sickLeaveDays || 0;
         const actualLeaveDays = row.leaveDays || rawSalary?.leaveDays || 0;
 
-        const nonPaidLeaveDeduction = actualSalaryType === 'MONTHLY' && cWorkingDays > 0
+        const nonPaidLeaveDeduction = row.nonPaidLeaveDeduction || (actualSalaryType === 'MONTHLY' && cWorkingDays > 0
             ? ((employeeData.basicSalary || row.basicPay) / cWorkingDays) * actualSickLeaveDays
-            : 0;
+            : 0);
 
         const payslipDeductions = [
             ...(row.customDeductions || []).map(d => ({ name: d.type, amount: d.amount })),
