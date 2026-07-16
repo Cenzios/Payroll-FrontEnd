@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect } from 'react'; 
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'; 
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, logout } from '../store/slices/authSlice';
@@ -41,26 +41,33 @@ const Login = () => {
 
   // ── Toast state ──
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const toastShownRef = useRef(false); // Prevent duplicate toast in StrictMode
 
   // ── Determine if this is a suspension redirect ──
   const isSuspension = reason === 'suspended' || errorParam === 'account_suspended';
 
-  // Use layout effect to clear error BEFORE browser paints
+  // Use layout effect to clear error BEFORE browser paints (prevents global toast)
   useLayoutEffect(() => {
     if (isSuspension) {
-      // Clear Redux error immediately – prevents global toast from appearing
       dispatch(clearError());
     }
   }, [isSuspension, dispatch]);
 
-  // ── Show toast on suspension redirect ──
+  // ── Show toast on suspension redirect (only once) ──
   useEffect(() => {
-    if (isSuspension) {
+    if (isSuspension && !toastShownRef.current) {
+      toastShownRef.current = true;
       setToast({
         message: 'Your account has been suspended. Please contact support for assistance.',
         type: 'error'
       });
     }
+    // Reset ref when suspension is gone (e.g., manual navigation)
+    return () => {
+      if (!isSuspension) {
+        toastShownRef.current = false;
+      }
+    };
   }, [isSuspension]);
 
   // Clear any existing session when user visits login page
