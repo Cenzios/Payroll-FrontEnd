@@ -40,7 +40,6 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
   const selectedOption = options.find((opt) => opt.value === value);
   const selectedIndex = options.findIndex((opt) => opt.value === value);
 
-  // Only one updatePosition (with flip logic)
   const updatePosition = useCallback(() => {
     const rect = buttonRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -118,7 +117,6 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
     [isOpen, toggleDropdown, closeDropdown, options, focusedIndex, selectOption, disabled]
   );
 
-  // Only one outside‑click handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const portalEl = document.querySelector('.rounded-select-portal');
@@ -133,7 +131,6 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [closeDropdown]);
 
-  // Only one position‑update effect
   useEffect(() => {
     if (!isOpen) {
       setPosition(null);
@@ -150,7 +147,6 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
     };
   }, [isOpen, updatePosition]);
 
-  // Reset focused index when options change
   useEffect(() => {
     if (isOpen) {
       setFocusedIndex(selectedIndex >= 0 ? selectedIndex : 0);
@@ -199,15 +195,15 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
             style={{
               top: position.top,
               left: position.left,
-              width: position.width,
-              minWidth: '120px',
+              minWidth: Math.max(position.width, 120), // at least button width
+              width: 'max-content',                    // expand to fit content
               maxHeight: '200px',
             }}
           >
             <div
               className={`
                 bg-white border border-gray-200 rounded-xl shadow-lg
-                overflow-y-auto overflow-x-hidden
+                overflow-y-auto
                 py-1
                 ${position.flip ? 'shadow-[0_-4px_12px_rgba(0,0,0,0.1)]' : 'shadow-[0_4px_12px_rgba(0,0,0,0.1)]'}
               `}
@@ -232,11 +228,9 @@ const RoundedSelect: React.FC<RoundedSelectProps> = ({
                       block w-full text-left px-4 py-2.5 text-sm
                       transition-colors duration-150
                       hover:bg-blue-50
-                      truncate
-                      ${
-                        opt.value === value
-                          ? 'bg-blue-100 text-blue-700 font-medium'
-                          : 'text-gray-700'
+                      ${opt.value === value
+                        ? 'bg-blue-100 text-blue-700 font-medium'
+                        : 'text-gray-700'
                       }
                       ${focusedIndex === index ? 'bg-blue-50/70' : ''}
                     `}
