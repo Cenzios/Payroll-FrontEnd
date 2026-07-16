@@ -36,6 +36,7 @@ axiosInstance.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
     const code = error.response?.data?.code;
+    const message = error.response?.data?.message || '';
 
     /* 🔥 TRIAL EXPIRATION HANDLING */
     if (status === 403 && code === 'TRIAL_EXPIRED') {
@@ -89,7 +90,14 @@ axiosInstance.interceptors.response.use(
       if (!isLoginPage && !isLoginRequest) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+
+        // Check if the error message indicates account suspension
+        const isSuspended = message.toLowerCase().includes('suspended');
+        const redirectUrl = isSuspended
+          ? `/login?reason=suspended`
+          : '/login';
+
+        window.location.href = redirectUrl;
       }
       return Promise.reject(error);
     }

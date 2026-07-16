@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, logout } from '../store/slices/authSlice';
 import { Mail, Lock, Loader2, EyeOff, Eye } from 'lucide-react';
@@ -23,6 +23,10 @@ const Login = () => {
   };
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
+  const reason = searchParams.get('reason');
+  const errorParam = searchParams.get('error');
+
   const [showPassword, setShowPassword] = useState(false);
   const { isLoading, error, token } = useAppSelector((state) => state.auth);
 
@@ -35,6 +39,15 @@ const Login = () => {
     email: '',
     password: '',
   });
+
+  // ── Determine suspension message ──
+  const getSuspensionMessage = () => {
+    if (reason === 'suspended' || errorParam === 'account_suspended') {
+      return 'Your account has been suspended. Please contact support for assistance.';
+    }
+    return null;
+  };
+  const suspensionMessage = getSuspensionMessage();
 
   // Clear any existing session when user visits login page
   useEffect(() => {
@@ -119,6 +132,12 @@ const Login = () => {
       title="Welcome back!"
       subtitle="Please login to access your account."
     >
+      {suspensionMessage && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {suspensionMessage}
+        </div>
+      )}
+
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
