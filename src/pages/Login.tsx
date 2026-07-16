@@ -1,9 +1,10 @@
-import { useState, useEffect, useLayoutEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, logout } from '../store/slices/authSlice';
 import { Mail, Lock, Loader2, EyeOff, Eye } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
+import axios from 'axios';
 
 const GoogleIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 48 48">
@@ -40,9 +41,20 @@ const Login = () => {
 
   // ── Banner state ──
   const [showBanner, setShowBanner] = useState(false);
+  // ── Polling state ──
+  const [pollingEmail, setPollingEmail] = useState<string | null>(null);
+  const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Determine if this is a suspension redirect ──
   const isSuspension = reason === 'suspended' || errorParam === 'account_suspended';
+
+  // ── Read email from sessionStorage on mount ──
+  useEffect(() => {
+    const email = sessionStorage.getItem('suspended_email');
+    if (email) {
+      setPollingEmail(email);
+    }
+  }, []);
 
   // ── Clear Redux error before it can trigger any global toast ──
   useLayoutEffect(() => {
@@ -51,19 +63,58 @@ const Login = () => {
     }
   }, [isSuspension, dispatch]);
 
-  // ── Show banner and auto‑hide after 5 seconds ──
+  // ── Show banner while isSuspension is true ──
   useEffect(() => {
     if (isSuspension) {
       setShowBanner(true);
-      const timer = setTimeout(() => {
-        setShowBanner(false);
-      }, 5000); // 5 seconds
-
-      return () => clearTimeout(timer);
     } else {
       setShowBanner(false);
     }
   }, [isSuspension]);
+
+  // ── Poll for status change when suspension is detected ──
+  useEffect(() => {
+    if (!isSuspension || !pollingEmail) {
+      if (pollingInterval.current) {
+        clearInterval(pollingInterval.current);
+        pollingInterval.current = null;
+      }
+      return;
+    }
+
+    const checkStatus = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/auth/status-by-email?email=${pollingEmail}`
+        );
+        const data = response.data?.data || response.data;
+        if (data?.status === 'ACTIVE') {
+          // User is active – clear banner and params
+          sessionStorage.removeItem('suspended_email');
+          setPollingEmail(null);
+          // Clear the URL params
+          const url = new URL(window.location.href);
+          url.searchParams.delete('reason');
+          url.searchParams.delete('error');
+          window.history.replaceState({}, '', url.toString());
+          // Banner will disappear because isSuspension becomes false
+        }
+      } catch (err) {
+        // ignore polling errors; keep trying
+      }
+    };
+
+    // Poll every 3 seconds
+    pollingInterval.current = setInterval(checkStatus, 3000);
+    checkStatus();
+
+    return () => {
+      if (pollingInterval.current) {
+        clearInterval(pollingInterval.current);
+        pollingInterval.current = null;
+      }
+    };
+  }, [isSuspension, pollingEmail]);
 
   // ── Clear any existing session ──
   useEffect(() => {
@@ -113,6 +164,16 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
+      // Clear suspension params so banner disappears
+      if (isSuspension) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('reason');
+        url.searchParams.delete('error');
+        window.history.replaceState({}, '', url.toString());
+        sessionStorage.removeItem('suspended_email');
+        setPollingEmail(null);
+      }
+
       const result = await dispatch(loginUser(formData));
 
       if (loginUser.fulfilled.match(result)) {
@@ -143,14 +204,14 @@ const Login = () => {
       title="Welcome back!"
       subtitle="Please login to access your account."
     >
-      {/* Suspension banner – auto‑dismisses after 5 seconds */}
+      {/* Suspension banner – shown while isSuspension true */}
       {isSuspension && showBanner && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg animate-in slide-in-from-top-2 duration-300">
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           Your account has been suspended. Please contact support for assistance.
         </div>
       )}
 
-      {/* Inline error – for other login errors (e.g., wrong password) */}
+      {/* Inline error – for other login errors */}
       {error && !isSuspension && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
@@ -158,7 +219,6 @@ const Login = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5 max-sm:px-5">
-        {/* ... (unchanged form fields) ... */}
         <div>
           <button
             type="button"

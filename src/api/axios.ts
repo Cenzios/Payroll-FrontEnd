@@ -88,6 +88,15 @@ axiosInstance.interceptors.response.use(
       const isLoginRequest = error.config?.url?.includes('/auth/login');
 
       if (!isLoginPage && !isLoginRequest) {
+        // Store email BEFORE clearing user data
+        let userEmail = '';
+        try {
+          const userData = JSON.parse(localStorage.getItem('user') || '{}');
+          if (userData.email) {
+            userEmail = userData.email;
+          }
+        } catch (e) { /* ignore */ }
+
         localStorage.removeItem('token');
         localStorage.removeItem('user');
 
@@ -96,6 +105,10 @@ axiosInstance.interceptors.response.use(
         const redirectUrl = isSuspended
           ? `/login?reason=suspended`
           : '/login';
+
+        if (isSuspended && userEmail) {
+          sessionStorage.setItem('suspended_email', userEmail);
+        }
 
         window.location.href = redirectUrl;
       }
