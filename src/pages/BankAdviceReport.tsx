@@ -9,6 +9,7 @@ import Toast from '../components/Toast';
 import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import logo from '../assets/images/logo-login.svg';
+import RoundedSelect from '../components/RoundedSelect';
 
 const BankAdviceReport = () => {
     const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
@@ -27,7 +28,7 @@ const BankAdviceReport = () => {
     const { data: employeesData, isLoading: isLoadingEmployees } = useGetEmployeesQuery({
         companyId: selectedCompanyId || '',
         status: 'ACTIVE',
-        limit: 1000 // Get all active employees
+        limit: 1000
     });
 
     const { data: salaryHistory, isLoading: isLoadingSalary } = useGetSalaryHistoryQuery({
@@ -93,12 +94,18 @@ const BankAdviceReport = () => {
         setToast({ message: `${format.toUpperCase()} exported successfully`, type: 'success' });
     };
 
+    const hasData = !isLoadingEmployees && !isLoadingSalary && bankReportData.length > 0;
+
     const months = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ];
 
     const years = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - i);
+
+    // Prepare options for RoundedSelect
+    const yearsOptions = years.map(y => ({ value: y, label: String(y) }));
+    const monthsOptions = months.map((m, i) => ({ value: i, label: m }));
 
     const MobileCard = ({ item, expandedId, setExpandedId }: {
         item: any,
@@ -157,7 +164,6 @@ const BankAdviceReport = () => {
         <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
             <AlertBar />
 
-            {/* Margin bottom gap after the banner */}
             <div className="-mb-4 shrink-0"></div>
 
             <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
@@ -172,7 +178,6 @@ const BankAdviceReport = () => {
                         </div>
                         <div className="flex items-center gap-2 ml-6">
 
-                            {/* Avatar circle */}
                             <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
                                 {user?.fullName?.charAt(0) || 'U'}
                             </div>
@@ -204,26 +209,26 @@ const BankAdviceReport = () => {
                         <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
                             <div className="flex items-center gap-6 max-sm:gap-4 max-sm:w-full max-sm:flex-col">
                                 <div className='flex flex-row gap-4'>
+                                    {/* Year */}
                                     <div className="flex items-center gap-3 max-sm:flex-1">
                                         <span className="text-sm font-medium text-gray-600">Year</span>
-                                        <select
+                                        <RoundedSelect
                                             value={selectedYear}
-                                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
-                                        >
-                                            {years.map(y => <option key={y} value={y}>{y}</option>)}
-                                        </select>
+                                            onChange={(val) => setSelectedYear(val)}
+                                            options={yearsOptions}
+                                            className="min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
+                                        />
                                     </div>
 
+                                    {/* Month */}
                                     <div className="flex items-center gap-3 max-sm:flex-1">
                                         <span className="text-sm font-medium text-gray-600">Month</span>
-                                        <select
+                                        <RoundedSelect
                                             value={selectedMonth}
-                                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-100 min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
-                                        >
-                                            {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
-                                        </select>
+                                            onChange={(val) => setSelectedMonth(val)}
+                                            options={monthsOptions}
+                                            className="min-w-[100px] max-sm:flex-1 max-sm:min-w-0"
+                                        />
                                     </div>
                                 </div>
 
@@ -243,13 +248,14 @@ const BankAdviceReport = () => {
 
                                     <div className="relative">
                                         <button
+                                            disabled={!hasData}
                                             onClick={() => setIsExportOpen(!isExportOpen)}
-                                            className="flex items-center gap-1.5 px-6 py-2 bg-white hover:bg-gray-50 text-green-600 text-sm font-medium rounded-lg border border-green-200 transition-colors max-sm:flex-1 max-sm:py-2.5"
+                                            className="flex items-center gap-1.5 px-6 py-2 bg-white hover:bg-gray-50 text-green-600 text-sm font-medium rounded-lg border border-green-200 transition-colors max-sm:flex-1 max-sm:py-2.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
                                         >
                                             Export
                                             <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
                                         </button>
-                                        {isExportOpen && (
+                                        {isExportOpen && hasData && (
                                             <>
                                                 <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
                                                 <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
@@ -297,7 +303,7 @@ const BankAdviceReport = () => {
                                         ) : bankReportData.length === 0 ? (
                                             <tr>
                                                 <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
-                                                    No bank advice data found for the selected period.
+                                                    No bank advice data found for the selected month.
                                                 </td>
                                             </tr>
                                         ) : (

@@ -15,7 +15,8 @@ import {
   ChevronDown,
   Building2,
   AlertTriangle,
-  LogOut
+  LogOut,
+  CalendarClock
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
@@ -82,10 +83,10 @@ const Dashboard = () => {
     skip: !user || isTokenPending,
   });
 
-  const { data: lastMonthSalary = 0 } = useQuery({
+  const { data: lastMonthData = { totalNetPay: 0, totalCompanyEPFETF: 0, totalEmployeeEPF: 0 } } = useQuery({
     queryKey: ['lastMonthSalary', selectedCompanyId],
     queryFn: async () => {
-      if (!selectedCompanyId) return 0;
+      if (!selectedCompanyId) return { totalNetPay: 0, totalCompanyEPFETF: 0, totalEmployeeEPF: 0 };
       const now = new Date();
       const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
@@ -97,7 +98,16 @@ const Dashboard = () => {
         lastMonthDate.getFullYear()
       );
 
-      return response.data?.monthlyData?.[0]?.totals?.totalNetPay || 0;
+      // const totals = response.data?.monthlyData?.[0]?.totals;
+      const payload = response.data || response;
+      const totals = payload?.monthlyData?.[0]?.totals;
+
+      return {
+        totalNetPay: totals?.totalNetPay || 0,
+        // totalCompanyEPFETF: (totals?.totalCompanyEPF || 0) + (totals?.totalCompanyETF || 0),
+        totalCompanyEPFETF: totals?.totalCompanyEPFETF || 0,
+        totalEmployeeEPF: totals?.totalEmployeeEPF || 0,
+      };
     },
     enabled: !!selectedCompanyId,
   });
@@ -272,8 +282,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-clip bg-gray-50 font-sans">
-
+    <div className="flex flex-col h-screen overflow-y-auto bg-gray-50 font-sans">
       <AlertBar />
 
       {/* Margin bottom gap after the banner */}
@@ -283,7 +292,7 @@ const Dashboard = () => {
         <Sidebar />
 
         {/* Main Content */}
-        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-svh max-sm:p-5 max-sm:py-7">
+        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-y-auto flex flex-col max-sm:h-svh max-sm:p-5 max-sm:py-7">
 
           {/* ── MOBILE HEADER (replaces PageHeader on mobile) ── */}
           <div className="hidden max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
@@ -291,6 +300,7 @@ const Dashboard = () => {
               <img src={logo} alt="logo" />
             </div>
             <div className="flex items-center gap-2 ml-6">
+
               {/* Company switcher pill */}
               <button
                 onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
@@ -298,10 +308,13 @@ const Dashboard = () => {
               >
                 <Building2 className="w-3 h-3 text-gray-500" />
                 {selectedCompany?.name
-                  ? selectedCompany.name.split(' ').slice(0, 2).join(' ') + ' ...'
+                  ? selectedCompany.name.trim().length > 10
+                    ? selectedCompany.name.trim().slice(0, 10) + '...'
+                    : selectedCompany.name.trim()
                   : 'Select Co'}
                 <ChevronDown className="w-3 h-3 text-gray-400" />
               </button>
+
               <CompanySwitcher
                 isOpen={isCompanyDropdownOpen}
                 onClose={() => setIsCompanyDropdownOpen(false)}
@@ -387,8 +400,10 @@ const Dashboard = () => {
                     >
                       <Building2 className="w-4 h-4 text-gray-500" />
                       {selectedCompany?.name
-                        ? selectedCompany.name.split(' ').slice(0, 2).join(' ') + ' ...'
-                        : 'Select Company'}
+                        ? selectedCompany.name.trim().length > 10
+                          ? selectedCompany.name.trim().slice(0, 10) + '...'
+                          : selectedCompany.name.trim()
+                        : 'Select Co'}
                       <ChevronDown className="w-4 h-4 text-gray-400" />
                     </button>
 
@@ -418,7 +433,7 @@ const Dashboard = () => {
                       openAddEmployee();
                     }}
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white pl-5 pr-2 py-2 rounded-full text-sm font-semibold transition-colors"
-                    title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
+                    title={!selectedCompanyId ? "Please select a company from the Dashboard first" : "Add New Employee"}
                   >
                     <span className="hidden sm:inline whitespace-nowrap">Add New Employee</span>
                     <div className="bg-white text-blue-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 ml-1">
@@ -459,23 +474,23 @@ const Dashboard = () => {
                   <StatCard
                     icon={DollarSign}
                     title="Total Salary Paid"
-                    value={`Rs ${lastMonthSalary.toLocaleString()}`}
+                    value={`Rs ${lastMonthData.totalNetPay.toLocaleString()}`}
                     colorTheme="green"
                     showLastMonth={true}
                   />
                   <StatCard
-                    icon={Plus}
+                    icon={CalendarClock}
                     title="Company EPF/ETF Amount"
-                    value={`Rs ${((dashboardData?.totalCompanyEPF || 0) + (dashboardData?.totalCompanyETF || 0)).toLocaleString()}`}
+                    value={`Rs ${lastMonthData.totalCompanyEPFETF.toLocaleString()}`}
                     colorTheme="purple"
-                    showLastMonth={false}
+                    showLastMonth={true}
                   />
                   <StatCard
                     icon={PieChart}
                     title="Total Employee EPF"
-                    value={`Rs ${dashboardData?.totalEmployeeEPF?.toLocaleString() || '0'}`}
+                    value={`Rs ${lastMonthData.totalEmployeeEPF.toLocaleString()}`}
                     colorTheme="orange"
-                    showLastMonth={false}
+                    showLastMonth={true}
                   />
                 </div>
 
@@ -516,7 +531,7 @@ const Dashboard = () => {
                 </div>
 
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start flex-1 overflow-hidden">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start flex-1">
                   {/* Left (2/3) – Salary Paid Summary Chart */}
                   <div className="lg:col-span-2 h-full flex flex-col">
                     <SalaryPaidSummary companyId={selectedCompanyId || ''} />

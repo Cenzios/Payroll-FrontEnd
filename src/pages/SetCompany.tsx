@@ -18,6 +18,7 @@ interface DecodedToken {
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const phoneRegex = /^\+94\s?\d{9}$/;
+const sriLankaPhoneRegex = /^(?:\+94|0)(11|21|23|24|25|26|27|31|32|33|34|35|36|37|38|41|45|47|51|52|54|55|57|63|65|66|67|81|91|7[0125678])\d{7}$/;
 
 const SetCompany = () => {
   const navigate = useNavigate();
@@ -100,8 +101,14 @@ const SetCompany = () => {
     switch (field) {
       case 'companyName': {
         const trimmed = value.trim();
+        if (!trimmed)
+          return 'Company name is required';
         if (!trimmed || trimmed.length < 3 || trimmed.length > 50)
           return 'Company name must be between 3 and 50 characters';
+        // if (!/[a-zA-Z0-9]/.test(value.trim()))
+        //   return 'Name must contain letters or numbers';
+        else if (/[^a-zA-Z0-9]{6,}/.test(value.trim()))
+          return "Name must not contain more than 5 consecutive special characters";
         return '';
       }
       case 'companyEmail': {
@@ -123,13 +130,21 @@ const SetCompany = () => {
       case 'companyPhone': {
         if (!value.trim())
           return 'Company phone is required';
-        if (!phoneRegex.test(value.trim()))
-          return 'Must be +94 followed by 9 digits';
+        if (value.trim().replace(/^(\+94|0)/, "").length > 9)
+          return 'Must be followed by 9 digits';
+        if (!sriLankaPhoneRegex.test(value.trim()))
+          return 'Enter a valid Sri Lankan number (e.g. 0771234567 or +94771234567)';
         return '';
       }
       case 'companyAddress': {
         if (!value.trim())
           return 'Company address is required';
+        if (!/[a-zA-Z0-9]/.test(value.trim()))
+          return 'Address must contain letters and numbers';
+        if (value.trim().length < 5 || value.trim().length > 50)
+          return 'Address must be between 5 and 50 characters';
+        if (/[^a-zA-Z0-9\s]{6,}/.test(value.trim()))
+          return "Address must not contain more than 5 consecutive special characters";
         return '';
       }
       default:
@@ -147,6 +162,15 @@ const SetCompany = () => {
     setValidationErrors(errors);
     // return !errors.companyName && !errors.companyCount && !errors.numberOfPeople;
     return !errors.companyName && !errors.companyEmail && !errors.companyPhone && !errors.companyAddress;
+  };
+
+  const isFormValid = (): boolean => {
+    return (
+      !validateField('companyName', formData.companyName) &&
+      !validateField('companyEmail', formData.companyEmail) &&
+      !validateField('companyPhone', formData.companyPhone) &&
+      !validateField('companyAddress', formData.companyAddress)
+    );
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -213,7 +237,7 @@ const SetCompany = () => {
             htmlFor="companyName"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Company name <span className="text-red-500">*</span>
+            Company Name <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <input
@@ -414,7 +438,7 @@ const SetCompany = () => {
 
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || !isFormValid()}
           className="w-full bg-[#3A8BFF] text-white font-semibold py-3 px-4 rounded-lg 
              hover:bg-[#337AEB] focus:outline-none 
              focus:ring-2 focus:ring-[#3A8BFF] focus:ring-offset-2 

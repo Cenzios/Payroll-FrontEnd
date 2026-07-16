@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Calendar } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -12,6 +12,7 @@ import {
   useGetAllPendingLoanInstallmentsQuery,
   useGetSalaryHistoryQuery,
   useSaveSalaryMutation,
+  useUpdateEmployeeMutation,
 } from "../store/apiSlice";
 import { Employee } from "../types/employee.types";
 import Toast from "../components/Toast";
@@ -29,7 +30,10 @@ import {
   setYear,
   setEmployeeLeaveDays,
   setEmployeeSickLeaveDays,
+  setEmployeeAllowances,
+  setEmployeeDeductions,
   setMonth,
+  resetSalaryState,
 } from "../store/slices/salarySlice";
 import EmployeeSalaryCard from "../components/EmployeeSalaryCard";
 import PayslipPreview from "../components/PayslipPreview";
@@ -49,6 +53,8 @@ const Salary = () => {
     employeeLoanEnabled,
     employeeLeaveDays,
     employeeSickLeaveDays,
+    employeeAllowances,
+    employeeDeductions,
     previewPayslip,
     selectedMonth,
     selectedYear,
@@ -61,6 +67,7 @@ const Salary = () => {
     null,
   );
   const [saveSalary, { isLoading: isSaving }] = useSaveSalaryMutation();
+  const [updateEmployee] = useUpdateEmployeeMutation();
 
   const [toast, setToast] = useState<{
     message: string;
@@ -116,12 +123,6 @@ const Salary = () => {
   const [deductionToggles, setDeductionToggles] = useState<
     Record<string, boolean>
   >({});
-  const [salaryAllowances, setSalaryAllowances] = useState<
-    Record<string, { type: string; amount: number }[]>
-  >({});
-  const [salaryDeductions, setSalaryDeductions] = useState<
-    Record<string, { type: string; amount: number }[]>
-  >({});
 
   // Manage modal state
   const [manageModal, setManageModal] = useState<{
@@ -136,8 +137,8 @@ const Salary = () => {
     const empId = emp.id;
     let existing =
       type === "allowance"
-        ? salaryAllowances[empId] || []
-        : salaryDeductions[empId] || [];
+        ? employeeAllowances[empId] || []
+        : employeeDeductions[empId] || [];
 
     // Populate from DB if not edited locally yet
     if (existing.length === 0) {
@@ -150,7 +151,7 @@ const Salary = () => {
           type: a.type,
           amount: a.amount,
         }));
-        setSalaryAllowances((prev) => ({ ...prev, [empId]: existing }));
+        dispatch(setEmployeeAllowances({ id: empId, allowances: existing }));
       } else if (
         type === "deduction" &&
         emp.recurringDeductions &&
@@ -160,7 +161,7 @@ const Salary = () => {
           type: d.type,
           amount: d.amount,
         }));
-        setSalaryDeductions((prev) => ({ ...prev, [empId]: existing }));
+        dispatch(setEmployeeDeductions({ id: empId, deductions: existing }));
       }
     }
 
@@ -168,24 +169,41 @@ const Salary = () => {
     setManageModal({ type, empId });
   };
 
-  const handleModalSave = () => {
+  const handleModalSave = async () => {
     if (!manageModal) return;
     const validEntries = modalEntries.filter(
       (e) => e.type.trim() && e.amount > 0,
     );
-    if (manageModal.type === "allowance") {
-      setSalaryAllowances((prev) => ({
-        ...prev,
-        [manageModal.empId]: validEntries,
-      }));
+
+    const { type, empId } = manageModal;
+
+    // Update Redux immediately so the UI reflects the change without waiting on a refetch
+    if (type === "allowance") {
+      dispatch(setEmployeeAllowances({ id: empId, allowances: validEntries }));
     } else {
-      setSalaryDeductions((prev) => ({
-        ...prev,
-        [manageModal.empId]: validEntries,
-      }));
+      dispatch(setEmployeeDeductions({ id: empId, deductions: validEntries }));
     }
+
     setManageModal(null);
     setModalEntries([]);
+
+    // Persist to the employee record so it survives refresh / navigation
+    if (!selectedCompanyId) return;
+    try {
+      await updateEmployee({
+        id: empId,
+        companyId: selectedCompanyId,
+        data:
+          type === "allowance"
+            ? { recurringAllowances: validEntries }
+            : { recurringDeductions: validEntries },
+      }).unwrap();
+    } catch (error: any) {
+      setToast({
+        message: error.data?.message || `Failed to save ${type}s`,
+        type: "error",
+      });
+    }
   };
 
   const handleModalCancel = () => {
@@ -217,6 +235,22 @@ const Salary = () => {
       skip: !selectedCompanyId,
     },
   );
+
+  // --- Reset state when month/year changes ---
+  useEffect(() => {
+    // Clear Redux overrides
+    dispatch(resetSalaryState());
+
+    // Clear local functional states
+    setAllowanceToggles({});
+    setDeductionToggles({});
+    setTouchedFields({
+      month: false,
+      companyDays: false,
+      employeeDays: {},
+    });
+    setSelectedEmployee(null);
+  }, [selectedMonth, selectedYear, dispatch]);
 
   const employees = data?.employees || [];
 
@@ -276,6 +310,23 @@ const Salary = () => {
     return new Date(year, month + 1, 0).getDate();
   };
 
+  // Max worked days an employee can log for the selected month, capped by their joined date.
+  const getEmployeeMaxWorkedDays = (emp: Employee, year: number, month: number, maxCompanyDays: number) => {
+    const joinedDate = new Date(emp.joinedDate);
+    const joinedYear = joinedDate.getFullYear();
+    const joinedMonth = joinedDate.getMonth();
+    const joinedDay = joinedDate.getDate();
+
+    // Only relevant if the employee joined in the currently selected month
+    if (year === joinedYear && month === joinedMonth) {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const availableDaysSinceJoining = daysInMonth - joinedDay + 1; // joined day counts as day 1
+      return Math.max(0, Math.min(maxCompanyDays, availableDaysSinceJoining));
+    }
+
+    return maxCompanyDays;
+  };
+
   const maxAllowedCompanyDays = getMaxAllowedDays(selectedYear, selectedMonth);
   const isFutureMonth =
     new Date(selectedYear, selectedMonth) >
@@ -328,8 +379,10 @@ const Salary = () => {
     if (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays)
       return true;
     const { workedDays, otHours, salaryAdvance, isEpfEnabled, isLoanEnabled, loanDeduction, leaveDays, sickLeaveDays } = getEmployeeValues(emp.id);
-    if (workedDays < 0 || workedDays > companyWorkingDays) return true;
+    const maxWorkedDaysForEmp = getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays);
+    if (workedDays < 0 || workedDays > maxWorkedDaysForEmp) return true;
     if (leaveDays < 0 || sickLeaveDays < 0) return true;
+    if (workedDays + leaveDays + sickLeaveDays !== companyWorkingDays) return true;
 
     // Check for negative net salary
     const otRate = emp.otRate || 0;
@@ -339,8 +392,8 @@ const Salary = () => {
       : emp.basicSalary * (workedDays + (Math.min(leaveDays, emp.paidLeave || 0)));
 
     const epfAmount = emp.epfEnabled && isEpfEnabled ? basicPay * 0.08 : 0;
-    const totalEarnings = basicPay + otAmount + (salaryAllowances[emp.id] || emp.recurringAllowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
-    const otherDeductions = epfAmount + (isLoanEnabled ? loanDeduction : 0) + (salaryDeductions[emp.id] || emp.recurringDeductions || []).reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    const totalEarnings = basicPay + otAmount + (employeeAllowances[emp.id] || emp.recurringAllowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
+    const otherDeductions = epfAmount + (isLoanEnabled ? loanDeduction : 0) + (employeeDeductions[emp.id] || emp.recurringDeductions || []).reduce((s, d) => s + (Number(d.amount) || 0), 0);
 
     if (totalEarnings - (otherDeductions + salaryAdvance) < 0) return true;
     return false;
@@ -358,15 +411,22 @@ const Salary = () => {
       ...prev,
       employeeDays: { ...prev.employeeDays, [empId]: true },
     }));
-    const clippedVal = Math.min(Math.max(0, val), companyWorkingDays);
+    // const { sickLeaveDays } = getEmployeeValues(empId);
+    const { leaveDays } = getEmployeeValues(empId);
+    const emp = employees.find((e) => e.id === empId);
+    const maxDays = emp
+      ? getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays)
+      : companyWorkingDays;
+    const clippedVal = Math.min(Math.max(0, val), maxDays);
     dispatch(setEmployeeWorkedDays({ id: empId, days: clippedVal }));
 
-    // Auto-calculate Unpaid Leaves (Sick Leaves in the code)
-    // Formula: Unpaid = Total - Worked - Paid
-    const { leaveDays } = getEmployeeValues(empId);
-    const autoNonPaidLeaves = Math.max(0, companyWorkingDays - clippedVal - leaveDays);
-    dispatch(setEmployeeSickLeaveDays({ id: empId, days: autoNonPaidLeaves }));
+    // Recalc paid leave = total - worked - unpaid (not the other way)
+    // const autoPaidLeave = Math.max(0, companyWorkingDays - clippedVal - sickLeaveDays);
+    // dispatch(setEmployeeLeaveDays({ id: empId, days: autoPaidLeave }));
+    const autoUnpaidLeave = Math.max(0, companyWorkingDays - clippedVal - leaveDays);
+    dispatch(setEmployeeSickLeaveDays({ id: empId, days: autoUnpaidLeave }));
   };
+
   const handleMonthChange = (month: number) => {
     setTouchedFields((prev) => ({ ...prev, month: true }));
     dispatch(setMonth(month));
@@ -400,7 +460,8 @@ const Salary = () => {
   };
 
   const handleEmployeeOtHoursChange = (empId: string, val: number) => {
-    dispatch(setEmployeeOtHours({ id: empId, hours: Math.max(0, val) }));
+    const capped = Math.min(Math.max(0, val), 744);
+    dispatch(setEmployeeOtHours({ id: empId, hours: capped }));
   };
 
   const handleEmployeeSalaryAdvanceChange = (empId: string, val: number) => {
@@ -408,23 +469,21 @@ const Salary = () => {
   };
 
   const handleEmployeeLeaveDaysChange = (empId: string, val: number) => {
-    const clippedVal = Math.max(0, val);
+    const { sickLeaveDays } = getEmployeeValues(empId);
+    const maxPaid = Math.max(0, companyWorkingDays - sickLeaveDays);
+    const clippedVal = Math.min(Math.max(0, val), maxPaid);
     dispatch(setEmployeeLeaveDays({ id: empId, days: clippedVal }));
-    // Non paid leaves
-    const currentWorkedDays = employeeWorkedDays[empId] ?? companyWorkingDays;
-    const autoNonPaidLeaves = Math.max(0, companyWorkingDays - currentWorkedDays - clippedVal);
-    dispatch(setEmployeeSickLeaveDays({ id: empId, days: autoNonPaidLeaves }));
+    const autoWorked = Math.max(0, companyWorkingDays - clippedVal - sickLeaveDays);
+    dispatch(setEmployeeWorkedDays({ id: empId, days: autoWorked }));
   };
 
   const handleEmployeeSickLeaveDaysChange = (empId: string, val: number) => {
-    const sickDays = Math.max(0, val);
-    dispatch(setEmployeeSickLeaveDays({ id: empId, days: sickDays }));
-
-    // Auto-calculate Worked Days
-    // Formula: Worked = Total - Unpaid - Paid
     const { leaveDays } = getEmployeeValues(empId);
-    const autoWorkedDays = Math.max(0, companyWorkingDays - sickDays - leaveDays);
-    dispatch(setEmployeeWorkedDays({ id: empId, days: autoWorkedDays }));
+    const maxUnpaid = Math.max(0, companyWorkingDays - leaveDays);
+    const clippedVal = Math.min(Math.max(0, val), maxUnpaid);
+    dispatch(setEmployeeSickLeaveDays({ id: empId, days: clippedVal }));
+    const autoWorked = Math.max(0, companyWorkingDays - leaveDays - clippedVal);
+    dispatch(setEmployeeWorkedDays({ id: empId, days: autoWorked }));
   };
 
   // Handle Generate process (Preview or Save)
@@ -485,8 +544,8 @@ const Salary = () => {
       ? (basicSalaryForCalc / companyWorkingDays) * sickLeaveDays
       : 0;
 
-    const currentAllowances = salaryAllowances[emp.id] || emp.recurringAllowances || [];
-    const currentDeductions = salaryDeductions[emp.id] || emp.recurringDeductions || [];
+    const currentAllowances = employeeAllowances[emp.id] || emp.recurringAllowances || [];
+    const currentDeductions = employeeDeductions[emp.id] || emp.recurringDeductions || [];
 
     const allowanceAmount = currentAllowances.reduce(
       (sum, a) => sum + (Number(a.amount) || 0),
@@ -497,19 +556,19 @@ const Salary = () => {
       0,
     );
 
-    // Calculations
+    // EPF/ETF always uses the configured epfEtfAmount from the employee form.
+    // No fallback to basic salary — if no amount is configured, EPF/ETF is 0.
     const epfBasis = (emp.epfEtfAmount && emp.epfEtfAmount > 0)
       ? emp.epfEtfAmount
-      : earnedBasicPay;
+      : 0;
     let epfEmployee = 0;
-    let epfEmployer = epfBasis * 0.12;
-    let etfEmployer = epfBasis * 0.03;
+    let epfEmployer = 0;
+    let etfEmployer = 0;
 
-    if (emp.epfEnabled && isEpfEnabled) {
+    if (emp.epfEnabled && isEpfEnabled && epfBasis > 0) {
       epfEmployee = epfBasis * 0.08;
-    } else {
-      epfEmployer = 0;
-      etfEmployer = 0;
+      epfEmployer = epfBasis * 0.12;
+      etfEmployer = epfBasis * 0.03;
     }
 
     const tax = 0; // Tax will be calculated by backend
@@ -755,7 +814,7 @@ const Salary = () => {
             <div className="w-full md:w-10/12 flex flex-col overflow-hidden">
 
               {/* FILTER BOX */}
-              <div className="bg-white gap-4 md:gap-14 p-4 md:p-7 w-full rounded-xl mb-6 flex flex-col md:flex-row border border-gray-200">
+              <div className="bg-white gap-4 md:gap-8 p-4 md:p-7 w-full rounded-xl mb-6 flex flex-col md:flex-row md:flex-wrap border border-gray-200">
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-800 mb-2">
                     Search Employee
@@ -772,10 +831,10 @@ const Salary = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-8 max-sm:gap-4">
+                <div className="flex flex-wrap gap-8 max-sm:gap-4">
                   <div className="flex flex-col min-w-[100px]">
                     <label className="text-sm font-medium text-gray-800 mb-2">
-                      Select Period
+                      Select Month
                     </label>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
@@ -840,8 +899,10 @@ const Salary = () => {
                 </div>
               </div>
 
-              {/* EMPLOYEE LIST */}
-              <div className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] max-sm:pb-20">
+              <div
+                key={`${selectedMonth}-${selectedYear}`}
+                className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] max-sm:pb-20"
+              >
                 {isLoading ? (
                   <SalaryListSkeleton />
                 ) : validEmployees.length === 0 ? (
@@ -849,7 +910,7 @@ const Salary = () => {
                     No employees found.
                   </div>
                 ) : (
-                  validEmployees.map((emp) => {
+                  validEmployees.map((emp, index) => {
                     const {
                       workedDays,
                       isEpfEnabled,
@@ -862,41 +923,52 @@ const Salary = () => {
                       hasLoanInstallment,
                     } = getEmployeeValues(emp.id);
 
+                    const maxWorkedDaysForEmp = getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays);
+
                     return (
-                      <EmployeeSalaryCard
+                      <div
                         key={emp.id}
-                        emp={emp}
-                        generatedSalary={generatedSalaries[emp.id]}
-                        selectedEmployee={selectedEmployee}
-                        handleSelectEmployee={handleSelectEmployee}
-                        workedDays={workedDays}
-                        isEpfEnabled={isEpfEnabled}
-                        isLoanEnabled={isLoanEnabled}
-                        otHours={otHours}
-                        salaryAdvance={salaryAdvance}
-                        leaveDays={leaveDays}
-                        sickLeaveDays={sickLeaveDays}
-                        loanDeduction={loanDeduction}
-                        companyWorkingDays={companyWorkingDays}
-                        hasLoanInstallment={hasLoanInstallment}
-                        handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
-                        handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
-                        handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}
-                        handleEmployeeLeaveDaysChange={handleEmployeeLeaveDaysChange}
-                        handleEmployeeSickLeaveDaysChange={handleEmployeeSickLeaveDaysChange}
-                        handleToggleLoan={handleToggleLoan}
-                        handleToggleEpfEtf={handleToggleEpfEtf}
-                        handleGeneratePayslip={handleGeneratePayslip}
-                        handleConfirmPayslip={handleConfirmPayslip}
-                        openManageModal={openManageModal}
-                        salaryAllowances={salaryAllowances}
-                        salaryDeductions={salaryDeductions}
-                        isSaving={isSaving}
-                        hasAnyError={hasAnyError}
-                        setTouchedFields={setTouchedFields}
-                        selectedMonth={selectedMonth}
-                        selectedYear={selectedYear}
-                      />
+                        className="animate-in fade-in slide-in-from-bottom-5 duration-700"
+                        style={{
+                          animationDelay: `${index * 100}ms`,
+                          animationFillMode: 'both'
+                        }}
+                      >
+                        <EmployeeSalaryCard
+                          emp={emp}
+                          generatedSalary={generatedSalaries[emp.id]}
+                          selectedEmployee={selectedEmployee}
+                          handleSelectEmployee={handleSelectEmployee}
+                          workedDays={workedDays}
+                          isEpfEnabled={isEpfEnabled}
+                          isLoanEnabled={isLoanEnabled}
+                          otHours={otHours}
+                          salaryAdvance={salaryAdvance}
+                          leaveDays={leaveDays}
+                          sickLeaveDays={sickLeaveDays}
+                          loanDeduction={loanDeduction}
+                          companyWorkingDays={companyWorkingDays}
+                          maxWorkedDays={maxWorkedDaysForEmp}
+                          hasLoanInstallment={hasLoanInstallment}
+                          handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
+                          handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
+                          handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}
+                          handleEmployeeLeaveDaysChange={handleEmployeeLeaveDaysChange}
+                          handleEmployeeSickLeaveDaysChange={handleEmployeeSickLeaveDaysChange}
+                          handleToggleLoan={handleToggleLoan}
+                          handleToggleEpfEtf={handleToggleEpfEtf}
+                          handleGeneratePayslip={handleGeneratePayslip}
+                          handleConfirmPayslip={handleConfirmPayslip}
+                          openManageModal={openManageModal}
+                          salaryAllowances={employeeAllowances}
+                          salaryDeductions={employeeDeductions}
+                          isSaving={isSaving}
+                          hasAnyError={hasAnyError}
+                          setTouchedFields={setTouchedFields}
+                          selectedMonth={selectedMonth}
+                          selectedYear={selectedYear}
+                        />
+                      </div>
                     );
                   })
                 )}
@@ -905,13 +977,14 @@ const Salary = () => {
 
             {/* RIGHT SIDE */}
             <div className={`
-              fixed md:relative inset-0 md:inset-auto z-40 md:z-auto
-              w-full md:w-5/12
-              flex flex-col overflow-y-auto
-              bg-white md:bg-transparent
-              transition-transform duration-300
-              ${selectedEmployee && previewPayslip ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
-            `}>
+  fixed md:relative inset-0 md:inset-auto z-40 md:z-auto
+  w-full md:w-5/12
+  h-full
+  flex flex-col overflow-y-auto
+  bg-white md:bg-transparent
+  transition-transform duration-300
+  ${selectedEmployee && previewPayslip ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+`}>
 
               <PayslipPreview
                 previewPayslip={previewPayslip}

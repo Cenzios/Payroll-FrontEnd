@@ -18,6 +18,8 @@ interface EmployeePayrollData {
     allowanceTotal?: number;
     deductionTotal?: number;
     deductions?: number;
+    loanDeduction?: number;
+    salaryType?: "DAILY" | "MONTHLY";
 }
 
 interface MonthTotals {
@@ -75,7 +77,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                 className="bg-gradient-to-r rounded-xl from-blue-50 to-indigo-50 px-6 py-4 cursor-pointer hover:from-blue-100 hover:to-indigo-100 transition-all max-sm:p-4"
             >
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 max-sm:gap-2">
+                    <div className="flex items-center gap-2 max-sm:gap-2">
                         {/* Expand/Collapse Icon */}
                         <div className="text-blue-600">
                             {isExpanded ? (
@@ -87,7 +89,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
 
                         {/* Month & Year */}
                         <div>
-                            <h3 className="text-base font-light text-gray-900">{month} {year}</h3>
+                            <h3 className="text-[14px] font-light text-gray-900">{month} {year}</h3>
                         </div>
 
                         {/* Status Badge */}
@@ -99,17 +101,23 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                         </span>
                     </div>
 
-                    {/* Summary Info */}
-                    <div className="flex flex-col ml-[39rem] max-sm:ml-0 max-sm:p-2">
+                    <div className="flex flex-row">
+                        {/* Summary Info */}
                         <div className="flex flex-col items-center">
                             <div className="text-sm text-gray-500">Employees</div>
-                            <div className="text-lg font-medium text-gray-900 max-sm:text-base">{totals.totalEmployees}</div>
+                            <div className="text-base font-medium text-gray-900">{totals.totalEmployees}</div>
                         </div>
-                    </div>
-                    <div className="flex flex-col">
-                        <div className="flex flex-col items-center">
+                        <div className="flex flex-col items-end w-44">
+                            <div className="text-sm text-gray-500">Employee EPF</div>
+                            <div className="text-base font-medium text-blue-600">Rs {totals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </div>
+                        <div className="flex flex-col items-end w-44">
+                            <div className="text-sm text-gray-500">Company EPF/ETF</div>
+                            <div className="text-base font-medium text-blue-600">Rs {totals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </div>
+                        <div className="flex flex-col items-end w-44">
                             <div className="text-sm text-gray-500">Total Net Pay</div>
-                            <div className="text-lg font-medium text-blue-600 max-sm:text-base">Rs {totals.totalNetPay.toLocaleString()}</div>
+                            <div className="text-base font-medium text-blue-600">Rs {totals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         </div>
                     </div>
                 </div>
@@ -120,7 +128,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                 <div className="border-t border-gray-200">
                     {filteredEmployees.length === 0 ? (
                         <div className="px-6 py-12 text-center text-gray-500">
-                            {employees.length === 0 ? 'No payroll records for this month.' : 'No matching employees found.'}
+                            {employees.length === 0 ? 'No payroll records found for the selected period.' : 'No matching employees found.'}
                         </div>
                     ) : (
                         <>
@@ -150,22 +158,34 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                 />
                                             </th> */}
-                                            <th className="px-6 py-3 text-gray-900 font-bold text-sm border-b border-gray-200">Employee ID</th>
-                                            <th className="px-4 py-3 text-gray-900 font-bold text-sm border-b border-gray-200 whitespace-nowrap">Employee Name</th>
-                                            <th className="px-4 py-3 text-gray-900 font-bold text-sm border-b border-gray-200">Worked Days</th>
-                                            <th className="px-4 py-3 text-gray-900 font-bold text-sm border-b border-gray-200">Basic Salary</th>
-                                            <th className="px-4 py-3 text-gray-900 font-bold text-sm border-b border-gray-200">OT</th>
-                                            <th className="px-4 py-3 text-gray-900 font-bold text-sm border-b border-gray-200">Allowance</th>
-                                            <th className="px-4 py-3 text-gray-900 font-bold text-sm border-b border-gray-200">Gross</th>
-                                            <th className="px-4 py-3 text-gray-900 font-bold text-sm border-b border-gray-200">Deduction</th>
-                                            <th className="px-4 py-3 text-blue-600 font-bold text-sm border-b border-gray-200 ">Net Salary</th>
-                                            <th className="px-4 py-3 text-gray-900 font-bold text-sm border-b border-gray-200">Action</th>
+                                            <th className="px-6 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200">Employee ID</th>
+                                            <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 whitespace-nowrap">Employee Name</th>
+                                            <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200">Worked Days</th>
+                                            <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-end">Basic Salary</th>
+                                            <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-end">OT</th>
+                                            <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-end">Allowance</th>
+                                            <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-end">Gross</th>
+                                            <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-end">Deduction</th>
+                                            <th className="px-4 py-3 text-blue-600 font-bold text-[12.5px] border-b border-gray-200 text-end">Net Salary</th>
+                                            <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {filteredEmployees.map((employee, index) => (
-                                            <tr key={index} className="hover:bg-gray-50 transition-colors">
-                                                {/* <td className="px-4 py-3">
+                                        {filteredEmployees.map((employee, index) => {
+                                            // Mirror the PayslipPreview / Salary page calculation:
+                                            // Gross = max(basicPay, basicSalary) + otAmount + allowanceTotal
+                                            // Total Deductions = EPF + salaryAdvance + custom deductions + nonPaidLeaveDeduction
+                                            //   (loan is excluded, same as PayslipPreview which filters out "Loan Deduction")
+                                            const displayBasic = (employee.basicPay > employee.basicSalary ? employee.basicPay : employee.basicSalary) || 0;
+                                            const grossEarnings = displayBasic + (employee.otAmount || 0) + (employee.allowanceTotal || 0);
+                                            const netPay = employee.netPay || 0;
+                                            const loanDeduction = employee.loanDeduction || 0;
+                                            // grossEarnings - netPay gives ALL deductions including loan; remove loan to match PayslipPreview
+                                            const totalDeductions = grossEarnings - netPay - loanDeduction;
+
+                                            return (
+                                                <tr key={index} className="hover:bg-gray-50 transition-colors">
+                                                    {/* <td className="px-4 py-3">
                                                     <input
                                                         type="checkbox"
                                                         checked={selectedEmployeeIds.includes(`${employee.employeeId}-${year}-${monthNumber}`)}
@@ -173,34 +193,38 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                     />
                                                 </td> */}
-                                                <td className="px-8 py-3 font-regular text-gray-900 text-left">{employee.employeeCode || '-'}</td>
-                                                <td className="px-6 py-3 text-gray-900 whitespace-nowrap text-left">{employee.employeeName || '-'}</td>
-                                                <td className="px-4 py-3 text-gray-500 text-center">{employee.workingDays}</td>
-                                                <td className="px-4 py-3 text-gray-500 font-medium text-end">{employee.basicSalary?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-4 py-3 text-gray-500">
-                                                    <div className="font-medium text-gray-500 text-end">{employee.otAmount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                                                    {/* <div className="text-[10px] text-gray-400">({employee.otHours} hrs)</div> */}
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{(employee.allowanceTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-4 py-3 font-regular text-gray-500 whitespace-nowrap text-end">{employee.grossPay?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{(employee.deductionTotal ?? employee.deductions ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-4 py-3 font-regular text-blue-600 whitespace-nowrap text-end">{employee.netPay?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                <td className="px-4 py-3 text-end">
-                                                    <button
-                                                        onClick={() => onViewEmployee(employee.employeeId, companyId)}
-                                                        className="px-6 py-2 border border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 text-xs transition-colors"
-                                                    >
-                                                        View
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                    <td className="px-8 py-3 font-regular text-gray-900 text-left">{employee.employeeCode || '-'}</td>
+                                                    <td className="px-6 py-3 text-gray-900 whitespace-nowrap text-left">{employee.employeeName || '-'}</td>
+                                                    <td className="px-4 py-3 text-gray-500 text-center">{employee.workingDays}</td>
+                                                    {/* <td className="px-4 py-3 text-gray-500 font-medium text-end">{employee.basicSalary?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td> */}
+                                                    <td className="px-4 py-3 text-gray-500 font-medium text-end">
+                                                        {displayBasic.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-gray-500">
+                                                        <div className="font-medium text-gray-500 text-end">{(employee.otAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                                        {/* <div className="text-[10px] text-gray-400">({employee.otHours} hrs)</div> */}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{(employee.allowanceTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                    <td className="px-4 py-3 font-regular text-gray-500 whitespace-nowrap text-end">{grossEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                    <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                    <td className="px-4 py-3 font-regular text-blue-600 whitespace-nowrap text-end">{netPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                    <td className="px-4 py-3 text-end">
+                                                        <button
+                                                            onClick={() => onViewEmployee(employee.employeeId, companyId)}
+                                                            className="px-6 py-2 border border-blue-200 text-blue-600 rounded-xl hover:bg-blue-50 text-xs transition-colors"
+                                                        >
+                                                            View
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
 
                             {/* Month Totals Footer */}
-                            <div className="bg-gray-50 border-t border-gray-200 px-6 py-4">
+                            {/* <div className="bg-gray-50 border-t border-gray-200 px-6 py-4">
                                 <div className="grid grid-cols-5 gap-6 max-sm:gap-[130px] max-sm:overflow-x-auto max-sm:whitespace-nowrap">
                                     <div className="text-center">
                                         <div className="text-sm text-gray-600 font-medium">Employees</div>
@@ -223,7 +247,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                         <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {totals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
                         </>
                     )}
                 </div>

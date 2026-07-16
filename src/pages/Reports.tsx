@@ -88,16 +88,36 @@ const Reports = () => {
             const reportData = response;
             console.log('✅ Report Data Received:', reportData);
 
-            setMonthlyData(reportData.monthlyData || []);
-            setOverallTotals(reportData.overallTotals || {
-                totalMonths: 0,
-                totalEmployees: 0,
-                totalGrossPay: 0,
-                totalNetPay: 0,
-                totalEmployeeEPF: 0,
-                totalCompanyEPFETF: 0,
-                totalAllowance: 0,
-                totalDeduction: 0
+            let computedOverallGross = 0;
+            const updatedMonthlyData = (reportData.monthlyData || []).map((month: any) => {
+                let computedMonthGross = 0;
+                const updatedEmployees = (month.employees || []).map((emp: any) => {
+                    const displayBasic = (emp.basicPay > emp.basicSalary ? emp.basicPay : emp.basicSalary) || 0;
+                    const grossEarnings = displayBasic + (emp.otAmount || 0) + (emp.allowanceTotal || 0);
+                    computedMonthGross += grossEarnings;
+                    return { ...emp, grossPay: grossEarnings };
+                });
+                computedOverallGross += computedMonthGross;
+                return {
+                    ...month,
+                    employees: updatedEmployees,
+                    totals: { ...month.totals, totalGrossPay: computedMonthGross }
+                };
+            });
+
+            setMonthlyData(updatedMonthlyData);
+            setOverallTotals({
+                ...(reportData.overallTotals || {
+                    totalMonths: 0,
+                    totalEmployees: 0,
+                    totalGrossPay: 0,
+                    totalNetPay: 0,
+                    totalEmployeeEPF: 0,
+                    totalCompanyEPFETF: 0,
+                    totalAllowance: 0,
+                    totalDeduction: 0
+                }),
+                totalGrossPay: computedOverallGross || reportData.overallTotals?.totalGrossPay || 0
             });
 
         } catch (error: any) {
@@ -153,11 +173,16 @@ const Reports = () => {
 
     const handleReset = () => {
         const currentDate = new Date();
-        setStartMonth(currentDate.getMonth());
-        setStartYear(currentDate.getFullYear());
-        setEndMonth(currentDate.getMonth());
-        setEndYear(currentDate.getFullYear());
+        const newMonth = currentDate.getMonth();
+        const newYear = currentDate.getFullYear();
+        setStartMonth(newMonth);
+        setStartYear(newYear);
+        setEndMonth(newMonth);
+        setEndYear(newYear);
         setSearch('');
+        setSelectedEmployeeIds([]);
+
+        checkAndUpdateData(newMonth, newYear, newMonth, newYear);
     };
 
     const toggleMonth = (monthKey: string) => {
@@ -203,7 +228,8 @@ const Reports = () => {
 
         filteredMonthlyData.forEach(month => {
             month.employees.forEach((emp: any) => {
-                totalBasicPay += emp.basicPay || 0;
+                // totalBasicPay += emp.basicPay || 0;
+                totalBasicPay += (emp.basicPay > emp.basicSalary ? emp.basicPay : emp.basicSalary) || 0;
                 totalGrossPay += emp.grossPay || 0;
                 totalEmployeeEPF += emp.employeeEPF || 0;
                 totalSalaryAdvance += emp.salaryAdvance || 0;
@@ -243,6 +269,8 @@ const Reports = () => {
         exportPayrollSummaryReport('csv', getExportData() as any);
         setToast({ message: 'CSV exported successfully', type: 'success' });
     };
+
+    const hasData = !isLoading && monthlyData.some(m => m.employees && m.employees.length > 0);
 
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
@@ -320,6 +348,7 @@ const Reports = () => {
                                         onStartChange={(month, year) => { setStartMonth(month); setStartYear(year); }}
                                         onEndChange={(month, year) => { setEndMonth(month); setEndYear(year); }}
                                         onApply={(sM, sY, eM, eY) => checkAndUpdateData(sM, sY, eM, eY)}
+                                        className="w-full"
                                     />
                                 </div>
                             </div>
@@ -337,14 +366,15 @@ const Reports = () => {
                                 {/* Export Dropdown */}
                                 <div className="relative">
                                     <button
+                                        disabled={!hasData}
                                         onClick={() => setIsExportOpen(prev => !prev)}
-                                        className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5"
+                                        className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
                                     >
                                         Export
                                         <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
                                     </button>
 
-                                    {isExportOpen && (
+                                    {isExportOpen && hasData && (
                                         <>
                                             <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
                                             <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
@@ -430,8 +460,6 @@ const Reports = () => {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Main Content — Scrollable */}
                         <div className="flex-1 overflow-y-auto space-y-3 max-sm:pb-10">
                             {isLoading ? (
                                 <div className="flex justify-center items-center py-20">

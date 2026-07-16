@@ -22,6 +22,9 @@ interface SalaryDetails {
     etf3: number;
     allowances: { name: string; amount: number }[];
     deductions: { name: string; amount: number }[];
+    leaveDays: number;
+    sickLeaveDays: number;
+    nonPaidLeaveDeduction: number;
 }
 
 interface SalaryState {
@@ -38,6 +41,9 @@ interface SalaryState {
     employeeLoanEnabled: Record<string, boolean>; // Defaults to true
     employeeLeaveDays: Record<string, number>;
     employeeSickLeaveDays: Record<string, number>;
+    // Recurring Allowances & Deductions
+    employeeAllowances: Record<string, { type: string; amount: number }[]>;
+    employeeDeductions: Record<string, { type: string; amount: number }[]>;
     // Preview data
     previewPayslip: SalaryDetails | null;
 }
@@ -53,6 +59,8 @@ const initialState: SalaryState = {
     employeeLoanEnabled: {},
     employeeLeaveDays: {},
     employeeSickLeaveDays: {},
+    employeeAllowances: {},
+    employeeDeductions: {},
     previewPayslip: null,
 };
 
@@ -64,6 +72,8 @@ const salarySlice = createSlice({
             state.companyWorkingDays = action.payload;
             // Clear overrides when company default changes to sync all
             state.employeeWorkedDays = {};
+            state.employeeLeaveDays = {};
+            state.employeeSickLeaveDays = {};
         },
         setEmployeeWorkedDays: (state, action: PayloadAction<{ id: string; days: number }>) => {
             state.employeeWorkedDays[action.payload.id] = action.payload.days;
@@ -96,13 +106,32 @@ const salarySlice = createSlice({
         setEmployeeSickLeaveDays: (state, action: PayloadAction<{ id: string; days: number }>) => {
             state.employeeSickLeaveDays[action.payload.id] = action.payload.days;
         },
+        setEmployeeAllowances: (
+            state,
+            action: PayloadAction<{ id: string; allowances: { type: string; amount: number }[] }>
+        ) => {
+            state.employeeAllowances[action.payload.id] = action.payload.allowances;
+        },
+        setEmployeeDeductions: (
+            state,
+            action: PayloadAction<{ id: string; deductions: { type: string; amount: number }[] }>
+        ) => {
+            state.employeeDeductions[action.payload.id] = action.payload.deductions;
+        },
         setPreviewPayslip: (state, action: PayloadAction<SalaryDetails | null>) => {
             state.previewPayslip = action.payload;
         },
         resetSalaryState: (state) => {
             state.employeeWorkedDays = {};
+            state.employeeOtHours = {};
+            state.employeeSalaryAdvance = {};
+            state.employeeEpfEtf = {};
+            state.employeeLoanEnabled = {};
+            state.employeeLeaveDays = {};
+            state.employeeSickLeaveDays = {};
+            state.employeeAllowances = {};
+            state.employeeDeductions = {};
             state.previewPayslip = null;
-            // Keep month/year/companyDays as they might be reusable
         }
     },
 });
@@ -118,6 +147,8 @@ export const {
     setYear,
     setEmployeeLeaveDays,
     setEmployeeSickLeaveDays,
+    setEmployeeAllowances,
+    setEmployeeDeductions,
     setPreviewPayslip,
     resetSalaryState
 } = salarySlice.actions;

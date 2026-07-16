@@ -20,7 +20,11 @@ import {
     Banknote,
     Wallet,
     Wallet2,
-    Pencil
+    Pencil,
+    CreditCard,
+    Activity,
+    Award,
+    UploadCloud
 } from "lucide-react";
 import { Employee } from "../types/employee.types";
 
@@ -41,7 +45,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
     onEditClick,
     isAddFileDisabled = false,
 }) => {
-    const [activeTab, setActiveTab] = useState("Personal Information");
+    const [activeTab, setActiveTab] = useState("Employee Information");
 
     if (!selectedEmployee) {
         return (
@@ -105,7 +109,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
 
                 {/* Tabs */}
                 <div className="flex items-center gap-6 border-b-[2px] border-gray-100 mb-4 mt-1 shrink-0">
-                    {["Personal Information", "Salary Information", "Bank Details"].map(
+                    {["Employee Information", "Salary Information", "Bank Details"].map(
                         (tab) => (
                             <button
                                 key={tab}
@@ -128,7 +132,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
 
                 {/* Tab Content */}
                 <div className="flex-1 overflow-y-auto pr-1 pb-1">
-                    {activeTab === "Personal Information" && (
+                    {activeTab === "Employee Information" && (
                         <div className="space-y-3">
                             {/* Name */}
                             <div className="flex items-center">
@@ -141,58 +145,14 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                             </div>
 
-                            {/* Email */}
-                            <div className="flex items-center">
-                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
-                                    <Mail className="w-[14px] h-[14px]" />
-                                    <span>Email</span>
-                                </div>
-                                <div className="text-[13px] font-medium text-gray-800">
-                                    {selectedEmployee.email || "N/A"}
-                                </div>
-                            </div>
-
                             {/* NIC */}
                             <div className="flex items-center">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
-                                    <Mail className="w-[14px] h-[14px]" />
+                                    <CreditCard className="w-[14px] h-[14px]" />
                                     <span>NIC</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.employeeNIC || "N/A"}
-                                </div>
-                            </div>
-
-                            {/* Address */}
-                            <div className="flex items-center">
-                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
-                                    <MapPin className="w-[14px] h-[14px]" />
-                                    <span>Address</span>
-                                </div>
-                                <div className="text-[13px] font-medium text-gray-800 max-w-[280px] break-words">
-                                    {selectedEmployee.address || "N/A"}
-                                </div>
-                            </div>
-
-                            {/* EPF no */}
-                            <div className="flex items-center">
-                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
-                                    <Mail className="w-[14px] h-[14px]" />
-                                    <span>EPF Number</span>
-                                </div>
-                                <div className="text-[13px] font-medium text-gray-800">
-                                    {selectedEmployee.epfNumber || "N/A"}
-                                </div>
-                            </div>
-
-                            {/* Designation */}
-                            <div className="flex items-center">
-                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
-                                    <Briefcase className="w-[14px] h-[14px]" />
-                                    <span>Designation</span>
-                                </div>
-                                <div className="text-[13px] font-normal text-[#4A7DFF]">
-                                    {selectedEmployee.designation || "None"}
                                 </div>
                             </div>
 
@@ -212,6 +172,39 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                             </div>
 
+                            {/* Address */}
+                            <div className="flex items-center">
+                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
+                                    <MapPin className="w-[14px] h-[14px]" />
+                                    <span>Address</span>
+                                </div>
+                                <div className="text-[13px] font-medium text-gray-800 max-w-[280px] break-words">
+                                    {selectedEmployee.address || "N/A"}
+                                </div>
+                            </div>
+
+                            {/* EPF no */}
+                            <div className="flex items-center">
+                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
+                                    <Activity className="w-[14px] h-[14px]" />
+                                    <span>EPF Number</span>
+                                </div>
+                                <div className="text-[13px] font-medium text-gray-800">
+                                    {selectedEmployee.epfNumber || "N/A"}
+                                </div>
+                            </div>
+
+                            {/* Email */}
+                            <div className="flex items-center">
+                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
+                                    <Mail className="w-[14px] h-[14px]" />
+                                    <span>Email</span>
+                                </div>
+                                <div className="text-[13px] font-medium text-gray-800">
+                                    {selectedEmployee.email || "N/A"}
+                                </div>
+                            </div>
+
                             {/* Phone Number */}
                             <div className="flex items-center">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
@@ -223,11 +216,22 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                             </div>
 
+                            {/* Designation */}
+                            <div className="flex items-center">
+                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
+                                    <Award className="w-[14px] h-[14px]" />
+                                    <span>Designation</span>
+                                </div>
+                                <div className="text-[13px] font-normal text-[#4A7DFF]">
+                                    {selectedEmployee.designation || "N/A"}
+                                </div>
+                            </div>
+
                             {/* Joining Date */}
                             <div className="flex items-center">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-medium text-[#AAAEBF]">
                                     <Calendar className="w-[14px] h-[14px]" />
-                                    <span>Joining Date</span>
+                                    <span>Joined Date</span>
                                 </div>
                                 <div className="text-[13px] font-normal text-gray-800 uppercase">
                                     {selectedEmployee.joinedDate
@@ -265,8 +269,8 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 {/* Files header row */}
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2 text-[#AAAEBF]">
-                                        <FileText className="w-[15px] h-[15px]" />
-                                        <span className="text-[12px] font-semibold">Files</span>
+                                        <UploadCloud className="w-[15px] h-[15px]" />
+                                        <span className="text-[12px] font-semibold">Documents</span>
                                     </div>
                                     {/* Add file button */}
                                     <button
@@ -278,7 +282,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                             : "border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
                                             }`}>
                                         <Plus className="w-3.5 h-3.5" />
-                                        {isAddFileDisabled ? "Limit reached" : "Add file"}
+                                        {isAddFileDisabled ? "Limit reached" : "Add Documents"}
                                     </button>
                                 </div>
 
@@ -308,7 +312,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                                         key={doc.id}
                                                         className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-100 bg-white hover:border-blue-100 hover:bg-blue-50/30 transition-all group cursor-pointer"
                                                         onClick={() => {
-                                                            if (isPdf) {
+                                                            if (ext === "pdf") {
                                                                 window.open(doc.fileUrl, "_blank", "noopener,noreferrer");
                                                             } else {
                                                                 setPreviewImage(doc.fileUrl);
@@ -366,7 +370,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                     {activeTab === "Salary Information" && (
                         <div className="space-y-3 pt-2 pb-2">
                             {/* Salary Mode */}
-                            <div className="flex items-center">
+                            <div className="flex items-center  gap-4">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <Wallet className="w-[14px] h-[14px]" />
                                     <span>Salary Mode</span>
@@ -391,7 +395,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             </div> */}
 
                             {/* Salary Rate */}
-                            <div className="flex items-center">
+                            <div className="flex items-center  gap-4">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <DollarSign className="w-[14px] h-[14px]" />
                                     <span>
@@ -409,10 +413,10 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             </div>
 
                             {/* OT Rate */}
-                            <div className="flex items-center">
+                            <div className="flex items-center  gap-4">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <Banknote className="w-[14px] h-[14px]" />
-                                    <span>OT Rate</span>
+                                    <span>OT Rate (Rs./hr)</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.otRate === 0
@@ -425,10 +429,10 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             </div>
 
                             {/* EPF/ETF */}
-                            <div className="flex items-center">
-                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
-                                    <Banknote className="w-[14px] h-[14px]" />
-                                    <span>EPF/ETF</span>
+                            <div className="flex gap-4">
+                                <div className="w-[150px] flex gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                    <Activity className="w-[18px] h-[18px]" />
+                                    <span>EPF/ETF Applicable Amount (Rs.)</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.epfEnabled
@@ -441,10 +445,10 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                             </div>
 
                             {/* Paid Leave */}
-                            <div className="flex items-center">
+                            <div className="flex items-center  gap-4">
                                 <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <Calendar className="w-[14px] h-[14px]" />
-                                    <span>Paid Leave</span>
+                                    <span>Annual Leave Days</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.paidLeave && selectedEmployee.paidLeave > 0
@@ -458,14 +462,14 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 <div className="flex items-center mb-2">
                                     <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                         <PlusCircle className="w-[14px] h-[14px]" />
-                                        <span>Allowances (Rs)</span>
+                                        <span>Allowances (Rs.)</span>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     {selectedEmployee.recurringAllowances &&
                                         selectedEmployee.recurringAllowances.length > 0 ? (
                                         selectedEmployee.recurringAllowances.map((allowance, index) => (
-                                            <div key={index} className="flex items-center">
+                                            <div key={index} className="flex items-center  gap-4">
                                                 <div className="w-[150px] pl-[22px] text-[12px] font-medium text-gray-600">
                                                     {allowance.type}
                                                 </div>
@@ -490,14 +494,14 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 <div className="flex items-center mb-2">
                                     <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                         <MinusCircle className="w-[14px] h-[14px]" />
-                                        <span>Deductions (Rs)</span>
+                                        <span>Deductions (Rs.)</span>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     {selectedEmployee.recurringDeductions &&
                                         selectedEmployee.recurringDeductions.length > 0 ? (
                                         selectedEmployee.recurringDeductions.map((deduction, index) => (
-                                            <div key={index} className="flex items-center">
+                                            <div key={index} className="flex items-center  gap-4">
                                                 <div className="w-[150px] pl-[22px] text-[12px] font-medium text-gray-600">
                                                     {deduction.type}
                                                 </div>
@@ -521,8 +525,17 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
 
                     {activeTab === "Bank Details" && (
                         <div className="space-y-3 pt-2">
+                            <div className="flex items-center pt-1">
+                                <div className="w-[160px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                    <User className="w-[16px] h-[16px]" />
+                                    <span>Account Name</span>
+                                </div>
+                                <div className="text-[13px] font-medium text-gray-800">
+                                    {selectedEmployee.accountHolderName || "N/A"}
+                                </div>
+                            </div>
                             <div className="flex items-center">
-                                <div className="w-[180px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                <div className="w-[160px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <Landmark className="w-[16px] h-[16px]" />
                                     <span>Bank Name</span>
                                 </div>
@@ -531,7 +544,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                             </div>
                             <div className="flex items-center">
-                                <div className="w-[180px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                <div className="w-[160px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <HomeIcon className="w-[16px] h-[16px]" />
                                     <span>Branch</span>
                                 </div>
@@ -540,21 +553,12 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                             </div>
                             <div className="flex items-center pt-1">
-                                <div className="w-[180px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                <div className="w-[160px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
                                     <ListOrdered className="w-[16px] h-[16px]" />
                                     <span>Account Number</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.accountNumber || "N/A"}
-                                </div>
-                            </div>
-                            <div className="flex items-center pt-1">
-                                <div className="w-[180px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
-                                    <UsersIcon className="w-[16px] h-[16px]" />
-                                    <span>Account Name</span>
-                                </div>
-                                <div className="text-[13px] font-medium text-gray-800">
-                                    {selectedEmployee.accountHolderName || "N/A"}
                                 </div>
                             </div>
                         </div>

@@ -3,13 +3,14 @@ import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { updateUser } from '../../store/slices/authSlice';
 import { updateProfile, changePassword } from '../../api/authApi';
 import { companyApi } from '../../api/companyApi';
-import { useGetSubscriptionQuery } from '../../store/apiSlice';
+import { useGetSubscriptionQuery, useGetCompaniesQuery, apiSlice } from '../../store/apiSlice';
 import { User, Building2, Loader2, Mail, Phone, MapPin, Lock, Eye, EyeOff, ArrowRight, Edit2 } from 'lucide-react';
+import Toast from "../../components/Toast";
 
 const AccountTab = () => {
     const dispatch = useAppDispatch();
     const { user, selectedCompanyId } = useAppSelector((state) => state.auth);
-    const [companies, setCompanies] = useState<any[]>([]);
+    const { data: companies = [], isLoading: companiesLoading, isFetching: companiesFetching } = useGetCompaniesQuery();
 
     // Subscription for employee usage
     const { data: subscription } = useGetSubscriptionQuery();
@@ -43,21 +44,25 @@ const AccountTab = () => {
 
     // Derived State
     const selectedCompany = companies.find(c => c.id === selectedCompanyId);
+    const companyDataReady = !companiesLoading && !companiesFetching && !!selectedCompany;
+
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+    // useEffect(() => {
+    //     const fetchCompanies = async () => {
+    //         try {
+    //             const data = await companyApi.getCompanies();
+    //             setCompanies(data);
+    //         } catch (err) {
+    //             console.error('Failed to fetch companies');
+    //         }
+    //     };
+    //     fetchCompanies();
+    // }, []);
 
     useEffect(() => {
-        const fetchCompanies = async () => {
-            try {
-                const data = await companyApi.getCompanies();
-                setCompanies(data);
-            } catch (err) {
-                console.error('Failed to fetch companies');
-            }
-        };
-        fetchCompanies();
-    }, []);
-
-    useEffect(() => {
-        if (user) setPersonalData({ fullName: user.fullName, email: user.email });
+        if (user)
+            setPersonalData({ fullName: user.fullName, email: user.email });
     }, [user]);
 
     useEffect(() => {
@@ -73,11 +78,13 @@ const AccountTab = () => {
 
     // Validation
     const phoneRegex = /^\+94\d{9}$/;
+    const sriLankaPhoneRegex = /^(?:\+94|0)(11|21|23|24|25|26|27|31|32|33|34|35|36|37|38|41|45|47|51|52|54|55|57|63|65|66|67|81|91|7[0125678])\d{7}$/;
 
     const validatePersonal = (field: string, value: string) => {
         if (field === 'fullName') {
             if (!value.trim()) return 'Full name is required';
-            if (value.trim().length < 3 || value.trim().length > 20) return 'Name must be between 3 and 20 characters';
+            if (value.trim().length < 3 || value.trim().length > 50) return 'Name must be between 3 and 50 characters';
+            if (!/^[a-zA-Z\s]+$/.test(value.trim())) return 'Full name must contain letters only';
         }
         return '';
     };
@@ -85,18 +92,37 @@ const AccountTab = () => {
     const validateCompany = (field: string, value: string) => {
         switch (field) {
             case 'name':
-                if (!value.trim()) return 'Company name is required';
-                if (value.trim().length < 3 || value.trim().length > 50) return 'Name must be between 3 and 50 characters';
+                if (!value.trim())
+                    return 'Company name is required';
+                if (value.trim().length < 3 || value.trim().length > 50)
+                    return 'Name must be between 3 and 50 characters';
+                else if (/[^a-zA-Z0-9]{6,}/.test(value.trim()))
+                    return "Name must not contain more than 5 consecutive special characters";
                 break;
             case 'email':
-                if (!value.trim()) return 'Email is required';
-                if (!/^(?!.*\.\.)[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$/.test(value)) return 'Invalid email format';
+                if (!value.trim())
+                    return 'Email is required';
+                if (!/^(?!.*\.\.)[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$/.test(value))
+                    return 'Invalid email format';
                 break;
             case 'contactNumber':
-                if (!value.trim()) return 'Contact number is required';
-                if (!phoneRegex.test(value)) return 'Must be +94 format';
+                if (!value.trim())
+                    return 'Contact number is required';
+                if (value.replace(/^(\+94|0)/, "").length > 9)
+                    return 'Must be followed by 9 digits';
+                if (!sriLankaPhoneRegex.test(value))
+                    return 'Enter a valid Sri Lankan number (e.g. 0771234567 or +94771234567)';
                 break;
-            case 'address': if (!value.trim()) return 'Address is required'; break;
+            case 'address':
+                if (!value.trim())
+                    return 'Address is required';
+                if (value.trim().length < 5 || value.trim().length > 50)
+                    return 'Address must be between 5 and 50 characters';
+                if (!/[a-zA-Z0-9]/.test(value.trim()))
+                    return 'Address must contain letters and numbers';
+                if (/[^a-zA-Z0-9\s]{6,}/.test(value.trim()))
+                    return 'Address must not contain more than 5 consecutive special characters';
+                break;
         }
         return '';
     };
@@ -109,8 +135,10 @@ const AccountTab = () => {
             const response = await updateProfile({ fullName: personalData.fullName });
             if (response.data) dispatch(updateUser(response.data));
             setIsEditingPersonal(false);
+            setToast({ message: "Personal info updated successfully", type: "success" });
         } catch (err: any) {
             setPersonalErrors({ fullName: err.message || 'Failed to update' });
+            setToast({ message: err.message || "Failed to update personal info", type: "error" });
         } finally { setIsSavingPersonal(false); }
     };
 
@@ -125,9 +153,12 @@ const AccountTab = () => {
         setIsSavingCompany(true);
         try {
             await companyApi.updateCompanyProfile(selectedCompany.id, companyData);
+            dispatch(apiSlice.util.invalidateTags(['Company']));
             setIsEditingCompany(false);
+            setToast({ message: "Company info updated successfully", type: "success" });
         } catch (err: any) {
             setCompanyErrors({ name: err.message || 'Failed to update' });
+            setToast({ message: err.message || "Failed to update company info", type: "error" });
         } finally { setIsSavingCompany(false); }
     };
 
@@ -136,15 +167,25 @@ const AccountTab = () => {
         if (!passwordData.currentPassword) errors.currentPassword = 'Required';
         if (passwordData.newPassword.length < 6) errors.newPassword = 'At least 6 characters';
         if (passwordData.newPassword !== passwordData.confirmPassword) errors.confirmPassword = 'Passwords do not match';
+        if (passwordData.newPassword && passwordData.currentPassword && passwordData.newPassword === passwordData.currentPassword) {
+            errors.newPassword = 'New password must be different from your current password';
+        }
         if (Object.keys(errors).length > 0) { setPasswordErrors(errors); return; }
         setIsSavingPassword(true);
         try {
             await changePassword({ currentPassword: passwordData.currentPassword, newPassword: passwordData.newPassword });
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-            alert('Password changed successfully');
+            setPasswordErrors({});
+            setShowPasswords({ current: false, new: false, confirm: false });
+            setToast({ message: "Password changed successfully", type: "success" });
         } catch (err: any) {
-            setPasswordErrors({ currentPassword: err.message || 'Failed to change password' });
-        } finally { setIsSavingPassword(false); }
+            setPasswordErrors({
+                currentPassword: 'The current password you entered is incorrect.'
+            });
+            setToast({ message: "The current password you entered is incorrect.", type: "error" });
+        } finally {
+            setIsSavingPassword(false);
+        }
     };
 
     // Input field style helper
@@ -175,10 +216,11 @@ const AccountTab = () => {
 
             {/* Personal Info Section */}
             <section className="py-8 border-b border-gray-200 max-sm:py-5">
-                <div className="flex gap-8 max-sm:flex-col max-sm:gap-3">                    {/* Left Description */}
+                <div className="flex gap-8 max-sm:flex-col max-sm:gap-3">
+                    {/* Left Description */}
                     <div className="w-[200px] shrink-0 px-2 max-sm:w-full max-sm:px-0">
                         <h3 className="text-[14px] font-semibold text-gray-900 mb-1">Personal Info</h3>
-                        <p className="text-[12px] text-gray-500 leading-relaxed">You can change your personal information settings here.</p>
+                        <p className="text-[12px] text-gray-500 leading-relaxed">You can change your personal information here.</p>
                     </div>
                     {/* Right Content */}
                     <div className="flex-1 space-y-4 max-sm:border max-sm:border-gray-200 max-sm:p-3 max-sm:rounded-lg">
@@ -197,7 +239,7 @@ const AccountTab = () => {
                                             setPersonalData({ ...personalData, fullName: e.target.value });
                                             setPersonalErrors({ ...personalErrors, fullName: validatePersonal('fullName', e.target.value) });
                                         }}
-                                        placeholder="Alex Morgan"
+                                        placeholder="Nimal Kumara"
                                         className={inputClasses(!!personalErrors.fullName, !isEditingPersonal)}
                                     />
                                 </div>
@@ -229,7 +271,11 @@ const AccountTab = () => {
                             ) : (
                                 <div className="flex gap-2 max-sm:w-full">
                                     <button
-                                        onClick={() => setIsEditingPersonal(false)}
+                                        onClick={() => {
+                                            setIsEditingPersonal(false)
+                                            setPersonalData({ fullName: user?.fullName || '', email: user?.email || '' })
+                                            setPersonalErrors({})
+                                        }}
                                         className="px-4 py-2 text-gray-600 hover:bg-gray-100 text-[12px] rounded-lg font-medium transition-all max-sm:flex-1 max-sm:text-center max-sm:py-2.5"
                                     >
                                         Cancel
@@ -259,122 +305,148 @@ const AccountTab = () => {
                     </div>
                     {/* Right Content */}
                     <div className="flex-1 space-y-4 max-sm:border max-sm:border-gray-200 max-sm:p-3 max-sm:rounded-lg">
-                        <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-                            <div>
-                                <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Name</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                        <Building2 className="h-4 w-4" />
-                                    </span>
-                                    <input
-                                        type="text"
-                                        value={companyData.name}
-                                        disabled={!isEditingCompany}
-                                        onChange={(e) => {
-                                            setCompanyData({ ...companyData, name: e.target.value });
-                                            setCompanyErrors({ ...companyErrors, name: validateCompany('name', e.target.value) });
-                                        }}
-                                        placeholder="ABC Solutions"
-                                        className={inputClasses(!!companyErrors.name, !isEditingCompany)}
-                                    />
+                        {!companyDataReady ? (
+                            <div className="animate-pulse space-y-4">
+                                <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                                    <div className="h-10 bg-gray-100 rounded-full" />
+                                    <div className="h-10 bg-gray-100 rounded-full" />
                                 </div>
-                                {companyErrors.name && <p className="text-xs text-red-500 mt-1">{companyErrors.name}</p>}
+                                <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                                    <div className="h-10 bg-gray-100 rounded-full" />
+                                    <div className="h-10 bg-gray-100 rounded-full" />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Email Address</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                        <Mail className="h-4 w-4" />
-                                    </span>
-                                    <input
-                                        type="email"
-                                        value={companyData.email}
-                                        disabled={!isEditingCompany}
-                                        onChange={(e) => {
-                                            setCompanyData({ ...companyData, email: e.target.value });
-                                            setCompanyErrors({ ...companyErrors, email: validateCompany('email', e.target.value) });
-                                        }}
-                                        placeholder="abcsolutions@yahoo.com"
-                                        className={inputClasses(!!companyErrors.email, !isEditingCompany)}
-                                    />
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Name</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                <Building2 className="h-4 w-4" />
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={companyData.name}
+                                                disabled={!isEditingCompany}
+                                                onChange={(e) => {
+                                                    setCompanyData({ ...companyData, name: e.target.value });
+                                                    setCompanyErrors({ ...companyErrors, name: validateCompany('name', e.target.value) });
+                                                }}
+                                                placeholder="Cenzios (Pvt) Ltd"
+                                                className={inputClasses(!!companyErrors.name, !isEditingCompany)}
+                                            />
+                                        </div>
+                                        {companyErrors.name && <p className="text-xs text-red-500 mt-1">{companyErrors.name}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Email Address</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                <Mail className="h-4 w-4" />
+                                            </span>
+                                            <input
+                                                type="email"
+                                                value={companyData.email}
+                                                disabled={!isEditingCompany}
+                                                onChange={(e) => {
+                                                    setCompanyData({ ...companyData, email: e.target.value });
+                                                    setCompanyErrors({ ...companyErrors, email: validateCompany('email', e.target.value) });
+                                                }}
+                                                placeholder="cenzios@gmail.com"
+                                                className={inputClasses(!!companyErrors.email, !isEditingCompany)}
+                                            />
+                                        </div>
+                                        {companyErrors.email && <p className="text-xs text-red-500 mt-1">{companyErrors.email}</p>}
+                                    </div>
                                 </div>
-                                {companyErrors.email && <p className="text-xs text-red-500 mt-1">{companyErrors.email}</p>}
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-                            <div>
-                                <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Phone Number</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                        <Phone className="h-4 w-4" />
-                                    </span>
-                                    <input
-                                        type="text"
-                                        value={companyData.contactNumber}
-                                        disabled={!isEditingCompany}
-                                        onChange={(e) => {
-                                            setCompanyData({ ...companyData, contactNumber: e.target.value });
-                                            setCompanyErrors({ ...companyErrors, contactNumber: validateCompany('contactNumber', e.target.value) });
-                                        }}
-                                        placeholder="+94 771457855"
-                                        className={inputClasses(!!companyErrors.contactNumber, !isEditingCompany)}
-                                    />
+                                <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Phone Number</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                <Phone className="h-4 w-4" />
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={companyData.contactNumber}
+                                                disabled={!isEditingCompany}
+                                                onChange={(e) => {
+                                                    setCompanyData({ ...companyData, contactNumber: e.target.value });
+                                                    setCompanyErrors({ ...companyErrors, contactNumber: validateCompany('contactNumber', e.target.value) });
+                                                }}
+                                                placeholder="+94 77 123 4567"
+                                                className={inputClasses(!!companyErrors.contactNumber, !isEditingCompany)}
+                                            />
+                                        </div>
+                                        {companyErrors.contactNumber && <p className="text-xs text-red-500 mt-1">{companyErrors.contactNumber}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Address</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                                <MapPin className="h-4 w-4" />
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={companyData.address}
+                                                disabled={!isEditingCompany}
+                                                onChange={(e) => {
+                                                    setCompanyData({ ...companyData, address: e.target.value });
+                                                    setCompanyErrors({ ...companyErrors, address: validateCompany('address', e.target.value) });
+                                                }}
+                                                placeholder="No 05, Colombo Rd, Baththaramulla"
+                                                className={inputClasses(!!companyErrors.address, !isEditingCompany)}
+                                            />
+                                        </div>
+                                        {companyErrors.address && <p className="text-xs text-red-500 mt-1">{companyErrors.address}</p>}
+                                    </div>
                                 </div>
-                                {companyErrors.contactNumber && <p className="text-xs text-red-500 mt-1">{companyErrors.contactNumber}</p>}
-                            </div>
-                            <div>
-                                <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Company Address</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                        <MapPin className="h-4 w-4" />
-                                    </span>
-                                    <input
-                                        type="text"
-                                        value={companyData.address}
-                                        disabled={!isEditingCompany}
-                                        onChange={(e) => {
-                                            setCompanyData({ ...companyData, address: e.target.value });
-                                            setCompanyErrors({ ...companyErrors, address: validateCompany('address', e.target.value) });
-                                        }}
-                                        placeholder="No. 9/2, Beach Road, Negombo"
-                                        className={inputClasses(!!companyErrors.address, !isEditingCompany)}
-                                    />
+                                <div className="flex justify-end max-sm:justify-center">
+                                    {!isEditingCompany ? (
+                                        <button
+                                            onClick={() => setIsEditingCompany(true)}
+                                            className="flex items-center gap-2 bg-blue-600 text-white text-[12px] font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-all max-sm:w-full max-sm:justify-center max-sm:py-2.5"                                >
+                                            Edit Details <Edit2 className="h-3.5 w-3.5" />
+                                        </button>
+                                    ) : (
+                                        <div className="flex gap-2 max-sm:w-full">
+                                            <button
+                                                onClick={() => {
+                                                    setIsEditingCompany(false)
+                                                    if (selectedCompany) {
+                                                        setCompanyData({
+                                                            name: selectedCompany.name,
+                                                            email: selectedCompany.email,
+                                                            contactNumber: selectedCompany.contactNumber,
+                                                            address: selectedCompany.address,
+                                                        });
+                                                    }
+                                                    setCompanyErrors({});
+                                                }}
+                                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 text-[12px] rounded-lg font-medium transition-all max-sm:flex-1 max-sm:text-center max-sm:py-2.5"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleSaveCompany}
+                                                disabled={isSavingCompany}
+                                                className="flex items-center gap-2 bg-blue-600 text-white text-[12px] px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-all max-sm:flex-1 max-sm:justify-center max-sm:py-2.5"
+                                            >
+                                                {isSavingCompany ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                                                Save Changes
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                                {companyErrors.address && <p className="text-xs text-red-500 mt-1">{companyErrors.address}</p>}
-                            </div>
-                        </div>
-                        <div className="flex justify-end max-sm:justify-center">
-                            {!isEditingCompany ? (
-                                <button
-                                    onClick={() => setIsEditingCompany(true)}
-                                    className="flex items-center gap-2 bg-blue-600 text-white text-[12px] font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-all max-sm:w-full max-sm:justify-center max-sm:py-2.5"                                >
-                                    Edit Details <Edit2 className="h-3.5 w-3.5" />
-                                </button>
-                            ) : (
-                                <div className="flex gap-2 max-sm:w-full">
-                                    <button
-                                        onClick={() => setIsEditingCompany(false)}
-                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 text-[12px] rounded-lg font-medium transition-all max-sm:flex-1 max-sm:text-center max-sm:py-2.5"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleSaveCompany}
-                                        disabled={isSavingCompany}
-                                        className="flex items-center gap-2 bg-blue-600 text-white text-[12px] px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-all max-sm:flex-1 max-sm:justify-center max-sm:py-2.5"
-                                    >
-                                        {isSavingCompany ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                                        Save Changes
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </section>
 
             {/* Change Password Section */}
-            <section className="py-8 max-sm:py-5">
+            <section className="py-6 max-sm:py-5">
                 <div className="flex gap-8 max-sm:flex-col max-sm:gap-3">
                     {/* Left Description */}
                     <div className="w-[200px] shrink-0 px-2 max-sm:w-full max-sm:px-0">
@@ -393,7 +465,14 @@ const AccountTab = () => {
                                     <input
                                         type={showPasswords.current ? 'text' : 'password'}
                                         value={passwordData.currentPassword}
-                                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setPasswordData({ ...passwordData, currentPassword: val });
+                                            setPasswordErrors(prev => ({
+                                                ...prev,
+                                                currentPassword: val ? '' : 'Required',
+                                            }));
+                                        }}
                                         placeholder="Enter Current Password"
                                         className={`w-full pl-10 pr-10 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-[13px] ${passwordErrors.currentPassword ? 'border-red-400' : ''
                                             }`}
@@ -418,7 +497,21 @@ const AccountTab = () => {
                                     <input
                                         type={showPasswords.new ? 'text' : 'password'}
                                         value={passwordData.newPassword}
-                                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setPasswordData({ ...passwordData, newPassword: val });
+                                            setPasswordErrors(prev => ({
+                                                ...prev,
+                                                newPassword: val.length > 0 && val.length < 6
+                                                    ? 'At least 6 characters'
+                                                    : val && passwordData.currentPassword && val === passwordData.currentPassword
+                                                        ? 'New password must be different from your current password'
+                                                        : '',
+                                                confirmPassword: passwordData.confirmPassword && val !== passwordData.confirmPassword
+                                                    ? 'Passwords do not match'
+                                                    : '',
+                                            }));
+                                        }}
                                         placeholder="Enter New Password"
                                         className={`w-full pl-10 pr-10 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-[13px] ${passwordErrors.newPassword ? 'border-red-400' : ''
                                             }`}
@@ -441,7 +534,16 @@ const AccountTab = () => {
                                     <input
                                         type={showPasswords.confirm ? 'text' : 'password'}
                                         value={passwordData.confirmPassword}
-                                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setPasswordData({ ...passwordData, confirmPassword: val });
+                                            setPasswordErrors(prev => ({
+                                                ...prev,
+                                                confirmPassword: val && val !== passwordData.newPassword
+                                                    ? 'Passwords do not match'
+                                                    : '',
+                                            }));
+                                        }}
                                         placeholder="Confirm New Password"
                                         className={`w-full pl-10 pr-10 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-[13px] ${passwordErrors.confirmPassword ? 'border-red-400' : ''
                                             }`}
@@ -467,6 +569,14 @@ const AccountTab = () => {
                     </div>
                 </div>
             </section>
+
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </div>
     );
 };

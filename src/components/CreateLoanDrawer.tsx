@@ -42,6 +42,26 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
   const [supportingDocs, setSupportingDocs] = useState<File[]>([]);
   const [fileTitles, setFileTitles] = useState<Record<number, string>>({});
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const employeeInputRef = useRef<HTMLInputElement>(null);
+
+
+  const [loanTitleError, setLoanTitleError] = useState('');
+  const LOAN_TITLE_MAX_LENGTH = 50;
+  const validateLoanTitle = (value: string): string => {
+    const trimmed = value.trim();
+    if (!trimmed) return 'Loan title is required';
+    if (trimmed.length > LOAN_TITLE_MAX_LENGTH)
+      return `Loan title must be less than ${LOAN_TITLE_MAX_LENGTH} characters`;
+    return '';
+  };
+
+  const [descriptionError, setDescriptionError] = useState('');
+  const LOAN_DESCRIPTION_MAX_LENGTH = 100;
+  const validateDescription = (value: string): string => {
+    if (value.trim().length > LOAN_DESCRIPTION_MAX_LENGTH)
+      return `Description must be less than ${LOAN_DESCRIPTION_MAX_LENGTH} characters`;
+    return '';
+  };
 
   const { data: employeesData } = useGetEmployeesQuery(
     { companyId: companyId || '' },
@@ -71,18 +91,25 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Calculate Monthly Premium
+  // Calculate Monthly Premium (Equated Monthly Installment - Reducing Balance)
   useEffect(() => {
     const p = parseFloat(amount) || 0;
-    const r = parseFloat(interestRate) || 0;
+    const rate = parseFloat(interestRate) || 0;
     const n = parseInt(installmentCount) || 0;
 
     if (p > 0 && n > 0) {
-      const totalInterest = interestRateType === 'ANNUALLY'
-        ? p * (r / 100) * (n / 12)
-        : p * (r / 100) * n;
-      const total = p + totalInterest;
-      setMonthlyPremium(total / n);
+      if (rate === 0) {
+        setMonthlyPremium(p / n);
+      } else {
+        // Convert to monthly decimal rate (r)
+        const r = interestRateType === 'ANNUALLY'
+          ? (rate / 12) / 100
+          : rate / 100;
+
+        // EMI Formula: [P * r * (1 + r)^n] / [(1 + r)^n - 1]
+        const emi = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+        setMonthlyPremium(emi);
+      }
     } else {
       setMonthlyPremium(0);
     }
@@ -101,10 +128,49 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     }
   }, [startDate, installmentCount]);
 
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
+
   const handleSubmit = async () => {
-    if (!companyId || !employeeId || !loanTitle || !amount || !installmentCount) {
-      setToast({ message: 'Please fill in all required fields', type: 'error' });
+    const titleError = validateLoanTitle(loanTitle);
+    setLoanTitleError(titleError);
+
+    const descError = validateDescription(description);
+    setDescriptionError(descError);
+
+    if (!companyId || !employeeId || !loanTitle || !amount || !installmentCount || titleError || descError) {
+      setToast({ message: titleError || descError || 'Please fill in all required fields', type: 'error' });
       return;
+    }
+
+    const selectedEmployee = employees.find((emp: Employee) => emp.id === employeeId);
+    if (selectedEmployee) {
+      const monthlySalary = selectedEmployee.salaryType === 'MONTHLY'
+        ? selectedEmployee.basicSalary
+        : selectedEmployee.basicSalary * 20;
+
+      if (monthlyPremium > monthlySalary) {
+        setToast({
+          message: `Monthly installment (Rs. ${monthlyPremium.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) exceeds the employee's monthly salary (Rs. ${monthlySalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}).`,
+          type: 'error'
+        });
+        return;
+      }
+
+      if (selectedEmployee.joinedDate && startDate) {
+        const joined = new Date(selectedEmployee.joinedDate);
+        const loanStart = new Date(startDate);
+        if (loanStart < joined) {
+          setToast({
+            message: `Loan start date cannot be before the employee's joined date (${joined.toLocaleDateString()}).`,
+            type: 'error'
+          });
+          return;
+        }
+      }
     }
 
     if (supportingDocs.length > 3) {
@@ -169,7 +235,9 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
   const resetForm = () => {
     setLoanTitle('');
+    setLoanTitleError('');
     setDescription('');
+    setDescriptionError('');
     setEmployeeId('');
     setSelectedEmployeeName('');
     setSearchTerm('');
@@ -287,10 +355,21 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 <input
                   type="text"
                   value={loanTitle}
-                  onChange={(e) => setLoanTitle(e.target.value)}
+                  maxLength={LOAN_TITLE_MAX_LENGTH}
+                  onChange={(e) => {
+                    setLoanTitle(e.target.value);
+                    setLoanTitleError(validateLoanTitle(e.target.value));
+                  }}
                   placeholder="Personal Home Renovation"
-                  className="w-full px-4 py-1.5 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                  className={`w-full px-4 py-1.5 text-[13px] bg-white border rounded-xl focus:outline-none focus:ring-2 transition-all placeholder:text-gray-400 ${loanTitleError
+                    ? 'border-red-500 focus:ring-red-100'
+                    : 'border-gray-200 focus:ring-blue-500/20 focus:border-blue-500'
+                    }`}
                 />
+                <div className="flex justify-between mt-1">
+                  {loanTitleError && <p className="text-red-500 text-xs">{loanTitleError}</p>}
+                  <p className="text-[11px] text-gray-400 ml-auto">{loanTitle.length}/{LOAN_TITLE_MAX_LENGTH}</p>
+                </div>
               </div>
 
               {/* 2. Description */}
@@ -306,11 +385,23 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={LOAN_DESCRIPTION_MAX_LENGTH}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    setDescriptionError(validateDescription(e.target.value));
+                  }}
                   placeholder="Requesting a loan for home improvement projects and general repairs."
                   rows={4}
-                  className="w-full px-4 py-1.5 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-4 resize-none"
+                  className={`w-full px-4 py-1.5 text-[13px] bg-white border rounded-xl focus:outline-none focus:ring-2 transition-all placeholder:text-gray-4 resize-none ${descriptionError
+                    ? 'border-red-500 focus:ring-red-100'
+                    : 'border-gray-200 focus:ring-blue-500/20 focus:border-blue-500'
+                    }`}
                 />
+
+                <div className="flex justify-between mt-1">
+                  {descriptionError && <p className="text-red-500 text-xs">{descriptionError}</p>}
+                  <p className="text-[11px] text-gray-400 ml-auto">{description.length}/{LOAN_DESCRIPTION_MAX_LENGTH}</p>
+                </div>
               </div>
 
               {/* 3. Employee (Searchable Dropdown) */}
@@ -325,12 +416,22 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 </div>
 
                 <div
-                  className={`relative flex items-center bg-white border rounded-xl focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all ${isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200'}`}
+                  onClick={() => {
+                    const next = !isDropdownOpen;
+                    setIsDropdownOpen(next);
+                    if (next) {
+                      employeeInputRef.current?.focus();
+                    } else {
+                      setSearchTerm('');
+                    }
+                  }}
+                  className={`relative cursor-pointer flex items-center bg-white border rounded-xl focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all ${isDropdownOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200'}`}
                 >
                   <div className="pl-4 pointer-events-none">
                     <Search className="w-4 h-4 text-gray-400" />
                   </div>
                   <input
+                    ref={employeeInputRef}
                     type="text"
                     value={isDropdownOpen ? searchTerm : (selectedEmployeeName || '')}
                     onChange={(e) => {
@@ -339,9 +440,9 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                     }}
                     onFocus={() => setIsDropdownOpen(true)}
                     placeholder="Search employee by name or ID..."
-                    className="w-full px-3 py-1.5 text-[13px] bg-transparent outline-none  placeholder:text-gray-400"
+                    className="w-full px-3 py-1.5 text-[13px] bg-transparent outline-none  placeholder:text-gray-400 cursor-pointer"
                   />
-                  <div className="pr-4 pointer-events-none">
+                  <div className="pr-4 pointer-events-none cursor-pointer">
                     <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
@@ -384,93 +485,59 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 )}
               </div>
 
-              {/* 4. Start & End Dates */}
+              {/* Amount */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <img src={loanStartIcon} alt="Start Date" className="h-4 w-4 text-blue-500" />
+                      <img src={loanAmountIcon} alt="Loan Amount" className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                      Start Date <strong className="text-red-600 text-[15px]">*</strong>
+                      Amount <strong className="text-red-600 text-[15px]">*</strong>
                     </label>
                   </div>
                   <div className="relative">
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <DatePicker
-                        value={startDate ? dayjs(startDate) : null}
-                        onChange={(newValue) => {
-                          setStartDate(newValue ? newValue.format('YYYY-MM-DD') : '');
-                        }}
-                        slotProps={{
-                          textField: {
-                            size: "small",
-                            sx: {
-                              width: "100%",
-                              backgroundColor: "white",
-                              "& .MuiOutlinedInput-root": {
-                                borderRadius: "0.75rem",
-                                "& fieldset": { borderColor: "#e5e7eb", transition: "all 0.2s" },
-                                "&.Mui-focused fieldset": {
-                                  borderColor: "#3b82f6",
-                                  borderWidth: "1px",
-                                  boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
-                                },
-                              },
-                              "& .MuiInputBase-input": {
-                                paddingY: "9.5px", paddingX: "14px", paddingLeft: "36px", fontSize: "10px", color: "#374151",
-                              }
-                            }
-                          }
-                        }}
-                      />
-                    </LocalizationProvider>
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <span className="text-gray-400 text-[13px] font-medium">Rs</span>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      value={amount}
+                      onChange={handleAmountChange}
+                      placeholder="120000"
+                      onWheel={(e) => e.currentTarget.blur()}
+                      onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                      className="no-spinner w-full pl-11 pr-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
+                    />
                   </div>
                 </div>
+
+                {/* Installments Count */}
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <img src={loanEndIcon} alt="End Date" className="h-4 w-4 text-blue-500" />
+                      <img src={loanInstallmentIcon} alt="Loan Installment" className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                      End Date <strong className="text-red-600 text-[15px]">*</strong>
+                      Installment Count <strong className="text-red-600 text-[15px]">*</strong>
                     </label>
                   </div>
-
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      value={endDate ? dayjs(endDate) : null}
-                      onChange={(newValue) => {
-                        setEndDate(newValue ? newValue.format('YYYY-MM-DD') : '');
-                      }}
-                      slotProps={{
-                        textField: {
-                          size: "small",
-                          sx: {
-                            width: "100%",
-                            backgroundColor: "white",
-                            "& .MuiOutlinedInput-root": {
-                              borderRadius: "0.75rem",
-                              "& fieldset": { borderColor: "#e5e7eb", transition: "all 0.2s" },
-                              "&:hover fieldset": { borderColor: "#d1d5db" },
-                              "&.Mui-focused fieldset": {
-                                borderColor: "#3b82f6",
-                                borderWidth: "1px",
-                                boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
-                              },
-                            },
-                            "& .MuiInputBase-input": {
-                              paddingY: "9.5px", paddingX: "14px", paddingLeft: "36px", fontSize: "14px", color: "#374151",
-                            }
-                          }
-                        }
-                      }}
-                    />
-                  </LocalizationProvider>
+                  <input
+                    type="number"
+                    min="0"
+                    value={installmentCount}
+                    onChange={handleInstallmentChange}
+                    placeholder="12"
+                    onWheel={(e) => e.currentTarget.blur()}
+                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                    className="no-spinner w-full px-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">Maximum 15 installments</p>
                 </div>
               </div>
 
-              {/* 5. Interest Rate Type & Rate */}
+              {/* Interest Rate Type & Rate */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="relative">
@@ -535,55 +602,87 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                 </div>
               </div>
 
-              {/* 6.1. Amount */}
+              {/* Start & End Dates */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <img src={loanAmountIcon} alt="Loan Amount" className="h-4 w-4 text-blue-500" />
+                      <img src={loanStartIcon} alt="Start Date" className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                      Amount <strong className="text-red-600 text-[15px]">*</strong>
+                      Start Date <strong className="text-red-600 text-[15px]">*</strong>
                     </label>
                   </div>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <span className="text-gray-400 text-[13px] font-medium">Rs</span>
-                    </div>
-                    <input
-                      type="number"
-                      min="0"
-                      value={amount}
-                      onChange={handleAmountChange}
-                      placeholder="120000"
-                      onWheel={(e) => e.currentTarget.blur()}
-                      onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
-                      className="no-spinner w-full pl-11 pr-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
-                    />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        value={startDate ? dayjs(startDate) : null}
+                        onChange={(newValue) => {
+                          setStartDate(newValue ? newValue.format('YYYY-MM-DD') : '');
+                        }}
+                        minDate={
+                          employeeId
+                            ? dayjs(employees.find((emp: Employee) => emp.id === employeeId)?.joinedDate)
+                            : undefined
+                        }
+                        slotProps={{
+                          textField: {
+                            size: "small",
+                            sx: {
+                              width: "100%",
+                              backgroundColor: "white",
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: "0.75rem",
+                                "& fieldset": { borderColor: "#e5e7eb", transition: "all 0.2s" },
+                                "&.Mui-focused fieldset": {
+                                  borderColor: "#3b82f6",
+                                  borderWidth: "1px",
+                                  boxShadow: "0 0 0 4px rgba(59, 130, 246, 0.1)",
+                                },
+                              },
+                              "& .MuiInputBase-input": {
+                                paddingY: "9.5px", paddingX: "14px", paddingLeft: "36px", fontSize: "10px", color: "#374151",
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </LocalizationProvider>
                   </div>
                 </div>
 
-                {/* 6.2. Installments Count */}
                 <div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                      <img src={loanInstallmentIcon} alt="Loan Installment" className="h-4 w-4 text-blue-500" />
+                      <img src={loanEndIcon} alt="End Date" className="h-4 w-4 text-blue-500" />
                     </div>
                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">
-                      Installment Count <strong className="text-red-600 text-[15px]">*</strong>
+                      End Date <strong className="text-red-600 text-[15px]">*</strong>
                     </label>
                   </div>
-                  <input
-                    type="number"
-                    min="0"
-                    value={installmentCount}
-                    onChange={handleInstallmentChange}
-                    placeholder="12"
-                    onWheel={(e) => e.currentTarget.blur()}
-                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
-                    className="no-spinner w-full px-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
-                  />
-                  <p className="text-[11px] text-gray-400 mt-1">Maximum 15 installments</p>
+
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      value={endDate ? dayjs(endDate) : null}
+                      disabled
+                      slotProps={{
+                        textField: {
+                          size: "small",
+                          sx: {
+                            width: "100%",
+                            backgroundColor: "#f9fafb",
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "0.75rem",
+                              "& fieldset": { borderColor: "#e5e7eb", transition: "all 0.2s" },
+                            },
+                            "& .MuiInputBase-input": {
+                              paddingY: "9.5px", paddingX: "14px", paddingLeft: "36px", fontSize: "10px", color: "#374151",
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </LocalizationProvider>
                 </div>
               </div>
 
@@ -618,7 +717,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                   <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
                     <UploadCloud className="h-4 w-4 text-gray-400 group-hover:text-blue-500" />
                   </div>
-                  <span>Upload Employee Documents</span>
+                  <span>Upload Supporting Documents</span>
                   <div className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-gray-50 group-hover:bg-blue-100 transition-colors">
                     <PlusCircle className="h-3.5 w-3.5 text-gray-400 group-hover:text-blue-600" />
                   </div>

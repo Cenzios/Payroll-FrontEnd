@@ -2,7 +2,7 @@ import { useState, FormEvent, useEffect } from "react";
 import {
     PlusCircle, MinusCircle, UploadCloud, Activity, MapPin, Phone, Mail,
     UserRound, Landmark, Home as HomeIcon, ListOrdered, CreditCard, Hotel,
-    ListFilter, X, Award, Calendar, Banknote, Wallet
+    ListFilter, X, Award, Calendar, Banknote, Wallet, ChevronDown, Check
 } from "lucide-react";
 import FileUploadModal from "../FileUploadModal";
 import { CreateEmployeeRequest } from "../../types/employee.types";
@@ -12,6 +12,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import { Toggle, SRI_LANKAN_BANKS } from "./drawerConstants";
 import { validateEmployeeField } from "./drawerValidation";
+import Toast from "../Toast";
 
 interface EmployeeDrawerProps {
     isOpen: boolean;
@@ -33,6 +34,10 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeTab, setActiveTab] = useState<"employee" | "payment" | "bank">("employee");
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [duplicateErrors, setDuplicateErrors] = useState<{ employeeId?: string; employeeNIC?: string }>({});
+    const [isCheckingId, setIsCheckingId] = useState(false);
+    const [isCheckingNic, setIsCheckingNic] = useState(false);
+    const isCheckingDuplicate = isCheckingId || isCheckingNic;
     const [employeeFiles, setEmployeeFiles] = useState<File[]>([]);
     const [employeeFileTitles, setEmployeeFileTitles] = useState<Record<number, string>>({});
     const [epfEtf, setEpfEtf] = useState("");
@@ -43,13 +48,16 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     const [deductions, setDeductions] = useState<{ type: string; amount: string }[]>([{ type: "", amount: "" }]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
-    const [isAccountNameEdited, setIsAccountNameEdited] = useState(false);
     const [shouldRender, setShouldRender] = useState(isOpen);
     const [isVisible, setIsVisible] = useState(false);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+    const [isEdit, setIsEdit] = useState(!!initialData);
+    const [isSalaryTypeOpen, setIsSalaryTypeOpen] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
             setShouldRender(true);
+            setIsEdit(!!initialData);
             const timer = setTimeout(() => setIsVisible(true), 10);
             return () => clearTimeout(timer);
         } else {
@@ -78,34 +86,49 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                 setAllowances([{ type: "", amount: "" }]);
                 setDeductions([{ type: "", amount: "" }]);
             } else {
-                const draftKey = `employee_add_draft_${companyId}`;
-                const savedDraft = localStorage.getItem(draftKey);
-                if (savedDraft) {
-                    try {
-                        const draft = JSON.parse(savedDraft);
-                        setEmployeeData(draft.employeeData || {});
-                        setEpfEnabled(draft.epfEnabled ?? true);
-                        setEpfEtf(draft.epfEtf || "");
-                        setAllowanceEnabled(draft.allowanceEnabled ?? false);
-                        setDeductionEnabled(draft.deductionEnabled ?? false);
-                        setAllowances(draft.allowances || [{ type: "", amount: "" }]);
-                        setDeductions(draft.deductions || [{ type: "", amount: "" }]);
-                    } catch (e) { console.error("Failed to parse draft", e); }
-                } else {
-                    setEmployeeData({
-                        fullName: "", address: "", employeeId: "", contactNumber: "",
-                        joinedDate: new Date().toISOString().split("T")[0],
-                        designation: "", department: "General", email: "",
-                        basicSalary: 0, salaryType: "DAILY", paidLeave: 0, otRate: 0,
-                        epfEnabled: true, allowanceEnabled: false, deductionEnabled: false,
-                    });
-                    setEpfEnabled(true);
-                    setEpfEtf("");
-                    setAllowanceEnabled(false);
-                    setDeductionEnabled(false);
-                    setAllowances([{ type: "", amount: "" }]);
-                    setDeductions([{ type: "", amount: "" }]);
-                }
+                // const draftKey = `employee_add_draft_${companyId}`;
+                // const savedDraft = localStorage.getItem(draftKey);
+                // if (savedDraft) {
+                //     try {
+                //         const draft = JSON.parse(savedDraft);
+                //         setEmployeeData(draft.employeeData || {});
+                //         setEpfEnabled(draft.epfEnabled ?? true);
+                //         setEpfEtf(draft.epfEtf || "");
+                //         setAllowanceEnabled(draft.allowanceEnabled ?? false);
+                //         setDeductionEnabled(draft.deductionEnabled ?? false);
+                //         setAllowances(draft.allowances || [{ type: "", amount: "" }]);
+                //         setDeductions(draft.deductions || [{ type: "", amount: "" }]);
+                //     } catch (e) { console.error("Failed to parse draft", e); }
+                // } else {
+                //     setEmployeeData({
+                //         fullName: "", address: "", employeeId: "", contactNumber: "",
+                //         joinedDate: new Date().toISOString().split("T")[0],
+                //         designation: "", department: "General", email: "",
+                //         basicSalary: 0, salaryType: "DAILY", paidLeave: 0, otRate: 0,
+                //         epfEnabled: true, allowanceEnabled: false, deductionEnabled: false,
+                //     });
+                //     setEpfEnabled(true);
+                //     setEpfEtf("");
+                //     setAllowanceEnabled(false);
+                //     setDeductionEnabled(false);
+                //     setAllowances([{ type: "", amount: "" }]);
+                //     setDeductions([{ type: "", amount: "" }]);
+                // }
+                // setEmployeeFiles([]);
+
+                setEmployeeData({
+                    fullName: "", address: "", employeeId: "", contactNumber: "",
+                    joinedDate: new Date().toISOString().split("T")[0],
+                    designation: "", department: "General", email: "",
+                    basicSalary: 0, salaryType: "DAILY", paidLeave: 0, otRate: 0,
+                    epfEnabled: true, allowanceEnabled: false, deductionEnabled: false,
+                });
+                setEpfEnabled(true);
+                setEpfEtf("");
+                setAllowanceEnabled(false);
+                setDeductionEnabled(false);
+                setAllowances([{ type: "", amount: "" }]);
+                setDeductions([{ type: "", amount: "" }]);
                 setEmployeeFiles([]);
             }
         }
@@ -133,25 +156,25 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         }
     }, [isOpen, initialData]);
 
-    useEffect(() => {
-        if (isOpen && !initialData && companyId) {
-            const draftKey = `employee_add_draft_${companyId}`;
-            const isDirty = employeeData.fullName || employeeData.employeeId || employeeData.contactNumber || employeeData.email ||
-                (allowances.length > 1 || allowances[0].type || allowances[0].amount) ||
-                (deductions.length > 1 || deductions[0].type || deductions[0].amount);
-            if (isDirty) {
-                localStorage.setItem(draftKey, JSON.stringify({ employeeData, epfEtf, epfEnabled, allowanceEnabled, deductionEnabled, allowances, deductions }));
-            } else {
-                localStorage.removeItem(draftKey);
-            }
-        }
-    }, [employeeData, epfEtf, epfEnabled, allowanceEnabled, deductionEnabled, allowances, deductions, initialData, companyId, isOpen]);
+    // useEffect(() => {
+    //     if (isOpen && !initialData && companyId) {
+    //         const draftKey = `employee_add_draft_${companyId}`;
+    //         const isDirty = employeeData.fullName || employeeData.employeeId || employeeData.contactNumber || employeeData.email ||
+    //             (allowances.length > 1 || allowances[0].type || allowances[0].amount) ||
+    //             (deductions.length > 1 || deductions[0].type || deductions[0].amount);
+    //         if (isDirty) {
+    //             localStorage.setItem(draftKey, JSON.stringify({ employeeData, epfEtf, epfEnabled, allowanceEnabled, deductionEnabled, allowances, deductions }));
+    //         } else {
+    //             localStorage.removeItem(draftKey);
+    //         }
+    //     }
+    // }, [employeeData, epfEtf, epfEnabled, allowanceEnabled, deductionEnabled, allowances, deductions, initialData, companyId, isOpen]);
 
-    useEffect(() => {
-        if (employeeData.fullName && !isAccountNameEdited) {
-            handleEmployeeChange("accountHolderName", employeeData.fullName);
-        }
-    }, [employeeData.fullName, isAccountNameEdited]);
+    // useEffect(() => {
+    //     if (employeeData.fullName && !isAccountNameEdited) {
+    //         handleEmployeeChange("accountHolderName", employeeData.fullName);
+    //     }
+    // }, [employeeData.fullName, isAccountNameEdited]);
 
     const getValidationContext = () => ({
         epfEnabled,
@@ -168,6 +191,9 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
             const epfError = validateEmployeeField("epfEtf", epfEtf, getValidationContext());
             setErrors((prev) => ({ ...prev, epfEtf: epfError }));
         }
+        // if (field === 'employeeId' || field === 'employeeNIC') {
+        //     setDuplicateErrors(prev => ({ ...prev, [field]: undefined }));
+        // }
         if (value && String(value).trim() !== "") setTouched((prev) => ({ ...prev, [field]: true }));
     };
 
@@ -176,7 +202,76 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         const value = (employeeData as any)[field];
         const error = validateEmployeeField(field, value, getValidationContext());
         setErrors((prev) => ({ ...prev, [field]: error }));
+
+        if (field === 'employeeId' || field === 'employeeNIC') {
+            checkDuplicate(field as 'employeeId' | 'employeeNIC', value);
+        }
     };
+
+    const checkDuplicate = async (field: 'employeeId' | 'employeeNIC', value: string) => {
+        if (!value?.trim() || !companyId) return;
+        if (validateEmployeeField(field, value, getValidationContext())) return;
+
+        if (field === 'employeeId') setIsCheckingId(true);
+        else setIsCheckingNic(true);
+        try {
+            const params = new URLSearchParams({ companyId });
+            if (field === 'employeeId') params.append('employeeId', value.trim());
+            if (field === 'employeeNIC') params.append('employeeNIC', value.trim());
+            if (initialData?.id) params.append('excludeId', initialData.id);
+
+            const token = localStorage.getItem('token');
+            const res = await fetch(
+                `${import.meta.env.VITE_API_BASE_URL}/employee/check-duplicate?${params}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const data = await res.json();
+            if (!data.success) return;
+
+            setDuplicateErrors(prev => ({
+                ...prev,
+                employeeId: field === 'employeeId'
+                    ? (data.data.employeeIdExists ? 'Employee ID already exists in this company' : undefined)
+                    : prev.employeeId,
+                employeeNIC: field === 'employeeNIC'
+                    ? (data.data.nicExists ? 'NIC already exists in this company' : undefined)
+                    : prev.employeeNIC,
+            }));
+            setTouched(prev => ({ ...prev, [field]: true }));
+        } catch (_) { /*  */ }
+        finally {
+            if (field === 'employeeId') setIsCheckingId(false);
+            else setIsCheckingNic(false);
+        }
+    };
+
+    useEffect(() => {
+        const id = employeeData.employeeId?.trim();
+        if (!id || validateEmployeeField('employeeId', id, getValidationContext())) {
+            setDuplicateErrors(prev => ({ ...prev, employeeId: undefined }));
+            setIsCheckingId(false);
+            return;
+        }
+        setIsCheckingId(true);
+        const timer = setTimeout(() => {
+            checkDuplicate('employeeId', id);
+        }, 600);
+        return () => clearTimeout(timer);
+    }, [employeeData.employeeId]);
+
+    useEffect(() => {
+        const nic = employeeData.employeeNIC?.trim();
+        if (!nic || validateEmployeeField('employeeNIC', nic, getValidationContext())) {
+            setDuplicateErrors(prev => ({ ...prev, employeeNIC: undefined }));
+            setIsCheckingNic(false);
+            return;
+        }
+        setIsCheckingNic(true);
+        const timer = setTimeout(() => {
+            checkDuplicate('employeeNIC', nic);
+        }, 600);
+        return () => clearTimeout(timer);
+    }, [employeeData.employeeNIC]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
@@ -191,10 +286,17 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     };
 
     const isTabValid = (tab: typeof activeTab) => {
+        // if (tab === "employee") {
+        //     return ["fullName", "employeeId", "contactNumber", "joinedDate", "employeeNIC", "epfNumber"].every(
+        //         (f) => !validateEmployeeField(f, (employeeData as any)[f], getValidationContext())
+        //     );
+        // }
         if (tab === "employee") {
-            return ["fullName", "employeeId", "contactNumber", "joinedDate", "employeeNIC", "epfNumber"].every(
-                (f) => !validateEmployeeField(f, (employeeData as any)[f], getValidationContext())
+            const hasFormatErrors = ["fullName", "employeeId", "contactNumber", "joinedDate", "employeeNIC", "epfNumber"].some(
+                (f) => !!validateEmployeeField(f, (employeeData as any)[f], getValidationContext())
             );
+            const hasDuplicateErrors = !!(duplicateErrors.employeeId || duplicateErrors.employeeNIC);
+            return !hasFormatErrors && !hasDuplicateErrors && !isCheckingDuplicate;
         }
         if (tab === "payment") {
             return !validateEmployeeField("basicSalary", employeeData.basicSalary, getValidationContext()) &&
@@ -209,6 +311,10 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     };
 
     const isFormValid = () => {
+        return isTabValid("employee") && isTabValid("payment") && isTabValid("bank");
+    };
+
+    const isFormValidOld = () => {
         const required = ["fullName", "employeeId", "contactNumber", "joinedDate", "employeeNIC", "epfNumber"];
         const bankFields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
         const isBankFilled = bankFields.some((f) => { const v = (employeeData as any)[f]; return v && v.toString().trim() !== ""; });
@@ -239,6 +345,17 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         [...fields, ...bankFields, "epfEtf"].forEach((f) => (allTouched[f] = true));
         setTouched(allTouched);
         return Object.keys(newErrors).length === 0;
+    };
+
+    const isBankSectionComplete = () => {
+        const bankFields = ["bankName", "accountNumber", "branchName", "accountHolderName"];
+        const values = bankFields.map((f) => (employeeData as any)[f]);
+        const allEmpty = values.every((v) => !v || String(v).trim() === "");
+        if (allEmpty) return true;
+        const allFilled = values.every((v) => v && String(v).trim() !== "");
+        if (!allFilled) return false;
+        const ctx = getValidationContext();
+        return bankFields.every((f) => !validateEmployeeField(f, (employeeData as any)[f], ctx));
     };
 
     const handleSubmit = async (e: FormEvent) => {
@@ -285,8 +402,19 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
 
     if (!shouldRender) return null;
 
-    const isEdit = !!initialData;
+    // const isEdit = !!initialData;
     const title = isEdit ? "Edit Employee" : "Add New Employee";
+
+    const blockInvalidNumericKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (['+', '-', 'e', 'E', 'ArrowUp', 'ArrowDown'].includes(e.key)) e.preventDefault();
+    };
+
+    const fileTypes: Record<string, { label: string; style: string }> = {
+        pdf: { label: "PDF", style: "bg-red-100 text-red-500" },
+        png: { label: "PNG", style: "bg-blue-100 text-blue-500" },
+        jpg: { label: "JPG", style: "bg-green-100 text-green-500" },
+        jpeg: { label: "JPEG", style: "bg-green-100 text-green-500" },
+    };
 
     return (
         <>
@@ -350,8 +478,12 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Employee ID <strong className="text-red-600 text-[15px]">*</strong></label>
                                                 </div>
                                                 <input type="text" value={employeeData.employeeId} onChange={(e) => handleEmployeeChange("employeeId", e.target.value)} onBlur={() => handleBlur("employeeId")} placeholder="Enter Employee ID"
-                                                    className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeId && errors.employeeId ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
-                                                {touched.employeeId && errors.employeeId && <p className="text-red-500 text-xs mt-1">{errors.employeeId}</p>}
+                                                    className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${(touched.employeeId && errors.employeeId) || duplicateErrors.employeeId ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
+                                                {(touched.employeeId && errors.employeeId) || duplicateErrors.employeeId ? (
+                                                    <p className="text-red-500 text-xs mt-1">
+                                                        {errors.employeeId || duplicateErrors.employeeId}
+                                                    </p>
+                                                ) : null}
                                             </div>
 
                                             {/* Name */}
@@ -371,9 +503,14 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><CreditCard className="h-4 w-4 text-blue-500" /></div>
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">NIC <strong className="text-red-600 text-[15px]">*</strong></label>
                                                 </div>
-                                                <input type="text" value={employeeData.employeeNIC || ""} onChange={(e) => handleEmployeeChange("employeeNIC", e.target.value)} onBlur={() => handleBlur("employeeNIC")} placeholder="Enter Employee NIC Number"
-                                                    className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.employeeNIC && errors.employeeNIC ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
-                                                {touched.employeeNIC && errors.employeeNIC && <p className="text-red-500 text-xs mt-1">{errors.employeeNIC}</p>}
+                                                <input type="text" value={employeeData.employeeNIC || ""}
+                                                    onChange={(e) => handleEmployeeChange("employeeNIC", e.target.value.replace(/[^0-9vVxX]/g, "").replace(/[vx]/g, (c) => c.toUpperCase()))} onBlur={() => handleBlur("employeeNIC")} placeholder="Enter Employee NIC Number"
+                                                    className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${(touched.employeeNIC && errors.employeeNIC) || duplicateErrors.employeeNIC ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
+                                                {(touched.employeeNIC && errors.employeeNIC) || duplicateErrors.employeeNIC ? (
+                                                    <p className="text-red-500 text-xs mt-1">
+                                                        {errors.employeeNIC || duplicateErrors.employeeNIC}
+                                                    </p>
+                                                ) : null}
                                             </div>
 
                                             {/* Address */}
@@ -414,7 +551,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                         <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Phone className="h-4 w-4 text-blue-500" /></div>
                                                         <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Phone Number <strong className="text-red-600 text-[15px]">*</strong></label>
                                                     </div>
-                                                    <input type="tel" value={employeeData.contactNumber} onChange={(e) => handleEmployeeChange("contactNumber", e.target.value)} onBlur={() => handleBlur("contactNumber")} placeholder="0771234567"
+                                                    <input type="tel" inputMode="numeric" value={employeeData.contactNumber} onChange={(e) => handleEmployeeChange("contactNumber", e.target.value.replace(/[^0-9]/g, ""))} onBlur={() => handleBlur("contactNumber")} placeholder="0771234567"
                                                         className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                     {touched.contactNumber && errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
                                                 </div>
@@ -469,19 +606,14 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><UploadCloud className="h-4 w-4 text-blue-500" /></div>
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Supporting Documents (Max 3)</label>
                                                 </div>
-                                                {initialData?.documents && initialData.documents.length > 0 && (
-                                                    <div className="mb-2 px-3 py-1.5 bg-gray-50 rounded-xl border border-gray-100">
-                                                        <span className="text-[13px] text-gray-500 font-medium">{initialData.documents.length} document(s) already uploaded</span>
-                                                    </div>
-                                                )}
                                                 <button
                                                     type="button"
                                                     onClick={() => setIsUploadModalOpen(true)}
-                                                    disabled={((initialData?.documents?.length || 0) + employeeFiles.length) >= 3}
+                                                    disabled={((initialData?.documents?.filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE').length || 0) + employeeFiles.length) >= 3}
                                                     className="flex items-center gap-2 w-full px-3 py-2.5 border border-gray-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all text-[13px] text-gray-500 font-medium group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent"
                                                 >
                                                     <span className="text-gray-400 text-[13px] font-light">
-                                                        {((initialData?.documents?.length || 0) + employeeFiles.length) >= 3 ? "Document limit reached" : "Upload Employee Documents"}
+                                                        {((initialData?.documents?.filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE').length || 0) + employeeFiles.length) >= 3 ? "Document limit reached" : "Upload Employee Documents"}
                                                     </span>
                                                     <div className="ml-auto w-6 h-6 flex items-center justify-center rounded-full bg-gray-50 group-hover:bg-blue-100 transition-colors">
                                                         <PlusCircle className="h-3.5 w-3.5 text-gray-400 group-hover:text-blue-600" />
@@ -517,9 +649,36 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     onFilesChange={setEmployeeFiles}
                                                     fileTitles={employeeFileTitles}
                                                     onTitlesChange={setEmployeeFileTitles}
-                                                    maxFiles={3 - (initialData?.documents?.length || 0)}
-                                                    onUpload={() => setIsUploadModalOpen(false)}
+                                                    maxFiles={3 - (initialData?.documents?.filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE').length || 0)}
+                                                    onUpload={() => {
+                                                        setIsUploadModalOpen(false);
+                                                        setToast({ message: "Uploading documents...", type: "success" });
+                                                    }}
                                                 />
+
+                                                {initialData?.documents && initialData.documents.filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE').length > 0 && (
+                                                    <div className="mb-2 space-y-2">
+                                                        {initialData.documents
+                                                            .filter((doc: any) => !doc.documentType || doc.documentType === 'EMPLOYEE')
+                                                            .map((doc: any) => {
+                                                                const ext = doc.fileName?.split(".").pop()?.toLowerCase();
+                                                                const fileType = fileTypes[ext] || { label: "FILE", style: "bg-gray-100 text-gray-500" };
+                                                                return (
+                                                                    <div
+                                                                        key={doc.id}
+                                                                        className="flex items-center gap-3 px-3 py-2 rounded-xl border border-gray-100 bg-gray-50"
+                                                                    >
+                                                                        <span className={`text-[11px] font-bold px-2 py-1 rounded-md ${fileType.style}`}>
+                                                                            {fileType.label}
+                                                                        </span>
+                                                                        <span className="text-[13px] font-medium text-gray-800 truncate">
+                                                                            {doc.docTitle || doc.fileName}
+                                                                        </span>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                    </div>
+                                                )}
                                             </div>
                                             <input type="hidden" value={employeeData.department} />
                                         </div>
@@ -534,19 +693,53 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Wallet className="h-4 w-4 text-blue-500" /></div>
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Basic Salary <strong className="text-red-600 text-[15px]">*</strong></label>
                                                 </div>
-                                                <div className="flex">
+                                                <div className="flex items-center">
                                                     <input type="number" min="0" value={employeeData.basicSalary || ""}
                                                         onChange={(e) => handleEmployeeChange("basicSalary", parseFloat(e.target.value) || 0)}
                                                         onBlur={() => handleBlur("basicSalary")}
                                                         onWheel={(e) => e.currentTarget.blur()}
-                                                        onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                                        onKeyDown={blockInvalidNumericKeys}
                                                         placeholder={employeeData.salaryType === "MONTHLY" ? "Enter Employee's Monthly Basic" : "Enter Employee's Daily Basic"}
-                                                        className={`text-[13px] w-full px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.basicSalary && errors.basicSalary ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`} />
-                                                    <select value={employeeData.salaryType || "DAILY"} onChange={(e) => handleEmployeeChange("salaryType", e.target.value as "DAILY" | "MONTHLY")}
-                                                        className="ml-2 px-4 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 bg-white focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none cursor-pointer">
-                                                        <option value="MONTHLY">Monthly</option>
-                                                        <option value="DAILY">Daily</option>
-                                                    </select>
+                                                        className={`text-[13px] w-full px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none 
+                                                        ${touched.basicSalary && errors.basicSalary
+                                                                ? "border-red-500 focus:ring-red-100"
+                                                                : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`}
+                                                    />
+
+                                                    <div className="relative ml-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setIsSalaryTypeOpen(!isSalaryTypeOpen)}
+                                                            className="flex items-center gap-1.5 px-4 py-1.5 border border-gray-200 rounded-xl text-[13px] font-medium text-gray-600 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none cursor-pointer transition-all whitespace-nowrap"
+                                                        >
+                                                            {employeeData.salaryType === "MONTHLY" ? "Monthly" : "Daily"}
+                                                            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isSalaryTypeOpen ? 'rotate-180' : ''}`} />
+                                                        </button>
+                                                        {isSalaryTypeOpen && (
+                                                            <>
+                                                                <div className="fixed inset-0 z-10" onClick={() => setIsSalaryTypeOpen(false)} />
+                                                                <div className="absolute right-0 mt-1 w-full min-w-[70px] bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
+                                                                    {(["MONTHLY", "DAILY"] as const).map((type) => (
+                                                                        <button
+                                                                            key={type}
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                handleEmployeeChange("salaryType", type);
+                                                                                setIsSalaryTypeOpen(false);
+                                                                            }}
+                                                                            className={`w-full flex items-center justify-between gap-2 px-4 py-2 text-[13px] font-medium transition-colors ${employeeData.salaryType === type
+                                                                                ? 'text-[#367AFF] bg-blue-50'
+                                                                                : 'text-gray-600 hover:bg-gray-50'
+                                                                                }`}
+                                                                        >
+                                                                            {type === "MONTHLY" ? "Monthly" : "Daily"}
+                                                                            {employeeData.salaryType === type}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 {touched.basicSalary && errors.basicSalary && <p className="text-red-500 text-[12px] mt-1">{errors.basicSalary}</p>}
                                             </div>
@@ -579,13 +772,13 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                             <div>
                                                 <div className="relative mt-4">
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Banknote className="h-4 w-4 text-blue-500" /></div>
-                                                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">OT Rate (Rs/hr)</label>
+                                                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">OT Rate (Rs./hr)</label>
                                                 </div>
                                                 <input type="number" min="0" value={employeeData.otRate || ""}
                                                     onChange={(e) => handleEmployeeChange("otRate", parseFloat(e.target.value) || 0)}
                                                     onBlur={() => handleBlur("otRate")}
                                                     onWheel={(e) => e.currentTarget.blur()}
-                                                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                                    onKeyDown={blockInvalidNumericKeys}
                                                     placeholder="Enter OT Rate (Rs)"
                                                     className={`text-[13px] w-full px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                 {touched.otRate && errors.otRate && <p className="text-red-500 text-xs mt-1">{errors.otRate}</p>}
@@ -607,7 +800,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                                 onChange={(e) => { const val = e.target.value; setEpfEtf(val); const err = validateEmployeeField("epfEtf", val, getValidationContext()); setErrors((prev) => ({ ...prev, epfEtf: err })); }}
                                                                 onBlur={() => { setTouched((prev) => ({ ...prev, epfEtf: true })); const err = validateEmployeeField("epfEtf", epfEtf, getValidationContext()); setErrors((prev) => ({ ...prev, epfEtf: err })); }}
                                                                 onWheel={(e) => e.currentTarget.blur()}
-                                                                onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                                                onKeyDown={blockInvalidNumericKeys}
                                                                 placeholder="Enter Employee's EPF/ETF Applicable Amount"
                                                                 className={`text-[13px] w-[330px] px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.epfEtf && errors.epfEtf ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                             {touched.epfEtf && errors.epfEtf && <p className="text-red-500 text-[11px] absolute top-full mt-1 left-0 whitespace-nowrap">{errors.epfEtf}</p>}
@@ -626,15 +819,15 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="space-y-3">
                                                         <div className="grid grid-cols-[1fr_1fr_36px] gap-3">
                                                             <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">Type</span>
-                                                            <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">Amount</span>
+                                                            <span className="text-[12px] font-medium text-gray-500 tracking-wide">AMOUNT (Rs.)</span>
                                                             <span></span>
                                                         </div>
                                                         {allowances.map((allowance, index) => (
                                                             <div key={index} className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center">
-                                                                <input type="text" value={allowance.type} onChange={(e) => { const u = [...allowances]; u[index].type = e.target.value; setAllowances(u); }} placeholder="Travelling" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all" />
+                                                                <input type="text" value={allowance.type} onChange={(e) => { const u = [...allowances]; u[index].type = e.target.value.replace(/[^a-zA-Z\s]/g, ''); setAllowances(u); }} placeholder="Travelling" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all" />
                                                                 <input type="number" min="0" value={allowance.amount} onChange={(e) => { const u = [...allowances]; u[index].amount = e.target.value; setAllowances(u); }}
                                                                     onWheel={(e) => e.currentTarget.blur()}
-                                                                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                                                    onKeyDown={blockInvalidNumericKeys}
                                                                     placeholder="15,000.00" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                                                 <button type="button" onClick={() => { if (allowances.length > 1) setAllowances(allowances.filter((_, i) => i !== index)); }} disabled={allowances.length <= 1} className="flex items-center justify-center">
                                                                     <MinusCircle className={`w-5 h-5 ${allowances.length <= 1 ? "text-gray-300" : "text-red-400 hover:text-red-600 cursor-pointer"} transition-colors`} />
@@ -648,7 +841,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                                 <span className="text-[12px] text-gray-400 group-hover:text-blue-500 transition-colors">Add Extra Allowances</span>
                                                             </div>
                                                             <div className="px-3 py-1.5 border border-dashed border-gray-200 rounded-xl group-hover:border-blue-300 transition-colors"><span className="text-[12px] text-gray-400">Enter Amount</span></div>
-                                                            <div className="flex items-center justify-center"><PlusCircle className="w-5 h-5 text-blue-400 group-hover:text-[#367AFF] transition-colors" /></div>
+                                                            <div className="flex items-center justify-center" title="Please fill the current row to add another one"><PlusCircle className="w-5 h-5 text-blue-400 group-hover:text-[#367AFF] transition-colors" /></div>
                                                         </div>
                                                     </div>
                                                 )}
@@ -664,15 +857,15 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="space-y-3">
                                                         <div className="grid grid-cols-[1fr_1fr_36px] gap-3">
                                                             <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">Type</span>
-                                                            <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">Amount (Rs)</span>
+                                                            <span className="text-[12px] font-medium text-gray-500 tracking-wide">AMOUNT (Rs.)</span>
                                                             <span></span>
                                                         </div>
                                                         {deductions.map((deduction, index) => (
                                                             <div key={index} className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center">
-                                                                <input type="text" value={deduction.type} onChange={(e) => { const u = [...deductions]; u[index].type = e.target.value; setDeductions(u); }} placeholder="Loan" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all" />
+                                                                <input type="text" value={deduction.type} onChange={(e) => { const u = [...deductions]; u[index].type = e.target.value.replace(/[^a-zA-Z\s]/g, ''); setDeductions(u); }} placeholder="Food" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all" />
                                                                 <input type="number" min="0" value={deduction.amount} onChange={(e) => { const u = [...deductions]; u[index].amount = e.target.value; setDeductions(u); }}
                                                                     onWheel={(e) => e.currentTarget.blur()}
-                                                                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                                                    onKeyDown={blockInvalidNumericKeys}
                                                                     placeholder="Amount" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                                                 <button type="button" onClick={() => { if (deductions.length > 1) setDeductions(deductions.filter((_, i) => i !== index)); }} disabled={deductions.length <= 1} className="flex items-center justify-center">
                                                                     <MinusCircle className={`w-5 h-5 ${deductions.length <= 1 ? "text-gray-300" : "text-red-400 hover:text-red-600 cursor-pointer"} transition-colors`} />
@@ -686,7 +879,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                                 <span className="text-[12px] text-gray-400 group-hover:text-red-500 transition-colors">Add Deduction</span>
                                                             </div>
                                                             <div className="px-3 py-1.5 border border-dashed border-red-200 rounded-xl group-hover:border-red-400 transition-colors"><span className="text-[12px] text-gray-400">Enter Amount</span></div>
-                                                            <div className="flex items-center justify-center"><PlusCircle className="w-5 h-5 text-blue-400 group-hover:text-red-500 transition-colors" /></div>
+                                                            <div className="flex items-center justify-center" title="Please fill the current row to add another one"><PlusCircle className="w-5 h-5 text-blue-400 group-hover:text-red-500 transition-colors" /></div>
                                                         </div>
                                                     </div>
                                                 )}
@@ -703,7 +896,9 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><UserRound className="h-4 w-4 text-blue-500" /></div>
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Account Holder Name</label>
                                                 </div>
-                                                <input type="text" value={employeeData.accountHolderName ?? ""} onChange={(e) => { setIsAccountNameEdited(true); handleEmployeeChange("accountHolderName", e.target.value); }} placeholder="Enter Your Account Holder Name"
+                                                <input type="text" value={employeeData.accountHolderName ?? ""}
+                                                    onChange={(e) => handleEmployeeChange("accountHolderName", e.target.value)}
+                                                    placeholder="Enter Your Account Holder Name"
                                                     className={`text-[13px] w-full pr-4 px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountHolderName && errors.accountHolderName ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                 {touched.accountHolderName && errors.accountHolderName && <p className="text-red-500 text-xs mt-1">{errors.accountHolderName}</p>}
                                             </div>
@@ -736,7 +931,9 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><ListOrdered className="h-4 w-4 text-blue-500" /></div>
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Account Number</label>
                                                 </div>
-                                                <input type="text" value={employeeData.accountNumber || ""} onChange={(e) => handleEmployeeChange("accountNumber", e.target.value)} placeholder="Enter Your Account Number"
+                                                <input type="text" inputMode="numeric" value={employeeData.accountNumber || ""}
+                                                    onChange={(e) => handleEmployeeChange("accountNumber", e.target.value.replace(/[^0-9]/g, ""))}
+                                                    placeholder="Enter Your Account Number"
                                                     className={`text-[13px] w-full pr-4 px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all ${touched.accountNumber && errors.accountNumber ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                 {touched.accountNumber && errors.accountNumber && <p className="text-red-500 text-xs mt-1">{errors.accountNumber}</p>}
                                             </div>
@@ -750,7 +947,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                     {/* Footer */}
                     <div className="p-4 border-t border-gray-200 flex justify-center">
                         {activeTab === "bank" ? (
-                            <button type="submit" onClick={handleSubmit} disabled={isSubmitting || !isFormValid()}
+                            <button type="submit" onClick={handleSubmit} disabled={isSubmitting || !isTabValid("employee") || !isTabValid("payment") || !isBankSectionComplete()}
                                 className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed
                                              max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
                                 {isSubmitting ? "Saving..." : isEdit ? "Update" : "Finish"}
@@ -760,12 +957,19 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                 disabled={!isTabValid(activeTab)}
                                 className="w-full max-w-sm text-white bg-[#367AFF] hover:bg-[#367AFF]/90 py-2.5 rounded-lg font-semibold transition-colors text-[14px] disabled:opacity-50 disabled:cursor-not-allowed
                                              max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200">
-                                Next
+                                {isCheckingDuplicate ? "Checking..." : "Next"}
                             </button>
                         )}
                     </div>
                 </div>
             </div>
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
         </>
     );
 };

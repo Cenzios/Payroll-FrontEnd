@@ -5,42 +5,48 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../api/axios";
 import { useGetUserDocumentsQuery } from "../store/apiSlice";
 
-const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
+const PlanVerify = ({ referenceId, totalAmount, onResubmit }: { referenceId?: string; totalAmount?: number; onResubmit?: () => void }) => {
     const navigate = useNavigate();
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [status, setStatus] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
 
     // Fetch user documents to check for rejection
-    const { data: documentsData, refetch: refetchDocs } = useGetUserDocumentsQuery();
+    // const { data: documentsData, refetch: refetchDocs } = useGetUserDocumentsQuery();
 
     useEffect(() => {
         const checkStatus = async () => {
             try {
-                // 1. Check Subscription Status
-                const subRes = await axiosInstance.get('/subscription/current');
+                // Fetch fresh documents directly via axios, not refetchDocs
+                const [subRes, docsRes] = await Promise.all([
+                    axiosInstance.get('/subscription/current'),
+                    axiosInstance.get('/user-documents') // ← use your actual documents endpoint
+                ]);
+
                 const subStatus = subRes.data?.data?.status;
+                const latestDoc = docsRes.data?.data?.[0]; // ← always fresh, no RTK cache issue
 
-                if (subStatus === 'ACTIVE') {
-                    // But check if there's a recent rejection that takes precedence for the UI
-                    const latestDoc = documentsData?.data?.[0];
-                    if (latestDoc && latestDoc.status === 'REJECTED') {
-                        setStatus("REJECTED");
-                    } else {
-                        setStatus("APPROVED");
-                    }
-                    return;
-                }
-
-                // 2. Check Document Status if subscription is not active
-                const latestDoc = documentsData?.data?.[0];
+                // if (subStatus === 'ACTIVE') {
+                //     if (latestDoc && latestDoc.status === 'REJECTED') {
                 if (latestDoc) {
+                    if (latestDoc.status === 'REJECTED') {
+                        setStatus("REJECTED");
+                        return;
+                    }
+                    if (latestDoc.status === 'PENDING') {
+                        setStatus("PENDING");
+                        return;
+                    }
                     if (latestDoc.status === 'APPROVED') {
                         setStatus("APPROVED");
-                    } else if (latestDoc.status === 'REJECTED') {
-                        setStatus("REJECTED");
-                    } else {
-                        setStatus("PENDING");
+                        return;
                     }
+                }
+
+                // No document found — check subscription status directly
+                if (subStatus === 'ACTIVE') {
+                    setStatus("APPROVED");
+                } else {
+                    setStatus("PENDING");
                 }
             } catch (error) {
                 console.warn("Failed to check approval status", error);
@@ -48,12 +54,9 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
         };
 
         checkStatus();
-        const intervalId = setInterval(() => {
-            checkStatus();
-            refetchDocs();
-        }, 5000);
+        const intervalId = setInterval(checkStatus, 5000);
         return () => clearInterval(intervalId);
-    }, [documentsData, refetchDocs]);
+    }, []); // ← empty deps
 
 
     return (
@@ -89,7 +92,7 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
                 {status === 'APPROVED' ? (
                     "Your payment has been successfully approved! You can now access your dashboard and manage your subscriptions."
                 ) : status === 'REJECTED' ? (
-                    "Your payment proof was rejected by the admin. Please review your submission and upload a valid bank slip."
+                    "Your previous payment proof was rejected. Please review your submission and upload a valid bank slip."
                 ) : (
                     "We've successfully received your bank slip. Our admin team is currently reviewing your payment details."
                 )}
@@ -125,7 +128,9 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
 
                     <div className="flex justify-between">
                         <span className="text-gray-500">Amount Submitted</span>
-                        <span className="font-semibold text-base text-end">Rs 100</span>
+                        <span className="font-semibold text-base text-end">
+                            Rs. {totalAmount !== undefined ? totalAmount.toFixed(2) : "100.00"}
+                        </span>
                     </div>
 
                     <div className="flex justify-between">
@@ -133,10 +138,12 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
                         <span className="font-normal text-end">{referenceId || "TRX-8923-AB"}</span>
                     </div>
 
-                    <div className="flex justify-between">
-                        <span className="text-gray-500">Est. Approval Time</span>
-                        <span className="font-semibold text-end">1–2 Business Hours</span>
-                    </div>
+                    {status === 'PENDING' && (
+                        <div className="flex justify-between">
+                            <span className="text-gray-500">Est. Approval Time</span>
+                            <span className="font-semibold text-end">1–2 Business Hours</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -153,7 +160,11 @@ const PlanVerify = ({ referenceId }: { referenceId?: string }) => {
                     <button
                         onClick={() => {
                             // Reset state and allow re-upload
-                            navigate('/buy-plan?isUpgrade=true');
+                            if (onResubmit) {
+                                onResubmit();
+                            } else {
+                                navigate('/buy-plan?method=manual&step=pay');
+                            }
                         }}
                         className="flex-1 bg-red-600 text-white rounded-xl py-3 text-sm font-bold hover:bg-red-700 shadow-lg shadow-red-200 flex items-center justify-center gap-2"
                     >

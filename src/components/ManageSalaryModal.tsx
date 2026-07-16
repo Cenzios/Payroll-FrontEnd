@@ -25,7 +25,7 @@ const ManageSalaryModal = ({
 
     // Total of all valid entries (excluding the empty last row)
     const total = modalEntries
-        .slice(0, -1)
+        // .slice(0, -1)
         .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
     return (
@@ -87,7 +87,7 @@ const ManageSalaryModal = ({
                                             const updated = [...modalEntries];
                                             updated[idx] = {
                                                 ...updated[idx],
-                                                amount: parseFloat(e.target.value) || 0,
+                                                amount: Math.max(0, parseFloat(e.target.value) || 0),
                                             };
                                             setModalEntries(updated);
                                         }}
@@ -95,6 +95,9 @@ const ManageSalaryModal = ({
                                         className="w-28 px-4 py-3 text-sm text-gray-700 placeholder:text-gray-300 outline-none bg-transparent text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         min="0"
                                         step="0.01"
+                                        onKeyDown={(e) => {
+                                            if (['+', '-', 'e', 'E'].includes(e.key)) e.preventDefault();
+                                        }}
                                     />
                                 </div>
 

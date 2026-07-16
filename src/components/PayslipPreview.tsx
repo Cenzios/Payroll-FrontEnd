@@ -15,6 +15,7 @@ interface PayslipPreviewProps {
     exportExcel: () => void;
     exportCSV: () => void;
     onClose?: () => void;
+    title?: string;
 }
 
 
@@ -30,6 +31,7 @@ const PayslipPreview = ({
     exportExcel,
     exportCSV,
     onClose,
+    title = "PAY SLIP",
 }: PayslipPreviewProps) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const downloadBtnRef = useRef<HTMLButtonElement>(null);
@@ -43,7 +45,7 @@ const PayslipPreview = ({
                 </div>
                 <h3 className="text-lg font-semibold text-gray-600">No Payslip Generated</h3>
                 <p className="max-w-xs mt-2 text-sm">
-                    Select an employee from the left and click "Generate Pay Slip" to preview.
+                    Select an employee from the left and click "Generate" button to preview Payslip.
                 </p>
             </div>
         );
@@ -52,14 +54,17 @@ const PayslipPreview = ({
     const fmt = (val: number) => (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     const grossEarnings =
-        previewPayslip.basicPay +
+        (previewPayslip.salaryType === "DAILY" ? previewPayslip.basicPay : previewPayslip.basicSalary) +
         previewPayslip.otAmount +
         (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0);
 
     const totalDeductions =
         (previewPayslip.nonPaidLeaveDeduction || 0) +
         (previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) +
-        previewPayslip.deductions.reduce((sum: number, d: any) => sum + d.amount, 0);
+        // previewPayslip.deductions.reduce((sum: number, d: any) => sum + d.amount, 0);
+        previewPayslip.deductions
+            .filter((d: any) => d.name !== "Loan Deduction")
+            .reduce((sum: number, d: any) => sum + d.amount, 0);
 
     const monthLabel = new Date(selectedYear, selectedMonth).toLocaleString("default", {
         month: "long",
@@ -68,8 +73,8 @@ const PayslipPreview = ({
 
     return (
         <div
-            className="bg-black/20 md:bg-transparent p-6 md:p-0 min-h-full md:min-h-0 rounded-xl md:rounded-none
-        flex flex-col items-center justify-center"
+            className="bg-black/20 md:bg-transparent p-6 md:p-0 min-h-0 rounded-xl md:rounded-none
+        flex flex-col items-center justify-start"
             onClick={(e) => {
                 if (e.target === e.currentTarget) {
                     onClose?.();
@@ -80,7 +85,7 @@ const PayslipPreview = ({
                 <div className="text-center mt-2 md:mt-3">
                     <h1 className="text-sm font-bold text-[#1D1F24]">{companyName}</h1>
                     <p className="text-xs font-bold text-[#718096] tracking-[0.15em] mt-1 mb-5 uppercase">
-                        PAY SLIP • {monthLabel}
+                        {title} • {monthLabel}
                     </p>
                 </div>
 
@@ -132,16 +137,32 @@ const PayslipPreview = ({
 
                     {/* EARNINGS */}
                     <div className="my-4 max-sm:my-1">
-                        <h3 className="text-[10px] font-bold text-[#718096] tracking-widest uppercase mb-4 mt-5 pt-2 flex items-center gap-3 border-t border-gray-100">
+                        {previewPayslip.salaryType === "DAILY" && (
+                            <div className="flex justify-between items-center text-[12px] border-t border-gray-100 py-3">
+                                <span className="text-[#718096]">Daily Basic Salary</span>
+                                <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicSalary)}</span>
+                            </div>
+                        )}
+
+                        <h3 className="text-[10px] font-bold text-[#718096] tracking-widest uppercase mb-4 pt-2 flex items-center gap-3 border-t border-gray-100">
                             EARNINGS
                         </h3>
                         <div className="space-y-2">
-                            <div className="flex justify-between items-center text-[12px]">
-                                <span className="text-[#718096]">
-                                    {previewPayslip.salaryType === "MONTHLY" ? "Monthly Basic Salary" : "Daily Basic Salary"}
-                                </span>
-                                <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicSalary)}</span>
-                            </div>
+                            {previewPayslip.salaryType === "MONTHLY" && (
+                                <div className="flex justify-between items-center text-[12px]">
+                                    <span className="text-[#718096]">Monthly Basic Salary</span>
+                                    <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicSalary)}</span>
+                                </div>
+                            )}
+
+                            {previewPayslip.salaryType === "DAILY" && (
+                                <div className="flex justify-between items-center text-[12px]">
+                                    <span className="text-[#718096]">
+                                        Daily Wage Earnings ({fmt(previewPayslip.basicSalary)} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
+                                    </span>
+                                    <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicPay)}</span>
+                                </div>
+                            )}
 
                             {previewPayslip.allowances?.map((a: any, i: number) => (
                                 <div key={i} className="flex justify-between items-center text-[12px]">
@@ -149,15 +170,6 @@ const PayslipPreview = ({
                                     <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(a.amount)}</span>
                                 </div>
                             ))}
-
-                            {previewPayslip.salaryType === "DAILY" && (
-                                <div className="flex justify-between items-center text-[12px]">
-                                    <span className="text-[#718096] italic">
-                                        Basic Calculation ({fmt(previewPayslip.basicSalary)} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
-                                    </span>
-                                    <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicPay)}</span>
-                                </div>
-                            )}
 
                             {previewPayslip.otAmount > 0 && (
                                 <div className="flex justify-between items-center text-[12px]">
@@ -187,7 +199,13 @@ const PayslipPreview = ({
                                     <span className="text-[#E11D48] font-bold tracking-tight">{fmt(previewPayslip.epf8)}</span>
                                 </div>
                             )}
-                            {previewPayslip.deductions?.filter((d: any) => d.amount > 0).map((d: any, i: number) => (
+                            {/* {previewPayslip.deductions?.filter((d: any) => d.amount > 0).map((d: any, i: number) => (
+                                <div key={i} className="flex justify-between items-center text-[12px]">
+                                    <span className="text-[#718096]">{d.name}</span>
+                                    <span className="text-[#E11D48] font-bold tracking-tight">{fmt(d.amount)}</span>
+                                </div>
+                            ))} */}
+                            {previewPayslip.deductions?.filter((d: any) => d.amount > 0 && d.name !== "Loan Deduction").map((d: any, i: number) => (
                                 <div key={i} className="flex justify-between items-center text-[12px]">
                                     <span className="text-[#718096]">{d.name}</span>
                                     <span className="text-[#E11D48] font-bold tracking-tight">{fmt(d.amount)}</span>

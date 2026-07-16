@@ -1,16 +1,24 @@
-import { useState, useEffect } from "react";
-import { UploadCloud, Copy, Loader2, X, AlertCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { UploadCloud, Copy, Check, Loader2, X, AlertCircle } from "lucide-react";
 import PlanVerify from "./PlanVerify";
 import axiosInstance from "../api/axios";
 
-const PlanPaymentManual = () => {
+interface PlanPaymentManualProps {
+    pricePerEmployee: number;
+    employeeCount: number;
+}
+
+const PlanPaymentManual = ({ pricePerEmployee, employeeCount }: PlanPaymentManualProps) => {
     const [file, setFile] = useState<File | null>(null);
     const [reference, setReference] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [dragError, setDragError] = useState<string | null>(null);
 
-    const accountNumber = "1234567890";
+    const accountNumber = "052020386231";
 
     // ✅ Check for existing docs on mount
     useEffect(() => {
@@ -24,7 +32,7 @@ const PlanPaymentManual = () => {
                     setReference(latestDoc.referenceId || "");
                     setIsSubmitted(true);
                 } else if (latestDoc?.status === "REJECTED") {
-                    setRejectionReason("Your previous payment proof was rejected by the admin. Please upload a clear bank slip for verification.");
+                    setRejectionReason("Your previous payment proof was rejected. Please review your submission and upload a valid bank slip.");
                 }
             } catch (err) {
                 console.warn("Failed to fetch existing user documents", err);
@@ -64,6 +72,8 @@ const PlanPaymentManual = () => {
 
             if (validateFile(selectedFile)) {
                 setFile(selectedFile);
+                setRejectionReason(null);
+                setDragError(null);
             } else {
                 e.target.value = ""; // Clear the input
             }
@@ -72,6 +82,8 @@ const PlanPaymentManual = () => {
 
     const handleCopy = () => {
         navigator.clipboard.writeText(accountNumber);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     const handleSubmit = async () => {
@@ -101,11 +113,21 @@ const PlanPaymentManual = () => {
     };
 
     if (isSubmitted) {
-        return <PlanVerify referenceId={reference || "N/A"} />;
+        return (
+            <PlanVerify
+                referenceId={reference || "N/A"}
+                totalAmount={pricePerEmployee * employeeCount}
+                onResubmit={() => {
+                    setIsSubmitted(false);
+                    setFile(null);
+                    setRejectionReason("Your previous payment proof was rejected. Please review your submission and upload a valid bank slip.");
+                }}
+            />
+        )
     }
 
     return (
-        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-4 max-sm:w-[22rem]">
+        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 space-y-1 max-sm:w-[22rem]">
 
             <h3 className="text-lg font-bold text-gray-900 max-sm:flex max-sm:justify-center">
                 Bank Deposit & Slip Upload
@@ -125,14 +147,14 @@ const PlanPaymentManual = () => {
                 <div className="flex justify-between">
                     <span className="text-gray-400 text-xs">BANK NAME</span>
                     <span className="font-semibold text-gray-800 text-sm">
-                        Commercial Bank PLC
+                        HNB Bank
                     </span>
                 </div>
 
                 <div className="flex justify-between">
                     <span className="text-gray-400 text-xs">ACCOUNT NAME</span>
                     <span className="font-semibold text-gray-800 text-sm">
-                        L.D.S.Pathum Udayanga
+                        Cenzios Pvt Ltd.
                     </span>
                 </div>
 
@@ -142,8 +164,17 @@ const PlanPaymentManual = () => {
                         <span className="font-semibold text-gray-800 text-sm">
                             {accountNumber}
                         </span>
-                        <button onClick={handleCopy}>
-                            <Copy className="w-4 h-4 text-blue-500" />
+                        <button onClick={handleCopy} className="relative">
+                            {copied ? (
+                                <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                                <Copy className="w-4 h-4 text-blue-500" />
+                            )}
+                            {copied && (
+                                <span className="absolute top-[14px] right-0 bg-gray-800 text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-md">
+                                    Copied!
+                                </span>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -151,14 +182,15 @@ const PlanPaymentManual = () => {
                 <div className="flex justify-between">
                     <span className="text-gray-400 text-xs">BRANCH</span>
                     <span className="font-semibold text-gray-800 text-sm">
-                        Colombo City Branch
+                        Horana
                     </span>
                 </div>
             </div>
 
             {/* Upload Box */}
-            <label
-                className="border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-blue-400 transition"
+            <div onClick={() => { if (!file) fileInputRef.current?.click(); }}
+                className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center transition
+        ${file ? "border-blue-400 bg-blue-50 cursor-default" : "border-gray-300 hover:border-blue-400 cursor-pointer"}`}
                 onDragOver={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -166,22 +198,32 @@ const PlanPaymentManual = () => {
                 onDrop={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const droppedFile = e.dataTransfer.files?.[0];
 
+                    if (e.dataTransfer.files.length > 1) {
+                        setDragError("Only one file can be uploaded at a time. Please drop a single file.");
+                        return;
+                    }
+
+                    setDragError(null);
+                    const droppedFile = e.dataTransfer.files?.[0];
                     if (droppedFile) {
                         if (file) {
                             const confirmReplace = window.confirm("You have already selected a file. Do you want to replace it with the new one?");
                             if (!confirmReplace) return;
                         }
-
                         if (validateFile(droppedFile)) {
                             setFile(droppedFile);
+                            setRejectionReason(null);
                         }
                     }
                 }}
             >
-                <UploadCloud className="w-8 h-8 text-blue-500 mb-2" />
 
+                {file ? (
+                    <Check className="w-8 h-8 text-blue-500 mb-2" />
+                ) : (
+                    <UploadCloud className="w-8 h-8 text-blue-500 mb-2" />
+                )}
                 <div className="flex flex-col items-center">
                     <p className="text-sm text-gray-700">
                         {file ? file.name : "Choose a file or Drag & Drop"}
@@ -193,25 +235,45 @@ const PlanPaymentManual = () => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 setFile(null);
+                                if (fileInputRef.current) fileInputRef.current.value = "";
                             }}
                             className="mt-2 text-xs text-red-500 font-medium flex items-center gap-1 hover:text-red-600"
                         >
                             <X className="w-3 h-3" /> Remove File
                         </button>
                     )}
+                    {!file && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                fileInputRef.current?.click();
+                            }}
+                            className="mt-1 text-xs text-blue-500 font-medium hover:text-blue-600"
+                        >
+                            Browse
+                        </button>
+                    )}
                 </div>
 
                 <p className="text-xs text-gray-400 mt-1">
-                    Accepted: PNG, JPG, PDF (Max 10MB)
+                    Only 1 file can be uploaded. Format PNG, JPG, PDF (Max 10MB)
                 </p>
+                {dragError && (
+                    <div className="mt-2 flex items-center gap-1.5 text-red-500">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <p className="text-xs font-medium">{dragError}</p>
+                    </div>
+                )}
 
                 <input
+                    ref={fileInputRef}
                     type="file"
                     className="hidden"
                     accept=".png,.jpg,.jpeg,.pdf"
                     onChange={handleFileChange}
                 />
-            </label>
+            </div>
 
             {/* Reference Input */}
             <div>
@@ -222,7 +284,7 @@ const PlanPaymentManual = () => {
                     type="text"
                     placeholder="e.g. TXN-987654321"
                     value={reference}
-                    onChange={(e) => setReference(e.target.value)}
+                    onChange={(e) => setReference(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
             </div>

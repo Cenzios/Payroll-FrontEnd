@@ -15,6 +15,7 @@ import {
   useDeleteEmployeeMutation,
   useUploadEmployeeDocumentMutation,
   useDeleteEmployeeDocumentMutation,
+  useGetLoansQuery,
 } from "../store/apiSlice";
 import { Employee } from '../types/employee.types';
 import PageHeader from '../components/PageHeader';
@@ -46,6 +47,11 @@ const Employees = () => {
 
   const employees = data?.employees || [];
 
+  const { data: loans = [] } = useGetLoansQuery(
+    { companyId: selectedCompanyId || "" },
+    { skip: !selectedCompanyId }
+  );
+
   const [createEmployee] = useCreateEmployeeMutation();
   const [updateEmployee] = useUpdateEmployeeMutation();
   const [deleteEmployee] = useDeleteEmployeeMutation();
@@ -67,8 +73,10 @@ const Employees = () => {
     title: string;
     message: string;
     confirmText?: string;
+    cancelText?: string;
     onConfirm: () => void;
     isLoading?: boolean;
+    showCancel?: boolean;
   }>({
     isOpen: false,
     type: "danger",
@@ -76,6 +84,7 @@ const Employees = () => {
     message: "",
     onConfirm: () => { },
     isLoading: false,
+    showCancel: true,
   });
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -114,21 +123,30 @@ const Employees = () => {
     }
   }, [isError, error]);
 
-  useEffect(() => {
-    if (employees.length > 0 && !selectedEmployee) {
-      setSelectedEmployee(employees[0]);
-    }
-  }, [employees, selectedEmployee]);
+  // useEffect(() => {
+  //     if (employees.length > 0 && !selectedEmployee) {
+  //       setSelectedEmployee(employees[0]);
+  //     }
+  //   }, [employees, selectedEmployee]);
 
   // Sync selected employee when list updates (e.g. after document upload)
   useEffect(() => {
-    if (selectedEmployee && employees.length > 0) {
+    // if (selectedEmployee && employees.length > 0) {
+    if (selectedEmployee) {
       const updatedEmployee = employees.find(e => e.id === selectedEmployee.id);
-      if (updatedEmployee && JSON.stringify(updatedEmployee) !== JSON.stringify(selectedEmployee)) {
+
+      if (!updatedEmployee) {
+        setSelectedEmployee(null);
+        setMobileView("list");
+        return;
+      }
+      // if (updatedEmployee && JSON.stringify(updatedEmployee) !== JSON.stringify(selectedEmployee)) {
+      if (JSON.stringify(updatedEmployee) !== JSON.stringify(selectedEmployee)) {
         setSelectedEmployee(updatedEmployee);
       }
     }
-  }, [employees]);
+    // }, [employees]);
+  }, [employees, selectedEmployee]);
 
   // Sync menu anchor with activeMenuId
   useEffect(() => {
@@ -251,7 +269,6 @@ const Employees = () => {
           return;
         }
 
-        setToast({ message: "Uploading documents...", type: "success" });
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
           const formData = new FormData();
@@ -291,8 +308,15 @@ const Employees = () => {
           errorMessage = error.message;
         }
 
-        if (errorMessage === "Employee with this NIC already exists in this company" || errorMessage.includes("NIC already exists")) {
+        const isNicDuplicate = errorMessage.includes("NIC already exists");
+        const isIdDuplicate = errorMessage.includes("Employee ID already exists") || errorMessage.includes("employeeId") || errorMessage.includes("Unique constraint");
+
+        if (isNicDuplicate && isIdDuplicate) {
+          errorMessage = "Employee ID and NIC already exist in this company";
+        } else if (isNicDuplicate) {
           errorMessage = "NIC already exists in this company";
+        } else if (isIdDuplicate) {
+          errorMessage = "Employee ID already exists in this company";
         }
 
         setToast({
@@ -321,7 +345,7 @@ const Employees = () => {
       isOpen: true,
       type: "warning",
       title: "Deactivate Employee?",
-      message: `Are you sure you want to deactivate ${employee.fullName}? They will not be able to log in.`,
+      message: `Are you sure you want to deactivate ${employee.fullName}? `,
       onConfirm: async () => {
         try {
           if (!selectedCompanyId) return;
@@ -351,15 +375,41 @@ const Employees = () => {
 
   const handleRemove = (employee: Employee) => {
     closeMenu();
+
+    const hasActiveLoan = loans.some((l: any) => {
+      if (l.employeeId !== employee.id) return false;
+      const status = (l.status || 'Active').toUpperCase();
+      const hasActiveStatus = status === 'ACTIVE' || status === 'PENDING';
+      const hasActiveInstallments = l.installments?.some(
+        (inst: any) => inst.status === "PENDING" || inst.status === "PARTIAL"
+      );
+      return hasActiveStatus || hasActiveInstallments;
+    });
+
+    if (hasActiveLoan) {
+      setConfirmation({
+        isOpen: true,
+        type: "warning",
+        title: "Cannot Delete Employee",
+        message: "can not delete users with active/pending loan",
+        confirmText: "OK",
+        showCancel: false,
+        onConfirm: () => setConfirmation((prev) => ({ ...prev, isOpen: false })),
+      });
+      return;
+    }
+
     setConfirmation({
       isOpen: true,
       type: "danger",
       title: "Remove Employee?",
       message: `Are you sure you want to permanently remove ${employee.fullName}? This action cannot be undone.`,
+      showCancel: true,
       onConfirm: async () => {
         try {
           if (!selectedCompanyId) {
             setToast({ message: "Company ID is missing", type: "error" });
+            setConfirmation((prev) => ({ ...prev, isOpen: false }));
             return;
           }
           await deleteEmployee({
@@ -374,13 +424,26 @@ const Employees = () => {
             setSelectedEmployee(null);
             setMobileView("list"); // Go back to list after removal on mobile
           }
-        } catch (error: any) {
-          setToast({
-            message: error.message || "Failed to remove",
-            type: "error",
-          });
-        } finally {
           setConfirmation((prev) => ({ ...prev, isOpen: false }));
+        } catch (error: any) {
+          const errMsg = error?.data?.message || error?.message || "";
+          if (errMsg.includes("can not delete users with active/pending loan") || errMsg.includes("active/pending loan")) {
+            setConfirmation({
+              isOpen: true,
+              type: "warning",
+              title: "Cannot Delete Employee",
+              message: "can not delete users with active/pending loan",
+              confirmText: "OK",
+              showCancel: false,
+              onConfirm: () => setConfirmation((prev) => ({ ...prev, isOpen: false })),
+            });
+          } else {
+            setToast({
+              message: errMsg || "Failed to remove",
+              type: "error",
+            });
+            setConfirmation((prev) => ({ ...prev, isOpen: false }));
+          }
         }
       },
     });
@@ -392,7 +455,7 @@ const Employees = () => {
       isOpen: true,
       type: "info",
       title: "Activate Employee?",
-      message: `Are you sure you want to activate ${employee.fullName}? They will be able to log in.`,
+      message: `Are you sure you want to activate ${employee.fullName}?`,
       onConfirm: async () => {
         try {
           if (!selectedCompanyId) return;
@@ -467,7 +530,7 @@ const Employees = () => {
 
           {/* ─── DESKTOP layout ─── */}
           <div className="contents max-sm:hidden">
-            <div className="shrink-0 px-6 pt-6">
+            <div className="shrink-0">
               <PageHeader
                 title="Employees"
                 subtitle="Here's Your Employees Overview"
@@ -503,7 +566,7 @@ const Employees = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex gap-6 flex-1 overflow-hidden pb-4 px-6">
+              <div className="flex gap-6 flex-1 overflow-hidden pb-4">
                 {/* Left Column */}
                 <div className="w-[60%] flex flex-col pr-6 h-full">
                   <div className="pb-6 shrink-0">
@@ -512,7 +575,7 @@ const Employees = () => {
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search users by name"
+                        placeholder="Search employees by name"
                         className="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#F2F4FF] focus:border-blue-400 outline-none transition-all placeholder-gray-400"
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -756,7 +819,9 @@ const Employees = () => {
         message={confirmation.message}
         type={confirmation.type}
         confirmText={confirmation.confirmText}
+        cancelText={confirmation.cancelText}
         isLoading={confirmation.isLoading}
+        showCancel={confirmation.showCancel}
       />
 
       {/* Addon Modal */}

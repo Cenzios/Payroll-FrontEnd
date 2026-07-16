@@ -31,6 +31,7 @@ export interface PayslipData {
     epf12: number;
     etf3: number;
     leaveDays: number;
+    sickLeaveDays: number;
     nonPaidLeaveDeduction: number;
 }
 
@@ -93,7 +94,7 @@ export interface EmployeeModalReportData {
 // --- Helper Functions ---
 
 const formatCurrency = (amount: number) => {
-    return `Rs. ${amount.toLocaleString(undefined, {
+    return `${amount.toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     })}`;
@@ -383,7 +384,7 @@ export const exportPayslip = (
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(180, 180, 180);
-        doc.text(`• Period: ${periodStr}`, 18, 33);
+        doc.text(`• Month: ${periodStr}`, 18, 33);
 
         // Header Texts - Right
         doc.setTextColor(255, 255, 255);
@@ -418,7 +419,7 @@ export const exportPayslip = (
         doc.text("Employee Name", 14, 70);
         doc.text("Employee No", 75, 70);
         doc.text("Designation", 125, 70);
-        doc.text("Pay Period", 175, 70);
+        doc.text("Month", 175, 70);
 
         doc.setFontSize(10);
         doc.setTextColor(0, 0, 0);
@@ -472,13 +473,20 @@ export const exportPayslip = (
             currentY += 7;
         };
 
+        addRow("Salary Type", previewPayslip.salaryType);
+        // addRow("Basic Rate", formatCurrency(previewPayslip.basicSalary));
+
         addRow("Working Days", companyWorkingDays.toString());
         addRow("Worked Days", previewPayslip.workedDays.toString());
 
         if (previewPayslip.salaryType === "MONTHLY" && previewPayslip.leaveDays > 0) {
             addRow("Paid Leave Count", previewPayslip.leaveDays.toString());
         }
-currentY += 4;
+        if (previewPayslip.salaryType === "MONTHLY" && (previewPayslip.sickLeaveDays || 0) > 0) {
+            addRow("Unpaid Leave Count", previewPayslip.sickLeaveDays.toString());
+        }
+
+        currentY += 4;
 
         doc.setTextColor(100, 100, 100);
         doc.setFontSize(9);
@@ -505,10 +513,11 @@ currentY += 4;
         doc.setLineDash([], 0);
         currentY += 8;
 
-
-        addRow("Rate Type", previewPayslip.salaryType);
-        addRow("Basic Rate", formatCurrency(previewPayslip.basicSalary));
-        addRow("Calculated Basic Pay", formatCurrency(previewPayslip.basicPay));
+        if (previewPayslip.salaryType === "DAILY") {
+            addRow("Daily Wage Earnings", formatCurrency(previewPayslip.basicPay));
+        } else {
+            addRow("Monthly Basic Salary", formatCurrency(previewPayslip.basicSalary));
+        }
 
         if (previewPayslip.otAmount > 0) {
             addRow(`OT Amount (${previewPayslip.otHours} hrs)`, formatCurrency(previewPayslip.otAmount));
@@ -525,7 +534,10 @@ currentY += 4;
         doc.line(14, currentY, 196, currentY);
         currentY += 6;
 
-        let gross = previewPayslip.basicPay + previewPayslip.otAmount + (previewPayslip.allowances || []).reduce((sum, a) => sum + a.amount, 0);
+        let gross =
+            (previewPayslip.salaryType === "DAILY" ? previewPayslip.basicPay : previewPayslip.basicSalary) +
+            previewPayslip.otAmount +
+            (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0);
         addRow("Gross Earnings", formatCurrency(gross), true);
 
         doc.setDrawColor(0, 0, 0);
@@ -565,9 +577,9 @@ currentY += 4;
         if (previewPayslip.isEpfEnabled) {
             addRow("EPF Employee (8%)", formatCurrency(previewPayslip.epf8));
         }
-        if (previewPayslip.loanDeduction > 0) {
-            addRow("Loan Installment", formatCurrency(previewPayslip.loanDeduction));
-        }
+        // if (previewPayslip.loanDeduction > 0) {
+        //     addRow("Loan Installment", formatCurrency(previewPayslip.loanDeduction));
+        // }
         previewPayslip.deductions.forEach(d => {
             if (d.amount > 0) {
                 addRow(d.name, formatCurrency(d.amount));
@@ -579,14 +591,20 @@ currentY += 4;
         doc.setLineWidth(0.2);
         doc.line(14, currentY, 196, currentY);
         currentY += 6;
-        addRow("Total Deductions", formatCurrency(previewPayslip.totalDeductions), true);
+
+        let totalDeductions =
+            (previewPayslip.nonPaidLeaveDeduction || 0) +
+            (previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) +
+            previewPayslip.deductions.reduce((sum: number, d: any) => sum + d.amount, 0);
+        addRow("Total Deductions", formatCurrency(totalDeductions), true);
+        // addRow("Total Deductions", formatCurrency(previewPayslip.totalDeductions), true);
 
         doc.setDrawColor(0, 0, 0);
         doc.setLineWidth(0.6);
         doc.line(14, currentY, 196, currentY);
 
         // 5. NET SALARY BOX
-        currentY += 12;
+        currentY += 10;
         doc.setFillColor(16, 24, 54); // Match top header color
         doc.rect(14, currentY, 182, 14, "F");
 
@@ -599,7 +617,7 @@ currentY += 4;
         const amountWidth = doc.getTextWidth(amountStr);
 
         doc.setTextColor(255, 255, 255);
-        doc.text("Net Salary Payable : ", 190 - amountWidth, currentY + 9, { align: "right" });
+        doc.text("", 190 - amountWidth, currentY + 9, { align: "right" });
         doc.setTextColor(252, 163, 17);
         doc.text(amountStr, 190, currentY + 9, { align: "right" });
 
@@ -637,7 +655,7 @@ currentY += 4;
             ...(previewPayslip.salaryType === "MONTHLY" && previewPayslip.leaveDays > 0 ? [["Paid Leave", previewPayslip.leaveDays]] : []),
             [],
             ["EARNINGS", "Amount (Rs.)"],
-            ["Rate Type", previewPayslip.salaryType],
+            ["Salary Type", previewPayslip.salaryType],
             ["Basic Rate", previewPayslip.basicSalary],
             ["Calculated Basic Pay", previewPayslip.basicPay],
             ...(previewPayslip.otAmount > 0
@@ -651,25 +669,27 @@ currentY += 4;
             ...(previewPayslip.allowances || []).map((a) => [a.name, a.amount]),
             [
                 "Gross Earnings",
-                previewPayslip.basicPay +
-                previewPayslip.otAmount +
-                (previewPayslip.allowances || []).reduce(
-                    (sum, a) => sum + a.amount,
-                    0
-                ),
+                    (previewPayslip.salaryType === "DAILY" ? previewPayslip.basicPay : previewPayslip.basicSalary) +
+                    previewPayslip.otAmount +
+                    (previewPayslip.allowances || []).reduce(
+                        (sum, a) => sum + a.amount,
+                        0
+                    )
             ],
             [],
             ["DEDUCTIONS", "Amount (Rs.)"],
             ...(previewPayslip.isEpfEnabled
                 ? [["EPF Employee (8%)", previewPayslip.epf8]]
                 : []),
-            ...(previewPayslip.loanDeduction > 0
-                ? [["Loan Installment", previewPayslip.loanDeduction]]
-                : []),
             ...previewPayslip.deductions
                 .filter((d) => d.amount > 0)
                 .map((d) => [d.name, d.amount]),
-            ["Total Deductions", previewPayslip.totalDeductions],
+            [
+                "Total Deductions", 
+                    (previewPayslip.nonPaidLeaveDeduction || 0) +
+                    (previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) +
+                    previewPayslip.deductions.reduce((sum: number, d: any) => sum + d.amount, 0)
+            ],
             [],
             ["NET SALARY PAYABLE", previewPayslip.netSalary],
             [],
@@ -773,10 +793,13 @@ export const exportPayrollSummaryReport = (
         doc.setFont("helvetica", "bold");
         doc.text("Payroll Summary Report", 19, 26);
 
+        const isSingleMonth = startMonth === endMonth && startYear === endYear;
+
         doc.setTextColor(180, 180, 180);
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        doc.text(`Here's your Payroll History • ${periodStr}`, 19, 36);
+        // doc.text(`Here's your Payroll History • ${periodStr}`, 19, 36);
+        doc.text(`Here's your Payroll History • ${isSingleMonth ? endPeriodStr : periodStr}`, 19, 36);
 
         // Right Header Texts
         doc.setTextColor(255, 255, 255);
@@ -801,12 +824,13 @@ export const exportPayrollSummaryReport = (
         doc.setTextColor(23, 44, 108);
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text("MULTI-MONTH PAYROLL OVERVIEW", 20, currentY + 8);
+        // doc.text("MULTI-MONTH PAYROLL OVERVIEW", 20, currentY + 8);
+        doc.text(isSingleMonth ? "SINGLE-MONTH PAYROLL OVERVIEW" : "MULTI-MONTH PAYROLL OVERVIEW", 20, currentY + 8);
 
         doc.setTextColor(100, 110, 140);
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
-        doc.text(`Period: ${periodStr}`, pageWidth - 20, currentY + 8, { align: "right" });
+        doc.text(`${isSingleMonth ? "Month" : "Period"}: ${isSingleMonth ? endPeriodStr : periodStr}`, pageWidth - 20, currentY + 8, { align: "right" });
 
         // 3. PERIOD SUMMARY Section
         currentY += 18;
@@ -821,12 +845,20 @@ export const exportPayrollSummaryReport = (
             : `${shortMonths[startMonth]} ${startYear} - ${shortMonths[endMonth]} ${endYear}`;
         doc.text(`Period Summary ( ${periodRange} )`, 20, currentY + 5.5);
 
+        // Replaced overallTotals.totalBasicPay in the summary boxes with
+        const computedTotalBasic = monthlyData.reduce(
+    (sum, month) => sum + month.employees.reduce(
+        (s, e) => s + (e.basicPay > e.basicSalary ? e.basicPay : e.basicSalary || 0), 0
+    ), 0
+);
+
         // Summary Boxes
         currentY += 8;
         const boxWidth = (pageWidth - 28) / 5;
         const boxHeight = 18;
         const summaries = [
-            { label: "Total Basic", value: `Rs ${overallTotals.totalBasicPay.toLocaleString()}` },
+            // { label: "Total Basic", value: `Rs ${overallTotals.totalBasicPay.toLocaleString()}` },
+            { label: "Total Basic", value: `Rs ${computedTotalBasic.toLocaleString()}` },
             { label: "Total Gross", value: `Rs ${overallTotals.totalGrossPay.toLocaleString()}` },
             { label: "Total EPF (8%)", value: `Rs ${overallTotals.totalEmployeeEPF.toLocaleString()}` },
             { label: "Total Advance", value: `Rs ${overallTotals.totalSalaryAdvance.toLocaleString()}` },
@@ -870,14 +902,14 @@ export const exportPayrollSummaryReport = (
             doc.text(`${monthData.month} ${monthData.year}`, 20, currentY + 6.5);
             doc.setFont("helvetica", "normal");
             doc.setFontSize(9);
-            doc.text(`${monthData.employees.length} employees`, pageWidth - 20, currentY + 6.5, { align: "right" });
-            currentY += 10;
+doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Employee" : "Employees"}`, pageWidth - 20, currentY + 6.5, { align: "right" });            currentY += 10;
 
             const tableBody = monthData.employees.map((emp: ReportEmployee) => [
                 emp.employeeCode || "-",
                 emp.employeeName || "-",
                 emp.workingDays,
-                (emp.basicSalary || 0).toLocaleString(),
+                // (emp.basicSalary || 0).toLocaleString(),
+    (emp.basicPay > emp.basicSalary ? emp.basicPay : emp.basicSalary || 0).toLocaleString(),
                 (emp.otAmount || 0).toLocaleString(),
                 emp.grossPay.toLocaleString(),
                 emp.employeeEPF.toLocaleString(),
@@ -886,7 +918,10 @@ export const exportPayrollSummaryReport = (
             ]);
 
             // Monthly Totals
-            const mTotalBasic = monthData.employees.reduce((s: number, e: ReportEmployee) => s + (e.basicSalary || 0), 0);
+            // const mTotalBasic = monthData.employees.reduce((s: number, e: ReportEmployee) => s + (e.basicSalary || 0), 0);
+            const mTotalBasic = monthData.employees.reduce(
+                (s: number, e: ReportEmployee) => s + (e.basicPay > e.basicSalary ? e.basicPay : e.basicSalary || 0), 0
+            );
             const mTotalOT = monthData.employees.reduce((s: number, e: ReportEmployee) => s + (e.otAmount || 0), 0);
             const mTotalGross = monthData.employees.reduce((s: number, e: ReportEmployee) => s + e.grossPay, 0);
             const mTotalEPF = monthData.employees.reduce((s: number, e: ReportEmployee) => s + e.employeeEPF, 0);
@@ -905,7 +940,7 @@ export const exportPayrollSummaryReport = (
 
             autoTable(doc, {
                 startY: currentY,
-                head: [["Emp ID", "Name", "Days", "Basic Salary", "OT", "Gross", "EPF (8%)", "Advance", "Net Pay"]],
+                head: [["Emp ID", "Name", "Worked Days", "Basic Salary", "OT", "Gross", "EPF (8%)", "Advance", "Net Pay"]],
                 body: tableBody,
                 theme: "plain",
                 styles: { fontSize: 8, cellPadding: 2 },
@@ -913,7 +948,7 @@ export const exportPayrollSummaryReport = (
                 columnStyles: {
                     0: { cellWidth: 15 },
                     1: { cellWidth: 45 },
-                    2: { cellWidth: 12, halign: 'center' },
+                    2: { cellWidth: 25, halign: 'center' },
                     3: { halign: 'right' },
                     4: { halign: 'right' },
                     5: { halign: 'right' },
@@ -922,13 +957,14 @@ export const exportPayrollSummaryReport = (
                     8: { halign: 'right', fontStyle: 'bold' }
                 },
                 didParseCell: (data) => {
+                    if (data.column.index >= 2) {
+                        data.cell.styles.halign = 'right';
+                    }
+
                     if (data.row.index === tableBody.length - 1) {
                         data.cell.styles.fillColor = [22, 28, 45]; // Dark background for total
                         data.cell.styles.textColor = [255, 184, 0]; // Yellow text
                         data.cell.styles.fontStyle = "bold";
-                        if (data.column.index === 1) {
-                            data.cell.styles.halign = 'right';
-                        }
                     }
                 },
                 margin: { left: 14, right: 14 }
@@ -1468,6 +1504,13 @@ export const exportBankAdviceReport = (
                 4: { cellWidth: 28 },
                 5: { cellWidth: 31, halign: 'right', fontStyle: 'bold' }
             },
+
+            didParseCell: (data) => {
+                if (data.section === "head" && data.column.index === 5) {
+                    data.cell.styles.halign = "right";
+                }
+            },
+    
             margin: { left: 14, right: 14 }
         });
 
@@ -1635,6 +1678,7 @@ export const exportEpfEtfReport = (
         doc.setFont("helvetica", "bold");
         doc.text("CenzHRM", 19, 13);
 
+        doc.setTextColor(255, 184, 0);
         doc.setFontSize(18);
         doc.text("EPF / ETF Summary Report", 19, 28);
 
@@ -1671,7 +1715,7 @@ export const exportEpfEtfReport = (
 
         // Add Total row to table body
         tableBody.push([
-            "", "", "Total",
+            "", "Total", "",
             totals.basicSalary.toLocaleString(undefined, { minimumFractionDigits: 2 }),
             totals.empEpf.toLocaleString(undefined, { minimumFractionDigits: 2 }),
             totals.employerEpf.toLocaleString(undefined, { minimumFractionDigits: 2 }),
@@ -1696,6 +1740,9 @@ export const exportEpfEtfReport = (
                 7: { halign: "right", fontStyle: "bold", textColor: [43, 116, 255] }
             },
             didParseCell: (data) => {
+                if (data.section === "head" && data.column.index >= 3) {
+                    data.cell.styles.halign = "right";
+                }
                 if (data.row.index === tableBody.length - 1) {
                     data.cell.styles.fillColor = [15, 23, 42];
                     data.cell.styles.textColor = [255, 184, 0];

@@ -56,7 +56,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                                 <Building2 className="w-5 h-5 text-[#0052CC]" />
                             </div>
                             <div>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Company </p>
+                                <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Company Name</p>
                                 <p className="text-base font-medium text-gray-800">Cenzios (Pvt) Ltd</p>
                             </div>
                         </div>
@@ -79,7 +79,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                             </div>
                             <div>
                                 <p className="text-[10px] text-gray-400 uppercase tracking-wider flex items-start">Contact No</p>
-                                <p className="text-base font-medium text-gray-800">+94 71 118 6028</p>
+                                <p className="text-base font-medium text-gray-800">+94 70 113 4650</p>
                             </div>
                         </div>
 
@@ -96,7 +96,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                     </div>
 
                     <button
-                        onClick={() => window.location.href = 'tel:+94711186028'}
+                        onClick={() => window.location.href = 'tel:+94701134650'}
                         className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-[#2563EB] to-[#153885] text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98]"
                     >
                         <Phone className="w-5 h-5 text-white" />
@@ -105,7 +105,7 @@ const ContactModal: React.FC<ContactModalProps> = ({
                     </button>
 
                     <button
-                        onClick={() => window.open('https://wa.me/94711186028', '_blank')}
+                        onClick={() => window.open('https://wa.me/94701134650', '_blank')}
                         className="flex items-center justify-center gap-2 mt-4 w-full bg-blue-100 text-black font-bold py-3 rounded-xl transition-all duration-200 active:scale-[0.98]"
                     >
                         <img src={whatsapp} alt="whatsapp" className='w-5 h-5' />

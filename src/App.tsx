@@ -13,7 +13,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Companies from './pages/Companies';
 import Employees from './pages/Employees';
-import Salary from './pages/Salary'; // Import Salary
+import Salary from './pages/Salary';
 import Loans from './pages/Loans';
 import Reports from './pages/Reports';
 import CFormReport from './pages/CFormReport';
@@ -29,6 +29,9 @@ import EpfEtfReport from './pages/EpfEtfReport';
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { checkAccessStatus } from './store/slices/authSlice';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import NotFound from './pages/NotFound';  
 
 function App() {
   const dispatch = useAppDispatch();
@@ -59,6 +62,8 @@ function App() {
         <Route path="/payment/success" element={<Confirmation />} />
         <Route path="/payment/cancel" element={<ConfirmationFail />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
         <Route path="/settle-invoice" element={<SettleInvoice />} />
         <Route path="/plan-verify" element={<PlanVerifyPage />} />
@@ -86,7 +91,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/salary"
           element={
@@ -143,10 +147,10 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="*" element={<NotFound />} />  {/* Catch-all route at the bottom */}
       </Routes>
     </Router>
   );
 }
 
-//12/11/2025  1:50PM
 export default App;

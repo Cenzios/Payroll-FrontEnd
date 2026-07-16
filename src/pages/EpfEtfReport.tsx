@@ -90,6 +90,7 @@ const EpfEtfReport = () => {
                         fullName: emp.fullName || employeeInfo?.fullName || '-',
                         epfNo: employeeInfo?.epfNumber || emp.epfNumber || '-',
                         basicSalary: 0,
+                        epfEtfAmount: 0,
                         grossPay: 0,
                         empEpf: 0,
                         employerEpf: 0,
@@ -103,28 +104,41 @@ const EpfEtfReport = () => {
                 const employeeInfo = employeesData?.employees.find(e => e.id === emp.employeeId);
 
                 // Fields from API (try various naming conventions)
-                const basicPay = emp.basicPay || 0;
+                const displayBasic = (emp.basicPay > emp.basicSalary ? emp.basicPay : emp.basicSalary) || 0;
+                const computedGross = displayBasic + (emp.otAmount || 0) + (emp.allowanceTotal || 0);
+
+                const basicPay = displayBasic;
+                const epfEtfAmount = emp.epfEtfAmount || employeeInfo?.epfEtfAmount || 0;
                 const empEpf = emp.employeeEPF || emp.employeeEpf || 0;
                 const employerEpf = emp.employerEPF || emp.employerEpf || 0;
                 const etf = emp.etfAmount || emp.etf || 0;
+                const companyEPFETF = emp.companyEPFETF || 0;
+
+                // Use direct fields if available, otherwise split companyEPFETF by ratio (12:3)
+                const resolvedEmployerEpf = employerEpf > 0 ? employerEpf : Math.round((companyEPFETF * 12) / 15);
+                const resolvedEtf = etf > 0 ? etf : Math.round((companyEPFETF * 3) / 15);
+
 
                 // Fallback calculations if they are missing but EPF is enabled
                 const isEpfEnabled = emp.epfEnabled ?? employeeInfo?.epfEnabled ?? (empEpf > 0);
 
                 record.basicSalary += basicPay;
-                record.grossPay += emp.grossPay || 0;
+                record.epfEtfAmount += epfEtfAmount;
+                // record.grossPay += emp.grossPay || 0;
+                record.grossPay += computedGross;
                 record.netPay += emp.netPay || emp.netSalary || 0;
 
                 if (empEpf > 0) {
                     record.empEpf += empEpf;
-                    record.employerEpf += employerEpf || (basicPay * 0.12);
-                    record.etf += etf || (basicPay * 0.03);
-                } else if (isEpfEnabled && basicPay > 0) {
-                    // If EPF is enabled but fields are missing, calculate them
-                    record.empEpf += basicPay * 0.08;
-                    record.employerEpf += basicPay * 0.12;
-                    record.etf += basicPay * 0.03;
+                    record.employerEpf += resolvedEmployerEpf;
+                    record.etf += resolvedEtf;
                 }
+                // else if (isEpfEnabled && basicPay > 0) {
+                //     // If EPF is enabled but fields are missing, calculate them
+                //     record.empEpf += basicPay * 0.08;
+                //     record.employerEpf += basicPay * 0.12;
+                //     record.etf += basicPay * 0.03;
+                // }
 
                 record.totalContribution = record.empEpf + record.employerEpf + record.etf;
             });
@@ -166,6 +180,8 @@ const EpfEtfReport = () => {
         emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         emp.employeeCode.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const hasData = !isLoading && filteredData.length > 0;
 
     const handleExport = (format: 'pdf' | 'excel' | 'csv') => {
         const selectedCompany = companies?.find(c => c.id === selectedCompanyId);
@@ -224,6 +240,7 @@ const EpfEtfReport = () => {
                         {[
                             { label: 'EPF No', value: item.epfNo },
                             { label: 'Basic Salary', value: fmt(item.basicSalary) },
+                            { label: 'Applicable EPF/ETF Amount', value: fmt(item.epfEtfAmount) },
                             { label: 'Emp EPF (8%)', value: fmt(item.empEpf) },
                             { label: 'Employer EPF (12%)', value: fmt(item.employerEpf) },
                             { label: 'ETF (3%)', value: fmt(item.etf) },
@@ -307,7 +324,7 @@ const EpfEtfReport = () => {
 
                                     {/* Time Period */}
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Time Period</span>
+                                        <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Month</span>
                                         <SingleMonthPicker
                                             selectedMonth={month}
                                             selectedYear={year}
@@ -328,13 +345,14 @@ const EpfEtfReport = () => {
 
                                     <div className="relative">
                                         <button
+                                            disabled={!hasData}
                                             onClick={() => setIsExportOpen(!isExportOpen)}
-                                            className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5"
+                                            className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
                                         >
                                             Export
                                             <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
                                         </button>
-                                        {isExportOpen && (
+                                        {isExportOpen && hasData && (
                                             <>
                                                 <div className="fixed inset-0 z-10" onClick={() => setIsExportOpen(false)} />
                                                 <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden">
@@ -391,14 +409,15 @@ const EpfEtfReport = () => {
                                     <table className="w-full text-left border-collapse">
                                         <thead className="sticky top-0 bg-gray-50 z-10">
                                             <tr className="border-b border-gray-200">
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900">Employee ID</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900">Employee Name</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900">EPF No</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Basic Salary</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Emp EPF (8%)</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Employer EPF (12%)</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">ETF (3%)</th>
-                                                <th className="px-6 py-4 text-xs font-bold text-[#2b74ff] text-right">Total Contribution</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900">Employee ID</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900">Employee Name</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900">EPF No</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Basic Salary</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Applicable EPF/ETF Amount</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Emp EPF (8%)</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Employer EPF (12%)</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">ETF (3%)</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-[#2b74ff] text-right">Total Contribution</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
@@ -414,20 +433,21 @@ const EpfEtfReport = () => {
                                             ) : filteredData.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={8} className="px-6 py-12 text-center text-gray-400">
-                                                        No EPF/ETF data found for the selected period.
+                                                        No EPF/ETF data found for the selected month.
                                                     </td>
                                                 </tr>
                                             ) : (
                                                 filteredData.map((item) => (
                                                     <tr key={item.employeeId} className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-6 py-4 text-sm font-medium text-[#2b74ff]">{item.employeeCode}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-700">{item.fullName}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-400">{item.epfNo}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.basicSalary)}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.empEpf)}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.employerEpf)}</td>
-                                                        <td className="px-6 py-4 text-sm text-gray-400 text-right">{fmt(item.etf)}</td>
-                                                        <td className="px-6 py-4 text-sm font-bold text-[#2b74ff] text-right">{fmt(item.totalContribution)}</td>
+                                                        <td className="px-4 py-4 text-sm font-medium text-[#2b74ff]">{item.employeeCode}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-700">{item.fullName}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400">{item.epfNo}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.basicSalary)}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.epfEtfAmount)}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.empEpf)}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.employerEpf)}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.etf)}</td>
+                                                        <td className="px-4 py-4 text-sm font-bold text-[#2b74ff] text-right">{fmt(item.totalContribution)}</td>
                                                     </tr>
                                                 ))
                                             )}

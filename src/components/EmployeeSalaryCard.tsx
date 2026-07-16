@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from 'react-dom';
 import { Loader2, ChevronRight, Lock, Loader, Eye, ArrowUpRight, LockKeyhole } from "lucide-react";
 import { Employee } from "../types/employee.types";
 import { useAppSelector } from "../store/hooks";
@@ -17,6 +18,7 @@ interface EmployeeSalaryCardProps {
     sickLeaveDays: number;
     loanDeduction: number;
     companyWorkingDays: number;
+    maxWorkedDays: number;
     hasLoanInstallment: boolean;
     handleEmployeeWorkedDaysChange: (empId: string, val: number) => void;
     handleEmployeeOtHoursChange: (empId: string, val: number) => void;
@@ -51,7 +53,10 @@ const Toggle = ({
     disabled?: boolean;
 }) => (
     <button
-        onClick={onToggle}
+        onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+        }}
         disabled={disabled}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none shrink-0
       ${enabled ? (disabled ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500") : "bg-gray-300"}
@@ -80,6 +85,7 @@ const EmployeeSalaryCard = ({
     sickLeaveDays,
     loanDeduction,
     companyWorkingDays,
+    maxWorkedDays,
     hasLoanInstallment,
     handleEmployeeWorkedDaysChange,
     handleEmployeeOtHoursChange,
@@ -102,9 +108,7 @@ const EmployeeSalaryCard = ({
     const { accessStatus } = useAppSelector((state) => state.auth);
     const isSelected = selectedEmployee?.id === emp.id;
 
-    // const isLocked = !!generatedSalary;
-    const [isLockedLocal, setIsLockedLocal] = useState(!!generatedSalary);
-    const isLocked = isLockedLocal || !!generatedSalary;
+    const isLocked = !!generatedSalary;
 
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
@@ -124,13 +128,15 @@ const EmployeeSalaryCard = ({
     const currentAllowances = salaryAllowances[emp.id] || emp.recurringAllowances || [];
     // const totalAllowances = isLocked
     const totalAllowances = isLocked && generatedSalary
-        ? generatedSalary.allowanceTotal
+        // ? generatedSalary.allowanceTotal
+        ? (generatedSalary.allowances || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0)
         : currentAllowances.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
     const currentDeductions = salaryDeductions[emp.id] || emp.recurringDeductions || [];
     // const totalDeductions_custom = isLocked
     const totalDeductions_custom = isLocked && generatedSalary
-        ? generatedSalary.deductionTotal - (generatedSalary.loanDeduction || 0)
+        // ? generatedSalary.deductionTotal - (generatedSalary.loanDeduction || 0)
+        ? (generatedSalary.deductions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0)
         : currentDeductions.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
     // Display Basic Pay: For Monthly, we show the full basic in Gross Earnings.
@@ -157,31 +163,50 @@ const EmployeeSalaryCard = ({
 
 
     const nonPaidLeaveDeduction = isLocked && generatedSalary
-        ? generatedSalary.nonPaidLeaveDeduction ?? 0
+        // ? generatedSalary.nonPaidLeaveDeduction ?? 0
+        ? generatedSalary.nonPaidLeaveDeduction ?? (
+            emp.salaryType === "MONTHLY" && companyWorkingDays > 0
+                ? ((generatedSalary.basicSalary || basicSalary) / companyWorkingDays) * (generatedSalary.sickLeaveDays || sickLeaveDays || 0)
+                : 0
+        )
         : emp.salaryType === "MONTHLY" && companyWorkingDays > 0
             ? (basicSalary / companyWorkingDays) * sickLeaveDays
             : 0;
 
-    // EPF is calculated on the actual EARNED amount (excluding allowances), 
-    // unless a custom EPF base amount is specified for the employee.
+    // EPF/ETF always uses the configured epfEtfAmount from the employee form.
+    // No fallback to basic salary — if no amount is configured, EPF/ETF is 0.
     const epfBasis = (emp.epfEtfAmount && emp.epfEtfAmount > 0)
         ? emp.epfEtfAmount
-        : earnedBasicPay;
+        : 0;
     const epfAmount = isLocked && generatedSalary
         ? generatedSalary.employeeEPF
-        : emp.epfEnabled && isEpfEnabled
+        : emp.epfEnabled && isEpfEnabled && epfBasis > 0
             ? epfBasis * 0.08
             : 0;
 
     // Gross Earnings uses the FULL display basic pay for the UI, 
     // and we show unpaid leaves as a deduction instead of pro-rating it directly here.
-    const totalEarnings = isLocked && generatedSalary
-        ? generatedSalary.grossSalary + (generatedSalary.nonPaidLeaveDeduction ?? 0)
-        : displayBasicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances;
+    // const totalEarnings = isLocked && generatedSalary
+    //     ? generatedSalary.grossSalary + (generatedSalary.nonPaidLeaveDeduction ?? 0)
+    //     : displayBasicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances;
+
+    console.log(generatedSalary);
+
+    const baseForEarnings = emp.salaryType === "DAILY"
+        ? displayBasicPay        // daily: rate × days
+        : basicSalary;           // monthly: always full basic salary
+
+    // const totalEarnings = isLocked && generatedSalary
+    // ? generatedSalary.grossSalary + (generatedSalary.nonPaidLeaveDeduction ?? 0)
+    // : baseForEarnings + otAmount + totalAllowances;
+    const totalEarnings = baseForEarnings + otAmount + totalAllowances;
 
     // Total Deductions includes the unpaid leave deduction, epf, advance, and loans.
     const totalDeductions = isLocked && generatedSalary
-        ? generatedSalary.totalDeduction + (generatedSalary.nonPaidLeaveDeduction ?? 0)
+        // ? generatedSalary.totalDeduction + (generatedSalary.nonPaidLeaveDeduction ?? 0)
+        ? (generatedSalary.totalDeduction != null
+            ? generatedSalary.totalDeduction + nonPaidLeaveDeduction
+            : displaySalaryAdvance + epfAmount + (generatedSalary.loanDeduction || 0) + totalDeductions_custom + nonPaidLeaveDeduction)
         : displaySalaryAdvance +
         epfAmount +
         (hasLoanInstallment && isLoanEnabled ? loanDeduction : 0) +
@@ -200,6 +225,24 @@ const EmployeeSalaryCard = ({
     //     year: "numeric",
     // });
 
+    {/*const isEpfEnabledRef = useRef(isEpfEnabled);
+    useEffect(() => {
+        isEpfEnabledRef.current = isEpfEnabled;
+    }, [isEpfEnabled]);
+
+    // Auto-disable EPF/ETF when unpaid leave === working days
+    useEffect(() => {
+        if (
+            emp.epfEnabled &&
+            isEpfEnabledRef.current &&
+            !isLocked &&
+            companyWorkingDays > 0 &&
+            sickLeaveDays === companyWorkingDays
+        ) {
+            handleToggleEpfEtf(emp.id);
+        }
+    }, [sickLeaveDays, companyWorkingDays, isLocked, emp.epfEnabled, emp.id]);*/}
+
     const inputClass = (locked: boolean) =>
         `w-full px-3 py-2 border rounded-xl text-[14px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner font-semibold
     ${locked
@@ -215,14 +258,20 @@ const EmployeeSalaryCard = ({
         handleSelectEmployee(emp);
     };
 
+    const blockInvalidNumberKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (['+', '-', 'e', 'E', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+            e.preventDefault();
+        }
+    };
+
     return (
         <div
             onClick={handleCardClick}
 
-            className={`relative bg-[#f0f5ff] rounded-2xl border cursor-pointer transition-all duration-200 overflow-hidden
+            className={`relative bg-[#f0f5ff] rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden
         ${isSelected
                     ? "border-[#407BFF] shadow-lg ring-1 ring-blue-200"
-                    : "border-[#407BFF] border-l-4 border-l-[#407BFF] "
+                    : "border-[#407BFF] border-l-4 border-l-[#407BFF] hover:shadow-[0_15px_50px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1.5 hover:border-blue-400 hover:bg-[#ebf2ff]"
                 }`}
         >
             {/* Full Card Overlay (when not selected) */}
@@ -296,7 +345,7 @@ const EmployeeSalaryCard = ({
                             disabled={isLocked}
                             className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[13px] font-semibold transition-all
               ${isLocked
-                                    ? "border-[#EF444433] bg-[#FFB3B31A] text-[#EF4444] cursor-not-allowed max-sm:text-[10px] max-sm:px-2 max-sm:py-1 max-sm:rounded-lg"
+                                    ? "border-[#EF444433] bg-[#FFB3B31A] text-red-300 cursor-not-allowed max-sm:text-[10px] max-sm:px-2 max-sm:py-1 max-sm:rounded-lg"
                                     : "border-[#EF444433] bg-[#FFB3B31A] text-[#EF4444] hover:bg-red-200 hover:border-red-400 active:scale-95 max-sm:text-[10px] max-sm:px-2 max-sm:py-1 max-sm:rounded-lg"
                                 }`}
                         >
@@ -332,7 +381,7 @@ const EmployeeSalaryCard = ({
 
                     {/* Period */}
                     <div className="px-4 md:px-6 md:border-r border-gray-200 w-1/2 md:w-auto max-sm:border-none">
-                        <p className="text-[12px] text-gray-400 mb-0.5">Period</p>
+                        <p className="text-[12px] text-gray-400 mb-0.5">Month</p>
                         <p className="text-[15px] font-bold text-gray-800">{periodLabel}</p>
                     </div>
 
@@ -400,10 +449,10 @@ const EmployeeSalaryCard = ({
                                 onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
                                 onBlur={() => setTouchedFields((prev: any) => ({ ...prev, employeeDays: { ...prev.employeeDays, [emp.id]: true } }))}
                                 onWheel={(e) => e.currentTarget.blur()}
-                                onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                onKeyDown={blockInvalidNumberKeys}
                                 className={inputClass(isLocked)}
                                 min="0"
-                                max={companyWorkingDays}
+                                max={maxWorkedDays}
                                 disabled={isLocked}
                             />
                         </div>
@@ -419,7 +468,7 @@ const EmployeeSalaryCard = ({
                                     value={displayOtHours === 0 ? "" : displayOtHours}
                                     onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
                                     onWheel={(e) => e.currentTarget.blur()}
-                                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                    onKeyDown={blockInvalidNumberKeys}
                                     className={inputClass(isLocked)}
                                     min="0"
                                     disabled={isLocked || emp.otRate <= 0}
@@ -437,7 +486,7 @@ const EmployeeSalaryCard = ({
                                 value={displaySalaryAdvance === 0 ? "" : displaySalaryAdvance}
                                 onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
                                 onWheel={(e) => e.currentTarget.blur()}
-                                onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                onKeyDown={blockInvalidNumberKeys}
                                 className={inputClass(isLocked)}
                                 min="0"
                                 disabled={isLocked}
@@ -454,9 +503,13 @@ const EmployeeSalaryCard = ({
                                         type="number"
                                         step="1"
                                         value={leaveDays === 0 ? "" : leaveDays}
-                                        onChange={(e) => handleEmployeeLeaveDaysChange(emp.id, parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value) || 0;
+                                            const capped = Math.min(val, emp.paidLeave ?? 0);
+                                            handleEmployeeLeaveDaysChange(emp.id, capped);
+                                        }}
                                         onWheel={(e) => e.currentTarget.blur()}
-                                        onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                        onKeyDown={blockInvalidNumberKeys}
                                         className={inputClass(isLocked || (emp.paidLeave ?? 0) === 0)}
                                         min="0"
                                         max={emp.paidLeave}
@@ -478,7 +531,7 @@ const EmployeeSalaryCard = ({
                                     value={sickLeaveDays === 0 ? "" : sickLeaveDays}
                                     onChange={(e) => handleEmployeeSickLeaveDaysChange(emp.id, parseFloat(e.target.value) || 0)}
                                     onWheel={(e) => e.currentTarget.blur()}
-                                    onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
+                                    onKeyDown={blockInvalidNumberKeys}
                                     className={inputClass(isLocked)}
                                     min="0"
                                     disabled={isLocked}
@@ -598,9 +651,9 @@ const EmployeeSalaryCard = ({
             )}
 
             {/* ── Confirm Modal ── */}
-            {isConfirmModalOpen && (
+            {isConfirmModalOpen && createPortal(
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="bg-white rounded-[26px] p-6 w-full max-w-[460px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] animate-in zoom-in duration-200">
@@ -637,7 +690,7 @@ const EmployeeSalaryCard = ({
                                 </div>
 
                                 <div className="text-right">
-                                    <p className="text-[11px] text-gray-400">PAY PERIOD</p>
+                                    <p className="text-[11px] text-gray-400">Month</p>
                                     <p className="text-[13px] font-semibold text-gray-900">
                                         {periodLabel}
                                     </p>
@@ -659,7 +712,7 @@ const EmployeeSalaryCard = ({
                                 <div className="text-right">
                                     <p className="text-gray-500">Deductions</p>
                                     <p className="text-red-500 font-semibold">
-                                        - {fmt(totalDeductions)}
+                                        {fmt(totalDeductions)}
                                     </p>
                                 </div>
                             </div>
@@ -699,17 +752,18 @@ const EmployeeSalaryCard = ({
                                 onClick={() => {
                                     handleConfirmPayslip(emp);
                                     setIsConfirmModalOpen(false);
-                                    setIsLockedLocal(true);
                                 }}
                                 className="flex-1 py-3 rounded-xl font-semibold text-white bg-green-600">
                                 Yes Confirm & Lock
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
 };
+
 
 export default EmployeeSalaryCard;

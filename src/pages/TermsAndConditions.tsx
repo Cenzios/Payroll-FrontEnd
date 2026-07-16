@@ -2,6 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 import axiosInstance from '../api/axios'; // ✅ ADDED
+import { Info } from 'lucide-react';
 
 
 const TermsAndConditions = () => {
@@ -13,6 +14,7 @@ const TermsAndConditions = () => {
 
     const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false); // ✅ ADDED
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
     const contentRef = useRef<HTMLDivElement | null>(null);
 
     const handleScroll = () => {
@@ -26,6 +28,26 @@ const TermsAndConditions = () => {
             setHasScrolledToBottom(true);
         }
     };
+
+    // const handleAccept = async () => {
+    //     localStorage.setItem('termsAccepted', 'true');
+
+    //     if (isTrial) {
+    //         try {
+    //             setIsProcessing(true);
+    //             console.log('🚀 Starting formal trial for plan:', planId);
+    //             await axiosInstance.post('/subscription/start-trial', { planId });
+    //             navigate('/dashboard');
+    //         } catch (error) {
+    //             console.error('❌ Failed to start trial:', error);
+    //             alert('Failed to start trial. Please try again.');
+    //         } finally {
+    //             setIsProcessing(false);
+    //         }
+    //     } else {
+    //         navigate(`/buy-plan?isPlanChange=${isPlanChange}`);
+    //     }
+    // };
 
     const handleAccept = async () => {
         localStorage.setItem('termsAccepted', 'true');
@@ -42,8 +64,25 @@ const TermsAndConditions = () => {
             } finally {
                 setIsProcessing(false);
             }
-        } else {
+        } else if (isPlanChange) {
+            // Existing user changing plans — not first time — same as before
             navigate(`/buy-plan?isPlanChange=${isPlanChange}`);
+        } else {
+            // First-time signup with a paid plan selected
+            setShowConfirmModal(true);
+        }
+    };
+
+    const handleConfirmActivation = async () => {
+        try {
+            setIsProcessing(true);
+            await axiosInstance.post('/subscription/activate-pending');
+            navigate('/dashboard');
+        } catch (error) {
+            console.error('❌ Failed to activate subscription:', error);
+            alert('Failed to activate your account. Please try again.');
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -52,11 +91,7 @@ const TermsAndConditions = () => {
     };
 
     return (
-        <div
-            className="min-h-screen relative overflow-hidden
-  bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
-  flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans"
-        >
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-4xl w-full space-y-8 relative z-10">
                 <div className="text-center">
                     <h1 className="text-3xl font-extrabold text-gray-900">Terms & Conditions</h1>
@@ -102,25 +137,19 @@ const TermsAndConditions = () => {
                             {/* 3. Account Registration */}
                             <section>
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">3. Account Registration</h3>
-                                <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-gray-600">
+                                <ul className="list-disc  space-y-2 text-sm leading-relaxed text-gray-600 ml-4">
                                     <li>Users must provide accurate, complete, and current information during registration.</li>
-                                    <li>A one-time registration fee is payable in the first month.</li>
-                                    <li>From the second month onwards, subscription fees are calculated based on:
-                                        <ul className="list-disc list-inside ml-6 mt-1 space-y-1">
-                                            <li>Number of employees</li>
-                                            <li>Selected per-employee package cost</li>
-                                        </ul>
-                                    </li>
+                                    <li>Upon commencement of the billing cycle, the Client agrees to pay a monthly subscription fee of LKR 100 for each active employee account. Clients seeking bespoke features or customized volume pricing may contact our sales department to establish an alternative agreement.</li>
                                 </ul>
                             </section>
 
                             {/* 4. Subscription & Payment */}
                             <section>
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">4. Subscription & Payment</h3>
-                                <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-gray-600">
+                                <ul className="list-disc space-y-2 text-sm leading-relaxed text-gray-600  ml-4">
                                     <li>Subscription type: Monthly</li>
                                     <li>Subscription auto-renews unless cancelled by the user.</li>
-                                    <li>No free trial is offered.</li>
+                                    <li>A one-time, three-month free trial period is available exclusively to new customers who have not previously held an active account with us.</li>
                                     <li>Failure to make payment may result in account termination after a defined grace period.</li>
                                 </ul>
                             </section>
@@ -208,7 +237,7 @@ const TermsAndConditions = () => {
                                 <p className="text-sm leading-relaxed mb-2 text-gray-600">For support or legal inquiries:</p>
                                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-1">
                                     <p className="text-sm text-gray-600">📧 <strong>Email:</strong> info@cenzios.com</p>
-                                    <p className="text-sm text-gray-600">📞 <strong>Phone:</strong> +94 71 118 6028</p>
+                                    <p className="text-sm text-gray-600">📞 <strong>Phone:</strong> +94 70 113 4650</p>
                                 </div>
                             </section>
 
@@ -264,11 +293,7 @@ const TermsAndConditions = () => {
                 </div>
             </div>
             {/* Background Wave - Bottom Left (Flipped) */}
-            <div
-                className="absolute bottom-[-350px] left-[-200px]
-  w-[700px] h-[700px]
-  z-0 pointer-events-none"
-            >
+            <div className="absolute bottom-[-350px] left-[-200px] w-[700px] h-[700px] z-0 pointer-events-none">
                 <img
                     src={bgIllustration}
                     alt="Background Wave"
@@ -276,6 +301,48 @@ const TermsAndConditions = () => {
                 />
             </div>
 
+            {showConfirmModal && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center">
+                        <div className="w-16 h-16 mx-auto mb-6 rounded-3xl bg-blue-100 flex items-center justify-center">
+                            {/* <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.008M10.29 3.86l-8.18 14.18A1.5 1.5 0 003.5 20.5h17a1.5 1.5 0 001.39-2.46L13.71 3.86a1.5 1.5 0 00-2.42 0z" />
+                            </svg> */}
+                            <Info className='w-8 h-8 text-blue-600' />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-4">You're all set to go !</h2>
+                        <p className="text-sm leading-relaxed text-gray-500 mb-8">
+                            By clicking confirm, you can immediately add your employees and continue working.
+                            You won't be charged today. Your first bill will be created 30 days from your registration date.
+                        </p>
+                        <div className="flex items-center justify-center gap-4">
+                            <button
+                                type="button"
+                                onClick={handleCancel}
+                                disabled={isProcessing}
+                                className="flex-1 px-6 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-2xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmActivation}
+                                disabled={isProcessing}
+                                className="flex-1 px-6 py-3 bg-blue-500 text-white font-semibold rounded-2xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+                            >
+                                {isProcessing ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        Processing...
+                                    </>
+                                ) : (
+                                    'Confirm'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import PageHeader from '../components/PageHeader';
 import AccountTab from '../components/settings/AccountTab';
@@ -9,7 +10,12 @@ import { useAppSelector } from '../store/hooks';
 
 const Settings = () => {
     const { user } = useAppSelector((state) => state.auth);
-    const [activeTab, setActiveTab] = useState<'account' | 'payment'>('account');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = (searchParams.get('tab') as 'account' | 'payment') ?? 'account';
+
+    const setActiveTab = (tab: 'account' | 'payment') => {
+        setSearchParams({ tab });
+    };
 
     const tabs = [
         { key: 'account' as const, label: 'Account' },
@@ -23,7 +29,7 @@ const Settings = () => {
             {/* Margin bottom gap after the banner */}
             <div className="-mb-4 shrink-0"></div>
 
-            <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
+            <div className="flex flex-1 overflow-hidden relative w-full">
                 <Sidebar />
 
                 <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col">
