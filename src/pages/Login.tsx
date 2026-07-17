@@ -88,17 +88,17 @@ const Login = () => {
           `${import.meta.env.VITE_API_BASE_URL}/auth/status-by-email?email=${pollingEmail}`
         );
         const data = response.data?.data || response.data;
-        if (data?.status === 'ACTIVE') {
-          // User is active – clear banner and params
-          sessionStorage.removeItem('suspended_email');
-          setPollingEmail(null);
-          // Clear the URL params
-          const url = new URL(window.location.href);
-          url.searchParams.delete('reason');
-          url.searchParams.delete('error');
-          window.history.replaceState({}, '', url.toString());
-          // Banner will disappear because isSuspension becomes false
-        }
+            // Check lockoutUntil
+            const isSuspended = data?.lockoutUntil && new Date(data.lockoutUntil) > new Date();
+
+            if (!isSuspended) {
+                sessionStorage.removeItem('suspended_email');
+                setPollingEmail(null);
+                const url = new URL(window.location.href);
+                url.searchParams.delete('reason');
+                url.searchParams.delete('error');
+                window.history.replaceState({}, '', url.toString());
+            }
       } catch (err) {
         // ignore polling errors; keep trying
       }
