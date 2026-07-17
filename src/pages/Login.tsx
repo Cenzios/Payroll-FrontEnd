@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, logout } from '../store/slices/authSlice';
-import { Mail, Lock, Loader2, EyeOff, Eye } from 'lucide-react';
+import { Mail, Lock, Loader2, EyeOff, Eye, ShieldAlert, Phone } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
+import ContactModal from '../components/ContactModal';
+import axiosInstance from '../api/axios';
 
 
 const GoogleIcon = () => (
@@ -14,6 +16,15 @@ const GoogleIcon = () => (
     <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16-5.7l-7.7-6c-2.1 1.4-4.8 2.3-8.3 2.3-6.7 0-12.5-3.8-15.4-9.3l-7 5.4C6.6 42.6 14.6 48 24 48z" />
   </svg>
 );
+
+// Messages that trigger the special banner UI (locked or suspended)
+const LOCKED_MESSAGES = [
+  'Your account has been locked. Please contact support for assistance.',
+];
+const SUSPENDED_MESSAGES = [
+  'Your account is currently suspended. Please contact support for assistance.',
+];
+const BANNER_MESSAGES = [...LOCKED_MESSAGES, ...SUSPENDED_MESSAGES];
 
 const Login = () => {
 
@@ -35,6 +46,69 @@ const Login = () => {
     email: '',
     password: '',
   });
+
+  // Contact modal state
+  const [isContactOpen, setIsContactOpen] = useState(false);
+
+  // Polling state: tracks if we're in "account locked" or "account suspended" mode
+  const [isAccountBlocked, setIsAccountBlocked] = useState(false);
+  const [blockedType, setBlockedType] = useState<'locked' | 'suspended' | null>(null);
+  const [blockedEmail, setBlockedEmail] = useState('');
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Detect locked/suspended account from error message
+  useEffect(() => {
+    if (error && LOCKED_MESSAGES.includes(error)) {
+      setIsAccountBlocked(true);
+      setBlockedType('locked');
+      setBlockedEmail(formData.email);
+    } else if (error && SUSPENDED_MESSAGES.includes(error)) {
+      setIsAccountBlocked(true);
+      setBlockedType('suspended');
+      setBlockedEmail(formData.email);
+    } else if (!error) {
+      setIsAccountBlocked(false);
+      setBlockedType(null);
+    }
+  }, [error]);
+
+  // Poll for account unlock/unsuspend when blocked
+  useEffect(() => {
+    if (!isAccountBlocked || !blockedEmail) return;
+
+    const checkStatus = async () => {
+      try {
+        const { data } = await axiosInstance.post('/auth/check-lock-status', { email: blockedEmail });
+        const result = data?.data;
+        const stillBlocked =
+          (blockedType === 'locked' && result?.isLocked === true) ||
+          (blockedType === 'suspended' && result?.isSuspended === true);
+
+        if (!stillBlocked) {
+          // Account was reactivated by admin — clear state automatically
+          setIsAccountBlocked(false);
+          setBlockedType(null);
+          dispatch(clearError());
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+        }
+      } catch {
+        // Silently ignore — will retry on next interval
+      }
+    };
+
+    // Poll every 10 seconds
+    pollIntervalRef.current = setInterval(checkStatus, 10000);
+
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, [isAccountBlocked, blockedEmail, blockedType, dispatch]);
 
   // Clear any existing session when user visits login page
   useEffect(() => {
@@ -79,6 +153,12 @@ const Login = () => {
       ...prev,
       [name]: '',
     }));
+    // If user edits the form, clear the blocked state so they can retry
+    if (isAccountBlocked) {
+      setIsAccountBlocked(false);
+      setBlockedType(null);
+      dispatch(clearError());
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,7 +199,46 @@ const Login = () => {
       title="Welcome back!"
       subtitle="Please login to access your account."
     >
-      {error && (
+      {/* Contact Support Modal */}
+      <ContactModal
+        isOpen={isContactOpen}
+        onClose={() => setIsContactOpen(false)}
+        title="Contact Support"
+        subtitle="We're here to help you"
+        description={
+          blockedType === 'suspended'
+            ? 'Your account has been suspended. Please reach out to our support team to have it reactivated.'
+            : 'Your account has been locked. Please reach out to our support team and we\'ll get you back in as soon as possible.'
+        }
+      />
+
+      {/* Account Locked / Suspended Banner */}
+      {isAccountBlocked && blockedType && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 overflow-hidden">
+          <div className="px-4 py-3">
+            <p className="text-xs text-red-700 font-semibold mb-3">
+              {blockedType === 'suspended'
+                ? 'Your account has been suspended by an administrator.'
+                : 'Your account has been locked by an administrator.'}
+            </p>
+
+            <p className="text-xs text-red-700 mb-3">
+              Please contact our support team to have your account reactivated. This page will update automatically once access is restored.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsContactOpen(true)}
+              className="flex items-center gap-2 w-full justify-center bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors duration-150"
+            >
+              <Phone className="w-4 h-4" />
+              Contact Support
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Generic Error (non-blocked) */}
+      {error && !isAccountBlocked && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
         </div>
