@@ -170,7 +170,7 @@ const BuyPlan = () => {
         if (!authToken) return;
 
         const planId = isPlanChange ? selectedPlan.id : (localStorage.getItem('reg_planId') || PLANS.BASIC.id);
-        const amount = activeSubscription?.registrationFee || selectedPlan.registrationFee; // Use API fee if available
+        const amount = (activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price) * employeeCount;
 
         console.log('📝 Creating Stripe Intent for Plan:', planId);
 
