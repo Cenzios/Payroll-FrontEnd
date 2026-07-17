@@ -173,11 +173,16 @@ const Reports = () => {
 
     const handleReset = () => {
         const currentDate = new Date();
-        setStartMonth(currentDate.getMonth());
-        setStartYear(currentDate.getFullYear());
-        setEndMonth(currentDate.getMonth());
-        setEndYear(currentDate.getFullYear());
+        const newMonth = currentDate.getMonth();
+        const newYear = currentDate.getFullYear();
+        setStartMonth(newMonth);
+        setStartYear(newYear);
+        setEndMonth(newMonth);
+        setEndYear(newYear);
         setSearch('');
+        setSelectedEmployeeIds([]);
+
+        checkAndUpdateData(newMonth, newYear, newMonth, newYear);
     };
 
     const toggleMonth = (monthKey: string) => {
@@ -343,6 +348,7 @@ const Reports = () => {
                                         onStartChange={(month, year) => { setStartMonth(month); setStartYear(year); }}
                                         onEndChange={(month, year) => { setEndMonth(month); setEndYear(year); }}
                                         onApply={(sM, sY, eM, eY) => checkAndUpdateData(sM, sY, eM, eY)}
+                                        className="w-full"
                                     />
                                 </div>
                             </div>
@@ -454,8 +460,6 @@ const Reports = () => {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Main Content — Scrollable */}
                         <div className="flex-1 overflow-y-auto space-y-3 max-sm:pb-10">
                             {isLoading ? (
                                 <div className="flex justify-center items-center py-20">

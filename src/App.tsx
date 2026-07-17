@@ -13,7 +13,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Companies from './pages/Companies';
 import Employees from './pages/Employees';
-import Salary from './pages/Salary'; // Import Salary
+import Salary from './pages/Salary';
 import Loans from './pages/Loans';
 import Reports from './pages/Reports';
 import CFormReport from './pages/CFormReport';
@@ -31,6 +31,7 @@ import { useAppDispatch, useAppSelector } from './store/hooks';
 import { checkAccessStatus } from './store/slices/authSlice';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import NotFound from './pages/NotFound';  
 
 function App() {
   const dispatch = useAppDispatch();
@@ -90,7 +91,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/salary"
           element={
@@ -147,10 +147,10 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="*" element={<NotFound />} />  {/* Catch-all route at the bottom */}
       </Routes>
     </Router>
   );
 }
 
-//12/11/2025  1:50PM
 export default App;

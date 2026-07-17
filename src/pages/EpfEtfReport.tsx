@@ -108,7 +108,7 @@ const EpfEtfReport = () => {
                 const computedGross = displayBasic + (emp.otAmount || 0) + (emp.allowanceTotal || 0);
 
                 const basicPay = displayBasic;
-                const epfEtfAmount = emp.epfEtfAmount || employeeInfo?.epfEtfAmount || emp.basicPay || 0;
+                const epfEtfAmount = emp.epfEtfAmount || employeeInfo?.epfEtfAmount || 0;
                 const empEpf = emp.employeeEPF || emp.employeeEpf || 0;
                 const employerEpf = emp.employerEPF || emp.employerEpf || 0;
                 const etf = emp.etfAmount || emp.etf || 0;

@@ -18,6 +18,7 @@ interface EmployeeSalaryCardProps {
     sickLeaveDays: number;
     loanDeduction: number;
     companyWorkingDays: number;
+    maxWorkedDays: number;
     hasLoanInstallment: boolean;
     handleEmployeeWorkedDaysChange: (empId: string, val: number) => void;
     handleEmployeeOtHoursChange: (empId: string, val: number) => void;
@@ -84,6 +85,7 @@ const EmployeeSalaryCard = ({
     sickLeaveDays,
     loanDeduction,
     companyWorkingDays,
+    maxWorkedDays,
     hasLoanInstallment,
     handleEmployeeWorkedDaysChange,
     handleEmployeeOtHoursChange,
@@ -223,7 +225,7 @@ const EmployeeSalaryCard = ({
     //     year: "numeric",
     // });
 
-    const isEpfEnabledRef = useRef(isEpfEnabled);
+    {/*const isEpfEnabledRef = useRef(isEpfEnabled);
     useEffect(() => {
         isEpfEnabledRef.current = isEpfEnabled;
     }, [isEpfEnabled]);
@@ -239,7 +241,7 @@ const EmployeeSalaryCard = ({
         ) {
             handleToggleEpfEtf(emp.id);
         }
-    }, [sickLeaveDays, companyWorkingDays, isLocked, emp.epfEnabled, emp.id]);
+    }, [sickLeaveDays, companyWorkingDays, isLocked, emp.epfEnabled, emp.id]);*/}
 
     const inputClass = (locked: boolean) =>
         `w-full px-3 py-2 border rounded-xl text-[14px] text-right focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none no-spinner font-semibold
@@ -450,7 +452,7 @@ const EmployeeSalaryCard = ({
                                 onKeyDown={blockInvalidNumberKeys}
                                 className={inputClass(isLocked)}
                                 min="0"
-                                max={companyWorkingDays}
+                                max={maxWorkedDays}
                                 disabled={isLocked}
                             />
                         </div>
@@ -688,7 +690,7 @@ const EmployeeSalaryCard = ({
                                 </div>
 
                                 <div className="text-right">
-                                    <p className="text-[11px] text-gray-400">PAY PERIOD</p>
+                                    <p className="text-[11px] text-gray-400">Month</p>
                                     <p className="text-[13px] font-semibold text-gray-900">
                                         {periodLabel}
                                     </p>

@@ -10,10 +10,22 @@ import axiosInstance from '../api/axios';
 
 const GoogleIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 48 48">
-    <path fill="#EA4335" d="M24 9.5c3.1 0 5.9 1.1 8.1 3l6-6C34.2 2.5 29.4 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7 5.4C11.5 13.3 17.3 9.5 24 9.5z" />
-    <path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-2.8-.4-4.1H24v7.8h12.7c-.3 2-1.8 5-5 7l7.7 6c4.5-4.1 7-10.2 7-16.7z" />
-    <path fill="#FBBC05" d="M9.7 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7-5.4C.9 17 .3 20.4.3 24s.6 7 2.4 10.1l7-5.4z" />
-    <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16-5.7l-7.7-6c-2.1 1.4-4.8 2.3-8.3 2.3-6.7 0-12.5-3.8-15.4-9.3l-7 5.4C6.6 42.6 14.6 48 24 48z" />
+    <path
+      fill="#EA4335"
+      d="M24 9.5c3.1 0 5.9 1.1 8.1 3l6-6C34.2 2.5 29.4 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7 5.4C11.5 13.3 17.3 9.5 24 9.5z"
+    />
+    <path
+      fill="#4285F4"
+      d="M46.1 24.5c0-1.6-.1-2.8-.4-4.1H24v7.8h12.7c-.3 2-1.8 5-5 7l7.7 6c4.5-4.1 7-10.2 7-16.7z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M9.7 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7-5.4C.9 17 .3 20.4.3 24s.6 7 2.4 10.1l7-5.4z"
+    />
+    <path
+      fill="#34A853"
+      d="M24 48c6.5 0 12-2.1 16-5.7l-7.7-6c-2.1 1.4-4.8 2.3-8.3 2.3-6.7 0-12.5-3.8-15.4-9.3l-7 5.4C6.6 42.6 14.6 48 24 48z"
+    />
   </svg>
 );
 
@@ -27,24 +39,27 @@ const SUSPENDED_MESSAGES = [
 const BANNER_MESSAGES = [...LOCKED_MESSAGES, ...SUSPENDED_MESSAGES];
 
 const Login = () => {
-
   const handleGoogleLogin = () => {
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
     window.location.href = `${apiBaseUrl}/auth/google`;
   };
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
+  const reason = searchParams.get("reason");
+  const errorParam = searchParams.get("error");
+
   const [showPassword, setShowPassword] = useState(false);
   const { isLoading, error, token } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
 
   const [validationErrors, setValidationErrors] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
 
   // Contact modal state
@@ -115,7 +130,7 @@ const Login = () => {
     if (token) {
       dispatch(logout());
     }
-  }, []); // Only run once on mount
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -125,18 +140,18 @@ const Login = () => {
 
   const validateForm = () => {
     const errors = {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     };
 
     if (!formData.email) {
-      errors.email = 'Email is required';
+      errors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Email is invalid';
+      errors.email = "Email is invalid";
     }
 
     if (!formData.password) {
-      errors.password = 'Password is required';
+      errors.password = "Password is required";
     }
 
     setValidationErrors(errors);
@@ -151,7 +166,7 @@ const Login = () => {
     }));
     setValidationErrors((prev) => ({
       ...prev,
-      [name]: '',
+      [name]: "",
     }));
     // If user edits the form, clear the blocked state so they can retry
     if (isAccountBlocked) {
@@ -164,31 +179,40 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
+      // Clear suspension params so banner disappears
+      if (isSuspension) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("reason");
+        url.searchParams.delete("error");
+        window.history.replaceState({}, "", url.toString());
+        sessionStorage.removeItem("suspended_email");
+        setPollingEmail(null);
+      }
+
       const result = await dispatch(loginUser(formData));
 
-      // Check if login was successful
       if (loginUser.fulfilled.match(result)) {
         const { hasActivePlan, hasCompany } = result.payload;
 
-        console.log('🔍 Login result:', {
+        console.log("🔍 Login result:", {
           hasActivePlan,
           hasCompany,
-          payload: result.payload
+          payload: result.payload,
         });
 
         if (hasActivePlan) {
-          // User has an active subscription → go to dashboard
-          console.log('✅ Has subscription → Redirecting to Dashboard');
-          navigate('/dashboard');
+          console.log("✅ Has subscription → Redirecting to Dashboard");
+          navigate("/dashboard");
         } else if (hasCompany) {
-          // User has company (and employee data) but no active subscription
-          // → skip SetCompany, go straight to GetPlan
-          console.log('🏢 Has company but no subscription → Redirecting to GetPlan');
-          navigate('/get-plan');
+          console.log(
+            "🏢 Has company but no subscription → Redirecting to GetPlan",
+          );
+          navigate("/get-plan");
         } else {
-          // Brand new user — no company, no subscription → start setup flow
-          console.log('🆕 No company, no subscription → Redirecting to SetCompany');
-          navigate('/set-company');
+          console.log(
+            "🆕 No company, no subscription → Redirecting to SetCompany",
+          );
+          navigate("/set-company");
         }
       }
     }
@@ -246,7 +270,6 @@ const Login = () => {
 
       <form onSubmit={handleSubmit} className="space-y-5 max-sm:px-5">
         <div>
-          {/* ✅ GOOGLE LOGIN BUTTON */}
           <button
             type="button"
             onClick={handleGoogleLogin}
@@ -278,10 +301,11 @@ const Login = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.email
-                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+              className={`block w-full pl-10 pr-3 py-3 border ${
+                validationErrors.email
+                  ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                  : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+              } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
               placeholder="Enter your Email"
             />
           </div>
@@ -304,15 +328,16 @@ const Login = () => {
               <Lock className="h-5 w-5 text-gray-400" />
             </div>
             <input
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.password
-                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+              className={`block w-full pl-10 pr-3 py-3 border ${
+                validationErrors.password
+                  ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                  : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+              } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
               placeholder="Enter your Password"
             />
             <button
@@ -357,14 +382,14 @@ const Login = () => {
               Signing in...
             </>
           ) : (
-            'Sign In'
+            "Sign In"
           )}
         </button>
       </form>
 
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
-          Don't have an account?{' '}
+          Don't have an account?{" "}
           <Link
             to="/signup"
             className="font-medium text-blue-600 hover:text-blue-700 transition-colors"

@@ -10,7 +10,13 @@ import { Loader2 } from 'lucide-react';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
-const PlanPaymentCard = () => {
+// ADDED: Props interface for PlanPaymentCard
+interface PlanPaymentCardProps {
+    pricePerEmployee?: number;
+    employeeCount?: number;
+}
+
+const PlanPaymentCard = ({ pricePerEmployee = 0, employeeCount = 1 }: PlanPaymentCardProps) => {
     const [searchParams] = useSearchParams();
     const isPlanChange = searchParams.get('isPlanChange') === 'true';
     const { user } = useAppSelector((state) => state.auth);
@@ -26,6 +32,9 @@ const PlanPaymentCard = () => {
     // Get selected plan dynamically
     const selectedPlanId = localStorage.getItem('reg_planId') || PLANS.BASIC.id;
     const selectedPlan = getPlanById(selectedPlanId) || PLANS.BASIC;
+
+    // Calculate total amount: pricePerEmployee * employeeCount
+    const calculatedTotal = pricePerEmployee * employeeCount;
 
     // Fetch current subscription from backend
     useEffect(() => {
@@ -61,7 +70,7 @@ const PlanPaymentCard = () => {
                 if (!authToken) return;
 
                 const planId = isPlanChange ? selectedPlan.id : (localStorage.getItem('reg_planId') || PLANS.BASIC.id);
-                const amount = activeSubscription?.registrationFee || selectedPlan.registrationFee; // Use API fee if available
+                const amount = selectedPlan.price * employeeCount; 
 
                 console.log('📝 Creating Stripe Intent for Plan:', planId);
 
@@ -89,7 +98,7 @@ const PlanPaymentCard = () => {
         };
 
         createPaymentIntent();
-    }, [user, isFetchingSub, isPlanChange, selectedPlan.id, activeSubscription?.registrationFee, selectedPlan.registrationFee]); // Dependencies
+    }, [user, isFetchingSub, isPlanChange, selectedPlan.id, selectedPlan.price, employeeCount]); // Dependencies
 
     return (
         <div className="bg-white rounded-[2.5rem] shadow-xl p-6 flex flex-col justify-center h-full min-h-[400px] max-sm:w-[22rem]">
@@ -114,7 +123,7 @@ const PlanPaymentCard = () => {
                 ) : clientSecret ? (
                     <div className="flex-grow flex flex-col justify-center">
                         <Elements stripe={stripePromise} options={{ clientSecret }}>
-                            <CheckoutForm amount={activeSubscription?.registrationFee || selectedPlan.registrationFee} currency="LKR" />
+                             <CheckoutForm amount={calculatedTotal} currency="LKR" />
                         </Elements>
                     </div>
                 ) : null}

@@ -12,6 +12,7 @@ import {
   useGetAllPendingLoanInstallmentsQuery,
   useGetSalaryHistoryQuery,
   useSaveSalaryMutation,
+  useUpdateEmployeeMutation,
 } from "../store/apiSlice";
 import { Employee } from "../types/employee.types";
 import Toast from "../components/Toast";
@@ -29,6 +30,8 @@ import {
   setYear,
   setEmployeeLeaveDays,
   setEmployeeSickLeaveDays,
+  setEmployeeAllowances,
+  setEmployeeDeductions,
   setMonth,
   resetSalaryState,
 } from "../store/slices/salarySlice";
@@ -50,6 +53,8 @@ const Salary = () => {
     employeeLoanEnabled,
     employeeLeaveDays,
     employeeSickLeaveDays,
+    employeeAllowances,
+    employeeDeductions,
     previewPayslip,
     selectedMonth,
     selectedYear,
@@ -62,6 +67,7 @@ const Salary = () => {
     null,
   );
   const [saveSalary, { isLoading: isSaving }] = useSaveSalaryMutation();
+  const [updateEmployee] = useUpdateEmployeeMutation();
 
   const [toast, setToast] = useState<{
     message: string;
@@ -117,12 +123,6 @@ const Salary = () => {
   const [deductionToggles, setDeductionToggles] = useState<
     Record<string, boolean>
   >({});
-  const [salaryAllowances, setSalaryAllowances] = useState<
-    Record<string, { type: string; amount: number }[]>
-  >({});
-  const [salaryDeductions, setSalaryDeductions] = useState<
-    Record<string, { type: string; amount: number }[]>
-  >({});
 
   // Manage modal state
   const [manageModal, setManageModal] = useState<{
@@ -137,8 +137,8 @@ const Salary = () => {
     const empId = emp.id;
     let existing =
       type === "allowance"
-        ? salaryAllowances[empId] || []
-        : salaryDeductions[empId] || [];
+        ? employeeAllowances[empId] || []
+        : employeeDeductions[empId] || [];
 
     // Populate from DB if not edited locally yet
     if (existing.length === 0) {
@@ -151,7 +151,7 @@ const Salary = () => {
           type: a.type,
           amount: a.amount,
         }));
-        setSalaryAllowances((prev) => ({ ...prev, [empId]: existing }));
+        dispatch(setEmployeeAllowances({ id: empId, allowances: existing }));
       } else if (
         type === "deduction" &&
         emp.recurringDeductions &&
@@ -161,7 +161,7 @@ const Salary = () => {
           type: d.type,
           amount: d.amount,
         }));
-        setSalaryDeductions((prev) => ({ ...prev, [empId]: existing }));
+        dispatch(setEmployeeDeductions({ id: empId, deductions: existing }));
       }
     }
 
@@ -169,24 +169,41 @@ const Salary = () => {
     setManageModal({ type, empId });
   };
 
-  const handleModalSave = () => {
+  const handleModalSave = async () => {
     if (!manageModal) return;
     const validEntries = modalEntries.filter(
       (e) => e.type.trim() && e.amount > 0,
     );
-    if (manageModal.type === "allowance") {
-      setSalaryAllowances((prev) => ({
-        ...prev,
-        [manageModal.empId]: validEntries,
-      }));
+
+    const { type, empId } = manageModal;
+
+    // Update Redux immediately so the UI reflects the change without waiting on a refetch
+    if (type === "allowance") {
+      dispatch(setEmployeeAllowances({ id: empId, allowances: validEntries }));
     } else {
-      setSalaryDeductions((prev) => ({
-        ...prev,
-        [manageModal.empId]: validEntries,
-      }));
+      dispatch(setEmployeeDeductions({ id: empId, deductions: validEntries }));
     }
+
     setManageModal(null);
     setModalEntries([]);
+
+    // Persist to the employee record so it survives refresh / navigation
+    if (!selectedCompanyId) return;
+    try {
+      await updateEmployee({
+        id: empId,
+        companyId: selectedCompanyId,
+        data:
+          type === "allowance"
+            ? { recurringAllowances: validEntries }
+            : { recurringDeductions: validEntries },
+      }).unwrap();
+    } catch (error: any) {
+      setToast({
+        message: error.data?.message || `Failed to save ${type}s`,
+        type: "error",
+      });
+    }
   };
 
   const handleModalCancel = () => {
@@ -227,8 +244,6 @@ const Salary = () => {
     // Clear local functional states
     setAllowanceToggles({});
     setDeductionToggles({});
-    setSalaryAllowances({});
-    setSalaryDeductions({});
     setTouchedFields({
       month: false,
       companyDays: false,
@@ -295,6 +310,23 @@ const Salary = () => {
     return new Date(year, month + 1, 0).getDate();
   };
 
+  // Max worked days an employee can log for the selected month, capped by their joined date.
+  const getEmployeeMaxWorkedDays = (emp: Employee, year: number, month: number, maxCompanyDays: number) => {
+    const joinedDate = new Date(emp.joinedDate);
+    const joinedYear = joinedDate.getFullYear();
+    const joinedMonth = joinedDate.getMonth();
+    const joinedDay = joinedDate.getDate();
+
+    // Only relevant if the employee joined in the currently selected month
+    if (year === joinedYear && month === joinedMonth) {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const availableDaysSinceJoining = daysInMonth - joinedDay + 1; // joined day counts as day 1
+      return Math.max(0, Math.min(maxCompanyDays, availableDaysSinceJoining));
+    }
+
+    return maxCompanyDays;
+  };
+
   const maxAllowedCompanyDays = getMaxAllowedDays(selectedYear, selectedMonth);
   const isFutureMonth =
     new Date(selectedYear, selectedMonth) >
@@ -347,7 +379,8 @@ const Salary = () => {
     if (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays)
       return true;
     const { workedDays, otHours, salaryAdvance, isEpfEnabled, isLoanEnabled, loanDeduction, leaveDays, sickLeaveDays } = getEmployeeValues(emp.id);
-    if (workedDays < 0 || workedDays > companyWorkingDays) return true;
+    const maxWorkedDaysForEmp = getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays);
+    if (workedDays < 0 || workedDays > maxWorkedDaysForEmp) return true;
     if (leaveDays < 0 || sickLeaveDays < 0) return true;
     if (workedDays + leaveDays + sickLeaveDays !== companyWorkingDays) return true;
 
@@ -359,8 +392,8 @@ const Salary = () => {
       : emp.basicSalary * (workedDays + (Math.min(leaveDays, emp.paidLeave || 0)));
 
     const epfAmount = emp.epfEnabled && isEpfEnabled ? basicPay * 0.08 : 0;
-    const totalEarnings = basicPay + otAmount + (salaryAllowances[emp.id] || emp.recurringAllowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
-    const otherDeductions = epfAmount + (isLoanEnabled ? loanDeduction : 0) + (salaryDeductions[emp.id] || emp.recurringDeductions || []).reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    const totalEarnings = basicPay + otAmount + (employeeAllowances[emp.id] || emp.recurringAllowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
+    const otherDeductions = epfAmount + (isLoanEnabled ? loanDeduction : 0) + (employeeDeductions[emp.id] || emp.recurringDeductions || []).reduce((s, d) => s + (Number(d.amount) || 0), 0);
 
     if (totalEarnings - (otherDeductions + salaryAdvance) < 0) return true;
     return false;
@@ -380,7 +413,11 @@ const Salary = () => {
     }));
     // const { sickLeaveDays } = getEmployeeValues(empId);
     const { leaveDays } = getEmployeeValues(empId);
-    const clippedVal = Math.min(Math.max(0, val), companyWorkingDays);
+    const emp = employees.find((e) => e.id === empId);
+    const maxDays = emp
+      ? getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays)
+      : companyWorkingDays;
+    const clippedVal = Math.min(Math.max(0, val), maxDays);
     dispatch(setEmployeeWorkedDays({ id: empId, days: clippedVal }));
 
     // Recalc paid leave = total - worked - unpaid (not the other way)
@@ -507,8 +544,8 @@ const Salary = () => {
       ? (basicSalaryForCalc / companyWorkingDays) * sickLeaveDays
       : 0;
 
-    const currentAllowances = salaryAllowances[emp.id] || emp.recurringAllowances || [];
-    const currentDeductions = salaryDeductions[emp.id] || emp.recurringDeductions || [];
+    const currentAllowances = employeeAllowances[emp.id] || emp.recurringAllowances || [];
+    const currentDeductions = employeeDeductions[emp.id] || emp.recurringDeductions || [];
 
     const allowanceAmount = currentAllowances.reduce(
       (sum, a) => sum + (Number(a.amount) || 0),
@@ -777,7 +814,7 @@ const Salary = () => {
             <div className="w-full md:w-10/12 flex flex-col overflow-hidden">
 
               {/* FILTER BOX */}
-              <div className="bg-white gap-4 md:gap-14 p-4 md:p-7 w-full rounded-xl mb-6 flex flex-col md:flex-row border border-gray-200">
+              <div className="bg-white gap-4 md:gap-8 p-4 md:p-7 w-full rounded-xl mb-6 flex flex-col md:flex-row md:flex-wrap border border-gray-200">
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-800 mb-2">
                     Search Employee
@@ -794,7 +831,7 @@ const Salary = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-8 max-sm:gap-4">
+                <div className="flex flex-wrap gap-8 max-sm:gap-4">
                   <div className="flex flex-col min-w-[100px]">
                     <label className="text-sm font-medium text-gray-800 mb-2">
                       Select Month
@@ -886,6 +923,8 @@ const Salary = () => {
                       hasLoanInstallment,
                     } = getEmployeeValues(emp.id);
 
+                    const maxWorkedDaysForEmp = getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays);
+
                     return (
                       <div
                         key={emp.id}
@@ -909,6 +948,7 @@ const Salary = () => {
                           sickLeaveDays={sickLeaveDays}
                           loanDeduction={loanDeduction}
                           companyWorkingDays={companyWorkingDays}
+                          maxWorkedDays={maxWorkedDaysForEmp}
                           hasLoanInstallment={hasLoanInstallment}
                           handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
                           handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
@@ -920,8 +960,8 @@ const Salary = () => {
                           handleGeneratePayslip={handleGeneratePayslip}
                           handleConfirmPayslip={handleConfirmPayslip}
                           openManageModal={openManageModal}
-                          salaryAllowances={salaryAllowances}
-                          salaryDeductions={salaryDeductions}
+                          salaryAllowances={employeeAllowances}
+                          salaryDeductions={employeeDeductions}
                           isSaving={isSaving}
                           hasAnyError={hasAnyError}
                           setTouchedFields={setTouchedFields}
