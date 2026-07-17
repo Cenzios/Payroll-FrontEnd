@@ -45,9 +45,9 @@ const Login = () => {
   };
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [searchParams] = useSearchParams();
-  const reason = searchParams.get("reason");
-  const errorParam = searchParams.get("error");
+  // // const [searchParams] = useSearchParams();
+  // const reason = searchParams.get("reason");
+  // const errorParam = searchParams.get("error");
 
   const [showPassword, setShowPassword] = useState(false);
   const { isLoading, error, token } = useAppSelector((state) => state.auth);
@@ -180,14 +180,14 @@ const Login = () => {
     e.preventDefault();
     if (validateForm()) {
       // Clear suspension params so banner disappears
-      if (isSuspension) {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("reason");
-        url.searchParams.delete("error");
-        window.history.replaceState({}, "", url.toString());
-        sessionStorage.removeItem("suspended_email");
-        setPollingEmail(null);
-      }
+      // if (isSuspension) {
+      //   const url = new URL(window.location.href);
+      //   url.searchParams.delete("reason");
+      //   url.searchParams.delete("error");
+      //   window.history.replaceState({}, "", url.toString());
+      //   sessionStorage.removeItem("suspended_email");
+      //   setPollingEmail(null);
+      // }
 
       const result = await dispatch(loginUser(formData));
 
@@ -301,11 +301,10 @@ const Login = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className={`block w-full pl-10 pr-3 py-3 border ${
-                validationErrors.email
+              className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.email
                   ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                   : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-              } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
               placeholder="Enter your Email"
             />
           </div>
@@ -333,11 +332,10 @@ const Login = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className={`block w-full pl-10 pr-3 py-3 border ${
-                validationErrors.password
+              className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.password
                   ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                   : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-              } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
               placeholder="Enter your Password"
             />
             <button
