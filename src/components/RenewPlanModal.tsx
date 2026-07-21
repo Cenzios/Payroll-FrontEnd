@@ -14,11 +14,16 @@ const RenewPlanModal = () => {
         return () => window.removeEventListener('open-renew-modal', handleOpenModal);
     }, []);
 
+    const closeModal = () => {
+        setIsOpen(false);
+        window.dispatchEvent(new CustomEvent('renew-modal-closed'));
+    };
+
     const handleStartRenewal = () => {
         setIsLoading(true);
         // Briefly show loader then navigate
         setTimeout(() => {
-            setIsOpen(false);
+            closeModal();
             setIsLoading(false);
             // navigate('/settle-invoice');
             // navigate('/get-plan?isUpgrade=true');
@@ -40,7 +45,7 @@ const RenewPlanModal = () => {
                     <button
                         // TRIAL EXPIRE LOCK
                         data-upgrade-btn
-                        onClick={() => setIsOpen(false)}
+                        onClick={closeModal}
                         className="text-gray-400 hover:text-gray-600">
                         ✕
                     </button>
