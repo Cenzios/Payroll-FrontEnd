@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
 import { useAppDispatch } from '../store/hooks';
-import { logout } from '../store/slices/authSlice';
+import { logout, checkAccessStatus } from '../store/slices/authSlice';
 import celebrationImg from '../assets/images/celebration-illustration.svg';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 import axiosInstance from '../api/axios';
@@ -34,6 +34,7 @@ const Confirmation = () => {
           return;
         }
 
+        // Step 1: Check if subscription is ACTIVE
         const response = await axiosInstance.get('/subscription/current', {
           headers: { Authorization: `Bearer ${authToken}` }
         });
@@ -41,7 +42,25 @@ const Confirmation = () => {
         const subStatus = response.data.data.status;
 
         if (subStatus === 'ACTIVE') {
+          // Step 2: Also verify the access status (checks all invoices too)
+          // This ensures overdue invoices have been cleared by the webhook before we redirect
+          const accessResponse = await axiosInstance.get('/subscription/access-status', {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+              'Cache-Control': 'no-cache',
+            }
+          });
+
+          const accessStatus = accessResponse?.data?.data?.status;
+          if (accessStatus !== 'ACTIVE') {
+            console.log('⏳ Access status not yet ACTIVE (invoices not yet cleared). Retrying...');
+            isCheckingRef.current = false;
+            return;
+          }
+
+          // ✅ Both subscription and access status are ACTIVE — proceed
           clearInterval(pollInterval);
+          dispatch(checkAccessStatus());
 
           const tempCompanyName = localStorage.getItem('temp_companyName');
           const tempCompanyEmail = localStorage.getItem('temp_companyEmail');
@@ -75,8 +94,6 @@ const Confirmation = () => {
               console.log('✅ Company created successfully');
             } catch (err) {
               console.error('⚠️ Activation success, but company creation failed:', err);
-              // Store it back if it failed? No, we don't want to retry indefinitely on the confirmation page.
-              // They can create it manually in dashboard.
             }
           }
 
