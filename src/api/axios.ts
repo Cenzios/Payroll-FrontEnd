@@ -36,6 +36,7 @@ axiosInstance.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
     const code = error.response?.data?.code;
+    const message = error.response?.data?.message || '';
 
     /* 🔥 TRIAL EXPIRATION HANDLING */
     if (status === 403 && code === 'TRIAL_EXPIRED') {
@@ -87,9 +88,29 @@ axiosInstance.interceptors.response.use(
       const isLoginRequest = error.config?.url?.includes('/auth/login');
 
       if (!isLoginPage && !isLoginRequest) {
+        // Store email BEFORE clearing user data
+        let userEmail = '';
+        try {
+          const userData = JSON.parse(localStorage.getItem('user') || '{}');
+          if (userData.email) {
+            userEmail = userData.email;
+          }
+        } catch (e) { /* ignore */ }
+
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+
+        // Check if the error message indicates account suspension
+        const isSuspended = message.toLowerCase().includes('suspended');
+        const redirectUrl = isSuspended
+          ? `/login?reason=suspended`
+          : '/login';
+
+        if (isSuspended && userEmail) {
+          sessionStorage.setItem('suspended_email', userEmail);
+        }
+
+        window.location.href = redirectUrl;
       }
       return Promise.reject(error);
     }

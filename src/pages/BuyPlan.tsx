@@ -21,6 +21,7 @@ const BuyPlan = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isPlanChange = searchParams.get('isPlanChange') === 'true';
+  const isRenewal = searchParams.get('isRenewal') === 'true';
   const { error: authError, user } = useAppSelector((state) => state.auth);
 
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
@@ -108,7 +109,8 @@ const BuyPlan = () => {
         console.log('✅ Subscription fetched:', sub);
 
         // ✅ Prevent accessing /buy-plan if user already has an active subscription (e.g. Free Trial or completed payment)
-        if (sub?.status === 'ACTIVE' && !isPlanChange) {
+        // Bypass this check if the user is explicitly changing plans or renewing an overdue plan
+        if (sub?.status === 'ACTIVE' && !isPlanChange && !isRenewal) {
           console.warn('User already has an ACTIVE subscription. Redirecting to dashboard.');
           navigate('/dashboard', { replace: true });
           return;
@@ -170,7 +172,7 @@ const BuyPlan = () => {
         if (!authToken) return;
 
         const planId = isPlanChange ? selectedPlan.id : (localStorage.getItem('reg_planId') || PLANS.BASIC.id);
-        const amount = activeSubscription?.registrationFee || selectedPlan.registrationFee; // Use API fee if available
+        const amount = (activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price) * employeeCount;
 
         console.log('📝 Creating Stripe Intent for Plan:', planId);
 
@@ -213,7 +215,7 @@ const BuyPlan = () => {
 
         {/* Back Button - page level */}
         <button
-          onClick={() => step === 'pay' ? handleStepChange('select') : navigate('/get-plan')}
+          onClick={() => step === 'pay' ? handleStepChange('select') : navigate(isRenewal ? '/dashboard' : '/get-plan')}
           className="fixed top-8 left-20 flex items-center gap-1.5 text-sm text-blue-800 hover:text-blue-900 border-2 border-blue-200 hover:border-blue-900 hover:bg-blue-50 transition px-4 py-2 rounded-full"
         >
           <ArrowLeft className="w-4 h-4" />

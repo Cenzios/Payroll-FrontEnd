@@ -148,9 +148,10 @@ const TermsAndConditions = () => {
                                 <h3 className="text-lg font-bold text-gray-900 mb-2">4. Subscription & Payment</h3>
                                 <ul className="list-disc space-y-2 text-sm leading-relaxed text-gray-600  ml-4">
                                     <li>Subscription type: Monthly</li>
-                                    <li>Subscription auto-renews unless cancelled by the user.</li>
+                                    <li>Subscription should be monthly renewed to continue using the service</li>
                                     <li>A one-time, three-month free trial period is available exclusively to new customers who have not previously held an active account with us.</li>
                                     <li>Failure to make payment may result in account termination after a defined grace period.</li>
+                                    <li>User can cancel subscription anytime.</li>
                                 </ul>
                             </section>
 
