@@ -155,10 +155,9 @@ const GetPlan = () => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]" />
 
       {/* Back Button */}
-      <button 
+      <button
         onClick={() => navigate(-1)}
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-[#53616A] hover:text-[#0E1D44] transition-colors bg-white/50 hover:bg-white/80 px-4 py-2 rounded-xl shadow-sm backdrop-blur-sm font-medium text-sm
-          max-sm:top-4 max-sm:left-4"
+        className="fixed top-8 left-20 flex items-center gap-1.5 text-sm text-blue-800 hover:text-blue-900 border-2 border-blue-200 hover:border-blue-900 hover:bg-blue-50 transition px-4 py-2 rounded-full"
       >
         <ArrowLeft className="w-4 h-4" />
         Back
