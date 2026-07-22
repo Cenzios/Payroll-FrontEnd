@@ -645,7 +645,7 @@ const Salary = () => {
           netSalary: netSalary,
           loanDeduction: loanDeduction,
           isLoanEnabled,
-          isEpfEnabled: emp.epfEnabled,
+          isEpfEnabled: emp.epfEnabled && isEpfEnabled,
           companyWorkingDays: companyWorkingDays,
           leaveDays: Math.min(leaveDays, emp.paidLeave || 0),
           nonPaidLeaveDeduction,
