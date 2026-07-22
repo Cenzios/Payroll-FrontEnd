@@ -337,6 +337,7 @@ export const exportPayslip = (
         selectedMonth: number;
         selectedYear: number;
         companyWorkingDays: number;
+        title?: string;
     }
 ) => {
     const {
@@ -347,6 +348,7 @@ export const exportPayslip = (
         selectedMonth,
         selectedYear,
         companyWorkingDays,
+        title = "Pay Slip",
     } = data;
 
     if (format === "pdf") {
@@ -379,7 +381,7 @@ export const exportPayslip = (
 
         doc.setTextColor(252, 163, 17);
         doc.setFontSize(26);
-        doc.text("Pay Slip", 18, 25);
+        doc.text(title, 18, 25);
 
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
@@ -643,7 +645,7 @@ export const exportPayslip = (
         const wsData = [
             [companyName.toUpperCase()],
             [
-                `PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" })} `,
+                `${title.toUpperCase()} - ${new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" })} `,
             ],
             [],
             ["Employee Name", selectedEmployee.fullName],

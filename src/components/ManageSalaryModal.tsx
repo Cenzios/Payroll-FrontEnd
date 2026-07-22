@@ -10,6 +10,7 @@ interface ManageSalaryModalProps {
     setModalEntries: Dispatch<SetStateAction<{ type: string; amount: number }[]>>;
     onSave: () => void;
     onCancel: () => void;
+    earningsLimit?: number; // For deduction: total deductions cannot exceed this
 }
 
 const ManageSalaryModal = ({
@@ -18,6 +19,7 @@ const ManageSalaryModal = ({
     setModalEntries,
     onSave,
     onCancel,
+    earningsLimit,
 }: ManageSalaryModalProps) => {
     if (!manageModal) return null;
 
@@ -27,6 +29,13 @@ const ManageSalaryModal = ({
     const total = modalEntries
         // .slice(0, -1)
         .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+
+    // Deduction limit check
+    const deductionExceedsEarnings =
+        !isAllowance &&
+        earningsLimit !== undefined &&
+        earningsLimit > 0 &&
+        total > earningsLimit;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -84,10 +93,12 @@ const ManageSalaryModal = ({
                                         type="number"
                                         value={entry.amount || ""}
                                         onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val.split('.')[0].length > 7) return;
                                             const updated = [...modalEntries];
                                             updated[idx] = {
                                                 ...updated[idx],
-                                                amount: Math.max(0, parseFloat(e.target.value) || 0),
+                                                amount: Math.max(0, parseFloat(val) || 0),
                                             };
                                             setModalEntries(updated);
                                         }}
@@ -169,6 +180,16 @@ const ManageSalaryModal = ({
                             LKR {total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                     </div>
+
+                    {/* Earnings limit warning for deductions */}
+                    {deductionExceedsEarnings && (
+                        <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                            <span className="text-red-500 text-base leading-none mt-0.5">⚠</span>
+                            <p className="text-[12px] text-red-600 font-medium leading-snug">
+                                Total deductions (Rs. {total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) cannot exceed total earnings (Rs. {earningsLimit!.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
@@ -181,7 +202,12 @@ const ManageSalaryModal = ({
                     </button>
                     <button
                         onClick={onSave}
-                        className="px-8 py-2.5 bg-[#4282ff] text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+                        disabled={deductionExceedsEarnings}
+                        className={`px-8 py-2.5 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm ${
+                            deductionExceedsEarnings
+                                ? "bg-gray-300 cursor-not-allowed"
+                                : "bg-[#4282ff] hover:bg-blue-700"
+                        }`}
                     >
                         Save
                     </button>
