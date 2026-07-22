@@ -180,7 +180,8 @@ const EmployeePayrollModal = ({
             companyAddress,
             selectedMonth: month - 1, // 0-indexed for export service
             selectedYear: year,
-            companyWorkingDays: payslipData.previewPayslip.workingDays
+            companyWorkingDays: payslipData.previewPayslip.workingDays,
+            title: "Salary Detail"
         });
     };
 
