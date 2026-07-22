@@ -10,7 +10,7 @@ import { fillEPFFormC } from '../utils/fillEPFFormC';
 import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import logo from '../assets/images/logo-login.svg';
-import RoundedSelect from '../components/RoundedSelect'; 
+import RoundedSelect from '../components/RoundedSelect';
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -118,7 +118,7 @@ const CFormReport = () => {
     const exportExcel = () => {
         const wsData: any[] = [
             ['C-Form Summary Report'],
-            [`Period: ${periodLabel}`],
+            [`Period: ${appliedPeriodLabel}`],
             [],
             ["Employee's Name", 'National ID No.', 'Member No.', 'Total (Rs.)', 'Employer Contribution (Rs.)', 'Employee Contribution (Rs.)', 'Total Earnings (Rs.)'],
             ...rows.map((r: any) => [
@@ -139,7 +139,7 @@ const CFormReport = () => {
     const exportCSV = () => {
         const wsData: any[] = [
             ['C-Form Summary Report'],
-            [`Period: ${periodLabel}`],
+            [`Period: ${appliedPeriodLabel}`],
             [],
             ["Employee's Name", 'National ID No.', 'Member No.', 'Total (Rs.)', 'Employer Contribution (Rs.)', 'Employee Contribution (Rs.)', 'Total Earnings (Rs.)'],
             ...rows.map((r: any) => [

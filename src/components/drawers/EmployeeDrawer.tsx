@@ -183,6 +183,17 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         salaryType: employeeData.salaryType,
     });
 
+    const validateDeductionsTotal = (deds: { type: string; amount: string }[], basic: any, type?: string) => {
+        const total = deds.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+        const basicAmount = Number(basic) || 0;
+        const currentSalaryType = type || employeeData.salaryType;
+        const maxAllowed = currentSalaryType === "DAILY" ? basicAmount * 30 : basicAmount;
+        if (total > maxAllowed) {
+            return `Total deductions (Rs. ${total.toLocaleString()}) cannot exceed basic salary (Rs. ${maxAllowed.toLocaleString()})`;
+        }
+        return "";
+    };
+
     const handleEmployeeChange = (field: keyof CreateEmployeeRequest, value: any) => {
         setEmployeeData((prev) => ({ ...prev, [field]: value }));
         const error = validateEmployeeField(field, value, getValidationContext());
@@ -190,10 +201,14 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         if (field === "basicSalary" || field === "salaryType") {
             const epfError = validateEmployeeField("epfEtf", epfEtf, getValidationContext());
             setErrors((prev) => ({ ...prev, epfEtf: epfError }));
+
+            if (deductionEnabled) {
+                const currentBasic = field === "basicSalary" ? value : employeeData.basicSalary;
+                const currentType = field === "salaryType" ? value : employeeData.salaryType;
+                const deductionsError = validateDeductionsTotal(deductions, currentBasic, currentType);
+                setErrors((prev) => ({ ...prev, deductionsTotal: deductionsError }));
+            }
         }
-        // if (field === 'employeeId' || field === 'employeeNIC') {
-        //     setDuplicateErrors(prev => ({ ...prev, [field]: undefined }));
-        // }
         if (value && String(value).trim() !== "") setTouched((prev) => ({ ...prev, [field]: true }));
     };
 
@@ -300,7 +315,8 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         }
         if (tab === "payment") {
             return !validateEmployeeField("basicSalary", employeeData.basicSalary, getValidationContext()) &&
-                !(epfEnabled && validateEmployeeField("epfEtf", epfEtf, getValidationContext()));
+                !(epfEnabled && validateEmployeeField("epfEtf", epfEtf, getValidationContext())) &&
+                !(deductionEnabled && validateDeductionsTotal(deductions, employeeData.basicSalary));
         }
         if (tab === "bank") {
             return ["bankName", "accountNumber", "branchName", "accountHolderName"].every(
@@ -825,7 +841,11 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                         {allowances.map((allowance, index) => (
                                                             <div key={index} className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center">
                                                                 <input type="text" value={allowance.type} onChange={(e) => { const u = [...allowances]; u[index].type = e.target.value.replace(/[^a-zA-Z\s]/g, ''); setAllowances(u); }} placeholder="Travelling" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all" />
-                                                                <input type="number" min="0" value={allowance.amount} onChange={(e) => { const u = [...allowances]; u[index].amount = e.target.value; setAllowances(u); }}
+                                                                <input type="number" min="0" value={allowance.amount} onChange={(e) => { 
+                                                                    const val = e.target.value;
+                                                                    if (val.split('.')[0].length > 7) return;
+                                                                    const u = [...allowances]; u[index].amount = val; setAllowances(u); 
+                                                                }}
                                                                     onWheel={(e) => e.currentTarget.blur()}
                                                                     onKeyDown={blockInvalidNumericKeys}
                                                                     placeholder="15,000.00" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
@@ -863,16 +883,36 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                         {deductions.map((deduction, index) => (
                                                             <div key={index} className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center">
                                                                 <input type="text" value={deduction.type} onChange={(e) => { const u = [...deductions]; u[index].type = e.target.value.replace(/[^a-zA-Z\s]/g, ''); setDeductions(u); }} placeholder="Food" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all" />
-                                                                <input type="number" min="0" value={deduction.amount} onChange={(e) => { const u = [...deductions]; u[index].amount = e.target.value; setDeductions(u); }}
+                                                                <input type="number" min="0" value={deduction.amount} onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    if (val.split('.')[0].length > 7) return;
+                                                                    const u = [...deductions]; u[index].amount = val; setDeductions(u);
+                                                                    const err = validateDeductionsTotal(u, employeeData.basicSalary);
+                                                                    setErrors((prev) => ({ ...prev, deductionsTotal: err }));
+                                                                    setTouched((prev) => ({ ...prev, deductionsTotal: true }));
+                                                                }}
                                                                     onWheel={(e) => e.currentTarget.blur()}
                                                                     onKeyDown={blockInvalidNumericKeys}
                                                                     placeholder="Amount" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-400 focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
-                                                                <button type="button" onClick={() => { if (deductions.length > 1) setDeductions(deductions.filter((_, i) => i !== index)); }} disabled={deductions.length <= 1} className="flex items-center justify-center">
+                                                                <button type="button" onClick={() => {
+                                                                    if (deductions.length > 1) {
+                                                                        const u = deductions.filter((_, i) => i !== index);
+                                                                        setDeductions(u);
+                                                                        const err = validateDeductionsTotal(u, employeeData.basicSalary);
+                                                                        setErrors((prev) => ({ ...prev, deductionsTotal: err }));
+                                                                    }
+                                                                }} disabled={deductions.length <= 1} className="flex items-center justify-center">
                                                                     <MinusCircle className={`w-5 h-5 ${deductions.length <= 1 ? "text-gray-300" : "text-red-400 hover:text-red-600 cursor-pointer"} transition-colors`} />
                                                                 </button>
                                                             </div>
                                                         ))}
-                                                        <div onClick={() => { const last = deductions[deductions.length - 1]; if (!last.type.trim() || !last.amount) return; setDeductions([...deductions, { type: "", amount: "" }]); }}
+                                                        <div onClick={() => {
+                                                            const last = deductions[deductions.length - 1]; if (!last.type.trim() || !last.amount) return;
+                                                            const u = [...deductions, { type: "", amount: "" }];
+                                                            setDeductions(u);
+                                                            const err = validateDeductionsTotal(u, employeeData.basicSalary);
+                                                            setErrors((prev) => ({ ...prev, deductionsTotal: err }));
+                                                        }}
                                                             className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center cursor-pointer group">
                                                             <div className="flex items-center gap-2 px-3 py-1.5 border border-dashed border-red-200 rounded-xl group-hover:border-red-400 transition-colors">
                                                                 <ListFilter className="w-4 h-4 text-red-300 group-hover:text-red-500 transition-colors" />
@@ -881,6 +921,9 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                             <div className="px-3 py-1.5 border border-dashed border-red-200 rounded-xl group-hover:border-red-400 transition-colors"><span className="text-[12px] text-gray-400">Enter Amount</span></div>
                                                             <div className="flex items-center justify-center" title="Please fill the current row to add another one"><PlusCircle className="w-5 h-5 text-blue-400 group-hover:text-red-500 transition-colors" /></div>
                                                         </div>
+                                                        {touched.deductionsTotal && errors.deductionsTotal && (
+                                                            <p className="text-red-500 text-xs mt-1">{errors.deductionsTotal}</p>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>

@@ -76,8 +76,8 @@ const Sidebar = () => {
     // ── Notification state ──
     const { user, token } = useAppSelector((state) => state.auth);
 
-    // Initialize isTrial from Redux user data (if available)
-    const [isTrial, setIsTrial] = useState(!!user?.isTrialUser);
+    // null = still loading; true/false = resolved. Avoids flash of "Upgrade Now".
+    const [isTrial, setIsTrial] = useState<boolean | null>(null);
 
     useEffect(() => {
         const checkTrial = async () => {
@@ -95,8 +95,11 @@ const Sidebar = () => {
         if (token) checkTrial();
     }, [token, user]);
 
-    // Memoize the UpgradeNow element – it only updates when isTrial changes
-    const upgradeNowElement = useMemo(() => <UpgradeNowButton isTrial={isTrial} />, [isTrial]);
+    // Memoize the UpgradeNow element – render nothing until isTrial is confirmed
+    const upgradeNowElement = useMemo(() => {
+        if (isTrial === null) return null; // still fetching – suppress the button
+        return <UpgradeNowButton isTrial={isTrial} />;
+    }, [isTrial]);
 
     const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
