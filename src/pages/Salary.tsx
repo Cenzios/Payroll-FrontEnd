@@ -128,6 +128,7 @@ const Salary = () => {
   const [manageModal, setManageModal] = useState<{
     type: "allowance" | "deduction";
     empId: string;
+    emp?: Employee;
   } | null>(null);
   const [modalEntries, setModalEntries] = useState<
     { type: string; amount: number }[]
@@ -166,7 +167,7 @@ const Salary = () => {
     }
 
     setModalEntries([...existing, { type: "", amount: 0 }]);
-    setManageModal({ type, empId });
+    setManageModal({ type, empId, emp });
   };
 
   const handleModalSave = async () => {
@@ -1011,6 +1012,22 @@ const Salary = () => {
             setModalEntries={setModalEntries}
             onSave={handleModalSave}
             onCancel={handleModalCancel}
+            earningsLimit={(() => {
+              if (!manageModal || manageModal.type !== "deduction" || !manageModal.emp) return undefined;
+              const emp = manageModal.emp;
+              const { workedDays, otHours, leaveDays } = getEmployeeValues(emp.id);
+              const basicSalary = emp.basicSalary || 0;
+              const otRate = emp.otRate || 0;
+              const otAmount = emp.otRate > 0 ? otHours * otRate : 0;
+              const currentAllowances = employeeAllowances[emp.id] || emp.recurringAllowances || [];
+              const totalAllowances = currentAllowances.reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
+              if (emp.salaryType === "MONTHLY") {
+                return basicSalary + otAmount + totalAllowances;
+              } else {
+                const displayBasicPay = basicSalary * (workedDays + Math.min(leaveDays, emp.paidLeave || 0));
+                return displayBasicPay + otAmount + totalAllowances;
+              }
+            })()}
           />
 
           {/* TOAST */}
