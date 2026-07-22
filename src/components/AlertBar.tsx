@@ -115,7 +115,7 @@ const AlertBar = () => {
     // Redirect to /buy-plan if cancelled subscription's end date has passed
     useEffect(() => {
         if (isCancelled && cancelledEndDate && new Date() > cancelledEndDate) {
-            navigate('/buy-plan', { replace: true });
+            navigate('/buy-plan?isRenewal=true', { replace: true });
         }
     }, [isCancelled, cancelledEndDate, navigate]);
 
@@ -208,7 +208,7 @@ const AlertBar = () => {
                     <span className='text-amber-200 text-2xl'>| </span>
                     <button
                         data-upgrade-btn
-                        onClick={() => navigate('/buy-plan')}
+                        onClick={() => navigate('/buy-plan?isRenewal=true')}
                         className='font-extrabold underline cursor-pointer'>
                         Renew Now
                     </button>
