@@ -56,6 +56,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
   };
 
   const [descriptionError, setDescriptionError] = useState('');
+  const [interestRateError, setInterestRateError] = useState('');
   const LOAN_DESCRIPTION_MAX_LENGTH = 100;
   const validateDescription = (value: string): string => {
     if (value.trim().length > LOAN_DESCRIPTION_MAX_LENGTH)
@@ -141,8 +142,11 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     const descError = validateDescription(description);
     setDescriptionError(descError);
 
-    if (!companyId || !employeeId || !loanTitle || !amount || !installmentCount || titleError || descError) {
-      setToast({ message: titleError || descError || 'Please fill in all required fields', type: 'error' });
+    const rateError = interestRate.trim() === '' ? 'Interest rate is required' : '';
+    setInterestRateError(rateError);
+
+    if (!companyId || !employeeId || !loanTitle || !amount || !installmentCount || !interestRate.trim() || titleError || descError || rateError) {
+      setToast({ message: titleError || descError || rateError || 'Please fill in all required fields', type: 'error' });
       return;
     }
 
@@ -246,6 +250,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     setAmount('');
     setInstallmentCount('');
     setInterestRate('');
+    setInterestRateError('');
     setSupportingDocs([]);
     setFileTitles({});
   };
@@ -589,16 +594,23 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                       step="0.1"
                       min="0"
                       value={interestRate}
-                      onChange={handleInterestRateChange}
+                      onChange={(e) => {
+                        handleInterestRateChange(e);
+                        if (interestRateError) setInterestRateError('');
+                      }}
                       placeholder="5.0"
                       onWheel={(e) => e.currentTarget.blur()}
                       onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
-                      className="no-spinner w-full px-4 py-3 text-[14px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
+                      className={`no-spinner w-full px-4 py-3 text-[14px] bg-white border rounded-xl focus:outline-none focus:ring-2 transition-all text-gray-900 ${interestRateError
+                        ? 'border-red-500 focus:ring-red-100'
+                        : 'border-gray-200 focus:ring-blue-500/20 focus:border-blue-500'
+                        }`}
                     />
                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                       <span className="text-gray-400 text-[13px] font-medium">%</span>
                     </div>
                   </div>
+                  {interestRateError && <p className="text-red-500 text-xs mt-1">{interestRateError}</p>}
                 </div>
               </div>
 
