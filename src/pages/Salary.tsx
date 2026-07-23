@@ -466,7 +466,9 @@ const Salary = () => {
   };
 
   const handleEmployeeSalaryAdvanceChange = (empId: string, val: number) => {
-    dispatch(setEmployeeSalaryAdvance({ id: empId, advance: Math.max(0, val) }));
+    const str = Math.max(0, val).toString().slice(0, 7);
+    const capped = str === "" ? 0 : parseInt(str, 10);
+    dispatch(setEmployeeSalaryAdvance({ id: empId, advance: capped }));
   };
 
   const handleEmployeeLeaveDaysChange = (empId: string, val: number) => {

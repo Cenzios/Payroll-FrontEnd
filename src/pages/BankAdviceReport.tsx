@@ -135,7 +135,7 @@ const BankAdviceReport = () => {
                         <p className="text-xs text-gray-400">{item.employeeCode}</p>
                     </div>
                     <span className="text-sm font-bold text-gray-800 whitespace-nowrap mr-1">
-                        Rs {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        Rs. {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                     <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
                 </button>
@@ -287,7 +287,7 @@ const BankAdviceReport = () => {
                                             <th className="px-6 py-4 text-xs font-bold text-gray-900">Bank Name</th>
                                             <th className="px-6 py-4 text-xs font-bold text-gray-900">Branch</th>
                                             <th className="px-6 py-4 text-xs font-bold text-gray-900">Account Number</th>
-                                            <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Amount</th>
+                                            <th className="px-6 py-4 text-xs font-bold text-gray-900 text-right">Amount (Rs.)</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
@@ -315,7 +315,7 @@ const BankAdviceReport = () => {
                                                     <td className="px-6 py-4 text-sm text-gray-500">{item.branchName}</td>
                                                     <td className="px-6 py-4 text-sm text-gray-500 font-mono">{item.accountNumber}</td>
                                                     <td className="px-6 py-4 text-sm font-bold text-blue-600 text-right">
-                                                        Rs {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                        {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                     </td>
                                                 </tr>
                                             ))
@@ -329,7 +329,7 @@ const BankAdviceReport = () => {
                                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end items-center gap-4">
                                     <span className="text-sm font-bold text-blue-600">Total Contribution</span>
                                     <span className="text-xl font-bold text-blue-600">
-                                        Rs {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        Rs. {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             )}
