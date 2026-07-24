@@ -28,6 +28,7 @@ const PlanPaymentCard = ({ pricePerEmployee = 0, employeeCount = 1 }: PlanPaymen
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [isLoadingSecret, setIsLoadingSecret] = useState(false);
     const [intentError, setIntentError] = useState<string | null>(null);
+    const [actualAmount, setActualAmount] = useState<number | null>(null);
 
     // Get selected plan dynamically
     const selectedPlanId = localStorage.getItem('reg_planId') || PLANS.BASIC.id;
@@ -70,7 +71,8 @@ const PlanPaymentCard = ({ pricePerEmployee = 0, employeeCount = 1 }: PlanPaymen
                 if (!authToken) return;
 
                 const planId = isPlanChange ? selectedPlan.id : (localStorage.getItem('reg_planId') || PLANS.BASIC.id);
-                const amount = selectedPlan.price * employeeCount; 
+                // Calculate the true amount based on the provided pricePerEmployee (e.g., 100) instead of the hardcoded default plan price
+                const amount = calculatedTotal;
 
                 console.log('📝 Creating Stripe Intent for Plan:', planId);
 
@@ -84,6 +86,7 @@ const PlanPaymentCard = ({ pricePerEmployee = 0, employeeCount = 1 }: PlanPaymen
 
                 if (data?.data?.clientSecret) {
                     setClientSecret(data.data.clientSecret);
+                    setActualAmount(data?.data?.intent?.amount || amount);
                     console.log('Client Secret received');
                 } else {
                     throw new Error('No client secret returned');
@@ -123,7 +126,7 @@ const PlanPaymentCard = ({ pricePerEmployee = 0, employeeCount = 1 }: PlanPaymen
                 ) : clientSecret ? (
                     <div className="flex-grow flex flex-col justify-center">
                         <Elements stripe={stripePromise} options={{ clientSecret }}>
-                             <CheckoutForm amount={calculatedTotal} currency="LKR" />
+                             <CheckoutForm amount={actualAmount ?? calculatedTotal} currency="LKR" />
                         </Elements>
                     </div>
                 ) : null}
