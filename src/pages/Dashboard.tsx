@@ -292,7 +292,7 @@ const Dashboard = () => {
         <Sidebar />
 
         {/* Main Content */}
-        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-y-auto flex flex-col max-sm:h-svh max-sm:p-5 max-sm:py-7">
+        <div className="flex-1 ml-0 sm:ml-64 sm:p-6 h-screen overflow-y-auto flex flex-col max-sm:h-svh max-sm:p-5 max-sm:py-7">
 
           {/* ── MOBILE HEADER (replaces PageHeader on mobile) ── */}
           <div className="hidden max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
