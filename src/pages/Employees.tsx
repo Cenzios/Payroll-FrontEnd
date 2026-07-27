@@ -512,7 +512,7 @@ const Employees = () => {
       <div className="flex flex-1 overflow-hidden relative w-full translate-x-0">
         <Sidebar />
 
-        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-svh">
+        <div className="flex-1 ml-0 sm:ml-64 sm:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-svh">
 
           {/* MOBILE HEADER */}
           <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
@@ -610,7 +610,7 @@ const Employees = () => {
                               <Mail className="w-4 h-4 text-gray-400 shrink-0" />
                               <span className="truncate">{emp.email || "No email provided"}</span>
                             </div>
-                            <div className="flex items-center gap-6 shrink-0">
+                            <div className="flex items-center gap-6 shrink-0 w-[140px] justify-end">
                               <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[100px]">
                                 <Phone className="w-4 h-4 text-gray-400 shrink-0" />
                                 <span>{emp.contactNumber}</span>

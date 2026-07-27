@@ -489,6 +489,7 @@ const EmployeeSalaryCard = ({
                                 onKeyDown={blockInvalidNumberKeys}
                                 className={inputClass(isLocked)}
                                 min="0"
+                                maxLength={7}
                                 disabled={isLocked}
                             />
                         </div>

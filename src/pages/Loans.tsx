@@ -154,7 +154,7 @@ const Loans = () => {
       <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
 
         <Sidebar />
-        <div className="flex-1 ml-0 md:ml-64 md:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-svh">
+        <div className="flex-1 ml-0 sm:ml-64 sm:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-svh">
 
           {selectedLoanId ? (
             <LoanHistoryView loan={{ id: selectedLoanId }} onBack={handleBack} />

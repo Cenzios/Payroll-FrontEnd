@@ -181,7 +181,7 @@ const EmployeePayrollModal = ({
             selectedMonth: month - 1, // 0-indexed for export service
             selectedYear: year,
             companyWorkingDays: payslipData.previewPayslip.workingDays,
-            title: "Salary Detail"
+            title: "Pay Slip"
         });
     };
 
@@ -208,7 +208,7 @@ const EmployeePayrollModal = ({
                             <div className="text-center py-20 text-gray-400 text-sm">No record available for this period.</div>
                         ) : (
                             <PayslipPreview
-                                title="SALARY DETAIL"
+                                title="Pay Slip"
                                 previewPayslip={payslipData.previewPayslip}
                                 selectedEmployee={payslipData.selectedEmployee as any}
                                 companyName={companyName}

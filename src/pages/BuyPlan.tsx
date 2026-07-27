@@ -44,11 +44,14 @@ const BuyPlan = () => {
   const [employeeCount, setEmployeeCount] = useState(1);
 
   useEffect(() => {
-    if (dashboardData?.totalEmployees) {
+    if (activeSubscription?.usedEmployees) {
+      setEmployeeCount(activeSubscription.usedEmployees);
+      localStorage.setItem('paid_employee_limit', String(activeSubscription.usedEmployees));
+    } else if (dashboardData?.totalEmployees) {
       setEmployeeCount(dashboardData.totalEmployees);
       localStorage.setItem('paid_employee_limit', String(dashboardData.totalEmployees));
     }
-  }, [dashboardData?.totalEmployees]);
+  }, [dashboardData?.totalEmployees, activeSubscription?.usedEmployees]);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
