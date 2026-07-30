@@ -28,7 +28,12 @@ const HeaderActions = ({ showLogout = true }: HeaderActionsProps = {}) => {
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  const { data: dbNotifications = [] } = useGetNotificationsQuery(undefined, { skip: !user });
+  const { data: dbNotifications = [] } = useGetNotificationsQuery(undefined, {
+    skip: !user,
+    pollingInterval: 30000, // Re-fetch every 30 seconds to pick up new admin messages in real time
+    refetchOnFocus: true,   // Also re-fetch when the user returns to the tab
+    refetchOnReconnect: true,
+  });
 
   const [markAsRead] = useMarkNotificationAsReadMutation();
   const [deleteNotification] = useDeleteNotificationMutation();
