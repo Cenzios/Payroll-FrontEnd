@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { UploadCloud, FileImage, File, Trash2, Loader2 } from "lucide-react";
+import { UploadCloud, FileImage, File, Trash2, Loader2, AlertCircle, X } from "lucide-react";
 
 interface FileUploadModalProps {
     isOpen: boolean;
@@ -27,6 +27,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     // ✅ Centralized submit logic
     const handleSubmit = () => {
@@ -49,12 +50,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     const validateFiles = (newFiles: File[]) => {
         const remaining = maxFiles - files.length;
         if (remaining <= 0) {
-            alert(`You can only upload a maximum of ${maxFiles} documents per employee.`);
+            setErrorMsg(`Maximum ${maxFiles} supporting documents are allowed. Please remove a file before adding another.`);
             return [];
         }
 
         if (newFiles.length > 1) {
-            alert("You can only upload one file at a time.");
+            setErrorMsg("You can only upload one file at a time.");
             return [newFiles[0]]; // Only take the first one
         }
 
@@ -62,8 +63,8 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             const isValidType = ['image/png', 'image/jpeg', 'application/pdf'].includes(file.type);
             const isValidSize = file.size <= 5 * 1024 * 1024;
 
-            if (!isValidType) alert(`File ${file.name} is not a supported format. Please upload JPG, PNG, or PDF files.`);
-            if (!isValidSize) alert(`File ${file.name} exceeds 5MB limit.`);
+            if (!isValidType) setErrorMsg(`"${file.name}" is not a supported format. Please upload JPG, PNG, or PDF files.`);
+            if (!isValidSize) setErrorMsg(`"${file.name}" exceeds the 5MB size limit.`);
 
             return isValidType && isValidSize;
         });
@@ -139,6 +140,21 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
                 <div className="pt-8 flex justify-center items-center bg-white border-b border-gray-50">
                     <h2 className="text-xl font-bold text-gray-900">Supporting Documents</h2>
                 </div>
+
+                {/* Inline Error Toast */}
+                {errorMsg && (
+                    <div className="mx-5 mt-4 flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                        <p className="text-[13px] text-red-600 font-medium flex-1">{errorMsg}</p>
+                        <button
+                            type="button"
+                            onClick={() => setErrorMsg(null)}
+                            className="text-red-400 hover:text-red-600 transition-colors p-0.5"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                )}
 
                 <div className="p-2 space-y-2 bg-white">
                     {/* Dropzone */}
