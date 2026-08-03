@@ -160,3 +160,104 @@ input::-ms-clear {
   display: none;
 
 }
+
+@media (max-width: 767px) {
+  .flex-1.ml-0.sm\:ml-64 {
+    height: 100svh !important;
+    padding: 1.75rem 1.25rem !important;
+    overflow-y: auto !important;
+  }
+
+  /* Hide desktop sidebar and other desktop elements */
+  .max-sm\:hidden {
+    display: none !important;
+  }
+
+  /* Hide desktop-only text and layouts */
+  .hidden.sm\:inline {
+    display: none !important;
+  }
+  .hidden.sm\:block {
+    display: none !important;
+  }
+  .hidden.sm\:flex {
+    display: none !important;
+  }
+
+  /* Show mobile layout elements */
+  .hidden.max-sm\:flex {
+    display: flex !important;
+  }
+  .hidden.max-sm\:block {
+    display: block !important;
+  }
+  .hidden.max-sm\:inline {
+    display: inline !important;
+  }
+
+  /* Show mobile bottom nav and options */
+  .sm\:hidden {
+    display: block !important;
+  }
+  
+  /* Reset flex containers with sm:hidden */
+  p.sm\:hidden, span.sm\:hidden, div.sm\:hidden.flex {
+    display: flex !important;
+  }
+  span.sm\:hidden {
+    display: inline !important;
+  }
+
+  /* Remove desktop sidebar margin */
+  .sm\:ml-64 {
+    margin-left: 0 !important;
+  }
+
+  /* Apply mobile padding */
+  .sm\:p-6 {
+    padding: 1.75rem 1.25rem !important;
+  }
+
+  /* Force mobile flex direction and layout wrapping */
+  .sm\:flex-row {
+    flex-direction: column !important;
+  }
+  .max-sm\:flex-col {
+    flex-direction: column !important;
+  }
+  .max-sm\:items-start {
+    align-items: flex-start !important;
+  }
+  .max-sm\:w-full {
+    width: 100% !important;
+  }
+  .max-sm\:ml-0 {
+    margin-left: 0 !important;
+  }
+  .max-sm\:mx-5 {
+    margin-left: 1.25rem !important;
+    margin-right: 1.25rem !important;
+  }
+  .max-sm\:px-6 {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+  .max-sm\:px-5 {
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
+  }
+  .max-sm\:pb-20 {
+    padding-bottom: 5rem !important;
+  }
+  .max-sm\:flex-1 {
+    flex: 1 1 0% !important;
+  }
+  
+  /* Handle mobile grid columns */
+  .max-sm\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .max-sm\:grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+}
