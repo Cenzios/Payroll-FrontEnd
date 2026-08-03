@@ -104,36 +104,35 @@ const SingleMonthPicker: React.FC<SingleMonthPickerProps> = ({
 
     return (
         <div className={`relative ${className}`} ref={popupRef}>
-            {/* Trigger Button */}
             <div
                 onClick={handleOpen}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm cursor-pointer hover:border-gray-300 focus-within:ring-2 focus-within:ring-blue-100 transition-all"
+                className="flex items-center gap-2 px-4 py-2 max-sm:px-2.5 max-sm:py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm max-sm:text-xs cursor-pointer hover:border-gray-300 focus-within:ring-2 focus-within:ring-blue-100 transition-all"
             >
-                <Calendar className="w-4 h-4 text-gray-400" />
+                <Calendar className="w-4 h-4 max-sm:w-3.5 max-sm:h-3.5 text-gray-400" />
                 <span className="text-gray-700">{formatDate()}</span>
             </div>
 
             {/* Popup */}
             {isOpen && (
-                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-6 w-[320px]">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-6 max-sm:p-4 w-[320px] max-sm:w-[260px] max-w-[calc(100vw-2rem)]">
                     <div className="mb-4">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-4 max-sm:mb-3">
                             <button
                                 onClick={() => setPanelYear(panelYear - 1)}
                                 className="p-1 hover:bg-gray-100 rounded transition-colors"
                             >
-                                <ChevronLeft className="w-4 h-4 text-gray-600" />
+                                <ChevronLeft className="w-4 h-4 max-sm:w-3.5 max-sm:h-3.5 text-gray-600" />
                             </button>
-                            <span className="font-semibold text-gray-900">{panelYear}</span>
+                            <span className="font-semibold text-gray-900 max-sm:text-sm">{panelYear}</span>
                             <button
                                 onClick={() => setPanelYear(panelYear + 1)}
                                 className="p-1 hover:bg-gray-100 rounded transition-colors"
                             >
-                                <ChevronRight className="w-4 h-4 text-gray-600" />
+                                <ChevronRight className="w-4 h-4 max-sm:w-3.5 max-sm:h-3.5 text-gray-600" />
                             </button>
                         </div>
                         <div className="text-xs text-gray-500 mb-2 font-medium text-center uppercase tracking-wider">Select Month</div>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-3 gap-2 max-sm:gap-1.5">
                             {months.map((month, index) => {
                                 const selected = isMonthSelected(index, panelYear);
                                 const disabled = isMonthDisabled(index, panelYear);
@@ -142,7 +141,7 @@ const SingleMonthPicker: React.FC<SingleMonthPickerProps> = ({
                                         key={index}
                                         onClick={() => !disabled && handleMonthClick(index)}
                                         disabled={disabled}
-                                        className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${disabled
+                                        className={`py-2 px-3 max-sm:py-1.5 max-sm:px-2 rounded-lg text-sm max-sm:text-xs font-medium transition-all ${disabled
                                             ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
                                             : selected
                                                 ? 'bg-blue-600 text-white shadow-md'
@@ -157,16 +156,16 @@ const SingleMonthPicker: React.FC<SingleMonthPickerProps> = ({
                     </div>
 
                     {/* Footer Display */}
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 flex flex-col gap-3">
+                    <div className="p-3 max-sm:p-2 bg-blue-50 rounded-lg border border-blue-100 flex flex-col gap-3 max-sm:gap-2">
                         <div className="text-center">
                             <div className="text-[10px] text-blue-600 font-bold tracking-wide mb-1">Selected Month</div>
-                            <div className="text-sm text-blue-900 font-semibold">
+                            <div className="text-sm max-sm:text-xs text-blue-900 font-semibold">
                                 {monthsFull[tempMonth]} {panelYear}
                             </div>
                         </div>
                         <button
                             onClick={handleApplyClick}
-                            className="w-full py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
+                            className="w-full py-2 max-sm:py-1.5 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm max-sm:text-xs font-semibold rounded-lg transition-colors"
                         >
                             Apply
                         </button>

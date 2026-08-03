@@ -154,7 +154,7 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
     };
 
     return (
-        <div className={`relative ${className}`} ref={popupRef}>
+        <div className={`relative ${className}`}>
             {/* Input Field */}
             <div
                 onClick={handleOpen}
@@ -166,113 +166,124 @@ const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
 
             {/* Popup */}
             {isOpen && (
-                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 p-6 w-[600px]">
-                    <div className="grid grid-cols-2 gap-6 mb-4">
-                        {/* Start Month Panel */}
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <button
-                                    onClick={() => setStartPanelYear(startPanelYear - 1)}
-                                    className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                >
-                                    <ChevronLeft className="w-4 h-4 text-gray-600" />
-                                </button>
-                                <span className="font-semibold text-gray-900">{startPanelYear}</span>
-                                <button
-                                    onClick={() => setStartPanelYear(startPanelYear + 1)}
-                                    className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                >
-                                    <ChevronRight className="w-4 h-4 text-gray-600" />
-                                </button>
+                <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 sm:items-center sm:pt-0">
+                    {/* Backdrop */}
+                    <div className="fixed inset-0 bg-black/20" />
+
+                    <div
+                        ref={popupRef}
+                        className="relative bg-white border border-gray-200 rounded-xl shadow-2xl p-4 sm:p-6 w-full max-w-[600px] max-h-[90vh] overflow-y-auto"
+                    >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-4">
+
+                            {/* Start Month Panel */}
+                            <div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <button
+                                        onClick={() => setStartPanelYear(startPanelYear - 1)}
+                                        className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                    >
+                                        <ChevronLeft className="w-4 h-4 text-gray-600" />
+                                    </button>
+                                    <span className="font-semibold text-gray-900">{startPanelYear}</span>
+                                    <button
+                                        onClick={() => setStartPanelYear(startPanelYear + 1)}
+                                        className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                    >
+                                        <ChevronRight className="w-4 h-4 text-gray-600" />
+                                    </button>
+                                </div>
+                                <div className="text-xs text-gray-500 mb-2 font-medium">Start Date</div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {months.map((month, index) => {
+                                        const selected = isMonthSelected(index, startPanelYear, true);
+                                        const inRange = isMonthInRange(index, startPanelYear);
+                                        const disabled = isMonthDisabled(index, startPanelYear);
+                                        return (
+                                            <button
+                                                key={index}
+                                                onClick={() => !disabled && handleStartMonthClick(index)}
+                                                disabled={disabled}
+                                                className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${disabled
+                                                    ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                                                    : selected
+                                                        ? 'bg-blue-600 text-white shadow-md'
+                                                        : inRange
+                                                            ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                    }`}
+                                            >
+                                                {month}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                            <div className="text-xs text-gray-500 mb-2 font-medium">Start Date</div>
-                            <div className="grid grid-cols-3 gap-2">
-                                {months.map((month, index) => {
-                                    const selected = isMonthSelected(index, startPanelYear, true);
-                                    const inRange = isMonthInRange(index, startPanelYear);
-                                    const disabled = isMonthDisabled(index, startPanelYear);
-                                    return (
-                                        <button
-                                            key={index}
-                                            onClick={() => !disabled && handleStartMonthClick(index)}
-                                            disabled={disabled}
-                                            className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${disabled
-                                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                                                : selected
-                                                    ? 'bg-blue-600 text-white shadow-md'
-                                                    : inRange
-                                                        ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                                                }`}
-                                        >
-                                            {month}
-                                        </button>
-                                    );
-                                })}
+
+                            {/* End Month Panel */}
+                            <div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <button
+                                        onClick={() => setEndPanelYear(endPanelYear - 1)}
+                                        className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                    >
+                                        <ChevronLeft className="w-4 h-4 text-gray-600" />
+                                    </button>
+                                    <span className="font-semibold text-gray-900">{endPanelYear}</span>
+                                    <button
+                                        onClick={() => setEndPanelYear(endPanelYear + 1)}
+                                        className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                    >
+                                        <ChevronRight className="w-4 h-4 text-gray-600" />
+                                    </button>
+                                </div>
+                                <div className="text-xs text-gray-500 mb-2 font-medium">End Date</div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {months.map((month, index) => {
+                                        const selected = isMonthSelected(index, endPanelYear, false);
+                                        const inRange = isMonthInRange(index, endPanelYear);
+                                        const disabled = isMonthDisabled(index, endPanelYear);
+                                        return (
+                                            <button
+                                                key={index}
+                                                onClick={() => !disabled && handleEndMonthClick(index)}
+                                                disabled={disabled}
+                                                className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${disabled
+                                                    ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                                                    : selected
+                                                        ? 'bg-blue-600 text-white shadow-md'
+                                                        : inRange
+                                                            ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                    }`}
+                                            >
+                                                {month}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
 
-                        {/* End Month Panel */}
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <button
-                                    onClick={() => setEndPanelYear(endPanelYear - 1)}
-                                    className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                >
-                                    <ChevronLeft className="w-4 h-4 text-gray-600" />
-                                </button>
-                                <span className="font-semibold text-gray-900">{endPanelYear}</span>
-                                <button
-                                    onClick={() => setEndPanelYear(endPanelYear + 1)}
-                                    className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                >
-                                    <ChevronRight className="w-4 h-4 text-gray-600" />
-                                </button>
-                            </div>
-                            <div className="text-xs text-gray-500 mb-2 font-medium">End Date</div>
-                            <div className="grid grid-cols-3 gap-2">
-                                {months.map((month, index) => {
-                                    const selected = isMonthSelected(index, endPanelYear, false);
-                                    const inRange = isMonthInRange(index, endPanelYear);
-                                    const disabled = isMonthDisabled(index, endPanelYear);
-                                    return (
-                                        <button
-                                            key={index}
-                                            onClick={() => !disabled && handleEndMonthClick(index)}
-                                            disabled={disabled}
-                                            className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${disabled
-                                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                                                : selected
-                                                    ? 'bg-blue-600 text-white shadow-md'
-                                                    : inRange
-                                                        ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                                                }`}
-                                        >
-                                            {month}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* Selected Range Display */}
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 flex gap-48">
-                        <div>
-                            <div className="text-xs text-blue-600 font-medium mb-1">Selected Time Period</div>
-                            <div className="text-sm text-blue-900 font-semibold">
-                                {/* {monthsFull[tempStartMonth]} {tempStartYear} – {monthsFull[tempEndMonth]} {tempEndYear} */}
-                                {monthsFull[tempStartMonth]} {startPanelYear} – {monthsFull[tempEndMonth]} {endPanelYear}
+
+                        {/* Selected Range Display */}
+                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+                            <div className="flex-1 min-w-0">
+                                <div className="text-sm text-blue-900 font-semibold truncate">Selected Time Period</div>
+                                <div className="text-sm text-blue-900 font-semibold">
+                                    {/* {monthsFull[tempStartMonth]} {tempStartYear} – {monthsFull[tempEndMonth]} {tempEndYear} */}
+                                    {monthsFull[tempStartMonth]} {startPanelYear} – {monthsFull[tempEndMonth]} {endPanelYear}
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <button
-                                onClick={handleApplyClick}
-                                className="flex px-9 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
-                            >
-                                Apply
-                            </button>
+                            <div>
+                                <button
+                                    onClick={handleApplyClick}
+                                    className="w-full sm:w-auto flex justify-center px-9 py-2 bg-[#2b74ff] hover:bg-blue-700 text-white text-sm font-regular rounded-lg transition-colors"
+                                >
+                                    Apply
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

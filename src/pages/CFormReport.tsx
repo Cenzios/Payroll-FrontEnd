@@ -160,7 +160,7 @@ const CFormReport = () => {
     };
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
+        <div className="flex flex-col h-screen md:overflow-hidden overflow-x-hidden bg-gray-50 font-sans">
             <AlertBar />
 
             <div className="-mb-4 shrink-0"></div>
@@ -168,7 +168,7 @@ const CFormReport = () => {
             <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
                 <Sidebar />
 
-                <div className="flex-1 ml-0 sm:ml-64 sm:p-6 h-screen overflow-hidden flex flex-col">
+                <div className="flex-1 ml-0 sm:ml-64 sm:p-6 md:h-screen max-md:overflow-y-auto md:overflow-hidden flex flex-col">
 
                     {/* MOBILE HEADER */}
                     <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 border-b border-gray-100">
@@ -203,11 +203,11 @@ const CFormReport = () => {
                         />
                     </div>
 
-                    <div className='max-sm:mx-5  max-sm:pb-20'>
+                    <div className='max-sm:mx-5 max-sm:pb-24'>
                         {/* Filter Section */}
                         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
-                            <div className="flex items-center gap-6 max-sm:gap-4 max-sm:w-full max-sm:flex-col">
-                                <div className='flex flex-row gap-4'>
+                            <div className="flex items-center gap-6 max-md:gap-4 max-md:w-full flex-wrap flex-row md:flex-nowrap">
+                                <div className='flex flex-row flex-wrap gap-4'>
                                     {/* Year */}
                                     <div className="flex items-center gap-3 max-sm:flex-1">
                                         <label className="text-sm font-semibold text-gray-600 whitespace-nowrap">Year</label>
@@ -232,17 +232,17 @@ const CFormReport = () => {
                                 </div>
 
                                 {/* Buttons */}
-                                <div className="flex gap-3 ml-auto max-sm:ml-0 max-sm:w-full max-sm:items-center max-sm:flex-row">
+                                <div className="flex gap-3 ml-auto max-md:ml-0 max-md:w-full items-center flex-row flex-wrap">
                                     <button
                                         onClick={handleApply}
                                         disabled={isLoading}
-                                        className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 max-sm:flex-1 max-sm:py-2.5"
+                                        className="px-5 py-2 w-[90px] bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60"
                                     >
                                         {isLoading ? 'Loading...' : 'Apply'}
                                     </button>
                                     <button
                                         onClick={handleReset}
-                                        className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors max-sm:flex-1 max-sm:py-2.5"
+                                        className="px-5 py-2 w-[90px] border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
                                     >
                                         Reset
                                     </button>

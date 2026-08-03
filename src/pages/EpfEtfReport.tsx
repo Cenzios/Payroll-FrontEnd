@@ -257,7 +257,7 @@ const EpfEtfReport = () => {
     };
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
+        <div className="flex flex-col h-screen md:overflow-hidden overflow-x-hidden bg-gray-50 font-sans">
             <AlertBar />
 
             {/* Margin bottom gap after the banner */}
@@ -266,7 +266,7 @@ const EpfEtfReport = () => {
             <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
                 <Sidebar />
 
-                <div className="flex-1 ml-0 sm:ml-64 sm:p-6 h-screen overflow-hidden flex flex-col">
+                <div className="flex-1 ml-0 sm:ml-64 sm:p-6 md:h-screen max-md:overflow-y-auto md:overflow-hidden flex flex-col">
 
                     {/* MOBILE HEADER */}
                     <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 border-b border-gray-100">
@@ -302,11 +302,11 @@ const EpfEtfReport = () => {
                         />
                     </div>
 
-                    <div className='max-sm:mx-5  max-sm:pb-20'>
+                    <div className='max-sm:mx-5 max-sm:pb-24'>
                         {/* Filters */}
                         <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
                             <div className="flex items-center gap-4 flex-wrap">
-                                <div className='flex flex-row gap-4'>
+                                <div className='flex flex-row flex-wrap gap-4'>
                                     {/* Search */}
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Search Employee</span>
@@ -335,10 +335,10 @@ const EpfEtfReport = () => {
                                 </div>
 
                                 {/* Buttons */}
-                                <div className="flex gap-3 ml-auto max-sm:ml-0 max-sm:w-full max-sm:items-center max-sm:flex-row">
+                                <div className="flex gap-3 ml-auto max-md:ml-0 max-md:w-full items-center flex-row flex-wrap">
                                     <button
                                         onClick={handleReset}
-                                        className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors max-sm:flex-1 max-sm:py-2.5"
+                                        className="px-5 py-2 w-[90px] bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
                                     >
                                         Reset
                                     </button>
@@ -347,7 +347,7 @@ const EpfEtfReport = () => {
                                         <button
                                             disabled={!hasData}
                                             onClick={() => setIsExportOpen(!isExportOpen)}
-                                            className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
+                                            className="flex items-center justify-center gap-1.5 px-5 py-2 w-[90px] bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
                                         >
                                             Export
                                             <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />

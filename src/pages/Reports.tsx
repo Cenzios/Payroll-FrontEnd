@@ -273,7 +273,7 @@ const Reports = () => {
     const hasData = !isLoading && monthlyData.some(m => m.employees && m.employees.length > 0);
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
+        <div className="flex flex-col h-screen md:overflow-hidden overflow-x-hidden bg-gray-50 font-sans">
             <AlertBar />
 
             {/* Margin bottom gap after the banner */}
@@ -282,7 +282,7 @@ const Reports = () => {
             <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
                 <Sidebar />
 
-                <div className="flex-1 ml-0 sm:ml-64 sm:p-6 h-screen overflow-hidden flex flex-col">
+                <div className="flex-1 ml-0 sm:ml-64 sm:p-6 md:h-screen max-md:overflow-y-auto md:overflow-hidden flex flex-col">
 
                     {/* MOBILE HEADER */}
                     <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5 border-b border-gray-100">
@@ -320,8 +320,8 @@ const Reports = () => {
 
                     {/* Filter Bar */}
                     <div className="shrink-0 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4 max-sm:mx-5">
-                        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 flex-wrap">
-                            <div className='flex flex-row gap-4'>
+                        <div className="flex flex-col sm:flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 flex-wrap">
+                            <div className='flex flex-row flex-wrap gap-4'>
                                 {/* Search */}
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm font-medium text-gray-600 whitespace-nowrap max-sm:hidden">Search Employee</span>
@@ -353,12 +353,12 @@ const Reports = () => {
                                 </div>
                             </div>
                             {/* Buttons */}
-                            <div className="flex gap-3 ml-auto max-sm:ml-0 max-sm:w-full max-sm:items-center max-sm:flex-row">
+                            <div className="flex gap-3 ml-auto max-md:ml-0 max-md:w-full items-center flex-row flex-wrap">
 
                                 {/* Reset */}
                                 <button
                                     onClick={handleReset}
-                                    className="px-9 py-2 bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors max-sm:flex-1 max-sm:py-2.5"
+                                    className="px-5 py-2 w-[90px] bg-white hover:bg-gray-50 text-gray-700 text-sm font-regular rounded-lg border border-gray-300 transition-colors"
                                 >
                                     Reset
                                 </button>
@@ -368,7 +368,7 @@ const Reports = () => {
                                     <button
                                         disabled={!hasData}
                                         onClick={() => setIsExportOpen(prev => !prev)}
-                                        className="flex items-center gap-1.5 px-7 py-2 bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors max-sm:flex-1 max-sm:py-2.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
+                                        className="flex items-center justify-center gap-1.5 px-5 py-2 w-[90px] bg-white hover:bg-gray-50 text-[#407BFF] text-sm font-regular rounded-lg border border-[#407BFF33] transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
                                     >
                                         Export
                                         <ChevronDown className={`w-4 h-4 transition-transform ${isExportOpen ? 'rotate-180' : ''}`} />
@@ -406,11 +406,11 @@ const Reports = () => {
                         </div>
                     </div>
 
-                    <div className='p-4 rounded-xl bg-white border border-[#00000014] flex flex-col flex-1 min-h-0 overflow-hidden max-sm:mx-5  max-sm:pb-20'>
-                        <div className="shrink-0 bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm px-3 md:px-6 py-3 md:py-4 mb-4 whitespace-nowrap">
-                            <div className="overflow-x-auto md:overflow-visible grid grid-cols-5 gap-[150px] md:gap-4 md:divide-x divide-gray-100 max-sm:py-2">
+                    <div className='p-4 rounded-xl bg-white border border-[#00000014] flex flex-col md:flex-1 md:min-h-0 md:overflow-hidden max-md:mx-4 max-md:mb-24'>
+                        <div className="shrink-0 bg-[#F4F8FC] rounded-xl border border-gray-200 shadow-sm px-3 md:px-6 py-3 md:py-4 mb-4">
+                            <div className="flex flex-wrap md:flex-nowrap gap-y-4 gap-x-6 md:gap-x-0 divide-x divide-gray-200 max-sm:py-2 overflow-x-auto">
                                 {/* Total Employees */}
-                                <div className="text-center max-sm:border-l-2 max-sm:border-[#F4F8FC] max-sm:pl-4">
+                                <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-2xl font-regular text-gray-900">
                                         {overallTotals.totalEmployees}
                                     </div>
@@ -420,7 +420,7 @@ const Reports = () => {
                                 </div>
 
                                 {/* Total Gross Pay */}
-                                <div className="text-center max-sm:border-l-2 max-sm:border-black max-sm:pl-4">
+                                <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-xl font-regular text-[#1f6feb]">
                                         Rs. {overallTotals.totalGrossPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </div>
@@ -430,7 +430,7 @@ const Reports = () => {
                                 </div>
 
                                 {/* Total Net Pay */}
-                                <div className="text-center max-sm:border-l-2 max-sm:border-black max-sm:pl-4">
+                                <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-xl font-regular text-[#1f6feb]">
                                         Rs. {overallTotals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </div>
@@ -440,7 +440,7 @@ const Reports = () => {
                                 </div>
 
                                 {/* Total Employee EPF */}
-                                <div className="text-center max-sm:border-l-2 max-sm:border-black max-sm:pl-4">
+                                <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-xl font-regular text-[#1f6feb]">
                                         Rs. {overallTotals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </div>
@@ -450,7 +450,7 @@ const Reports = () => {
                                 </div>
 
                                 {/* Total Company EPF/ETF */}
-                                <div className="text-center max-sm:border-l-2 max-sm:border-black max-sm:pl-4">
+                                <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-xl font-regular text-[#1f6feb]">
                                         Rs. {overallTotals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </div>
@@ -460,7 +460,7 @@ const Reports = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto space-y-3 max-sm:pb-10">
+                        <div className="md:flex-1 md:overflow-y-auto space-y-3">
                             {isLoading ? (
                                 <div className="flex justify-center items-center py-20">
                                     <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
