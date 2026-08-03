@@ -74,10 +74,10 @@ const MonthSection: React.FC<MonthSectionProps> = ({
             {/* Month Header */}
             <div
                 onClick={onToggle}
-                className="bg-gradient-to-r rounded-xl from-blue-50 to-indigo-50 px-6 py-4 cursor-pointer hover:from-blue-100 hover:to-indigo-100 transition-all max-sm:p-4"
+                className="bg-gradient-to-r rounded-xl from-blue-50 to-indigo-50 px-6 sm:pr-8 py-4 cursor-pointer hover:from-blue-100 hover:to-indigo-100 transition-all max-sm:p-4"
             >
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 max-sm:gap-2">
+                <div className="flex items-center justify-between gap-3 min-w-0">
+                    <div className="flex items-center gap-2 max-sm:gap-2 shrink-0 w-56 sm:w-64">
                         {/* Expand/Collapse Icon */}
                         <div className="text-blue-600">
                             {isExpanded ? (
@@ -93,7 +93,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                         </div>
 
                         {/* Status Badge */}
-                        <span className={`px-3 py-1 rounded-full text-xs font-regular ${status === 'Completed'
+                        <span className={`px-3 py-1 rounded-full text-xs font-regular whitespace-nowrap shrink-0 ${status === 'Completed'
                             ? 'bg-green-100 text-green-700'
                             : 'bg-yellow-100 text-yellow-700'
                             }`}>
@@ -101,23 +101,23 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                         </span>
                     </div>
 
-                    <div className="flex flex-row">
+                    <div className="flex flex-row items-center overflow-x-auto gap-2 sm:gap-6 min-w-0 flex-1 justify-start">
                         {/* Summary Info */}
-                        <div className="flex flex-col items-center">
-                            <div className="text-sm text-gray-500">Employees</div>
-                            <div className="text-base font-medium text-gray-900">{totals.totalEmployees}</div>
+                        <div className="flex flex-col items-center shrink-0 w-36 ml-20 text-center">
+                            <div className="text-sm text-gray-500 whitespace-nowrap">Employees</div>
+                            <div className="text-base font-medium text-gray-900 whitespace-nowrap">{totals.totalEmployees}</div>
                         </div>
-                        <div className="flex flex-col items-end w-44">
-                            <div className="text-sm text-gray-500">Employee EPF</div>
-                            <div className="text-base font-medium text-blue-600">Rs {totals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div className="flex flex-col items-end shrink-0 w-44 text-right">
+                            <div className="text-sm text-gray-500 whitespace-nowrap">Employee EPF</div>
+                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">Rs {totals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         </div>
-                        <div className="flex flex-col items-end w-44">
-                            <div className="text-sm text-gray-500">Company EPF/ETF</div>
-                            <div className="text-base font-medium text-blue-600">Rs {totals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div className="flex flex-col items-end shrink-0 w-44 text-right">
+                            <div className="text-sm text-gray-500 whitespace-nowrap">Company EPF/ETF</div>
+                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">Rs {totals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         </div>
-                        <div className="flex flex-col items-end w-44">
-                            <div className="text-sm text-gray-500">Total Net Pay</div>
-                            <div className="text-base font-medium text-blue-600">Rs {totals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        <div className="flex flex-col items-end shrink-0 w-44 text-right">
+                            <div className="text-sm text-gray-500 whitespace-nowrap">Total Net Pay</div>
+                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">Rs {totals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         </div>
                     </div>
                 </div>
@@ -158,8 +158,8 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                 />
                                             </th> */}
-                                            <th className="px-6 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200">Employee ID</th>
-                                            <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 whitespace-nowrap">Employee Name</th>
+                                            <th className="px-6 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-left">Employee ID</th>
+                                            <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 whitespace-nowrap text-left">Employee Name</th>
                                             <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200">Worked Days</th>
                                             <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-end">Basic Salary</th>
                                             <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-end">OT</th>
@@ -193,8 +193,8 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                     />
                                                 </td> */}
-                                                    <td className="px-8 py-3 font-regular text-gray-900 text-left">{employee.employeeCode || '-'}</td>
-                                                    <td className="px-6 py-3 text-gray-900 whitespace-nowrap text-left">{employee.employeeName || '-'}</td>
+                                                    <td className="px-6 py-3 font-regular text-gray-900 text-left">{employee.employeeCode || '-'}</td>
+                                                    <td className="px-4 py-3 text-gray-900 whitespace-nowrap text-left">{employee.employeeName || '-'}</td>
                                                     <td className="px-4 py-3 text-gray-500 text-center">{employee.workingDays}</td>
                                                     {/* <td className="px-4 py-3 text-gray-500 font-medium text-end">{employee.basicSalary?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td> */}
                                                     <td className="px-4 py-3 text-gray-500 font-medium text-end">
