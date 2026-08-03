@@ -376,6 +376,7 @@ const SetPassword = () => {
         </button>
 
         <button
+          type="button"
           onClick={() => navigate('/signup')}
           className="mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium text-center w-full"
         >
