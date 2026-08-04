@@ -85,6 +85,8 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                 setDeductionEnabled(false);
                 setAllowances([{ type: "", amount: "" }]);
                 setDeductions([{ type: "", amount: "" }]);
+                setEmployeeFiles([]);
+                setEmployeeFileTitles({});
             } else {
                 // const draftKey = `employee_add_draft_${companyId}`;
                 // const savedDraft = localStorage.getItem(draftKey);
@@ -130,6 +132,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                 setAllowances([{ type: "", amount: "" }]);
                 setDeductions([{ type: "", amount: "" }]);
                 setEmployeeFiles([]);
+                setEmployeeFileTitles({});
             }
         }
     }, [isOpen, initialData, companyId]);
@@ -567,7 +570,13 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                         <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Phone className="h-4 w-4 text-blue-500" /></div>
                                                         <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Phone Number <strong className="text-red-600 text-[15px]">*</strong></label>
                                                     </div>
-                                                    <input type="tel" inputMode="numeric" value={employeeData.contactNumber} onChange={(e) => handleEmployeeChange("contactNumber", e.target.value.replace(/[^0-9]/g, ""))} onBlur={() => handleBlur("contactNumber")} placeholder="0771234567"
+                                                    <input type="tel" inputMode="tel" value={employeeData.contactNumber} onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        const hasLeadingPlus = val.startsWith("+");
+                                                        const digits = val.replace(/[^0-9]/g, "");
+                                                        const sanitized = hasLeadingPlus ? `+${digits}` : digits;
+                                                        handleEmployeeChange("contactNumber", sanitized);
+                                                    }} onBlur={() => handleBlur("contactNumber")} placeholder="0771234567"
                                                         className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                     {touched.contactNumber && errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
                                                 </div>
@@ -841,10 +850,10 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                         {allowances.map((allowance, index) => (
                                                             <div key={index} className="grid grid-cols-[1fr_1fr_36px] gap-3 items-center">
                                                                 <input type="text" value={allowance.type} onChange={(e) => { const u = [...allowances]; u[index].type = e.target.value.replace(/[^a-zA-Z\s]/g, ''); setAllowances(u); }} placeholder="Travelling" className="text-[12px] w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#367AFF] focus:border-transparent outline-none transition-all" />
-                                                                <input type="number" min="0" value={allowance.amount} onChange={(e) => { 
+                                                                <input type="number" min="0" value={allowance.amount} onChange={(e) => {
                                                                     const val = e.target.value;
                                                                     if (val.split('.')[0].length > 7) return;
-                                                                    const u = [...allowances]; u[index].amount = val; setAllowances(u); 
+                                                                    const u = [...allowances]; u[index].amount = val; setAllowances(u);
                                                                 }}
                                                                     onWheel={(e) => e.currentTarget.blur()}
                                                                     onKeyDown={blockInvalidNumericKeys}
