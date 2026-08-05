@@ -135,6 +135,7 @@ const AddEmployeeDrawer = ({
                 setDeductionEnabled(initialData.deductionEnabled ?? false);
                 setAllowances(initialData.recurringAllowances?.length ? initialData.recurringAllowances.map((a: any) => ({ type: a.type, amount: a.amount.toString() })) : [{ type: "", amount: "" }]);
                 setDeductions(initialData.recurringDeductions?.length ? initialData.recurringDeductions.map((d: any) => ({ type: d.type, amount: d.amount.toString() })) : [{ type: "", amount: "" }]);
+                setEmployeeFiles([]);
             } else {
                 setEmployeeData({
                     fullName: "",
@@ -515,10 +516,17 @@ const AddEmployeeDrawer = ({
                                             </div>
                                             <input
                                                 type="tel"
+                                                inputMode="tel"
                                                 value={employeeData.contactNumber}
-                                                onChange={(e) => handleChange("contactNumber", e.target.value)}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    const hasLeadingPlus = val.startsWith("+");
+                                                    const digits = val.replace(/[^0-9]/g, "");
+                                                    const sanitized = hasLeadingPlus ? `+${digits}` : digits;
+                                                    handleChange("contactNumber", sanitized);
+                                                }}
                                                 onBlur={() => handleBlur("contactNumber")}
-                                                placeholder="0XXXXXXXXX"
+                                                placeholder="0771234567"
                                                 className={`text-[14px] w-full pl-12 pr-4 py-2.5 bg-white border rounded-xl focus:ring-2 outline-none transition-all ${touched.contactNumber && errors.contactNumber ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-blue-500/20 focus:border-blue-500"}`}
                                             />
                                         </div>
