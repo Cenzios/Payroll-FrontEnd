@@ -806,6 +806,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
         <Toast
           message={toast.message}
           type={toast.type}
+          duration={10000}
           onClose={() => setToast(null)}
         />
       )}
