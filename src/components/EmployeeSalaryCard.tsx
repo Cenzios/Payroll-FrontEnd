@@ -413,7 +413,7 @@ const EmployeeSalaryCard = ({
                     {isLocked && (
                         <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#00000099]/40 backdrop-blur-[2px] rounded-b-2xl">
                             <div className="bg-[#FFFFFF66] border border-gray-600 rounded-2xl flex items-center shadow-2xl overflow-hidden">
-                                <div className="flex flex-wrap items-start gap-y-3 px-4 md:px-5 py-3 border-b border-blue-100/70 bg-white">
+                                <div className="flex flex-wrap items-start ml-5 rounded-lg  px-4 md:px-5 py-2 border-b border-blue-100/70 bg-white">
                                     <div>
                                         <LockKeyhole className="w-5 h-5 text-gray-700" strokeWidth={2.5} />
                                     </div>

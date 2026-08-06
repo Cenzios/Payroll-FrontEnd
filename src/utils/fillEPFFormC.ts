@@ -144,7 +144,7 @@ export async function fillEPFFormC(params: {
         drawTextRightAligned(fmt(totalContrib), COL_RIGHT.total, yFromTop);
         drawTextRightAligned(fmt(emp.employerEpf), COL_RIGHT.employer, yFromTop);
         drawTextRightAligned(fmt(emp.employeeEpf), COL_RIGHT.employee, yFromTop);
-        drawTextRightAligned(fmt(emp.basicPay), COL_RIGHT.earnings, yFromTop); 
+        drawTextRightAligned(fmt(emp.totalEarnings), COL_RIGHT.earnings, yFromTop); 
     });
 
     // ─── 6. Fill totals row ─────────────────────────────────────────────────────
@@ -167,7 +167,7 @@ export async function fillEPFFormC(params: {
     drawTextRightAligned(fmt(totalContribTotal), COL_RIGHT.total, TOTAL_BOX_Y);
     drawTextRightAligned(fmt(totals.employerEpf), COL_RIGHT.employer, TOTAL_BOX_Y);
     drawTextRightAligned(fmt(totals.employeeEpf), COL_RIGHT.employee, TOTAL_BOX_Y);
-    drawTextRightAligned(fmt(totals.basicPay), COL_RIGHT.earnings, TOTAL_BOX_Y);
+    drawTextRightAligned(fmt(totals.totalEarnings), COL_RIGHT.earnings, TOTAL_BOX_Y);
 
     // ─── 7. Save & download ─────────────────────────────────────────────────────
     const pdfBytes = await pdfDoc.save();
