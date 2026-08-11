@@ -238,21 +238,21 @@ const Login = () => {
 
       {/* Account Locked / Suspended Banner */}
       {isAccountBlocked && blockedType && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 overflow-hidden">
-          <div className="px-4 py-3">
-            <p className="text-xs text-red-700 font-semibold mb-3">
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 overflow-hidden max-sm:mx-0 max-sm:rounded-xl">
+          <div className="px-4 py-3 max-sm:px-4 max-sm:py-4">
+            <p className="text-xs text-red-700 font-semibold mb-3 max-sm:text-sm">
               {blockedType === 'suspended'
                 ? 'Your account has been suspended by an administrator.'
                 : 'Your account has been locked by an administrator.'}
             </p>
 
-            <p className="text-xs text-red-700 mb-3">
+            <p className="text-xs text-red-700 mb-3 max-sm:text-sm max-sm:leading-relaxed">
               Please contact our support team to have your account reactivated. This page will update automatically once access is restored.
             </p>
             <button
               type="button"
               onClick={() => setIsContactOpen(true)}
-              className="flex items-center gap-2 w-full justify-center bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors duration-150"
+              className="flex items-center gap-2 w-full justify-center bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors duration-150 max-sm:py-3 max-sm:text-base max-sm:rounded-xl"
             >
               <Phone className="w-4 h-4" />
               Contact Support
@@ -263,31 +263,31 @@ const Login = () => {
 
       {/* Generic Error (non-blocked) */}
       {error && !isAccountBlocked && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg max-sm:text-sm max-sm:rounded-xl max-sm:mx-0">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5 max-sm:px-5">
+      <form onSubmit={handleSubmit} className="space-y-5 max-sm:px-4 max-sm:space-y-4">
         <div>
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="w-full mt-3 bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center gap-3"
+            className="w-full mt-3 bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center gap-3 max-sm:py-3.5 max-sm:text-base max-sm:rounded-xl max-sm:mt-6"
           >
             <GoogleIcon />
             Continue with Google
           </button>
 
-          <div className="flex items-center justify-center gap-3 mt-6">
+          <div className="flex items-center justify-center gap-3 mt-6 max-sm:mt-5">
             <hr className="flex-1 border-gray-300" />
-            <p className="text-gray-500">or</p>
+            <p className="text-gray-500 max-sm:text-sm">or</p>
             <hr className="flex-1 border-gray-300" />
           </div>
 
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mt-6 mb-2"
+            className="block text-sm font-medium text-gray-700 mt-6 mb-2 max-sm:text-base max-sm:mt-5"
           >
             Email Address
           </label>
@@ -304,7 +304,7 @@ const Login = () => {
               className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.email
                   ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                   : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                } rounded-lg focus:outline-none focus:ring-2 transition-colors max-sm:py-3.5 max-sm:text-base max-sm:rounded-xl`}
               placeholder="Enter your Email"
             />
           </div>
@@ -318,7 +318,7 @@ const Login = () => {
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-700 mb-2 max-sm:text-base"
           >
             Password
           </label>
@@ -335,7 +335,7 @@ const Login = () => {
               className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.password
                   ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                   : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                } rounded-lg focus:outline-none focus:ring-2 transition-colors max-sm:py-3.5 max-sm:text-base max-sm:rounded-xl`}
               placeholder="Enter your Password"
             />
             <button
@@ -357,8 +357,8 @@ const Login = () => {
           )}
         </div>
 
-        <div className="mt-6 text-right">
-          <p className="text-sm text-gray-600">
+        <div className="mt-6 text-right max-sm:mt-4">
+          <p className="text-sm text-gray-600 max-sm:text-base">
             <Link
               to="/forgot-password"
               className="font-medium text-blue-600 hover:text-blue-700 transition-colors"
@@ -371,8 +371,7 @@ const Login = () => {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-[#3A8BFF] text-white font-semibold py-3 px-4 rounded-lg hover:bg-[#337AEB] focus:outline-none focus:ring-2 focus:ring-[#3A8BFF] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center
-                    max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:text-white max-sm:border-0 max-sm:shadow-blue-200"
+          className="w-full bg-[#3A8BFF] text-white font-semibold py-3 px-4 rounded-lg hover:bg-[#337AEB] focus:outline-none focus:ring-2 focus:ring-[#3A8BFF] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center max-sm:rounded-xl max-sm:py-4 max-sm:text-base max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:shadow-blue-200 max-sm:border-0"
         >
           {isLoading ? (
             <>
@@ -385,8 +384,8 @@ const Login = () => {
         </button>
       </form>
 
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600">
+      <div className="mt-6 text-center max-sm:mt-8 max-sm:px-4">
+        <p className="text-sm text-gray-600 max-sm:text-base">
           Don't have an account?{" "}
           <Link
             to="/signup"
