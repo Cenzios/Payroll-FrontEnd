@@ -774,7 +774,7 @@ const Salary = () => {
       <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
         <Sidebar />
 
-        <div className="flex-1 ml-0 sm:ml-64 sm:p-6 h-screen overflow-hidden flex flex-col">
+        <div className="flex-1 ml-0 sm:ml-64 sm:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-auto">
 
           {/* MOBILE HEADER */}
           <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5  border-b border-gray-100">
@@ -811,10 +811,10 @@ const Salary = () => {
           </div>
 
           {/* MAIN CONTENT */}
-          <div className="flex flex-col md:flex-row gap-6 flex-1 overflow-hidden max-sm:px-6">
+          <div className="flex flex-col md:flex-row gap-6 flex-1 overflow-hidden max-sm:overflow-visible max-sm:px-6">
 
             {/* LEFT SIDE */}
-            <div className="w-full md:w-10/12 flex flex-col overflow-hidden">
+            <div className="w-full md:w-10/12 flex flex-col overflow-hidden max-sm:overflow-visible">
 
               {/* FILTER BOX */}
               <div className="bg-white gap-4 md:gap-8 p-4 md:p-7 w-full rounded-xl mb-6 flex flex-col md:flex-row md:flex-wrap border border-gray-200">
@@ -904,7 +904,7 @@ const Salary = () => {
 
               <div
                 key={`${selectedMonth}-${selectedYear}`}
-                className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] max-sm:pb-20"
+                className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] max-sm:overflow-visible max-sm:pb-20"
               >
                 {isLoading ? (
                   <SalaryListSkeleton />
