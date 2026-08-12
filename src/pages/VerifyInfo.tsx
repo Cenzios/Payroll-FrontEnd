@@ -1,32 +1,48 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { startSignup } from '../store/slices/authSlice';
 import { Mail, Loader2 } from 'lucide-react';
 import verifyIllustration from '../assets/images/verify-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
+import { resendVerificationEmail } from '../store/slices/authSlice';
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 const VerifyInfo = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { signupEmail, isLoading } = useAppSelector((state) => state.auth);
+  const { signupEmail, signupToken, isLoading } = useAppSelector((state) => state.auth);
+
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const handleResend = async () => {
-    if (!signupEmail) {
+    if (cooldown > 0) return;
+    if (!signupEmail || !signupToken) {
       navigate('/signup');
       return;
     }
 
-    const result = await dispatch(
-      startSignup({
-        fullName: '',
-        email: signupEmail,
-      })
-    );
+    // const result = await dispatch(
+    //   startSignup({
+    //     fullName: '',
+    //     email: signupEmail,
+    //   })
+    // );
+    const result = await dispatch(resendVerificationEmail({ signupToken }));
 
-    if (startSignup.fulfilled.match(result)) {
+    if (resendVerificationEmail.fulfilled.match(result)) {
       setResendSuccess(true);
+      setCooldown(RESEND_COOLDOWN_SECONDS);
       setTimeout(() => setResendSuccess(false), 3000);
     }
   };
@@ -75,14 +91,16 @@ const VerifyInfo = () => {
           </p>
           <button
             onClick={handleResend}
-            disabled={isLoading}
-            className="w-full bg-white text-blue-600 border-2 border-blue-600 font-semibold py-3 px-4 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-          >
+            disabled={isLoading || cooldown > 0}
+            className="w-full bg-white text-blue-600 border-2 border-blue-600 font-semibold py-3 px-4 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center
+                       max-sm:rounded-lg max-sm:py-4 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] max-sm:shadow-lg max-sm:text-white max-sm:border-0 max-sm:shadow-blue-200">
             {isLoading ? (
               <>
                 <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
                 Sending...
               </>
+            ) : cooldown > 0 ? (
+              `Resend available in ${cooldown}s`
             ) : (
               'Resend Verification Email'
             )}

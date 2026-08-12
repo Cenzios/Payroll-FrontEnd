@@ -1,10 +1,14 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Check, Loader2, ArrowLeft } from 'lucide-react';
 import { useAppDispatch } from '../store/hooks';
 import { setAuthFromToken, setSignupEmail, setTempPlanId } from '../store/slices/authSlice';
 import { jwtDecode } from 'jwt-decode';
+import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
-import { PLANS, getAllPlans } from '../constants/plans';
+import ContactModal from '../components/ContactModal';
+import { PLANS, Plan } from '../constants/plans';
+import bgIllustration from '../assets/images/Background-illustration.svg';
 
 interface DecodedToken {
   userId: string;
@@ -46,65 +50,263 @@ const GetPlan = () => {
     }
   }, [searchParams, dispatch]);
 
-  const handleSelectPlan = (planId: string) => {
-    // ✅ Set plan ID in Redux
-    dispatch(setTempPlanId(planId));
+  const [apiPlans, setApiPlans] = useState<Plan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isProcessingPlan, setIsProcessingPlan] = useState(false);
 
-    // ✅ Also save to localStorage for persistence (following existing pattern)
-    localStorage.setItem('reg_planId', planId);
+  // ~line 55 — add state for which card is expanded on mobile
+  const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
 
-    console.log('✅ Plan selected:', planId);
-
-    // ✅ Navigate to buy-plan page
-    navigate('/buy-plan');
+  const toggleExpand = (planId: string) => {
+    setExpandedPlan(prev => prev === planId ? null : planId);
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col items-center justify-center px-4 py-16">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]"></div>
+  // Fetch plans from API
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await axiosInstance.get('/plans'); // Assuming this endpoint exists or should be created
+        if (response.data.success) {
+          setApiPlans(response.data.data);
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch plans:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPlans();
+  }, []);
 
-      <h1 className="text-4xl font-bold text-center text-gray-900 mb-12 relative z-10">
-        Choose The Plan That's Right For You
-      </h1>
+  const handleSelectPlan = async (planId: string) => {
+    setIsProcessingPlan(true);
+    try {
+      // ✅ Get token for authenticated request
+      const token = localStorage.getItem('token');
 
-      {/* Three Plan Cards */}
-      <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-        {/* Professional Plan (Left - Highlighted) */}
-        <PlanCard
-          planName={PLANS.PROFESSIONAL.name}
-          price={PLANS.PROFESSIONAL.price}
-          registrationFee={PLANS.PROFESSIONAL.registrationFee}
-          description={PLANS.PROFESSIONAL.description}
-          features={PLANS.PROFESSIONAL.features}
-          isHighlighted={false}
-          showButton={true}
-          onSelectPlan={() => handleSelectPlan(PLANS.PROFESSIONAL.id)}
-        />
+      if (!token) {
+        console.error('❌ No auth token found. Please login.');
+        navigate('/login');
+        return;
+      }
 
-        {/* Basic Plan (Center - Highlighted) */}
-        <PlanCard
-          planName={PLANS.BASIC.name}
-          price={PLANS.BASIC.price}
-          registrationFee={PLANS.BASIC.registrationFee}
-          description={PLANS.BASIC.description}
-          features={PLANS.BASIC.features}
-          isHighlighted={true}
-          showButton={true}
-          onSelectPlan={() => handleSelectPlan(PLANS.BASIC.id)}
-        />
+      // ✅ Secure plan selection via backend
+      console.log('📤 Selecting plan via backend:', planId);
 
-        {/* Enterprise Plan (Right) */}
-        <PlanCard
-          planName={PLANS.ENTERPRISE.name}
-          price={PLANS.ENTERPRISE.price}
-          registrationFee={PLANS.ENTERPRISE.registrationFee}
-          description={PLANS.ENTERPRISE.description}
-          features={PLANS.ENTERPRISE.features}
-          isHighlighted={false}
-          showButton={true}
-          onSelectPlan={() => handleSelectPlan(PLANS.ENTERPRISE.id)}
-        />
+      const response = await axiosInstance.post(
+        '/subscription/select-plan',
+        { planId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log('✅ Backend plan selection success:', response.data);
+
+      // ✅ Set plan ID in Redux (keep for UI sync)
+      dispatch(setTempPlanId(planId));
+
+      // ✅ Save subscription data to localStorage for persistence
+      localStorage.setItem('subscriptionId', response.data.data.subscriptionId);
+      localStorage.setItem('reg_planId', planId);
+
+      // ✅ Check if we are in "Change Plan" mode
+      const isPlanChange = searchParams.get('isPlanChange') === 'true';
+
+      // ✅ Navigate to terms-and-conditions page (pass the flag forward)
+      navigate(`/terms-and-conditions?isPlanChange=${isPlanChange}`);
+    } catch (error: any) {
+      if (error.response?.data?.message === 'PENDING_ARREARS') {
+        navigate('/settle-invoice');
+        return;
+      }
+      console.error('❌ Failed to select plan:', error);
+      alert(error.response?.data?.message || 'Plan selection failed. Please try again.');
+    } finally {
+      setIsProcessingPlan(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
       </div>
+    );
+  }
+
+  // Map API plans to their respective slots by name or ID, merging pricing only
+  const mergePlanDetails = (localPlan: any) => {
+    const apiPlan = apiPlans.find(p => p.id === localPlan.id);
+    return {
+      ...localPlan,
+      employeePrice: apiPlan?.employeePrice || localPlan.employeePrice || localPlan.price,
+      registrationFee: apiPlan?.registrationFee || localPlan.registrationFee,
+    };
+  };
+
+  const basicPlan = mergePlanDetails(PLANS.BASIC);
+
+  return (
+    <div className="min-h-screen relative overflow-hidden 
+      bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50
+      flex flex-col items-center justify-center px-4 py-7
+      max-sm:justify-start max-sm:py-10 max-sm:px-8">
+
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,131,248,0.35),transparent_70%)]" />
+
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed top-8 left-20 flex items-center gap-1.5 text-sm text-blue-800 hover:text-blue-900 border-2 border-blue-200 hover:border-blue-900 hover:bg-blue-50 transition px-4 py-2 rounded-full"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back
+      </button>
+
+      {/* Title */}
+      <div className="text-center mb-10 relative z-10
+        max-sm:mb-6">
+        <h1 className="text-4xl font-bold text-center text-[#0E1D44] mb-3 relative z-10
+          max-sm:text-2xl max-sm:text-center">
+          Choose The Plan That's Right For You
+        </h1>
+        <p className="text-[#53616A] mt-3 text-sm md:text-base
+          max-sm:text-center max-sm:text-xs">
+          Simple, transparent pricing — one fixed plan or fully tailored to your needs.
+        </p>
+      </div>
+
+      {/* Cards Grid */}
+      <div className="grid md:grid-cols-2 gap-10 w-full max-w-5xl relative z-10
+        max-sm:grid-cols-1 max-sm:gap-7">
+
+        {/* Basic Plan Card */}
+        <div className="w-full max-w-[400px] mx-auto relative z-10 flex flex-col items-center
+          max-sm:max-w-full max-sm:mx-0">
+          <PlanCard
+            planId={basicPlan.id}
+            planName={basicPlan.name}
+            price={basicPlan.employeePrice || basicPlan.price}
+            description={basicPlan.description}
+            features={basicPlan.features}
+            isHighlighted={true}
+            showButton={true}
+            showFreeTrial={searchParams.get('isUpgrade') !== 'true'}
+            isLoading={isProcessingPlan}
+            onSelectPlan={() => handleSelectPlan(basicPlan.id)}
+            // ✅ mobile expand props
+            isMobileExpanded={expandedPlan === basicPlan.id}
+            onMobileToggle={() => toggleExpand(basicPlan.id)}
+          />
+
+          {/* Contact Footer Bar */}
+          {/* <div className="bg-white/80 backdrop-blur-md rounded-3xl px-10 py-5 shadow-xl border border-white/50 flex flex-col sm:flex-row items-center gap-6 sm:gap-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <p className="text-gray-500 text-[13px] font-medium">
+            If you want a <span className="text-gray-900 font-bold">customize plan</span>, please contact us.
+          </p>
+          <button
+            onClick={() => setIsContactModalOpen(true)}
+            className="bg-[#4E8DFF] hover:bg-[#3B7BDE] text-white text-sm font-bold px-10 py-3 rounded-2xl shadow-lg shadow-blue-100 transition-all active:scale-[0.98]"
+          >
+            Contact us
+          </button>
+        </div> */}
+        </div>
+
+        {/* Custom Plan Card */}
+        <div className="max-sm:flex-1">
+          <div
+            className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-300 max-w-[400px] hover:shadow-3xl hover:-translate-y-1
+              max-sm:max-w-full max-sm:rounded-2xl max-sm:shadow-md"
+          >
+            {/* Card Header — always visible, acts as toggle on mobile */}
+            <div
+              className="relative bg-gradient-to-r from-[#2563EB] to-[#153885] text-white p-8 py-8
+                max-sm:p-8 max-sm:cursor-pointer max-sm:flex max-sm:h-[220px]"
+              onClick={() => toggleExpand('custom')}
+            >
+              <div>
+                <p className="text-xs tracking-widest opacity-80 flex items-start justify-start uppercase">
+                  CUSTOM PLAN
+                </p>
+
+                <h2 className="text-[50px] font-bold mt-6
+                  max-sm:text-4xl max-sm:font-bold max-sm:mt-6">
+                  Let's talk
+                </h2>
+                <p className="text-xs font-light text-white mt-2
+                  max-sm:text-sm max-sm:opacity-80 max-sm:mt-4">
+                  Tailored pricing for your business size & needs
+                </p>
+              </div>
+
+              {/* drop down icon  */}
+              <div className="hidden max-sm:flex items-center justify-center w-8 h-8 rounded-full bg-white/20 shrink-0 ml-4 transition-transform duration-300"
+                style={{ transform: expandedPlan === 'custom' ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+
+            {/* Card Body — hidden on mobile until expanded */}
+            <div className={`px-9 pt-7 pb-7 space-y-4 text-[13px] text-[#334155]
+  max-sm:overflow-hidden max-sm:transition-all max-sm:duration-300
+  ${expandedPlan === 'custom'
+                ? 'max-sm:max-h-[600px] max-sm:opacity-100 max-sm:px-4 max-sm:pt-4 max-sm:pb-4'
+                : 'max-sm:max-h-0 max-sm:opacity-0 max-sm:px-0 max-sm:pt-0 max-sm:pb-0'
+              }`}>
+              <p className="text-[13px] opacity-90">
+                Everything in the Basic plan, plus features built around your specific requirements:
+              </p>
+
+              {[
+                "Unlimited employees",
+                "Custom integration",
+                "Dedicated support",
+                "SLA guarantee",
+                "Custom reports",
+                "On-boarding assistance",
+              ].map((feature, index) => (
+                <div key={index} className="flex items-center gap-4 group">
+                  <div className="w-4 h-4 rounded-full bg-[#255DAD] flex items-center justify-center shrink-0 shadow-lg shadow-blue-100 transition-transform group-hover:scale-110">
+                    <Check className="w-3 h-3 text-white" strokeWidth={4} />
+                  </div>
+                  <span className="text-[#334155] text-[13px] font-medium leading-tight">{feature}</span>
+                </div>
+              ))}
+
+
+              <button
+                onClick={() => setIsContactModalOpen(true)}
+                className="w-full bg-[#0C3080] mb-5 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                Contact Us
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+        title="Custom Plan"
+        subtitle="Tailored pricing for your business"
+        description="Need advanced features or a custom solution? Contact our team and we'll create a package that fits your business needs."
+      />
+
+      {/* Background Wave - Bottom Right */}
+      {/* <div className="absolute bottom-[-350px] right-[-200px] 
+                w-[700px] h-[700px] 
+                z-0 pointer-events-none">
+        <img
+          src={bgIllustration}
+          alt="Background Wave"
+          className="w-full h-full object-contain rotate-0"
+        />
+      </div> */}
     </div>
   );
 };

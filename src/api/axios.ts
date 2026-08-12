@@ -10,6 +10,9 @@ const axiosInstance = axios.create({
   },
 });
 
+/* =========================
+   REQUEST INTERCEPTOR
+========================= */
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -18,21 +21,100 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
+/* =========================
+   RESPONSE INTERCEPTOR
+========================= */
+
+// 🔒 Prevent duplicate modal triggers (important for React 18 / prod)
+let renewModalOpened = false;
+
 axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    const status = error.response?.status;
+    const code = error.response?.data?.code;
+    const message = error.response?.data?.message || '';
+
+    /* 🔥 TRIAL EXPIRATION HANDLING */
+    if (status === 403 && code === 'TRIAL_EXPIRED') {
+      if (!renewModalOpened) {
+        renewModalOpened = true;
+
+        window.dispatchEvent(
+          new CustomEvent('open-trial-upgrade-modal')
+        );
+
+        window.addEventListener(
+          'trial-modal-closed',
+          () => {
+            renewModalOpened = false;
+          },
+          { once: true }
+        );
+      }
+      return Promise.reject(error);
     }
+
+    /* 🔥 SUBSCRIPTION BLOCK HANDLING */
+    if (status === 403 && code === 'SUBSCRIPTION_BLOCKED') {
+      if (!renewModalOpened) {
+        renewModalOpened = true;
+
+        window.dispatchEvent(
+          new CustomEvent('open-renew-modal')
+        );
+
+        // Reset flag after modal is closed (frontend should emit this)
+        window.addEventListener(
+          'renew-modal-closed',
+          () => {
+            renewModalOpened = false;
+          },
+          { once: true }
+        );
+      }
+
+      // Always reject so API callers still fail safely
+      return Promise.reject(error);
+    }
+
+    /* 🔐 AUTH HANDLING */
+    if (status === 401) {
+      // Check if we are already on the login page or making a login request
+      const isLoginPage = window.location.pathname === '/login';
+      const isLoginRequest = error.config?.url?.includes('/auth/login');
+
+      if (!isLoginPage && !isLoginRequest) {
+        // Store email BEFORE clearing user data
+        let userEmail = '';
+        try {
+          const userData = JSON.parse(localStorage.getItem('user') || '{}');
+          if (userData.email) {
+            userEmail = userData.email;
+          }
+        } catch (e) { /* ignore */ }
+
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+
+        // Check if the error message indicates account suspension
+        const isSuspended = message.toLowerCase().includes('suspended');
+        const redirectUrl = isSuspended
+          ? `/login?reason=suspended`
+          : '/login';
+
+        if (isSuspended && userEmail) {
+          sessionStorage.setItem('suspended_email', userEmail);
+        }
+
+        window.location.href = redirectUrl;
+      }
+      return Promise.reject(error);
+    }
+
     return Promise.reject(error);
   }
 );
