@@ -1,38 +1,81 @@
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon } from "lucide-react";
+
+export type StatColorTheme = 'blue' | 'green' | 'purple' | 'orange';
 
 interface StatCardProps {
-    icon: LucideIcon;
-    title: string;
-    value: string | number;
-    subtitle?: string;
-    iconBgColor: string;
-    iconColor: string;
+  icon: LucideIcon;
+  title: string;
+  value: string | number;
+  showLastMonth?: boolean;
+  colorTheme?: StatColorTheme;
 }
 
+const themeStyles: Record<StatColorTheme, { bg: string; text: string; dot: string }> = {
+  blue: { bg: 'bg-blue-50', text: 'text-blue-500', dot: 'bg-blue-500' },
+  green: { bg: 'bg-green-50', text: 'text-green-500', dot: 'bg-green-500' },
+  purple: { bg: 'bg-purple-50', text: 'text-purple-500', dot: 'bg-purple-500' },
+  orange: { bg: 'bg-orange-50', text: 'text-orange-500', dot: 'bg-orange-500' },
+};
+
 const StatCard = ({
-    icon: Icon,
-    title,
-    value,
-    subtitle,
-    iconBgColor,
-    iconColor
+  icon: Icon,
+  title,
+  value,
+  showLastMonth = false,
+  colorTheme = 'blue',
 }: StatCardProps) => {
-    return (
-        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-            {subtitle && (
-                <div className="text-xs text-gray-500 mb-2">{subtitle}</div>
-            )}
-            <div className="flex items-center gap-4">
-                <div className={`${iconBgColor} p-3 rounded-lg`}>
-                    <Icon className={`w-6 h-6 ${iconColor}`} />
-                </div>
-                <div className="flex-1">
-                    <div className="text-sm text-gray-600 mb-1">{title}</div>
-                    <div className="text-2xl font-bold text-gray-900">{value}</div>
-                </div>
-            </div>
+  const now = new Date();
+
+  let monthIndex = now.getMonth();
+  let year = now.getFullYear();
+
+  if (showLastMonth) {
+    if (monthIndex === 0) {
+      monthIndex = 11;
+      year = year - 1;
+    } else {
+      monthIndex = monthIndex - 1;
+    }
+  }
+
+  const displayDate = new Date(year, monthIndex);
+
+  const monthLabel = displayDate.toLocaleString("default", { month: "short" });
+  const yearLabel = displayDate.getFullYear();
+
+  const themeStyle = themeStyles[colorTheme];
+
+  return (
+    <div className="relative rounded-lg p-6 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all group flex items-center justify-between
+    max-sm:flex-col max-sm:items-start max-sm:p-4 max-sm:gap-2">
+
+      {/* Date Badge — top-right corner*/}
+      <div className="absolute top-6 right-6 flex items-center gap-1
+      max-sm:static max-sm:order-3 max-sm:mt-1">
+        <span className={`w-[7px] h-[7px] rounded-full ${themeStyle.dot} shrink-0`} />
+        <span className="text-[11px] font-medium text-gray-400">
+          {monthLabel} {yearLabel}
+        </span>
+      </div>
+
+      {/* Left Content */}
+      <div className="max-sm:order-2">
+        <div className="text-[11px] text-gray-600 mb-4 font-regular max-sm:mb-1">
+          {title}
         </div>
-    );
+        <div className="text-[20px] font-bold text-gray-900 leading-none">
+          {value}
+        </div>
+      </div>
+
+      {/* Right Icon */}
+      <div className={`mt-5 w-8 h-8 rounded-xl ${themeStyle.bg} flex items-center justify-center shrink-0 transition-transform group-hover:scale-105
+      max-sm:absolute max-sm:top-5 max-sm:right-4 max-sm:w-6 max-sm:h-6 max-sm:mt-0 max-sm:rounded-lg`}>
+        <Icon className={`w-5 h-5 max-sm:w-4 max-sm:h-4 ${themeStyle.text}`} />
+      </div>
+
+    </div>
+  );
 };
 
 export default StatCard;

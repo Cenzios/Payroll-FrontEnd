@@ -1,627 +1,1049 @@
-import { useState, useEffect } from 'react';
-import { Search, Loader2, Download, FileText, FileSpreadsheet, Calculator, Wallet } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
-import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { employeeApi } from '../api/employeeApi';
-import { salaryApi } from '../api/salaryApi';
-import { Employee } from '../types/employee.types';
-import Toast from '../components/Toast';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import React, { useState, useEffect } from "react";
+import { Search, Calendar } from "lucide-react";
+import Sidebar from "../components/Sidebar";
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
+import { useAppSelector, useAppDispatch } from "../store/hooks";
 import {
-    setCompanyWorkingDays,
-    setEmployeeWorkedDays,
-    toggleEpfEtf,
-    setPreviewPayslip,
-    setMonth,
-    setYear
-} from '../store/slices/salarySlice';
+  useGetEmployeesQuery,
+  useGetCompaniesQuery,
+  useGetAllPendingLoanInstallmentsQuery,
+  useGetSalaryHistoryQuery,
+  useSaveSalaryMutation,
+  useUpdateEmployeeMutation,
+} from "../store/apiSlice";
+import { Employee } from "../types/employee.types";
+import Toast from "../components/Toast";
+import SalaryListSkeleton from "../components/skeletons/SalaryListSkeleton";
+import PageHeader from "../components/PageHeader";
+import { exportPayslip } from "../utils/exportService";
+import {
+  setCompanyWorkingDays,
+  setEmployeeWorkedDays,
+  setEmployeeOtHours,
+  setEmployeeSalaryAdvance,
+  toggleEpfEtf,
+  toggleLoanEnabled,
+  setPreviewPayslip,
+  setYear,
+  setEmployeeLeaveDays,
+  setEmployeeSickLeaveDays,
+  setEmployeeAllowances,
+  setEmployeeDeductions,
+  setMonth,
+  resetSalaryState,
+} from "../store/slices/salarySlice";
+import EmployeeSalaryCard from "../components/EmployeeSalaryCard";
+import PayslipPreview from "../components/PayslipPreview";
+import ManageSalaryModal from "../components/ManageSalaryModal";
+import AlertBar from "../components/AlertBar";
+import logo from '../assets/images/logo-login.svg';
 
 const Salary = () => {
-    const dispatch = useAppDispatch();
-    const { selectedCompanyId } = useAppSelector((state) => state.auth);
-    const {
-        companyWorkingDays,
-        employeeWorkedDays,
-        employeeEpfEtf,
-        previewPayslip,
-        selectedMonth,
-        selectedYear
-    } = useAppSelector((state) => state.salary);
+  const dispatch = useAppDispatch();
+  const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
+  const {
+    companyWorkingDays,
+    employeeWorkedDays,
+    employeeOtHours,
+    employeeSalaryAdvance,
+    employeeEpfEtf,
+    employeeLoanEnabled,
+    employeeLeaveDays,
+    employeeSickLeaveDays,
+    employeeAllowances,
+    employeeDeductions,
+    previewPayslip,
+    selectedMonth,
+    selectedYear,
+  } = useAppSelector((state) => state.salary);
 
-    const [employees, setEmployees] = useState<Employee[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
 
-    // Selection State
-    const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
+  // Selection State
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null,
+  );
+  const [saveSalary, { isLoading: isSaving }] = useSaveSalaryMutation();
+  const [updateEmployee] = useUpdateEmployeeMutation();
 
-    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
-    // Fetch Employees
-    useEffect(() => {
-        const fetchEmployees = async () => {
-            if (!selectedCompanyId) return;
-            try {
-                setIsLoading(true);
-                // ✅ Fetch ONLY ACTIVE employees for Salary generation
-                const data = await employeeApi.getEmployees(selectedCompanyId, 1, 100, search, 'ACTIVE');
-                setEmployees(data.employees);
-            } catch (error: any) {
-                setToast({ message: error.message || 'Failed to fetch employees', type: 'error' });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchEmployees();
-    }, [selectedCompanyId, search]);
+  // Pending Loans Query (for all employees)
+  const { data: allPendingLoans } = useGetAllPendingLoanInstallmentsQuery(
+    {
+      companyId: selectedCompanyId || "",
+      month: selectedMonth + 1,
+      year: selectedYear,
+    },
+    {
+      skip: !selectedCompanyId,
+    },
+  );
 
-    // Helper functions for Redux State
-    const getEmployeeValues = (empId: string) => {
-        const workedDays = employeeWorkedDays[empId] ?? companyWorkingDays;
-        const isEpfEnabled = employeeEpfEtf[empId] ?? true;
-        return { workedDays, isEpfEnabled };
-    };
+  // Create a map of employeeId -> loan installment total
+  const employeeLoanMap = (allPendingLoans || []).reduce(
+    (map: Record<string, number>, inst: any) => {
+      const empId = inst.loan?.employeeId;
+      if (empId) {
+        map[empId] = (map[empId] || 0) + (inst.amount - (inst.paidAmount || 0));
+      }
+      return map;
+    },
+    {},
+  );
 
-    const handleCompanyWorkingDaysChange = (val: number) => {
-        dispatch(setCompanyWorkingDays(val));
-    };
+  // Fetch Salary History for the current month
+  const { data: salaryHistory, isFetching: isFetchingHistory } = useGetSalaryHistoryQuery(
+    {
+      companyId: selectedCompanyId || "",
+      month: selectedMonth + 1,
+      year: selectedYear,
+    },
+    {
+      skip: !selectedCompanyId,
+    },
+  );
 
-    const handleEmployeeWorkedDaysChange = (empId: string, val: number) => {
-        dispatch(setEmployeeWorkedDays({ id: empId, days: val }));
-    };
+  // Map generated salaries by employee ID
+  const generatedSalaries = (salaryHistory || []).reduce((acc: any, record: any) => {
+    acc[record.employeeId] = record;
+    return acc;
+  }, {});
 
-    const handleToggleEpfEtf = (empId: string) => {
-        const currentVal = employeeEpfEtf[empId] ?? true;
-        dispatch(toggleEpfEtf({ id: empId, value: !currentVal }));
-    };
+  // Allowance / Deduction local state per employee
+  const [allowanceToggles, setAllowanceToggles] = useState<
+    Record<string, boolean>
+  >({});
+  const [deductionToggles, setDeductionToggles] = useState<
+    Record<string, boolean>
+  >({});
 
-    // Handle Generate Pay Slip
-    const handleGeneratePayslip = async (emp: Employee) => {
-        setSelectedEmployee(emp);
+  // Manage modal state
+  const [manageModal, setManageModal] = useState<{
+    type: "allowance" | "deduction";
+    empId: string;
+    emp?: Employee;
+  } | null>(null);
+  const [modalEntries, setModalEntries] = useState<
+    { type: string; amount: number }[]
+  >([]);
 
-        const { workedDays, isEpfEnabled } = getEmployeeValues(emp.id);
-        const dailyRate = emp.dailyRate;
-        const basicSalary = dailyRate * workedDays;
+  const openManageModal = (type: "allowance" | "deduction", emp: Employee) => {
+    const empId = emp.id;
+    let existing =
+      type === "allowance"
+        ? employeeAllowances[empId] || []
+        : employeeDeductions[empId] || [];
 
-        // Calculations
-        let epfEmployee = 0;
-        let epfEmployer = basicSalary * 0.12;
-        let etfEmployer = basicSalary * 0.03;
+    // Populate from DB if not edited locally yet
+    if (existing.length === 0) {
+      if (
+        type === "allowance" &&
+        emp.recurringAllowances &&
+        emp.recurringAllowances.length > 0
+      ) {
+        existing = emp.recurringAllowances.map((a) => ({
+          type: a.type,
+          amount: a.amount,
+        }));
+        dispatch(setEmployeeAllowances({ id: empId, allowances: existing }));
+      } else if (
+        type === "deduction" &&
+        emp.recurringDeductions &&
+        emp.recurringDeductions.length > 0
+      ) {
+        existing = emp.recurringDeductions.map((d) => ({
+          type: d.type,
+          amount: d.amount,
+        }));
+        dispatch(setEmployeeDeductions({ id: empId, deductions: existing }));
+      }
+    }
 
-        if (isEpfEnabled) {
-            epfEmployee = basicSalary * 0.08;
-        } else {
-            epfEmployer = 0;
-            etfEmployer = 0;
-        }
+    setModalEntries([...existing, { type: "", amount: 0 }]);
+    setManageModal({ type, empId, emp });
+  };
 
-        const totalDeductions = epfEmployee;
-        const netSalary = basicSalary - totalDeductions;
-
-        const details = {
-            basicSalary,
-            epfEmployee,
-            epfEmployer,
-            etfEmployer,
-            totalDeductions,
-            netSalary,
-            workedDays,
-            dailyRate,
-            isEpfEnabled
-        };
-
-        dispatch(setPreviewPayslip(details));
-
-        // Save to DB
-        if (!selectedCompanyId) return;
-        setIsSaving(true);
-        try {
-            await salaryApi.saveSalary({
-                companyId: selectedCompanyId,
-                employeeId: emp.id,
-                month: selectedMonth + 1,
-                year: selectedYear,
-                workingDays: workedDays,
-                basicPay: basicSalary,
-                employeeEPF: epfEmployee,
-                employerEPF: epfEmployer,
-                etfAmount: etfEmployer,
-                netSalary: netSalary
-            });
-            setToast({ message: 'Salary saved successfully!', type: 'success' });
-        } catch (error: any) {
-            setToast({ message: error.response?.data?.message || 'Failed to save salary', type: 'error' });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleSelectEmployee = (emp: Employee) => {
-        setSelectedEmployee(emp);
-    };
-
-    // Export Functions
-    const exportPDF = () => {
-        if (!previewPayslip || !selectedEmployee) return;
-
-        const doc = new jsPDF();
-
-        // Header
-        doc.setFontSize(18);
-        doc.text('COMPANY NAME (PVT) LTD', 105, 20, { align: 'center' });
-        doc.setFontSize(12);
-        doc.text(`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`, 105, 30, { align: 'center' });
-
-        doc.line(14, 35, 196, 35);
-
-        // Employee Details
-        doc.setFontSize(10);
-        doc.text(`Employee Name : ${selectedEmployee.fullName}`, 14, 45);
-        doc.text(`Employee No   : ${selectedEmployee.employeeId}`, 14, 52);
-        doc.text(`Designation   : ${selectedEmployee.designation}`, 14, 59);
-
-        // Earnings
-        doc.setFontSize(11);
-        doc.text('EARNINGS', 14, 70);
-
-        autoTable(doc, {
-            startY: 75,
-            head: [['Description', 'Amount (Rs.)']],
-            body: [
-                ['Daily Rate', previewPayslip.dailyRate.toLocaleString()],
-                ['Working Days', companyWorkingDays.toString()],
-                ['Worked Days', previewPayslip.workedDays.toString()],
-                [`Basic Salary (${previewPayslip.dailyRate} x ${previewPayslip.workedDays})`, previewPayslip.basicSalary.toLocaleString()],
-                ['Gross Earnings', previewPayslip.basicSalary.toLocaleString()]
-            ],
-            theme: 'plain',
-            styles: { fontSize: 10, cellPadding: 2 },
-            columnStyles: { 1: { halign: 'right' } }
-        });
-
-        let currentY = (doc as any).lastAutoTable.finalY + 10;
-
-        // Deductions
-        doc.text('DEDUCTIONS', 14, currentY);
-
-        autoTable(doc, {
-            startY: currentY + 5,
-            head: [['Description', 'Amount (Rs.)']],
-            body: [
-                ['EPF Employee (8%)', previewPayslip.epfEmployee > 0 ? previewPayslip.epfEmployee.toLocaleString() : '-'],
-                ['Total Deductions', previewPayslip.totalDeductions.toLocaleString()]
-            ],
-            theme: 'plain',
-            styles: { fontSize: 10, cellPadding: 2 },
-            columnStyles: { 1: { halign: 'right' } }
-        });
-
-        currentY = (doc as any).lastAutoTable.finalY + 10;
-
-        // Net Salary
-        doc.setLineWidth(0.5);
-        doc.line(14, currentY, 196, currentY);
-        doc.setFontSize(12);
-        doc.text('NET SALARY', 14, currentY + 8);
-        doc.text(`Net Salary Payable (Rs.) : ${previewPayslip.netSalary.toLocaleString()}`, 196, currentY + 8, { align: 'right' });
-        doc.line(14, currentY + 12, 196, currentY + 12);
-        doc.line(14, currentY + 14, 196, currentY + 14);
-
-        currentY += 25;
-
-        // Employer Contributions
-        doc.setFontSize(10);
-        doc.text('EMPLOYER CONTRIBUTIONS (Not included in Net Salary)', 14, currentY);
-        autoTable(doc, {
-            startY: currentY + 5,
-            body: [
-                ['EPF Employer (12%)', previewPayslip.epfEmployer.toLocaleString()],
-                ['ETF Employer (3%)', previewPayslip.etfEmployer.toLocaleString()]
-            ],
-            theme: 'plain',
-            styles: { fontSize: 9, cellPadding: 1 },
-            columnStyles: { 1: { halign: 'right' } }
-        });
-
-        currentY = (doc as any).lastAutoTable.finalY + 30;
-
-        // Signatures
-        doc.text('Prepared By : ___________________', 14, currentY);
-        doc.text(`Date : ${new Date().toLocaleDateString()}`, 110, currentY);
-
-        doc.text('Checked By  : ___________________', 14, currentY + 15);
-
-        doc.text('Employee Sign : ___________________', 14, currentY + 30);
-
-        doc.save(`Payslip_${selectedEmployee.employeeId}_${selectedMonth + 1}_${selectedYear}.pdf`);
-    };
-
-    const exportExcel = () => {
-        if (!previewPayslip || !selectedEmployee) return;
-
-        const wsData = [
-            ['COMPANY NAME (PVT) LTD'],
-            [`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
-            [],
-            ['Employee Name', selectedEmployee.fullName],
-            ['Employee No', selectedEmployee.employeeId],
-            ['Designation', selectedEmployee.designation],
-            [],
-            ['EARNINGS', 'Amount (Rs.)'],
-            ['Daily Rate', previewPayslip.dailyRate],
-            ['Worked Days', previewPayslip.workedDays],
-            ['Basic Salary', previewPayslip.basicSalary],
-            ['Gross Earnings', previewPayslip.basicSalary],
-            [],
-            ['DEDUCTIONS', 'Amount (Rs.)'],
-            ['EPF Employee (8%)', previewPayslip.epfEmployee],
-            ['Total Deductions', previewPayslip.totalDeductions],
-            [],
-            ['NET SALARY PAYABLE', previewPayslip.netSalary],
-            [],
-            ['EMPLOYER CONTRIBUTIONS', 'Amount (Rs.)'],
-            ['EPF Employer (12%)', previewPayslip.epfEmployer],
-            ['ETF Employer (3%)', previewPayslip.etfEmployer]
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Payslip");
-        XLSX.writeFile(wb, `Payslip_${selectedEmployee.employeeId}.xlsx`);
-    };
-
-    const exportCSV = () => {
-        if (!previewPayslip || !selectedEmployee) return;
-
-        const wsData = [
-            ['COMPANY NAME (PVT) LTD'],
-            [`PAY SLIP - ${new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`],
-            [],
-            ['Employee Name', selectedEmployee.fullName],
-            ['Employee No', selectedEmployee.employeeId],
-            ['Designation', selectedEmployee.designation],
-            [],
-            ['EARNINGS', 'Amount (Rs.)'],
-            ['Daily Rate', previewPayslip.dailyRate],
-            ['Worked Days', previewPayslip.workedDays],
-            ['Basic Salary', previewPayslip.basicSalary],
-            ['Gross Earnings', previewPayslip.basicSalary],
-            [],
-            ['DEDUCTIONS', 'Amount (Rs.)'],
-            ['EPF Employee (8%)', previewPayslip.epfEmployee],
-            ['Total Deductions', previewPayslip.totalDeductions],
-            [],
-            ['NET SALARY PAYABLE', previewPayslip.netSalary],
-            [],
-            ['EMPLOYER CONTRIBUTIONS', 'Amount (Rs.)'],
-            ['EPF Employer (12%)', previewPayslip.epfEmployer],
-            ['ETF Employer (3%)', previewPayslip.etfEmployer]
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        const csv = XLSX.utils.sheet_to_csv(ws);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `Payslip_${selectedEmployee.employeeId}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    return (
-        <div className="flex min-h-screen bg-gray-50">
-            <Sidebar />
-
-            <div className="flex-1 ml-64 p-8 min-h-screen flex flex-col">
-                {/* Header */}
-                <header className="flex items-center justify-between mb-8 shrink-0">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Salary</h1>
-                        <p className="text-sm text-gray-500 mt-1">View and calculate employee salaries</p>
-                    </div>
-                </header>
-
-                {/* Filters/Search Bar */}
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex items-center justify-between">
-                    <div className="w-full max-w-md relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search Employee..."
-                            className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                        />
-                    </div>
-                    {/* Month & Year Pickers */}
-                    <div className="flex items-center gap-4">
-                        <select
-                            value={selectedMonth}
-                            onChange={(e) => dispatch(setMonth(parseInt(e.target.value)))}
-                            className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
-                        >
-                            {Array.from({ length: 12 }, (_, i) => (
-                                <option key={i} value={i}>
-                                    {new Date(0, i).toLocaleString('default', { month: 'long' })}
-                                </option>
-                            ))}
-                        </select>
-                        <select
-                            value={selectedYear}
-                            onChange={(e) => dispatch(setYear(parseInt(e.target.value)))}
-                            className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium border-none outline-none cursor-pointer"
-                        >
-                            {Array.from({ length: 6 }, (_, i) => {
-                                const year = new Date().getFullYear() - 5 + i;
-                                return <option key={year} value={year}>{year}</option>;
-                            })}
-                        </select>
-                        {/* Working Days Editable Input within same style container */}
-                        <div className="bg-gray-50 px-4 py-2 rounded-lg text-sm text-gray-600 font-medium flex items-center gap-2">
-                            <span>Working Days:</span>
-                            <input
-                                type="number"
-                                value={companyWorkingDays}
-                                onChange={(e) => handleCompanyWorkingDaysChange(parseInt(e.target.value) || 0)}
-                                className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center font-bold text-gray-800"
-                                min="0" max="31"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex gap-6">
-                    {/* LEFT SIDE: Employee Salary Cards */}
-                    <div className="w-1/2 overflow-y-auto pr-2 space-y-4">
-                        {isLoading ? (
-                            <div className="flex justify-center p-12">
-                                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                            </div>
-                        ) : employees.length === 0 ? (
-                            <div className="text-center p-12 text-gray-500">No employees found.</div>
-                        ) : (
-                            employees.map(emp => {
-                                const { workedDays, isEpfEnabled } = getEmployeeValues(emp.id);
-                                return (
-                                    <div
-                                        key={emp.id}
-                                        onClick={() => handleSelectEmployee(emp)}
-                                        className={`bg-white rounded-xl border p-6 cursor-pointer transition-all duration-200 ${selectedEmployee?.id === emp.id
-                                            ? 'border-blue-500 shadow-md ring-1 ring-blue-500'
-                                            : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
-                                            }`}
-                                    >
-                                        {/* Header */}
-                                        <div className="flex items-center justify-between mb-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                                                    {emp.fullName.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-gray-900">{emp.fullName}</h3>
-                                                    <p className="text-xs text-gray-500">{emp.designation}</p>
-                                                </div>
-                                            </div>
-                                            <div className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-semibold rounded">
-                                                {emp.employeeId}
-                                            </div>
-                                        </div>
-
-                                        {/* Input Controls - Visible when selected */}
-                                        {selectedEmployee?.id === emp.id && (
-                                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                                                {/* Earnings */}
-                                                <div>
-                                                    <h4 className="flex items-center gap-2 text-sm font-semibold text-green-600 mb-3">
-                                                        <Calculator className="w-4 h-4" /> Earnings
-                                                    </h4>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                                            <label className="text-xs text-gray-500 block mb-1">Daily Rate</label>
-                                                            <div className="font-semibold text-gray-900">Rs. {emp.dailyRate}</div>
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-xs text-gray-500 block mb-1">Enter Worked Days</label>
-                                                            <input
-                                                                type="number"
-                                                                value={workedDays}
-                                                                onChange={(e) => handleEmployeeWorkedDaysChange(emp.id, parseFloat(e.target.value) || 0)}
-                                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-gray-900"
-                                                                min="0"
-                                                                max="31"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Deductions */}
-                                                <div>
-                                                    <h4 className="flex items-center gap-2 text-sm font-semibold text-red-600 mb-3">
-                                                        <Wallet className="w-4 h-4" /> Deductions
-                                                    </h4>
-                                                    <label className="flex items-center gap-3 cursor-pointer group">
-                                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isEpfEnabled ? 'bg-blue-600 border-blue-600' : 'border-gray-300 bg-white'}`}>
-                                                            {isEpfEnabled && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
-                                                        </div>
-                                                        <input
-                                                            type="checkbox"
-                                                            className="hidden"
-                                                            checked={isEpfEnabled}
-                                                            onChange={() => handleToggleEpfEtf(emp.id)}
-                                                        />
-                                                        <span className="text-sm text-gray-700 font-medium group-hover:text-gray-900">Apply EPF / ETF</span>
-                                                    </label>
-                                                </div>
-
-                                                <div className="pt-2 flex justify-end">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleGeneratePayslip(emp);
-                                                        }}
-                                                        disabled={isSaving}
-                                                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm hover:shadow active:scale-95 flex items-center gap-2"
-                                                    >
-                                                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Generate Pay-slip'}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {selectedEmployee?.id !== emp.id && (
-                                            <div className="mt-4 text-center text-sm text-gray-400 italic">
-                                                Click to calculate salary
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })
-                        )}
-                    </div>
-
-                    {/* RIGHT SIDE: Payslip Preview */}
-                    <div className="w-1/2 flex flex-col">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
-                            {previewPayslip && selectedEmployee ? (
-                                <div className="flex flex-col">
-                                    {/* Preview Container (No scroll) */}
-                                    <div>
-                                        <div className="p-8 font-mono text-sm">
-
-                                            {/* Paper Effect Container */}
-                                            <div className="bg-white p-6 border-2 border-dashed border-gray-300 relative mx-auto max-w-lg shadow-sm">
-
-                                                {/* Header */}
-                                                <div className="text-center mb-6 border-b-2 border-gray-800 pb-4">
-                                                    <h2 className="text-lg font-bold uppercase tracking-wider">Company Name (Pvt) Ltd</h2>
-                                                    <p className="text-xs font-semibold mt-1">Pay Slip - {new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
-                                                </div>
-
-                                                {/* Emp Details */}
-                                                <div className="mb-6 text-xs space-y-1">
-                                                    <div className="flex"><span className="w-24 font-bold">Employee Name</span> <span>: {selectedEmployee.fullName}</span></div>
-                                                    <div className="flex"><span className="w-24 font-bold">Employee No</span> <span>: {selectedEmployee.employeeId}</span></div>
-                                                    <div className="flex"><span className="w-24 font-bold">Designation</span> <span>: {selectedEmployee.designation}</span></div>
-                                                </div>
-
-                                                {/* Earnings */}
-                                                <div className="mb-6">
-                                                    <div className="border-b border-gray-800 font-bold mb-2 pb-1">EARNINGS</div>
-                                                    <div className="flex justify-between mb-1">
-                                                        <span>Daily Rate</span>
-                                                        <span>{previewPayslip.dailyRate.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="flex justify-between mb-1">
-                                                        <span>Working Days</span>
-                                                        <span>{companyWorkingDays}</span>
-                                                    </div>
-                                                    <div className="flex justify-between mb-1">
-                                                        <span>Worked Days</span>
-                                                        <span>{previewPayslip.workedDays}</span>
-                                                    </div>
-                                                    <div className="flex justify-between mb-1 font-semibold">
-                                                        <span>Basic Salary</span>
-                                                        <span>{previewPayslip.basicSalary.toLocaleString()}</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Deductions */}
-                                                <div className="mb-6">
-                                                    <div className="border-b border-gray-800 font-bold mb-2 pb-1">DEDUCTIONS</div>
-                                                    <div className="flex justify-between mb-1">
-                                                        <span>EPF Employee (8%)</span>
-                                                        <span>{previewPayslip.epfEmployee > 0 ? previewPayslip.epfEmployee.toLocaleString() : '-'}</span>
-                                                    </div>
-                                                    <div className="flex justify-between mb-1 font-semibold border-t border-gray-200 pt-1 mt-1">
-                                                        <span>Total Deductions</span>
-                                                        <span>{previewPayslip.totalDeductions.toLocaleString()}</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Net Salary */}
-                                                <div className="mb-6 border-y-2 border-gray-800 py-3 bg-gray-50">
-                                                    <div className="flex justify-between text-base font-bold">
-                                                        <span>NET SALARY PAYABLE</span>
-                                                        <span>Rs. {previewPayslip.netSalary.toLocaleString()}</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Employer Contributions */}
-                                                <div className="mb-8">
-                                                    <div className="text-[10px] text-center font-semibold mb-2 text-gray-500 uppercase">Employer Contributions (Not included in Net Salary)</div>
-                                                    <div className="flex justify-between mb-1 text-xs text-gray-600">
-                                                        <span>EPF Employer 12%</span>
-                                                        <span>{previewPayslip.epfEmployer.toLocaleString()}</span>
-                                                    </div>
-                                                    <div className="flex justify-between mb-1 text-xs text-gray-600">
-                                                        <span>ETF Employer 3%</span>
-                                                        <span>{previewPayslip.etfEmployer.toLocaleString()}</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Signatures */}
-                                                <div className="mt-12 pt-4 border-t border-gray-300 flex justify-between text-[10px] text-gray-500">
-                                                    <div>Prepared By : 25/11/2026</div>
-                                                    <div>Checked By : ..............</div>
-                                                </div>
-                                                <div className="mt-4 text-[10px] text-gray-500">
-                                                    Employee Sign : ________________________
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Action Buttons */}
-                                        <div className="p-4 border-t border-gray-200 bg-gray-50 space-y-3 mx-4 mb-4 rounded-lg">
-                                            <button
-                                                onClick={exportPDF}
-                                                className="w-full bg-blue-600 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors font-medium shadow-sm"
-                                            >
-                                                <FileText className="w-4 h-4" /> Download Pay Slip (PDF)
-                                            </button>
-                                            <button
-                                                onClick={exportExcel}
-                                                className="w-full bg-green-600 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors font-medium shadow-sm"
-                                            >
-                                                <FileSpreadsheet className="w-4 h-4" /> Download Pay Slip (Excel)
-                                            </button>
-                                            <button
-                                                onClick={exportCSV}
-                                                className="w-full bg-gray-700 text-white py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors font-medium shadow-sm"
-                                            >
-                                                <Download className="w-4 h-4" /> Download Pay Slip (CSV)
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
-                                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                        <FileText className="w-10 h-10 text-gray-300" />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-gray-600">No Payslip Generated</h3>
-                                    <p className="max-w-xs mt-2 text-sm">Select an employee from the left and click "Generate Pay Slip" to preview.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Toast */}
-                {toast && (
-                    <Toast
-                        message={toast.message}
-                        type={toast.type}
-                        onClose={() => setToast(null)}
-                    />
-                )}
-            </div>
-        </div>
+  const handleModalSave = async () => {
+    if (!manageModal) return;
+    const validEntries = modalEntries.filter(
+      (e) => e.type.trim() && e.amount > 0,
     );
+
+    const { type, empId } = manageModal;
+
+    // Update Redux immediately so the UI reflects the change without waiting on a refetch
+    if (type === "allowance") {
+      dispatch(setEmployeeAllowances({ id: empId, allowances: validEntries }));
+    } else {
+      dispatch(setEmployeeDeductions({ id: empId, deductions: validEntries }));
+    }
+
+    setManageModal(null);
+    setModalEntries([]);
+
+    // Persist to the employee record so it survives refresh / navigation
+    if (!selectedCompanyId) return;
+    try {
+      await updateEmployee({
+        id: empId,
+        companyId: selectedCompanyId,
+        data:
+          type === "allowance"
+            ? { recurringAllowances: validEntries }
+            : { recurringDeductions: validEntries },
+      }).unwrap();
+    } catch (error: any) {
+      setToast({
+        message: error.data?.message || `Failed to save ${type}s`,
+        type: "error",
+      });
+    }
+  };
+
+  const handleModalCancel = () => {
+    setManageModal(null);
+    setModalEntries([]);
+  };
+
+  // Touch tracking for validation
+  const [touchedFields, setTouchedFields] = useState<{
+    month: boolean;
+    companyDays: boolean;
+    employeeDays: Record<string, boolean>;
+  }>({
+    month: false,
+    companyDays: false,
+    employeeDays: {},
+  });
+
+  // RTK Query for Employees
+  const { data, isLoading } = useGetEmployeesQuery(
+    {
+      companyId: selectedCompanyId || "",
+      page: 1,
+      limit: 100,
+      search,
+      status: "ACTIVE", // Fetch ACTIVE only
+    },
+    {
+      skip: !selectedCompanyId,
+    },
+  );
+
+  // --- Reset state when month/year changes ---
+  useEffect(() => {
+    // Clear Redux overrides
+    dispatch(resetSalaryState());
+
+    // Clear local functional states
+    setAllowanceToggles({});
+    setDeductionToggles({});
+    setTouchedFields({
+      month: false,
+      companyDays: false,
+      employeeDays: {},
+    });
+    setSelectedEmployee(null);
+  }, [selectedMonth, selectedYear, dispatch]);
+
+  const employees = data?.employees || [];
+
+  // Fetch Companies to get the name
+  const { data: companies } = useGetCompaniesQuery();
+  const selectedCompany = companies?.find((c) => c.id === selectedCompanyId);
+  const companyName = selectedCompany?.name || "Company Name";
+
+  // Helper functions for Redux State
+  const getEmployeeValues = (empId: string) => {
+    const workedDays = employeeWorkedDays[empId] ?? companyWorkingDays;
+    const isEpfEnabled = employeeEpfEtf[empId] ?? true;
+    const isLoanEnabled = employeeLoanEnabled[empId] ?? true;
+    const otHours = employeeOtHours[empId] ?? 0;
+    const salaryAdvance = employeeSalaryAdvance[empId] ?? 0;
+    const leaveDays = employeeLeaveDays[empId] ?? 0;
+    const sickLeaveDays = employeeSickLeaveDays[empId] ?? 0;
+    const hasLoanInstallment = !!employeeLoanMap[empId];
+    const loanDeduction = (isLoanEnabled && hasLoanInstallment) ? employeeLoanMap[empId] || 0 : 0;
+    return {
+      workedDays,
+      isEpfEnabled,
+      isLoanEnabled,
+      otHours,
+      salaryAdvance,
+      leaveDays,
+      sickLeaveDays,
+      loanDeduction,
+      hasLoanInstallment,
+    };
+  };
+
+  // Helper for ordinal suffixes (1st, 2nd, etc.)
+  const getOrdinalSuffix = (n: number) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
+  // --- Validation Logic ---
+  const getMaxAllowedDays = (year: number, month: number) => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    // If future month entirely
+    if (year > currentYear || (year === currentYear && month > currentMonth)) {
+      return 0; // Invalid
+    }
+
+    // If current month, return days elapsed so far
+    if (year === currentYear && month === currentMonth) {
+      return now.getDate();
+    }
+
+    // If past month, return total days in that month
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  // Max worked days an employee can log for the selected month, capped by their joined date.
+  const getEmployeeMaxWorkedDays = (emp: Employee, year: number, month: number, maxCompanyDays: number) => {
+    const joinedDate = new Date(emp.joinedDate);
+    const joinedYear = joinedDate.getFullYear();
+    const joinedMonth = joinedDate.getMonth();
+    const joinedDay = joinedDate.getDate();
+
+    // Only relevant if the employee joined in the currently selected month
+    if (year === joinedYear && month === joinedMonth) {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const availableDaysSinceJoining = daysInMonth - joinedDay + 1; // joined day counts as day 1
+      return Math.max(0, Math.min(maxCompanyDays, availableDaysSinceJoining));
+    }
+
+    return maxCompanyDays;
+  };
+
+  const maxAllowedCompanyDays = getMaxAllowedDays(selectedYear, selectedMonth);
+  const isFutureMonth =
+    new Date(selectedYear, selectedMonth) >
+    new Date(new Date().getFullYear(), new Date().getMonth());
+
+  // Derived Errors (only shown if touched)
+  const monthError =
+    touchedFields.month && isFutureMonth
+      ? "Cannot generate for future months"
+      : null;
+
+  const companyDaysError =
+    touchedFields.companyDays &&
+      (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays)
+      ? `Must be between 1 and ${maxAllowedCompanyDays} days`
+      : null;
+
+  const getEmployeeError = (empId: string, workedDays: number) => {
+    if (!touchedFields.employeeDays[empId]) return null;
+    if (workedDays < 0) return "Cannot be negative";
+    if (workedDays > companyWorkingDays)
+      return `Cannot exceed company days (${companyWorkingDays})`;
+    return null;
+  };
+
+  const isBeforeJoinedDate = (emp: Employee, year: number, month: number) => {
+    const joinedDate = new Date(emp.joinedDate);
+    const joinedYear = joinedDate.getFullYear();
+    const joinedMonth = joinedDate.getMonth();
+
+    if (year < joinedYear) return true;
+    if (year === joinedYear && month < joinedMonth) return true;
+    return false;
+  };
+
+  const validEmployees = employees
+    .filter(emp => !isBeforeJoinedDate(emp, selectedYear, selectedMonth))
+    .sort((a, b) => {
+      const isALocked = !!generatedSalaries[a.id];
+      const isBLocked = !!generatedSalaries[b.id];
+      if (isALocked && !isBLocked) return 1;
+      if (!isALocked && isBLocked) return -1;
+      return 0;
+    });
+
+  // Check if ANY validation error exists (for button disable)
+  const hasAnyError = (emp: Employee) => {
+    if (isFutureMonth) return true;
+    if (isBeforeJoinedDate(emp, selectedYear, selectedMonth)) return true;
+    if (companyWorkingDays < 1 || companyWorkingDays > maxAllowedCompanyDays)
+      return true;
+    const { workedDays, otHours, salaryAdvance, isEpfEnabled, isLoanEnabled, loanDeduction, leaveDays, sickLeaveDays } = getEmployeeValues(emp.id);
+    const maxWorkedDaysForEmp = getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays);
+    if (workedDays < 0 || workedDays > maxWorkedDaysForEmp) return true;
+    if (leaveDays < 0 || sickLeaveDays < 0) return true;
+    if (workedDays + leaveDays + sickLeaveDays !== companyWorkingDays) return true;
+
+    // Check for negative net salary
+    const otRate = emp.otRate || 0;
+    const otAmount = emp.otRate > 0 ? otHours * otRate : 0;
+    const basicPay = emp.salaryType === "MONTHLY"
+      ? (companyWorkingDays > 0 ? (emp.basicSalary / companyWorkingDays) * Math.min(workedDays + (Math.min(leaveDays, emp.paidLeave || 0)), companyWorkingDays) : 0)
+      : emp.basicSalary * (workedDays + (Math.min(leaveDays, emp.paidLeave || 0)));
+
+    const epfAmount = emp.epfEnabled && isEpfEnabled ? basicPay * 0.08 : 0;
+    const totalEarnings = basicPay + otAmount + (employeeAllowances[emp.id] || emp.recurringAllowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
+    const otherDeductions = epfAmount + (isLoanEnabled ? loanDeduction : 0) + (employeeDeductions[emp.id] || emp.recurringDeductions || []).reduce((s, d) => s + (Number(d.amount) || 0), 0);
+
+    if (totalEarnings - (otherDeductions + salaryAdvance) < 0) return true;
+    return false;
+  };
+
+  const handleCompanyWorkingDaysChange = (val: number) => {
+    setTouchedFields((prev) => ({ ...prev, companyDays: true }));
+    const maxVal = getMaxAllowedDays(selectedYear, selectedMonth);
+    const clippedVal = Math.min(Math.max(0, val), maxVal);
+    dispatch(setCompanyWorkingDays(clippedVal));
+  };
+
+  const handleEmployeeWorkedDaysChange = (empId: string, val: number) => {
+    setTouchedFields((prev) => ({
+      ...prev,
+      employeeDays: { ...prev.employeeDays, [empId]: true },
+    }));
+    // const { sickLeaveDays } = getEmployeeValues(empId);
+    const { leaveDays } = getEmployeeValues(empId);
+    const emp = employees.find((e) => e.id === empId);
+    const maxDays = emp
+      ? getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays)
+      : companyWorkingDays;
+    const clippedVal = Math.min(Math.max(0, val), maxDays);
+    dispatch(setEmployeeWorkedDays({ id: empId, days: clippedVal }));
+
+    // Recalc paid leave = total - worked - unpaid (not the other way)
+    // const autoPaidLeave = Math.max(0, companyWorkingDays - clippedVal - sickLeaveDays);
+    // dispatch(setEmployeeLeaveDays({ id: empId, days: autoPaidLeave }));
+    const autoUnpaidLeave = Math.max(0, companyWorkingDays - clippedVal - leaveDays);
+    dispatch(setEmployeeSickLeaveDays({ id: empId, days: autoUnpaidLeave }));
+  };
+
+  const handleMonthChange = (month: number) => {
+    setTouchedFields((prev) => ({ ...prev, month: true }));
+    dispatch(setMonth(month));
+    dispatch(setCompanyWorkingDays(getMaxAllowedDays(selectedYear, month)));
+  };
+
+  const handleYearChange = (year: number) => {
+    setTouchedFields((prev) => ({ ...prev, month: true }));
+
+    // Prevent keeping a future month if year is changed to current
+    let targetMonth = selectedMonth;
+    const now = new Date();
+    if (year === now.getFullYear() && selectedMonth > now.getMonth()) {
+      targetMonth = now.getMonth();
+      dispatch(setMonth(targetMonth));
+    }
+
+    dispatch(setYear(year));
+    dispatch(setCompanyWorkingDays(getMaxAllowedDays(year, targetMonth)));
+  };
+
+
+  const handleToggleEpfEtf = (empId: string) => {
+    const currentVal = employeeEpfEtf[empId] ?? true;
+    dispatch(toggleEpfEtf({ id: empId, value: !currentVal }));
+  };
+
+  const handleToggleLoan = (empId: string) => {
+    const currentVal = employeeLoanEnabled[empId] ?? true;
+    dispatch(toggleLoanEnabled({ id: empId, value: !currentVal }));
+  };
+
+  const handleEmployeeOtHoursChange = (empId: string, val: number) => {
+    const capped = Math.min(Math.max(0, val), 744);
+    dispatch(setEmployeeOtHours({ id: empId, hours: capped }));
+  };
+
+  const handleEmployeeSalaryAdvanceChange = (empId: string, val: number) => {
+    const str = Math.max(0, val).toString().slice(0, 7);
+    const capped = str === "" ? 0 : parseInt(str, 10);
+    dispatch(setEmployeeSalaryAdvance({ id: empId, advance: capped }));
+  };
+
+  const handleEmployeeLeaveDaysChange = (empId: string, val: number) => {
+    const { sickLeaveDays } = getEmployeeValues(empId);
+    const maxPaid = Math.max(0, companyWorkingDays - sickLeaveDays);
+    const clippedVal = Math.min(Math.max(0, val), maxPaid);
+    dispatch(setEmployeeLeaveDays({ id: empId, days: clippedVal }));
+    const autoWorked = Math.max(0, companyWorkingDays - clippedVal - sickLeaveDays);
+    dispatch(setEmployeeWorkedDays({ id: empId, days: autoWorked }));
+  };
+
+  const handleEmployeeSickLeaveDaysChange = (empId: string, val: number) => {
+    const { leaveDays } = getEmployeeValues(empId);
+    const maxUnpaid = Math.max(0, companyWorkingDays - leaveDays);
+    const clippedVal = Math.min(Math.max(0, val), maxUnpaid);
+    dispatch(setEmployeeSickLeaveDays({ id: empId, days: clippedVal }));
+    const autoWorked = Math.max(0, companyWorkingDays - leaveDays - clippedVal);
+    dispatch(setEmployeeWorkedDays({ id: empId, days: autoWorked }));
+  };
+
+  // Handle Generate process (Preview or Save)
+  const processPayslip = async (emp: Employee, saveToDb: boolean = false) => {
+    setSelectedEmployee(emp);
+
+    const {
+      workedDays,
+      isEpfEnabled,
+      isLoanEnabled,
+      otHours,
+      salaryAdvance,
+      leaveDays,
+      sickLeaveDays,
+      loanDeduction,
+      hasLoanInstallment,
+    } = getEmployeeValues(emp.id);
+    const otAmount = emp.otRate > 0 ? otHours * (emp.otRate || 0) : 0;
+
+    // FINAL VALIDATION BLOCK - Mark all as touched and check
+    setTouchedFields({
+      month: true,
+      companyDays: true,
+      employeeDays: { ...touchedFields.employeeDays, [emp.id]: true },
+    });
+
+    if (
+      isFutureMonth ||
+      isBeforeJoinedDate(emp, selectedYear, selectedMonth) ||
+      companyWorkingDays < 1 ||
+      companyWorkingDays > maxAllowedCompanyDays ||
+      workedDays < 0 ||
+      workedDays > companyWorkingDays
+    ) {
+      setToast({
+        message: "Please fix validation errors before generating",
+        type: "error",
+      });
+      return;
+    }
+
+    let basicSalaryForCalc = emp.basicSalary || 0;
+    let fullBasicPay = 0;
+    let earnedBasicPay = 0;
+
+    if (emp.salaryType === "MONTHLY") {
+      const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
+      const payableDays = workedDays + applicableAnnualLeave;
+      fullBasicPay = (basicSalaryForCalc / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
+      earnedBasicPay = fullBasicPay;
+    } else {
+      const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
+      fullBasicPay = basicSalaryForCalc * (workedDays + applicableAnnualLeave);
+      earnedBasicPay = fullBasicPay;
+    }
+
+    const nonPaidLeaveDeduction = emp.salaryType === "MONTHLY" && companyWorkingDays > 0
+      ? (basicSalaryForCalc / companyWorkingDays) * sickLeaveDays
+      : 0;
+
+    const currentAllowances = employeeAllowances[emp.id] || emp.recurringAllowances || [];
+    const currentDeductions = employeeDeductions[emp.id] || emp.recurringDeductions || [];
+
+    const allowanceAmount = currentAllowances.reduce(
+      (sum, a) => sum + (Number(a.amount) || 0),
+      0,
+    );
+    const deductionAmount = currentDeductions.reduce(
+      (sum, d) => sum + (Number(d.amount) || 0),
+      0,
+    );
+
+    // EPF/ETF always uses the configured epfEtfAmount from the employee form.
+    // No fallback to basic salary — if no amount is configured, EPF/ETF is 0.
+    const epfBasis = (emp.epfEtfAmount && emp.epfEtfAmount > 0)
+      ? emp.epfEtfAmount
+      : 0;
+    let epfEmployee = 0;
+    let epfEmployer = 0;
+    let etfEmployer = 0;
+
+    if (emp.epfEnabled && isEpfEnabled && epfBasis > 0) {
+      epfEmployee = epfBasis * 0.08;
+      epfEmployer = epfBasis * 0.12;
+      etfEmployer = epfBasis * 0.03;
+    }
+
+    const tax = 0; // Tax will be calculated by backend
+    const totalDeductions =
+      epfEmployee + tax + salaryAdvance + deductionAmount + loanDeduction;
+    const netSalary = earnedBasicPay + otAmount + allowanceAmount - totalDeductions;
+
+    const details = {
+      basicSalary: emp.basicSalary || 0,
+      salaryType: emp.salaryType || "MONTHLY",
+      basicPay: earnedBasicPay,
+      epfEmployee,
+      epfEmployer,
+      etfEmployer,
+      tax,
+      totalDeductions,
+      netSalary,
+      workedDays,
+      isEpfEnabled,
+      otHours,
+      otAmount,
+      salaryAdvance,
+      nonPaidLeaveDeduction,
+      leaveDays,
+      sickLeaveDays,
+      loanDeduction,
+      epf8: epfEmployee,
+      epf12: epfEmployer,
+      etf3: etfEmployer,
+      paidLeave: Math.min(leaveDays, emp.paidLeave || 0),
+      dailyRate: emp.salaryType === "MONTHLY" ? ((emp.basicSalary || 0) / companyWorkingDays) : (emp.basicSalary || 0),
+      deductions: [
+        { name: "Salary Advance", amount: salaryAdvance },
+        ...currentDeductions.map((d) => ({
+          name: d.type,
+          amount: Number(d.amount),
+        })),
+        ...((isLoanEnabled && hasLoanInstallment)
+          ? (allPendingLoans || []).filter(
+            (inst: any) => inst.loan?.employeeId === emp.id,
+          )
+          : []
+        ).map((inst: any) => ({
+          name: `Loan Installment: ${inst.loan?.loanTitle} (${getOrdinalSuffix(inst.installmentNumber)} installment)`,
+          amount: inst.amount - (inst.paidAmount || 0),
+        })),
+      ],
+      allowances: currentAllowances.map((a) => ({
+        name: a.type,
+        amount: Number(a.amount),
+      })),
+    };
+
+    dispatch(setPreviewPayslip(details));
+
+    // Save to DB
+    if (saveToDb) {
+      if (!selectedCompanyId) return;
+      try {
+        await saveSalary({
+          companyId: selectedCompanyId,
+          employeeId: emp.id,
+          month: selectedMonth + 1,
+          year: selectedYear,
+          workingDays: workedDays,
+          basicPay: fullBasicPay,
+          otHours: otHours,
+          otAmount: otAmount,
+          salaryAdvance: salaryAdvance,
+          employeeEPF: epfEmployee,
+          employerEPF: epfEmployer,
+          etfAmount: etfEmployer,
+          netSalary: netSalary,
+          loanDeduction: loanDeduction,
+          isLoanEnabled,
+          isEpfEnabled: emp.epfEnabled && isEpfEnabled,
+          companyWorkingDays: companyWorkingDays,
+          leaveDays: Math.min(leaveDays, emp.paidLeave || 0),
+          nonPaidLeaveDeduction,
+          sickLeaveDays: sickLeaveDays,
+          allowances: currentAllowances.map(a => ({ type: a.type, amount: Number(a.amount) })),
+          deductions: currentDeductions.map(d => ({ type: d.type, amount: Number(d.amount) })),
+        }).unwrap();
+        setToast({ message: "Salary saved successfully!", type: "success" });
+      } catch (error: any) {
+        setToast({
+          message: error.data?.message || "Failed to save salary",
+          type: "error",
+        });
+      }
+    } // end saveToDb
+  };
+
+  const handleGeneratePayslip = async (emp: Employee) => {
+    const savedRecord = generatedSalaries[emp.id];
+    if (savedRecord) {
+      setSelectedEmployee(emp);
+      const details = {
+        basicSalary: savedRecord.basicSalary || 0,
+        salaryType: savedRecord.salaryType || "DAILY",
+        basicPay: savedRecord.basicPay,
+        epfEmployee: savedRecord.employeeEPF,
+        epfEmployer: savedRecord.employerEPF,
+        etfEmployer: savedRecord.etfAmount,
+        totalDeductions: savedRecord.totalDeduction,
+        netSalary: savedRecord.netSalary,
+        workedDays: savedRecord.workingDays,
+        isEpfEnabled: savedRecord.employeeEPF > 0 || savedRecord.employerEPF > 0,
+        otHours: savedRecord.otHours,
+        otAmount: savedRecord.otAmount,
+        salaryAdvance: savedRecord.salaryAdvance,
+        nonPaidLeaveDeduction: savedRecord.nonPaidLeaveDeduction ?? (
+          savedRecord.salaryType === "MONTHLY" && companyWorkingDays > 0
+            ? ((savedRecord.basicSalary || 0) / companyWorkingDays) * (savedRecord.sickLeaveDays || 0)
+            : 0
+        ),
+        leaveDays: savedRecord.leaveDays || 0,
+        sickLeaveDays: savedRecord.sickLeaveDays || 0,
+        loanDeduction: savedRecord.loanDeduction,
+        epf8: savedRecord.employeeEPF,
+        epf12: savedRecord.employerEPF,
+        etf3: savedRecord.etfAmount,
+        paidLeave: savedRecord.paidLeave || 0,
+        dailyRate: savedRecord.salaryType === "MONTHLY" ? ((savedRecord.basicSalary || 0) / companyWorkingDays) : (savedRecord.basicSalary || 0),
+        deductions: [
+          ...(savedRecord.salaryAdvance > 0 ? [{ name: "Salary Advance", amount: savedRecord.salaryAdvance }] : []),
+          ...(savedRecord.loanDeduction > 0 ? [{ name: "Loan Deduction", amount: savedRecord.loanDeduction }] : []),
+          ...(savedRecord.deductions || []).map((d: any) => ({ name: d.type, amount: d.amount })),
+        ],
+        allowances: (savedRecord.allowances || []).map((a: any) => ({ name: a.type, amount: a.amount })),
+      };
+      dispatch(setPreviewPayslip(details));
+      return;
+    }
+
+    await processPayslip(emp, false);
+  };
+
+  const handleConfirmPayslip = async (emp: Employee) => {
+    await processPayslip(emp, true);
+  };
+
+  const handleSelectEmployee = (emp: Employee) => {
+    if (selectedEmployee?.id === emp.id) {
+      setSelectedEmployee(null);
+      dispatch(setPreviewPayslip(null));
+    } else {
+      setSelectedEmployee(emp);
+      dispatch(setPreviewPayslip(null));
+    }
+  };
+
+  // Export Functions
+  const exportPDF = () => {
+    if (!previewPayslip || !selectedEmployee) return;
+    exportPayslip("pdf", {
+      previewPayslip,
+      selectedEmployee,
+      companyName,
+      companyAddress: selectedCompany?.address || "",
+      selectedMonth,
+      selectedYear,
+      companyWorkingDays,
+    });
+  };
+
+  const exportExcel = () => {
+    if (!previewPayslip || !selectedEmployee) return;
+    exportPayslip("excel", {
+      previewPayslip,
+      selectedEmployee,
+      companyName,
+      companyAddress: selectedCompany?.address || "",
+      selectedMonth,
+      selectedYear,
+      companyWorkingDays,
+    });
+  };
+
+  const exportCSV = () => {
+    if (!previewPayslip || !selectedEmployee) return;
+    exportPayslip("csv", {
+      previewPayslip,
+      selectedEmployee,
+      companyName,
+      companyAddress: selectedCompany?.address || "",
+      selectedMonth,
+      selectedYear,
+      companyWorkingDays,
+    });
+  };
+
+  return (
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 font-sans">
+      <AlertBar />
+
+      {/* Margin bottom gap after the banner */}
+      <div className="-mb-4 shrink-0"></div>
+
+      <div className="flex flex-1 overflow-hidden relative w-full translate-x-0 md:translate-x-0">
+        <Sidebar />
+
+        <div className="flex-1 ml-0 sm:ml-64 sm:p-6 h-screen overflow-hidden flex flex-col max-sm:overflow-y-auto max-sm:h-auto">
+
+          {/* MOBILE HEADER */}
+          <div className="hidden mt-6 max-sm:flex items-center justify-between pt-5  border-b border-gray-100">
+            <div>
+              <img src={logo} alt="logo" className='w-40 h-10' />
+            </div>
+            <div className="flex items-center gap-2 ml-6">
+
+              {/* Avatar circle */}
+              <div className="w-9 h-9 rounded-full mr-5 bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                {user?.fullName?.charAt(0) || 'U'}
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Title & Action */}
+          <div className="hidden max-sm:block px-6 py-2 shrink-0">
+            <div className="flex items-center justify-between mb-1">
+              <div className='px-3'>
+                <div className="inline-block rounded-sm">
+                  <h1 className="text-[22px] font-bold text-[#1D1F24]">Salary</h1>
+                </div>
+                <p className="text-[13px] text-[#989FA7] font-medium">View and Calculate Employee Salaries</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Header */}
+          <div className="shrink-0 max-sm:hidden">
+            <PageHeader
+              title="Salary"
+              subtitle="View and Calculate Employee Salaries"
+            />
+          </div>
+
+          {/* MAIN CONTENT */}
+          <div className="flex flex-col md:flex-row gap-6 flex-1 overflow-hidden max-sm:overflow-visible max-sm:px-6">
+
+            {/* LEFT SIDE */}
+            <div className="w-full md:w-10/12 flex flex-col overflow-hidden max-sm:overflow-visible">
+
+              {/* FILTER BOX */}
+              <div className="bg-white gap-4 md:gap-8 p-4 md:p-7 w-full rounded-xl mb-6 flex flex-col md:flex-row md:flex-wrap border border-gray-200">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-800 mb-2">
+                    Search Employee
+                  </label>
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search by Name or ID"
+                      className="bg-gray-50 pl-10 pr-4 py-2 rounded-lg text-sm text-gray-700 font-medium border border-gray-300 outline-none w-full md:w-80"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-8 max-sm:gap-4">
+                  <div className="flex flex-col min-w-[100px]">
+                    <label className="text-sm font-medium text-gray-800 mb-2">
+                      Select Month
+                    </label>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        views={['month', 'year']}
+                        value={dayjs(new Date(selectedYear, selectedMonth))}
+                        maxDate={dayjs(new Date())}
+                        onChange={(newValue) => {
+                          if (newValue && newValue.isValid()) {
+                            handleYearChange(newValue.year());
+                            handleMonthChange(newValue.month());
+                          }
+                        }}
+                        slotProps={{
+                          textField: {
+                            size: "small",
+                            sx: {
+                              backgroundColor: "white",
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: "0.75rem",
+                                "& fieldset": {
+                                  borderColor: "#374151",
+                                },
+                                "&.Mui-focused fieldset": {
+                                  borderColor: "#374151",
+                                  borderWidth: "1px",
+                                },
+                              },
+                              "& .MuiInputBase-input": {
+                                paddingY: "9.5px",
+                                paddingX: "14px",
+                                fontSize: "0.875rem",
+                                color: "#1f2937",
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </div>
+
+                  {/* Working Days */}
+                  <div className="flex flex-col">
+                    <label className="text-sm font-medium text-gray-800 mb-2">
+                      Working Days
+                    </label>
+                    <div className="relative flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-300">
+                      <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                      <input
+                        type="number"
+                        min="1"
+                        max={maxAllowedCompanyDays}
+                        value={companyWorkingDays}
+                        onChange={(e) =>
+                          handleCompanyWorkingDaysChange(
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                        className="w-12 bg-transparent border-b border-gray-300 focus:border-blue-500 outline-none text-center text-sm font-medium text-gray-700"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                key={`${selectedMonth}-${selectedYear}`}
+                className="flex-1 overflow-y-auto pr-2 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] max-sm:overflow-visible max-sm:pb-20"
+              >
+                {isLoading ? (
+                  <SalaryListSkeleton />
+                ) : validEmployees.length === 0 ? (
+                  <div className="text-center p-12 text-gray-500">
+                    No employees found.
+                  </div>
+                ) : (
+                  validEmployees.map((emp, index) => {
+                    const {
+                      workedDays,
+                      isEpfEnabled,
+                      isLoanEnabled,
+                      otHours,
+                      salaryAdvance,
+                      leaveDays,
+                      sickLeaveDays,
+                      loanDeduction,
+                      hasLoanInstallment,
+                    } = getEmployeeValues(emp.id);
+
+                    const maxWorkedDaysForEmp = getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays);
+
+                    return (
+                      <div
+                        key={emp.id}
+                        className="animate-in fade-in slide-in-from-bottom-5 duration-700"
+                        style={{
+                          animationDelay: `${index * 100}ms`,
+                          animationFillMode: 'both'
+                        }}
+                      >
+                        <EmployeeSalaryCard
+                          emp={emp}
+                          generatedSalary={generatedSalaries[emp.id]}
+                          selectedEmployee={selectedEmployee}
+                          handleSelectEmployee={handleSelectEmployee}
+                          workedDays={workedDays}
+                          isEpfEnabled={isEpfEnabled}
+                          isLoanEnabled={isLoanEnabled}
+                          otHours={otHours}
+                          salaryAdvance={salaryAdvance}
+                          leaveDays={leaveDays}
+                          sickLeaveDays={sickLeaveDays}
+                          loanDeduction={loanDeduction}
+                          companyWorkingDays={companyWorkingDays}
+                          maxWorkedDays={maxWorkedDaysForEmp}
+                          hasLoanInstallment={hasLoanInstallment}
+                          handleEmployeeWorkedDaysChange={handleEmployeeWorkedDaysChange}
+                          handleEmployeeOtHoursChange={handleEmployeeOtHoursChange}
+                          handleEmployeeSalaryAdvanceChange={handleEmployeeSalaryAdvanceChange}
+                          handleEmployeeLeaveDaysChange={handleEmployeeLeaveDaysChange}
+                          handleEmployeeSickLeaveDaysChange={handleEmployeeSickLeaveDaysChange}
+                          handleToggleLoan={handleToggleLoan}
+                          handleToggleEpfEtf={handleToggleEpfEtf}
+                          handleGeneratePayslip={handleGeneratePayslip}
+                          handleConfirmPayslip={handleConfirmPayslip}
+                          openManageModal={openManageModal}
+                          salaryAllowances={employeeAllowances}
+                          salaryDeductions={employeeDeductions}
+                          isSaving={isSaving}
+                          hasAnyError={hasAnyError}
+                          setTouchedFields={setTouchedFields}
+                          selectedMonth={selectedMonth}
+                          selectedYear={selectedYear}
+                        />
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT SIDE */}
+            <div className={`
+  fixed md:relative inset-0 md:inset-auto z-40 md:z-auto
+  w-full md:w-5/12
+  h-full
+  flex flex-col overflow-y-auto
+  bg-white md:bg-transparent
+  transition-transform duration-300
+  ${selectedEmployee && previewPayslip ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+`}>
+
+              <PayslipPreview
+                previewPayslip={previewPayslip}
+                selectedEmployee={selectedEmployee}
+                companyName={companyName}
+                selectedYear={selectedYear}
+                selectedMonth={selectedMonth}
+                companyWorkingDays={companyWorkingDays}
+                exportPDF={exportPDF}
+                exportExcel={exportExcel}
+                exportCSV={exportCSV}
+                onClose={() => {
+                  setSelectedEmployee(null);
+                  dispatch(setPreviewPayslip(null));
+                }}
+              />
+            </div>
+          </div>
+
+          {/* MODAL */}
+          <ManageSalaryModal
+            manageModal={manageModal}
+            modalEntries={modalEntries}
+            setModalEntries={setModalEntries}
+            onSave={handleModalSave}
+            onCancel={handleModalCancel}
+            earningsLimit={(() => {
+              if (!manageModal || manageModal.type !== "deduction" || !manageModal.emp) return undefined;
+              const emp = manageModal.emp;
+              const { workedDays, otHours, leaveDays } = getEmployeeValues(emp.id);
+              const basicSalary = emp.basicSalary || 0;
+              const otRate = emp.otRate || 0;
+              const otAmount = emp.otRate > 0 ? otHours * otRate : 0;
+              const currentAllowances = employeeAllowances[emp.id] || emp.recurringAllowances || [];
+              const totalAllowances = currentAllowances.reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
+              if (emp.salaryType === "MONTHLY") {
+                return basicSalary + otAmount + totalAllowances;
+              } else {
+                const displayBasicPay = basicSalary * (workedDays + Math.min(leaveDays, emp.paidLeave || 0));
+                return displayBasicPay + otAmount + totalAllowances;
+              }
+            })()}
+          />
+
+          {/* TOAST */}
+          {toast && (
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => setToast(null)}
+            />
+          )}
+        </div>
+      </div >
+    </div>
+  );
 };
 
 export default Salary;

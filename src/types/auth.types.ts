@@ -3,6 +3,8 @@ export interface User {
   fullName: string;
   email: string;
   role: string;
+  isTrialUser?: boolean;
+  createdAt?: string; // ✅ ADDED
 }
 
 export interface StartSignupRequest {
@@ -13,15 +15,33 @@ export interface StartSignupRequest {
 export interface StartSignupResponse {
   success: boolean;
   message: string;
+  // signupToken?: string; 
+  data?: {
+      signupToken?: string;
+    };
+}
+
+export interface ResendVerificationRequest {
+  signupToken: string;
+}
+
+export interface ResendVerificationResponse {
+  success: boolean;
+  message: string;
+  // signupToken?: string;
+  data?: {
+      signupToken?: string;
+    };
 }
 
 export interface VerifyEmailResponse {
   success: boolean;
   message: string;
+  email?: string; // ✅ ADD
 }
 
 export interface SetPasswordRequest {
-  email: string;
+  signupToken: string; // ✅ Use token instead of email
   password: string;
 }
 
@@ -41,6 +61,8 @@ export interface LoginResponse {
   data: {
     user: User;
     token: string;
+    hasActivePlan: boolean; // ✅ ADDED
+    hasCompany: boolean;     // ✅ ADDED
   };
 }
 
@@ -62,10 +84,12 @@ export interface RegisterResponse {
 export interface AuthState {
   user: User | null;
   token: string | null;
+  signupToken: string | null; // ✅ ADD
   isLoading: boolean;
   error: string | null;
   signupEmail: string | null;
   tempPassword: string | null;
   tempPlanId: string | null;
   selectedCompanyId: string | null;
+  accessStatus: 'LOADING' | 'ACTIVE' | 'BLOCKED';
 }
