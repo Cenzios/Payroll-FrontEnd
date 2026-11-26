@@ -54,6 +54,8 @@ export interface ReportEmployee {
     companyEPFETF?: string;
     salaryType?: string;
     loanDeduction?: string;
+    /** Sum of this salary's allowances (included in gross). */
+    allowanceTotal?: string;
     allowances?: Allowance[];
     customDeductions?: Deduction[];
 }
@@ -94,8 +96,11 @@ const formatCurrency = (amount: MoneyInput): string => formatMoney(amount);
 /** Money with the shared currency prefix ("Rs. 1,234.50"). */
 const rs = (amount: MoneyInput): string => formatRs(amount);
 
-/** Numeric spreadsheet cell (xlsx needs a JS number). */
-const xlsNum = (amount: MoneyInput): number => toChartNumber(amount);
+/**
+ * Numeric money cell (xlsx needs a JS number) with a 2-decimal number format, so Excel
+ * shows 85000.50 and CSV export prints "85000.50" instead of 85000.5 / 78462.
+ */
+const xlsNum = (amount: MoneyInput): XLSX.CellObject => ({ t: "n", v: toChartNumber(amount), z: "0.00" });
 
 /** Payslip gross earnings (stored value for saved salaries). */
 const payslipGross = (p: PayslipData): Decimal => payslipTotals(p).gross;
@@ -991,6 +996,7 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                 "Rate Type",
                 "Basic Pay (earned)",
                 "OT Amount",
+                "Allowances",
                 "Gross Pay",
                 "EPF (8%)",
                 "Salary Advance",
@@ -1007,6 +1013,7 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                     basicRateLabel(emp),
                     xlsNum(emp.basicPay),
                     xlsNum(emp.otAmount),
+                    xlsNum(emp.allowanceTotal ?? "0"),
                     xlsNum(rowGross(emp)),
                     xlsNum(emp.employeeEPF),
                     xlsNum(emp.salaryAdvance),
@@ -1019,6 +1026,7 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                 "", "Monthly Total", "", "", "",
                 xlsNum(m.totalBasicPayEarned),
                 xlsNum(m.totalOtAmount),
+                xlsNum(m.totalAllowances),
                 xlsNum(m.totalGrossPay),
                 xlsNum(m.totalEmployeeEPF),
                 xlsNum(m.totalSalaryAdvance),
@@ -1620,7 +1628,7 @@ export interface EpfEtfReportData {
         employeeCode: string;
         fullName: string;
         epfNo: string;
-        basicSalary: string;
+        basicPay: string;
         empEpf: string;
         employerEpf: string;
         etf: string;
@@ -1632,7 +1640,7 @@ export interface EpfEtfReportData {
     endYear: number;
     totals: {
         count: number;
-        basicSalary: string;
+        basicPay: string;
         empEpf: string;
         employerEpf: string;
         etf: string;
@@ -1713,7 +1721,7 @@ export const exportEpfEtfReport = (
             item.employeeCode,
             item.fullName,
             item.epfNo,
-            formatCurrency(item.basicSalary),
+            formatCurrency(item.basicPay),
             formatCurrency(item.empEpf),
             formatCurrency(item.employerEpf),
             formatCurrency(item.etf),
@@ -1723,7 +1731,7 @@ export const exportEpfEtfReport = (
         // Add Total row to table body
         tableBody.push([
             "", "Total", "",
-            formatCurrency(totals.basicSalary),
+            formatCurrency(totals.basicPay),
             formatCurrency(totals.empEpf),
             formatCurrency(totals.employerEpf),
             formatCurrency(totals.etf),
@@ -1732,7 +1740,7 @@ export const exportEpfEtfReport = (
 
         autoTable(doc, {
             startY: 60,
-            head: [["Employee ID", "Employee Name", "EPF No", "Basic Salary", "Emp EPF (8%)", "Employer EPF (12%)", "ETF (3%)", "Total Contribution"]],
+            head: [["Employee ID", "Employee Name", "EPF No", "Basic Pay (earned)", "Emp EPF (8%)", "Employer EPF (12%)", "ETF (3%)", "Total Contribution"]],
             body: tableBody,
             styles: { fontSize: 7, cellPadding: 2 },
             headStyles: { fillColor: [243, 246, 253], textColor: [23, 44, 108], fontStyle: "bold" },
@@ -1844,19 +1852,19 @@ export const exportEpfEtfReport = (
             [`Company: ${companyName}`],
             [`Period: ${periodStr}`],
             [],
-            ["Employee ID", "Employee Name", "EPF No", "Basic Salary", "Emp EPF (8%)", "Employer EPF (12%)", "ETF (3%)", "Total Contribution"],
+            ["Employee ID", "Employee Name", "EPF No", "Basic Pay (earned)", "Emp EPF (8%)", "Employer EPF (12%)", "ETF (3%)", "Total Contribution"],
             ...reportData.map(item => [
                 item.employeeCode,
                 item.fullName,
                 item.epfNo,
-                xlsNum(item.basicSalary),
+                xlsNum(item.basicPay),
                 xlsNum(item.empEpf),
                 xlsNum(item.employerEpf),
                 xlsNum(item.etf),
                 xlsNum(item.totalContribution)
             ]),
             [],
-            ["Total", "", "", xlsNum(totals.basicSalary), xlsNum(totals.empEpf), xlsNum(totals.employerEpf), xlsNum(totals.etf), xlsNum(totals.totalContribution)]
+            ["Total", "", "", xlsNum(totals.basicPay), xlsNum(totals.empEpf), xlsNum(totals.employerEpf), xlsNum(totals.etf), xlsNum(totals.totalContribution)]
         ];
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);

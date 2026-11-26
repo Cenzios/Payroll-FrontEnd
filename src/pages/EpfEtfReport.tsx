@@ -23,7 +23,7 @@ interface EpfEtfRow {
     employeeCode: string;
     fullName: string;
     epfNo: string;
-    basicSalary: string;
+    basicPay: string;
     epfEtfAmount: string;
     grossPay: string;
     empEpf: string;
@@ -35,7 +35,7 @@ interface EpfEtfRow {
 
 interface EpfEtfTotals {
     count: number;
-    basicSalary: string;
+    basicPay: string;
     grossPay: string;
     empEpf: string;
     employerEpf: string;
@@ -45,7 +45,7 @@ interface EpfEtfTotals {
 }
 
 const EMPTY_TOTALS: EpfEtfTotals = {
-    count: 0, basicSalary: '0', grossPay: '0', empEpf: '0', employerEpf: '0', etf: '0', totalContribution: '0', netPay: '0'
+    count: 0, basicPay: '0', grossPay: '0', empEpf: '0', employerEpf: '0', etf: '0', totalContribution: '0', netPay: '0'
 };
 
 /** Report rows may use either API naming; all money is read as decimal strings. */
@@ -59,8 +59,8 @@ type ReportEmployeeRow = PayrollSummaryEmployee & {
 };
 
 interface EpfAccumulator {
-    base: Omit<EpfEtfRow, 'basicSalary' | 'epfEtfAmount' | 'grossPay' | 'empEpf' | 'employerEpf' | 'etf' | 'totalContribution' | 'netPay'>;
-    basicSalary: Decimal;
+    base: Omit<EpfEtfRow, 'basicPay' | 'epfEtfAmount' | 'grossPay' | 'empEpf' | 'employerEpf' | 'etf' | 'totalContribution' | 'netPay'>;
+    basicPay: Decimal;
     epfEtfAmount: Decimal;
     grossPay: Decimal;
     empEpf: Decimal;
@@ -89,11 +89,13 @@ function aggregateEpfEtf(months: readonly PayrollSummaryMonth[], employees: read
                     fullName: emp.fullName || employeeInfo?.fullName || '-',
                     epfNo: employeeInfo?.epfNumber || emp.epfNumber || '-',
                 },
-                basicSalary: ZERO, epfEtfAmount: ZERO, grossPay: ZERO, empEpf: ZERO, employerEpf: ZERO, etf: ZERO, netPay: ZERO,
+                basicPay: ZERO, epfEtfAmount: ZERO, grossPay: ZERO, empEpf: ZERO, employerEpf: ZERO, etf: ZERO, netPay: ZERO,
             };
             employeeMap.set(emp.employeeId, record);
 
-            const displayBasic = Decimal.max(toDecimal(emp.basicPay), toDecimal(emp.basicSalary));
+            // Earned basic pay for the month for every salary type (monthly: pro-rated contract
+            // salary; daily: rate x days) - never the monthly contract vs a daily rate mix.
+            const earnedBasic = toDecimal(emp.basicPay);
             // Stored salary-row gross (never recomputed from components)
             const computedGross = toDecimal(rowGross(emp));
             const empEpf = firstNonZero(emp.employeeEPF, emp.employeeEpf);
@@ -108,7 +110,7 @@ function aggregateEpfEtf(months: readonly PayrollSummaryMonth[], employees: read
                 ? directEtf
                 : companyEPFETF.times(3).dividedBy(15).toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
 
-            record.basicSalary = record.basicSalary.plus(displayBasic);
+            record.basicPay = record.basicPay.plus(earnedBasic);
             record.epfEtfAmount = record.epfEtfAmount.plus(firstNonZero(emp.epfEtfAmount, employeeInfo?.epfEtfAmount));
             record.grossPay = record.grossPay.plus(computedGross);
             record.netPay = record.netPay.plus(firstNonZero(emp.netPay, emp.netSalary));
@@ -121,7 +123,7 @@ function aggregateEpfEtf(months: readonly PayrollSummaryMonth[], employees: read
     });
     return Array.from(employeeMap.values()).map((r) => ({
         ...r.base,
-        basicSalary: r.basicSalary.toFixed(4),
+        basicPay: r.basicPay.toFixed(4),
         epfEtfAmount: r.epfEtfAmount.toFixed(4),
         grossPay: r.grossPay.toFixed(4),
         empEpf: r.empEpf.toFixed(4),
@@ -136,7 +138,7 @@ function aggregateEpfEtf(months: readonly PayrollSummaryMonth[], employees: read
 function totalsOf(rows: readonly EpfEtfRow[]): EpfEtfTotals {
     return {
         count: rows.length,
-        basicSalary: sumBy(rows, (r) => r.basicSalary).toFixed(4),
+        basicPay: sumBy(rows, (r) => r.basicPay).toFixed(4),
         grossPay: sumBy(rows, (r) => r.grossPay).toFixed(4),
         empEpf: sumBy(rows, (r) => r.empEpf).toFixed(4),
         employerEpf: sumBy(rows, (r) => r.employerEpf).toFixed(4),
@@ -285,7 +287,7 @@ const EpfEtfReport = () => {
                     <div className="px-2 pb-4 pt-3 space-y-2 mx-4 mb-3 border-t border-gray-300">
                         {[
                             { label: 'EPF No', value: item.epfNo },
-                            { label: 'Basic Salary', value: fmt(item.basicSalary) },
+                            { label: 'Basic Pay (earned)', value: fmt(item.basicPay) },
                             { label: 'Applicable EPF/ETF Amount', value: fmt(item.epfEtfAmount) },
                             { label: 'Emp EPF (8%)', value: fmt(item.empEpf) },
                             { label: 'Employer EPF (12%)', value: fmt(item.employerEpf) },
@@ -458,7 +460,7 @@ const EpfEtfReport = () => {
                                                 <th className="px-4 py-4 text-xs font-bold text-gray-900">Employee ID</th>
                                                 <th className="px-4 py-4 text-xs font-bold text-gray-900">Employee Name</th>
                                                 <th className="px-4 py-4 text-xs font-bold text-gray-900">EPF No</th>
-                                                <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Basic Salary</th>
+                                                <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Basic Pay (earned)</th>
                                                 <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Applicable EPF/ETF Amount</th>
                                                 <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Emp EPF (8%)</th>
                                                 <th className="px-4 py-4 text-xs font-bold text-gray-900 text-right">Employer EPF (12%)</th>
@@ -488,7 +490,7 @@ const EpfEtfReport = () => {
                                                         <td className="px-4 py-4 text-sm font-medium text-[#2b74ff]">{item.employeeCode}</td>
                                                         <td className="px-4 py-4 text-sm text-gray-700">{item.fullName}</td>
                                                         <td className="px-4 py-4 text-sm text-gray-400">{item.epfNo}</td>
-                                                        <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.basicSalary)}</td>
+                                                        <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.basicPay)}</td>
                                                         <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.epfEtfAmount)}</td>
                                                         <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.empEpf)}</td>
                                                         <td className="px-4 py-4 text-sm text-gray-400 text-right">{fmt(item.employerEpf)}</td>

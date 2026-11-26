@@ -51,6 +51,7 @@ export function matchesEmployeeSearch(row: SearchableRow, query: string): boolea
 export interface SummaryRow extends StoredSalaryFigures {
     basicPay: string;
     otAmount: string;
+    allowanceTotal?: string;
     employeeEPF: string;
     salaryAdvance: string;
     companyEPFETF?: string;
@@ -61,6 +62,7 @@ export interface RowTotals {
     /** Sum of earned (prorated) basic pay. */
     totalBasicPayEarned: string;
     totalOtAmount: string;
+    totalAllowances: string;
     totalGrossPay: string;
     totalDeductions: string;
     totalNetPay: string;
@@ -76,6 +78,7 @@ export function sumRows(rows: readonly SummaryRow[]): RowTotals {
         totalEmployees: rows.length,
         totalBasicPayEarned: fixed((r) => r.basicPay),
         totalOtAmount: fixed((r) => r.otAmount),
+        totalAllowances: fixed((r) => r.allowanceTotal),
         totalGrossPay: fixed(rowGross),
         totalDeductions: fixed(rowDeduction),
         totalNetPay: fixed(rowNet),
