@@ -914,6 +914,7 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                 emp.workingDays,
                 formatCurrency(emp.basicPay),
                 formatCurrency(emp.otAmount),
+                formatCurrency(emp.allowanceTotal ?? "0"),
                 formatCurrency(rowGross(emp)),
                 formatCurrency(emp.employeeEPF),
                 formatCurrency(rowDeduction(emp)),
@@ -927,6 +928,7 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                 "", "Monthly Total", "",
                 formatCurrency(m.totalBasicPayEarned),
                 formatCurrency(m.totalOtAmount),
+                formatCurrency(m.totalAllowances),
                 formatCurrency(m.totalGrossPay),
                 formatCurrency(m.totalEmployeeEPF),
                 formatCurrency(m.totalDeductions),
@@ -935,21 +937,23 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
 
             autoTable(doc, {
                 startY: currentY,
-                head: [["Emp ID", "Name", "Worked Days", "Basic Pay", "OT", "Gross", "EPF (8%)", "Deductions", "Net Pay"]],
+                // Basic Pay + OT + Allowances = Gross (same columns as the CSV/Excel export)
+                head: [["Emp ID", "Name", "Days", "Basic Pay", "OT", "Allowances", "Gross", "EPF (8%)", "Deductions", "Net Pay"]],
                 body: tableBody,
                 theme: "plain",
-                styles: { fontSize: 8, cellPadding: 2 },
+                styles: { fontSize: 7.5, cellPadding: 1.8 },
                 headStyles: { fillColor: [243, 246, 253], textColor: [23, 44, 108], fontStyle: "bold" },
                 columnStyles: {
-                    0: { cellWidth: 15 },
-                    1: { cellWidth: 38 },
-                    2: { cellWidth: 18, halign: 'center' },
+                    0: { cellWidth: 14 },
+                    1: { cellWidth: 30 },
+                    2: { cellWidth: 10, halign: 'center' },
                     3: { halign: 'right' },
                     4: { halign: 'right' },
                     5: { halign: 'right' },
                     6: { halign: 'right' },
                     7: { halign: 'right' },
-                    8: { halign: 'right', fontStyle: 'bold' }
+                    8: { halign: 'right' },
+                    9: { halign: 'right', fontStyle: 'bold' }
                 },
                 didParseCell: (data) => {
                     if (data.column.index >= 2) {
