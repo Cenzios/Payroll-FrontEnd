@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import Decimal from "decimal.js";
 import type { SalaryDetails } from "../types/salary.types";
-import type { EmployeeAnnualTotals, EmployeeMonthlyRow, SelectedSummaryTotals } from "../types/report.types";
+import type { EmployeeAnnualTotals, EmployeeMonthlyRow, SelectedSummaryEmployee, SelectedSummaryTotals } from "../types/report.types";
 import { formatMoney, MoneyInput, sumBy, toChartNumber, toDecimal, toDecimalString } from "./money";
 
 // --- Types ---
@@ -1225,7 +1225,7 @@ export const exportAllEmployeesSummary = (
             reportType: string;
             totalGrossPay: string;
         };
-        employees: ReportEmployee[];
+        employees: SelectedSummaryEmployee[];
         totals: SelectedSummaryTotals;
     }
 ) => {
@@ -1257,7 +1257,7 @@ export const exportAllEmployeesSummary = (
         const tableData = employees.map((emp) => [
             emp.employeeCode,
             emp.employeeName,
-            emp.workingDays.toString(),
+            emp.workedDays.toString(),
             `RS ${fmtPlain(emp.basicSalary)} `,
             `RS ${fmtPlain(emp.otAmount)} (${emp.otHours || 0}h)`,
             `RS ${fmtPlain(emp.grossPay)} `,
@@ -1343,7 +1343,7 @@ export const exportAllEmployeesSummary = (
             ...employees.map((emp) => [
                 emp.employeeCode,
                 emp.employeeName,
-                emp.workingDays,
+                emp.workedDays,
                 xlsNum(emp.basicSalary),
                 xlsNum(emp.otAmount),
                 xlsNum(emp.grossPay),

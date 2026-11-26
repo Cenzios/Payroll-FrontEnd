@@ -152,7 +152,7 @@ const AllEmployeesSummaryModal = ({
                                                         <tr key={index} className="hover:bg-gray-50 bg-white border-b border-gray-100">
                                                             <td className="px-3 py-3 text-gray-900 border-x border-gray-200 text-center font-medium">{emp.employeeCode}</td>
                                                             <td className="px-3 py-3 text-gray-700 border-x border-gray-200">{emp.employeeName}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">{emp.workingDays}</td>
+                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">{emp.workedDays}</td>
                                                             <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {fmtPlain(emp.basicSalary)}</td>
                                                             <td className="px-3 py-3 text-center text-green-600 border-x border-gray-200 font-medium">RS: {fmtPlain(emp.otAmount)}</td>
                                                             <td className="px-3 py-3 text-center text-gray-900 border-x border-gray-200 font-bold">RS: {fmtPlain(emp.grossPay)}</td>

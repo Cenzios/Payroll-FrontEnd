@@ -85,9 +85,8 @@ export interface SelectedSummaryEmployee {
     employeeId: string;
     employeeCode: string;
     employeeName: string;
-    /** Frontend reads `workingDays`; the backend currently sends `workedDays`. */
-    workingDays: number;
-    workedDays?: number;
+    /** Days worked in the month (backend field name; 0 when no salary row exists). */
+    workedDays: number;
     basicSalary: string;
     basicPay: string;
     otHours?: string;
