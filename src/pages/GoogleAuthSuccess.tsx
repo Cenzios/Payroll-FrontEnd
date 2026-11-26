@@ -2,47 +2,62 @@
 
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAppDispatch } from '../store/hooks';
-import { setAuthFromToken } from '../store/slices/authSlice';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { setSignupEmail } from '../store/slices/authSlice';
+import { refreshAccessToken } from '../auth/refreshSession';
 import { Loader2 } from 'lucide-react';
 
-function GoogleAuthSuccess() {
+/**
+ * Landing page after the Google OAuth callback. The backend has already set
+ * the HttpOnly refresh cookie and redirected here WITHOUT a token in the URL;
+ * we exchange the cookie for an in-memory access token via POST /auth/refresh
+ * and route using the `new` / `hasCompany` query params.
+ */
+function GoogleAuthSuccess(): JSX.Element {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const { isAuthenticated, user } = useAppSelector((state) => state.auth);
 
     useEffect(() => {
-        const token = searchParams.get('token');
         const isNewUserParam = searchParams.get('new'); // 'true' or null
         const hasCompanyParam = searchParams.get('hasCompany'); // 'true' or 'false'
 
-        if (!token) {
-            console.error('No token found in Google OAuth redirect');
-            navigate('/login', { replace: true });
-            return;
-        }
+        const completeSignIn = async (): Promise<void> => {
+            // <AuthBootstrap> normally already exchanged the cookie on page load;
+            // only refresh again if that did not yield a session.
+            let email = user?.email ?? '';
+            if (!isAuthenticated) {
+                const { session } = await refreshAccessToken();
+                if (!session) {
+                    console.error('Google sign-in: unable to establish a session');
+                    navigate('/login', { replace: true });
+                    return;
+                }
+                email = session.user.email;
+            }
 
-        // Store token
-        localStorage.setItem('token', token);
-        localStorage.setItem('signup_method', 'google'); // ✅ Flag as google signup
+            localStorage.setItem('signup_method', 'google'); // ✅ Flag as google signup (non-secret)
+            if (email) {
+                dispatch(setSignupEmail(email));
+            }
 
-        // Update Redux store with user data from token
-        dispatch(setAuthFromToken(token));
+            if (isNewUserParam !== 'true') {
+                // Existing user → dashboard
+                navigate('/dashboard', { replace: true });
+            } else if (hasCompanyParam === 'true') {
+                // Has company but no subscription → skip company setup, go straight to plan selection
+                navigate('/get-plan', { replace: true });
+            } else {
+                // Brand new user — no company, no subscription → start full setup
+                navigate('/set-company', { replace: true });
+            }
+        };
 
-        if (!isNewUserParam || isNewUserParam !== 'true') {
-            // Has active subscription → go to dashboard
-            console.log('Google user has active subscription → Redirecting to /dashboard');
-            navigate('/dashboard', { replace: true });
-        } else if (hasCompanyParam === 'true') {
-            // Has company but no subscription → skip company setup, go straight to plan selection
-            console.log('Google user has company but no subscription → Redirecting to /get-plan');
-            navigate('/get-plan', { replace: true });
-        } else {
-            // Brand new user — no company, no subscription → start full setup
-            console.log('Google user is brand new → Redirecting to /set-company');
-            navigate('/set-company', { replace: true });
-        }
-    }, [searchParams, navigate, dispatch]);
+        void completeSignIn();
+        // Runs once on landing; auth state is final after <AuthBootstrap>.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">

@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_BASE_URL;
+import axiosInstance from './axios';
 
 export const reportApi = {
     /**
@@ -10,16 +8,13 @@ export const reportApi = {
      * @returns Employee info and monthly salary breakdown
      */
     getEmployeePayrollSummary: async (employeeId: string, companyId: string, month: number, year: number) => {
-        const token = localStorage.getItem('token');
-
-        const response = await axios.get(`${API_URL}/reports/employee-payroll-summary`, {
+        const response = await axiosInstance.get('/reports/employee-payroll-summary', {
             params: {
                 employeeId,
                 companyId,
                 month,
                 year
-            },
-            headers: { Authorization: `Bearer ${token}` }
+            }
         });
         return response.data;
     },
@@ -38,12 +33,9 @@ export const reportApi = {
         month: number,
         year: number
     ) => {
-        const token = localStorage.getItem('token');
-
-        const response = await axios.post(
-            `${API_URL}/reports/selected-employees-summary`,
-            { companyId, employeeIds, month, year },
-            { headers: { Authorization: `Bearer ${token}` } }
+        const response = await axiosInstance.post(
+            '/reports/selected-employees-summary',
+            { companyId, employeeIds, month, year }
         );
         return response.data;
     }

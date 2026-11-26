@@ -19,7 +19,7 @@ interface PlanPaymentCardProps {
 const PlanPaymentCard = ({ pricePerEmployee = 0, employeeCount = 1 }: PlanPaymentCardProps) => {
     const [searchParams] = useSearchParams();
     const isPlanChange = searchParams.get('isPlanChange') === 'true';
-    const { user } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
     const [activeSubscription, setActiveSubscription] = useState<any>(null);
     const [isFetchingSub, setIsFetchingSub] = useState(true);
@@ -41,12 +41,9 @@ const PlanPaymentCard = ({ pricePerEmployee = 0, employeeCount = 1 }: PlanPaymen
     useEffect(() => {
         const fetchSubscription = async () => {
             try {
-                const authToken = localStorage.getItem('token');
-                if (!authToken) return;
+                if (!isAuthenticated) return;
 
-                const response = await axiosInstance.get('/subscription/current', {
-                    headers: { Authorization: `Bearer ${authToken}` }
-                });
+                const response = await axiosInstance.get('/subscription/current');
 
                 setActiveSubscription(response.data.data);
             } catch (err) {
@@ -67,8 +64,7 @@ const PlanPaymentCard = ({ pricePerEmployee = 0, employeeCount = 1 }: PlanPaymen
             setIsLoadingSecret(true);
             setIntentError(null);
             try {
-                const authToken = localStorage.getItem('token');
-                if (!authToken) return;
+                if (!isAuthenticated) return;
 
                 const planId = isPlanChange ? selectedPlan.id : (localStorage.getItem('reg_planId') || PLANS.BASIC.id);
                 // Calculate the true amount based on the provided pricePerEmployee (e.g., 100) instead of the hardcoded default plan price
@@ -80,8 +76,6 @@ const PlanPaymentCard = ({ pricePerEmployee = 0, employeeCount = 1 }: PlanPaymen
                     planId,
                     amount,
                     currency: 'LKR'
-                }, {
-                    headers: { Authorization: `Bearer ${authToken}` }
                 });
 
                 if (data?.data?.clientSecret) {

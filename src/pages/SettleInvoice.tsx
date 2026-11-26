@@ -14,7 +14,7 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
 
 const SettleInvoice = () => {
     const navigate = useNavigate();
-    const { token } = useAppSelector((state) => state.auth);
+    const { isAuthenticated } = useAppSelector((state) => state.auth);
 
     const [invoice, setInvoice] = useState<any>(null);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -22,7 +22,7 @@ const SettleInvoice = () => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!token) return;
+        if (!isAuthenticated) return;
 
         const fetchPendingInvoiceAndIntent = async () => {
             try {
@@ -31,9 +31,7 @@ const SettleInvoice = () => {
 
                 console.log('📝 Fetching Pending Monthly Invoice & Payment Intent');
 
-                const { data } = await axiosInstance.post('/payments/renew-monthly', {}, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const { data } = await axiosInstance.post('/payments/renew-monthly', {});
 
                 if (data?.data?.clientSecret && data?.data?.invoice) {
                     setClientSecret(data.data.clientSecret);
@@ -52,7 +50,7 @@ const SettleInvoice = () => {
         };
 
         fetchPendingInvoiceAndIntent();
-    }, [token]);
+    }, [isAuthenticated]);
 
     const handleLogout = () => {
         navigate('/login');

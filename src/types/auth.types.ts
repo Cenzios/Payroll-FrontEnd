@@ -55,36 +55,13 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface LoginResponse {
-  success: boolean;
-  message: string;
-  data: {
-    user: User;
-    token: string;
-    hasActivePlan: boolean; // ✅ ADDED
-    hasCompany: boolean;     // ✅ ADDED
-  };
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  planId: string;
-}
-
-export interface RegisterResponse {
-  success: boolean;
-  message: string;
-  data: {
-    user: User;
-    token: string;
-  };
-}
-
 export interface AuthState {
   user: User | null;
-  token: string | null;
-  signupToken: string | null; // ✅ ADD
+  /** True once a login/refresh succeeded. The access token itself is in src/auth/tokenStore.ts. */
+  isAuthenticated: boolean;
+  /** 'pending' until the boot-time POST /auth/refresh has settled. */
+  bootstrapStatus: 'pending' | 'done';
+  signupToken: string | null; // in memory only
   isLoading: boolean;
   error: string | null;
   signupEmail: string | null;

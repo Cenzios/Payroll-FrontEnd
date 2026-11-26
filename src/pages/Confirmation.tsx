@@ -1,12 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
-import { useAppDispatch } from '../store/hooks';
-import { logout, checkAccessStatus } from '../store/slices/authSlice';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { checkAccessStatus } from '../store/slices/authSlice';
 import celebrationImg from '../assets/images/celebration-illustration.svg';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 import axiosInstance from '../api/axios';
 import { Loader2 } from 'lucide-react';
-import { jwtDecode } from 'jwt-decode';
 
 
 
@@ -15,6 +14,8 @@ const Confirmation = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [status, setStatus] = useState<'verifying' | 'active' | 'failed'>('verifying');
+  // Session is restored by <AuthBootstrap> after the payment-provider redirect.
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
 
   // Using ref to track execution status across renders and intervals
   const isCheckingRef = useRef(false);
@@ -28,16 +29,13 @@ const Confirmation = () => {
       isCheckingRef.current = true;
 
       try {
-        const authToken = localStorage.getItem('token');
-        if (!authToken) {
+        if (!isAuthenticated) {
           setStatus('failed');
           return;
         }
 
         // Step 1: Check if subscription is ACTIVE
-        const response = await axiosInstance.get('/subscription/current', {
-          headers: { Authorization: `Bearer ${authToken}` }
-        });
+        const response = await axiosInstance.get('/subscription/current');
 
         const subStatus = response.data.data.status;
 
@@ -46,7 +44,6 @@ const Confirmation = () => {
           // This ensures overdue invoices have been cleared by the webhook before we redirect
           const accessResponse = await axiosInstance.get('/subscription/access-status', {
             headers: {
-              Authorization: `Bearer ${authToken}`,
               'Cache-Control': 'no-cache',
             }
           });
@@ -75,9 +72,8 @@ const Confirmation = () => {
             localStorage.removeItem('temp_companyAddress');
 
             try {
-              // Get email from token since we might have refreshed
-              const decoded: any = jwtDecode(authToken);
-              const userEmail = decoded.email;
+              // Email of the in-memory session identity
+              const userEmail = user?.email;
 
               console.log('🏢 Creating company after payment:', tempCompanyName);
 
@@ -87,8 +83,6 @@ const Confirmation = () => {
                 address: tempCompanyAddress || 'Not Provided',
                 contactNumber: tempCompanyPhone || '',
                 departments: []
-              }, {
-                headers: { Authorization: `Bearer ${authToken}` }
               });
 
               console.log('✅ Company created successfully');

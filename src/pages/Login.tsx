@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { loginUser, clearError, logout } from '../store/slices/authSlice';
+import { clearError } from '../store/slices/authSlice';
+import { loginUser, logout } from '../store/slices/sessionThunks';
 import { Mail, Lock, Loader2, EyeOff, Eye, ShieldAlert, Phone } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 import ContactModal from '../components/ContactModal';
@@ -50,7 +51,7 @@ const Login = () => {
   // const errorParam = searchParams.get("error");
 
   const [showPassword, setShowPassword] = useState(false);
-  const { isLoading, error, token } = useAppSelector((state) => state.auth);
+  const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -127,7 +128,7 @@ const Login = () => {
 
   // Clear any existing session when user visits login page
   useEffect(() => {
-    if (token) {
+    if (isAuthenticated) {
       dispatch(logout());
     }
   }, []);

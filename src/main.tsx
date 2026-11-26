@@ -5,7 +5,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { store } from './store/store';
 import App from './App.tsx';
 import './index.css';
-import './api/axios';
+import { purgeLegacyAuthStorage, registerAuthListeners } from './auth/registerAuthListeners';
+
+// One-time cleanup of tokens persisted by older builds, then bridge
+// HTTP-layer session events (refresh / expiry) into Redux.
+purgeLegacyAuthStorage();
+registerAuthListeners(store);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,7 +23,12 @@ const queryClient = new QueryClient({
   },
 });
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error('Root element #root not found');
+}
+
+createRoot(rootElement).render(
   <StrictMode>
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
@@ -28,5 +38,3 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
-
-// comment

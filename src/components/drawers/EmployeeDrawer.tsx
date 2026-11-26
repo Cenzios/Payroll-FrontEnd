@@ -13,6 +13,7 @@ import dayjs from "dayjs";
 import { Toggle, SRI_LANKAN_BANKS } from "./drawerConstants";
 import { validateEmployeeField } from "./drawerValidation";
 import Toast from "../Toast";
+import axiosInstance from "../../api/axios";
 
 interface EmployeeDrawerProps {
     isOpen: boolean;
@@ -238,12 +239,8 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
             if (field === 'employeeNIC') params.append('employeeNIC', value.trim());
             if (initialData?.id) params.append('excludeId', initialData.id);
 
-            const token = localStorage.getItem('token');
-            const res = await fetch(
-                `${import.meta.env.VITE_API_BASE_URL}/employee/check-duplicate?${params}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            const data = await res.json();
+            // Shared axios instance: in-memory Bearer token + refresh-on-401
+            const { data } = await axiosInstance.get(`/employee/check-duplicate?${params}`);
             if (!data.success) return;
 
             setDuplicateErrors(prev => ({

@@ -1,29 +1,14 @@
-import axios from 'axios';
+import axiosInstance from './axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-const api = axios.create({
-    baseURL: `${API_BASE_URL}/api/v1/notifications`,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-// Add token to requests
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
+// All calls go through the shared instance (in-memory Bearer + refresh-on-401).
+const BASE_PATH = '/notifications';
 
 /**
  * Get user's notifications
  * @param includeRead - Include read notifications (default: true)
  */
 export const getUserNotifications = async (includeRead: boolean = true) => {
-    const response = await api.get(`/?includeRead=${includeRead}`);
+    const response = await axiosInstance.get(`${BASE_PATH}/?includeRead=${includeRead}`);
     return response.data;
 };
 
@@ -31,7 +16,7 @@ export const getUserNotifications = async (includeRead: boolean = true) => {
  * Get unread notification count
  */
 export const getUnreadCount = async () => {
-    const response = await api.get('/unread-count');
+    const response = await axiosInstance.get(`${BASE_PATH}/unread-count`);
     return response.data;
 };
 
@@ -39,7 +24,7 @@ export const getUnreadCount = async () => {
  * Mark a notification as read
  */
 export const markNotificationAsRead = async (id: string) => {
-    const response = await api.put(`/${id}/read`);
+    const response = await axiosInstance.put(`${BASE_PATH}/${id}/read`);
     return response.data;
 };
 
@@ -47,7 +32,7 @@ export const markNotificationAsRead = async (id: string) => {
  * Delete a notification (soft delete)
  */
 export const deleteNotification = async (id: string) => {
-    const response = await api.delete(`/${id}`);
+    const response = await axiosInstance.delete(`${BASE_PATH}/${id}`);
     return response.data;
 };
 

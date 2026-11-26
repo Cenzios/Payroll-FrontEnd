@@ -74,7 +74,7 @@ const Sidebar = () => {
     const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] = useState(false);
 
     // ── Notification state ──
-    const { user, token } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
     // null = still loading; true/false = resolved. Avoids flash of "Upgrade Now".
     const [isTrial, setIsTrial] = useState<boolean | null>(null);
@@ -92,8 +92,8 @@ const Sidebar = () => {
                 setIsTrial(!!user?.isTrialUser);
             }
         };
-        if (token) checkTrial();
-    }, [token, user]);
+        if (isAuthenticated) checkTrial();
+    }, [isAuthenticated, user]);
 
     // Memoize the UpgradeNow element – render nothing until isTrial is confirmed
     const upgradeNowElement = useMemo(() => {

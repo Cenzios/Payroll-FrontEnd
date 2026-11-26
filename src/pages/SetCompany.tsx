@@ -1,20 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { clearError, setAuthFromToken, setSignupEmail } from '../store/slices/authSlice';
+import { clearError } from '../store/slices/authSlice';
 import { Building2, Loader2 } from 'lucide-react';
-import { jwtDecode } from 'jwt-decode';
 import companyIllustration from '../assets/images/company-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
-
-interface DecodedToken {
-  userId: string;
-  role: string;
-  email: string;
-  fullName: string;
-  iat: number;
-  exp: number;
-}
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const phoneRegex = /^\+94\s?\d{9}$/;
@@ -23,8 +13,7 @@ const sriLankaPhoneRegex = /^(?:\+94|0)(11|21|23|24|25|26|27|31|32|33|34|35|36|3
 const SetCompany = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [searchParams] = useSearchParams();
-  const { isLoading, error, signupEmail, token } = useAppSelector((state) => state.auth);
+  const { isLoading, error, signupEmail, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -44,52 +33,16 @@ const SetCompany = () => {
     companyAddress: '',
   });
 
-  // Handle Google OAuth callback
+  // Google OAuth users arrive here already authenticated (session restored via
+  // POST /auth/refresh); email-signup users have signupEmail. Otherwise → signup.
   useEffect(() => {
-    const token = searchParams.get('token');
-    const isNewUser = searchParams.get('new');
-
-    if (token) {
-      try {
-        // Decode token to get user email
-        const decoded = jwtDecode<DecodedToken>(token);
-
-        // Set auth data in Redux
-        dispatch(setAuthFromToken(token));
-
-        // Set email for subscription flow
-        if (decoded.email) {
-          dispatch(setSignupEmail(decoded.email));
-          console.log('✅ Google user email set in SetCompany:', decoded.email);
-        }
-
-        // Clean up URL
-        window.history.replaceState({}, '', '/set-company');
-      } catch (error) {
-        console.error('❌ Error processing OAuth token:', error);
-      }
-    }
-  }, [searchParams, dispatch]);
-
-  // Only redirect to signup if there's no email AND no token in URL
-  useEffect(() => {
-    const urlToken = searchParams.get('token');
-
-    // If there's a token in URL, wait for it to be processed
-    if (urlToken) {
+    if (isAuthenticated) {
       return;
     }
-
-    // If user is authenticated (has token), allow access even without signupEmail
-    if (token) {
-      return;
-    }
-
-    // Only redirect if no email, no token, and not authenticated
     if (!signupEmail) {
       navigate('/signup');
     }
-  }, [signupEmail, navigate, searchParams, token]);
+  }, [signupEmail, navigate, isAuthenticated]);
 
   useEffect(() => {
     return () => {
@@ -214,7 +167,7 @@ const SetCompany = () => {
     }
   };
 
-  if (!signupEmail && !token) {
+  if (!signupEmail && !isAuthenticated) {
     return null;
   }
 

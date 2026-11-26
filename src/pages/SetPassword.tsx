@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setPassword, clearError, setSignupEmail, loginUser } from '../store/slices/authSlice';
+import { setPassword, clearError, setSignupEmail } from '../store/slices/authSlice';
+import { loginUser } from '../store/slices/sessionThunks';
 import { Lock, Loader2, Eye, EyeOff, Mail, ArrowRight } from 'lucide-react';
 import passwordIllustration from '../assets/images/password-illustration.svg';
 import AuthLayout from '../components/AuthLayout';

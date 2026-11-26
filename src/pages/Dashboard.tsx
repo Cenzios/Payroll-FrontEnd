@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { logout, setAuthFromToken, setSelectedCompanyId } from '../store/slices/authSlice';
+import { setSelectedCompanyId } from '../store/slices/authSlice';
+import { logout } from '../store/slices/sessionThunks';
 import axiosInstance from '../api/axios';
 import {
   Users,
@@ -50,8 +51,7 @@ import logo from '../assets/images/logo-login.svg';
 const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [searchParams] = useSearchParams();
-  const { user, selectedCompanyId, token } = useAppSelector((state) => state.auth);
+  const { user, selectedCompanyId, isAuthenticated } = useAppSelector((state) => state.auth);
 
   // State
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -70,17 +70,14 @@ const Dashboard = () => {
   } | null>(null);
   const [isAddonModalOpen, setIsAddonModalOpen] = useState(false);
 
-  const urlToken = searchParams.get('token');
-  const isTokenPending = !!urlToken && urlToken !== token;
-
   // RTK Query hooks
   const [createCompanyMutation] = useCreateCompanyMutation(); // ✅ Hook for mutation
   const { data: companies = [], refetch: refetchCompanies } = useGetCompaniesQuery(undefined, {
-    skip: !user || isTokenPending
+    skip: !user
   });
 
   const { data: dashboardData, isLoading: isDashboardLoading } = useGetDashboardSummaryQuery(selectedCompanyId || undefined, {
-    skip: !user || isTokenPending,
+    skip: !user,
   });
 
   const { data: lastMonthData = { totalNetPay: 0, totalCompanyEPFETF: 0, totalEmployeeEPF: 0 } } = useQuery({
@@ -118,24 +115,11 @@ const Dashboard = () => {
   // Derived state
   const selectedCompany = companies.find(c => c.id === selectedCompanyId) || null;
 
-  // Handle Google OAuth callback for existing users
-  useEffect(() => {
-    const token = searchParams.get('token');
-    if (token) {
-      try {
-        dispatch(setAuthFromToken(token));
-        window.history.replaceState({}, '', '/dashboard');
-      } catch (error) {
-        console.error('❌ Error processing OAuth token:', error);
-      }
-    }
-  }, [searchParams, dispatch]);
-
   // ✅ 1. Automatic Company Creation for Trial Users
   useEffect(() => {
     const createPendingCompany = async () => {
       const tempName = localStorage.getItem('temp_companyName');
-      if (tempName && token && user) {
+      if (tempName && isAuthenticated && user) {
         try {
           console.log('🏢 Transitioning Trial User: Creating company detected in localStorage...');
           const companyData = {
@@ -162,8 +146,8 @@ const Dashboard = () => {
         }
       }
     };
-    if (token && user) createPendingCompany();
-  }, [token, user, createCompanyMutation, refetchCompanies]);
+    if (isAuthenticated && user) createPendingCompany();
+  }, [isAuthenticated, user, createCompanyMutation, refetchCompanies]);
 
   // Effect to set default selected company
   useEffect(() => {

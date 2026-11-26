@@ -22,7 +22,7 @@ const BuyPlan = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const isPlanChange = searchParams.get('isPlanChange') === 'true';
   const isRenewal = searchParams.get('isRenewal') === 'true';
-  const { error: authError, user } = useAppSelector((state) => state.auth);
+  const { error: authError, user, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
   const [isFetchingSub, setIsFetchingSub] = useState(true);
@@ -99,13 +99,10 @@ const BuyPlan = () => {
   useEffect(() => {
     const fetchSubscription = async () => {
       try {
-        const authToken = localStorage.getItem('token');
-        if (!authToken) return;
+        if (!isAuthenticated) return;
 
         console.log('🔍 Fetching subscription from backend...');
-        const response = await axiosInstance.get('/subscription/current', {
-          headers: { Authorization: `Bearer ${authToken}` }
-        });
+        const response = await axiosInstance.get('/subscription/current');
 
         const sub = response.data.data;
         setActiveSubscription(sub);
@@ -171,8 +168,7 @@ const BuyPlan = () => {
       setIsLoadingSecret(true);
       setIntentError(null);
       try {
-        const authToken = localStorage.getItem('token');
-        if (!authToken) return;
+        if (!isAuthenticated) return;
 
         const planId = isPlanChange ? selectedPlan.id : (localStorage.getItem('reg_planId') || PLANS.BASIC.id);
         const amount = (activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price) * employeeCount;
@@ -183,8 +179,6 @@ const BuyPlan = () => {
           planId,
           amount,
           currency: 'LKR'
-        }, {
-          headers: { Authorization: `Bearer ${authToken}` }
         });
 
         if (data?.data?.clientSecret) {

@@ -7,7 +7,7 @@ import { useAppSelector } from "../store/hooks";
 
 const AlertBar = () => {
     const navigate = useNavigate();
-    const { user, token } = useAppSelector((state) => state.auth);
+    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
     // const [remainingDays, setRemainingDays] = useState(7);
     // const [isTrial, setIsTrial] = useState(false);
@@ -93,14 +93,14 @@ const AlertBar = () => {
             }
         };
 
-        if (token) {
+        if (isAuthenticated) {
             checkTrialStatus();
 
             // Re-check on window focus to ensure dynamic updates if tab is left open
             window.addEventListener('focus', checkTrialStatus);
             return () => window.removeEventListener('focus', checkTrialStatus);
         }
-    }, [token, user]);
+    }, [isAuthenticated, user]);
 
     // TRIAL EXPIRE LOCK
     // body attribute effect

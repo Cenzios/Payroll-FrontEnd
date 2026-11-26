@@ -31,19 +31,21 @@ import { useAppDispatch, useAppSelector } from './store/hooks';
 import { checkAccessStatus } from './store/slices/authSlice';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import NotFound from './pages/NotFound';  
+import NotFound from './pages/NotFound';
+import AuthBootstrap from './components/AuthBootstrap';
 
-function App() {
+function App(): JSX.Element {
   const dispatch = useAppDispatch();
-  const { token } = useAppSelector((state) => state.auth);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
   useEffect(() => {
-    if (token) {
+    if (isAuthenticated) {
       dispatch(checkAccessStatus());
     }
-  }, [token, dispatch]);
+  }, [isAuthenticated, dispatch]);
 
   return (
+    <AuthBootstrap>
     <Router>
       <RenewPlanModal />
       <TrialUpgradeModal />
@@ -150,6 +152,7 @@ function App() {
         <Route path="*" element={<NotFound />} />  {/* Catch-all route at the bottom */}
       </Routes>
     </Router>
+    </AuthBootstrap>
   );
 }
 

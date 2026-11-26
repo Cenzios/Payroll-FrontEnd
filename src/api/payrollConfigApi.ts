@@ -1,28 +1,13 @@
-import axios from 'axios';
+import axiosInstance from './axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-const api = axios.create({
-    baseURL: `${API_BASE_URL}/api/v1/payroll-config`,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-// Add token to requests
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
+// All calls go through the shared instance (in-memory Bearer + refresh-on-401).
+const BASE_PATH = '/payroll-config';
 
 /**
  * Get the active payroll configuration
  */
 export const getActivePayrollConfig = async () => {
-    const response = await api.get('/active');
+    const response = await axiosInstance.get(`${BASE_PATH}/active`);
     return response.data;
 };
 
@@ -30,7 +15,7 @@ export const getActivePayrollConfig = async () => {
  * Get all payroll configurations
  */
 export const getAllPayrollConfigs = async () => {
-    const response = await api.get('/');
+    const response = await axiosInstance.get(`${BASE_PATH}/`);
     return response.data;
 };
 
@@ -38,7 +23,7 @@ export const getAllPayrollConfigs = async () => {
  * Create a new payroll configuration
  */
 export const createPayrollConfig = async (data: any) => {
-    const response = await api.post('/', data);
+    const response = await axiosInstance.post(`${BASE_PATH}/`, data);
     return response.data;
 };
 
@@ -46,7 +31,7 @@ export const createPayrollConfig = async (data: any) => {
  * Update a payroll configuration
  */
 export const updatePayrollConfig = async (id: string, data: any) => {
-    const response = await api.put(`/${id}`, data);
+    const response = await axiosInstance.put(`${BASE_PATH}/${id}`, data);
     return response.data;
 };
 

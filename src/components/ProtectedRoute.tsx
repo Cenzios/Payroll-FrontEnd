@@ -1,32 +1,19 @@
-import { Navigate, useSearchParams, useLocation } from 'react-router-dom';
-import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { setAuthFromToken } from '../store/slices/authSlice';
-import { useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAppSelector } from '../store/hooks';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { token, accessStatus } = useAppSelector((state) => state.auth);
-  const [searchParams] = useSearchParams();
-  const urlToken = searchParams.get('token');
-  const dispatch = useAppDispatch();
-  const location = useLocation();
+/**
+ * Renders children only for an authenticated session. The session is restored
+ * by <AuthBootstrap> (POST /auth/refresh) before any route renders, so by the
+ * time this runs `isAuthenticated` is final for this page load.
+ */
+const ProtectedRoute = ({ children }: ProtectedRouteProps): JSX.Element => {
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
 
-  useEffect(() => {
-    if (urlToken && !token) {
-      dispatch(setAuthFromToken(urlToken));
-      // Remove token from URL
-      window.history.replaceState({}, '', location.pathname);
-    }
-  }, [urlToken, token, dispatch, location.pathname]);
-
-  // Use effective token for logic (either from Redux or about to enter Redux)
-  const effectiveToken = token || urlToken;
-
-  // Allow access if token exists in Redux OR in URL (for OAuth callback)
-  if (!effectiveToken) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 

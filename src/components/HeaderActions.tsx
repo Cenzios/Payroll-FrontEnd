@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, LogOut } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { logout } from '../store/slices/authSlice';
+import { logout } from '../store/slices/sessionThunks';
 import {
   apiSlice,
   useGetNotificationsQuery,

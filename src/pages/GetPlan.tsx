@@ -1,54 +1,20 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Check, Loader2, ArrowLeft } from 'lucide-react';
-import { useAppDispatch } from '../store/hooks';
-import { setAuthFromToken, setSignupEmail, setTempPlanId } from '../store/slices/authSlice';
-import { jwtDecode } from 'jwt-decode';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { setTempPlanId } from '../store/slices/authSlice';
 import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
 import ContactModal from '../components/ContactModal';
 import { PLANS, Plan } from '../constants/plans';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 
-interface DecodedToken {
-  userId: string;
-  role: string;
-  email: string;
-  fullName: string;
-  iat: number;
-  exp: number;
-}
-
 const GetPlan = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
 
-  // Handle Google OAuth callback
-  useEffect(() => {
-    const token = searchParams.get('token');
-
-    if (token) {
-      try {
-        // Decode token to get user email
-        const decoded = jwtDecode<DecodedToken>(token);
-
-        // Set auth data in Redux
-        dispatch(setAuthFromToken(token));
-
-        // Set email for subscription flow
-        if (decoded.email) {
-          dispatch(setSignupEmail(decoded.email));
-          console.log('✅ Google user email set:', decoded.email);
-        }
-
-        // Clean up URL
-        window.history.replaceState({}, '', '/get-plan');
-      } catch (error) {
-        console.error('❌ Error processing OAuth token:', error);
-      }
-    }
-  }, [searchParams, dispatch]);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
   const [apiPlans, setApiPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,10 +48,8 @@ const GetPlan = () => {
   const handleSelectPlan = async (planId: string) => {
     setIsProcessingPlan(true);
     try {
-      // ✅ Get token for authenticated request
-      const token = localStorage.getItem('token');
-
-      if (!token) {
+      // ✅ Require an authenticated session (access token lives in memory)
+      if (!isAuthenticated) {
         console.error('❌ No auth token found. Please login.');
         navigate('/login');
         return;
@@ -96,8 +60,7 @@ const GetPlan = () => {
 
       const response = await axiosInstance.post(
         '/subscription/select-plan',
-        { planId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { planId }
       );
 
       console.log('✅ Backend plan selection success:', response.data);

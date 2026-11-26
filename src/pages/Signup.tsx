@@ -23,7 +23,7 @@ const Signup = () => {
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isLoading, error, token } = useAppSelector((state) => state.auth);
+  const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -36,10 +36,10 @@ const Signup = () => {
   });
 
   useEffect(() => {
-    if (token) {
+    if (isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [token, navigate]);
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     return () => {

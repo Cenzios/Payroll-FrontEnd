@@ -5,7 +5,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import { useTrialStatus } from '../hooks/useTrialStatus';
-import { useAppSelector } from '../store/hooks';
+import { getAccessToken } from '../auth/tokenStore';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -17,6 +17,24 @@ interface DocItem {
     docTitle?: string;
 }
 
+/**
+ * Attach the in-memory Bearer token only for files served by our own API
+ * (same origin as VITE_API_BASE_URL or relative URLs) — never for third-party
+ * hosts such as Cloudinary.
+ */
+function buildAuthHeaders(fileUrl: string): Record<string, string> {
+    const token = getAccessToken();
+    if (!token) return {};
+    try {
+        const apiOrigin = new URL(import.meta.env.VITE_API_BASE_URL, window.location.origin).origin;
+        const fileOrigin = new URL(fileUrl, window.location.origin).origin;
+        const isOwnApi = fileOrigin === apiOrigin || fileOrigin === window.location.origin;
+        return isOwnApi ? { Authorization: `Bearer ${token}` } : {};
+    } catch {
+        return {};
+    }
+}
+
 interface DocumentViewerModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -26,7 +44,6 @@ interface DocumentViewerModalProps {
 
 const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClose, docs, initialIndex = 0 }) => {
     const { handleTrialAction } = useTrialStatus();
-    const { token } = useAppSelector((state) => state.auth);
     const [activeIndex, setActiveIndex] = useState(initialIndex);
     const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
     const [pdfLoading, setPdfLoading] = useState(false);
@@ -55,13 +72,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
             const loadPdf = async () => {
                 setPdfLoading(true);
                 try {
-                    const isExternal = activeDoc.fileUrl.includes('cloudinary.com');
-                    const headers: Record<string, string> = {};
-                    if (!isExternal && token) {
-                        headers['Authorization'] = `Bearer ${token}`;
-                    }
-
-                    const response = await fetch(activeDoc.fileUrl, { headers });
+                    const response = await fetch(activeDoc.fileUrl, { headers: buildAuthHeaders(activeDoc.fileUrl) });
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
                     const contentType = response.headers.get('content-type') || '';
@@ -101,7 +112,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
             }
             setPdfBlobUrl(null);
         };
-    }, [isOpen, activeIndex, docs, token]);
+    }, [isOpen, activeIndex, docs]);
 
     if (!isOpen) return null;
 
@@ -127,13 +138,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
 
     const handleDownload = async () => {
         try {
-            const isExternal = currentDoc.fileUrl.includes('cloudinary.com');
-            const headers: Record<string, string> = {};
-            if (!isExternal && token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-
-            const response = await fetch(currentDoc.fileUrl, { headers });
+            const response = await fetch(currentDoc.fileUrl, { headers: buildAuthHeaders(currentDoc.fileUrl) });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const blob = await response.blob();
             const blobUrl = window.URL.createObjectURL(blob);
