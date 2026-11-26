@@ -5,6 +5,7 @@ import { updateProfile, changePassword } from '../../api/authApi';
 import { companyApi } from '../../api/companyApi';
 import { useGetSubscriptionQuery, useGetCompaniesQuery, apiSlice } from '../../store/apiSlice';
 import { User, Building2, Loader2, Mail, Phone, MapPin, Lock, Eye, EyeOff, ArrowRight, Edit2 } from 'lucide-react';
+import { validateCompanyField } from '../drawers/drawerValidation';
 import Toast from "../../components/Toast";
 
 const AccountTab = () => {
@@ -100,11 +101,8 @@ const AccountTab = () => {
                     return "Name must not contain more than 5 consecutive special characters";
                 break;
             case 'email':
-                if (!value.trim())
-                    return 'Email is required';
-                if (!/^(?!.*\.\.)[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$/.test(value))
-                    return 'Invalid email format';
-                break;
+                // Same rules as the Add-company form (no 6-character TLD limit)
+                return validateCompanyField('email', value);
             case 'contactNumber':
                 if (!value.trim())
                     return 'Contact number is required';
