@@ -14,7 +14,8 @@ import { DollarSign, HandCoins, CircleDotDashed, Shapes } from 'lucide-react';
 import AlertBar from '../components/AlertBar';
 import logo from '../assets/images/logo-login.svg';
 import { useSearchParams } from 'react-router-dom';
-import { formatRs, sumBy, toDecimalString, ZERO } from '../utils/money';
+import Decimal from 'decimal.js';
+import { formatRs, sumBy, toDecimal, toDecimalString, ZERO } from '../utils/money';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -65,7 +66,12 @@ const Loans = () => {
     (sum, l) => sum.plus(sumBy(l.installments, (ins) => ins.paidAmount)),
     ZERO,
   );
-  const totalPendingPayment = totalLoanAmount.minus(totalAmountCollected);
+  // Pending = what the instalment schedules still expect (principal + interest) − collected
+  const totalRepayable = loans.reduce(
+    (sum, l) => sum.plus(l.installments && l.installments.length > 0 ? sumBy(l.installments, (ins) => ins.amount) : toDecimal(l.amount)),
+    ZERO,
+  );
+  const totalPendingPayment = Decimal.max(totalRepayable.minus(totalAmountCollected), 0);
 
   const SummaryCard = ({ title, value, icon: Icon, iconBg, iconColor }: {
     title: string;

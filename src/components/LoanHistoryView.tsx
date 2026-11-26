@@ -105,14 +105,13 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
     const totalInstallmentsCount = loan.installmentCount || installments.length || 1;
     const progressPercent = Math.min(Math.round((paidInstallmentsCount / totalInstallmentsCount) * 100), 100);
 
-    // Interest calculation based on rate and type (decimal.js; amounts are decimal strings)
+    // Totals come from the instalment schedule (decimal.js; amounts are decimal strings):
+    // full amount = sum of instalment amounts, interest = that sum − principal.
     const principal = toDecimal(loan.amount);
-    const rateFraction = toDecimal(loan.interestRate).dividedBy(100);
-    const totalInterest: Decimal = loan.interestRateType === 'ANNUALLY'
-        ? principal.times(rateFraction).times(new Decimal(totalInstallmentsCount).dividedBy(12))
-        : principal.times(rateFraction).times(totalInstallmentsCount);
-
-    const fullAmountWithInterest = principal.plus(totalInterest);
+    const fullAmountWithInterest: Decimal = installments.length > 0
+        ? sumBy(installments, (i) => i.amount)
+        : toDecimal(loan.monthlyPremium).times(totalInstallmentsCount);
+    const totalInterest: Decimal = Decimal.max(fullAmountWithInterest.minus(principal), 0);
     const currentPaidAmount = sumBy(
         installments.filter((i) => i.status === 'PAID'),
         (i) => i.amount,
