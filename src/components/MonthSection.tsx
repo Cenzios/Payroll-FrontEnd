@@ -58,7 +58,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                 className="bg-gradient-to-r rounded-xl from-blue-50 to-indigo-50 px-6 sm:pr-8 py-4 cursor-pointer hover:from-blue-100 hover:to-indigo-100 transition-all max-sm:p-4"
             >
                 <div className="flex items-center justify-between gap-3 min-w-0">
-                    <div className="flex items-center gap-2 max-sm:gap-2 shrink-0 w-56 sm:w-64">
+                    <div className="flex items-center gap-2 max-sm:gap-2 shrink-0">
                         {/* Expand/Collapse Icon */}
                         <div className="text-blue-600">
                             {isExpanded ? (
@@ -82,21 +82,22 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                         </span>
                     </div>
 
-                    <div className="flex flex-row items-center overflow-x-auto gap-2 sm:gap-6 min-w-0 flex-1 justify-start">
+                    {/* Wraps instead of clipping the last column (e.g. "Total Net Pay" at 1440px) */}
+                    <div className="flex flex-row flex-wrap items-center gap-x-6 gap-y-2 min-w-0 flex-1 justify-end">
                         {/* Summary Info */}
-                        <div className="flex flex-col items-center shrink-0 w-36 ml-20 text-center">
+                        <div className="flex flex-col items-center shrink-0 text-center">
                             <div className="text-sm text-gray-500 whitespace-nowrap">Employees</div>
                             <div className="text-base font-medium text-gray-900 whitespace-nowrap">{totals.totalEmployees}</div>
                         </div>
-                        <div className="flex flex-col items-end shrink-0 w-44 text-right">
+                        <div className="flex flex-col items-end shrink-0 text-right">
                             <div className="text-sm text-gray-500 whitespace-nowrap">Employee EPF</div>
                             <div className="text-base font-medium text-blue-600 whitespace-nowrap">{formatRs(totals.totalEmployeeEPF)}</div>
                         </div>
-                        <div className="flex flex-col items-end shrink-0 w-44 text-right">
+                        <div className="flex flex-col items-end shrink-0 text-right">
                             <div className="text-sm text-gray-500 whitespace-nowrap">Company EPF/ETF</div>
                             <div className="text-base font-medium text-blue-600 whitespace-nowrap">{formatRs(totals.totalCompanyEPFETF)}</div>
                         </div>
-                        <div className="flex flex-col items-end shrink-0 w-44 text-right">
+                        <div className="flex flex-col items-end shrink-0 text-right">
                             <div className="text-sm text-gray-500 whitespace-nowrap">Total Net Pay</div>
                             <div className="text-base font-medium text-blue-600 whitespace-nowrap">{formatRs(totals.totalNetPay)}</div>
                         </div>
