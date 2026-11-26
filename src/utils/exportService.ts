@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 import Decimal from "decimal.js";
 import type { SalaryDetails } from "../types/salary.types";
 import type { EmployeeAnnualTotals, EmployeeMonthlyRow, SelectedSummaryEmployee, SelectedSummaryTotals } from "../types/report.types";
-import { formatMoney, formatRs, MoneyInput, toChartNumber, toDecimal, toDecimalString } from "./money";
+import { formatMoney, formatRs, MoneyInput, toChartNumber, toDecimal } from "./money";
 import { rowDeduction, rowGross, rowNet, sumRows } from "./reportRow";
 import { LOAN_TOTAL_LINE, payslipBasicLine, payslipTotals } from "./payslipTotals";
 
@@ -1529,7 +1529,7 @@ export const exportBankAdviceReport = (
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text("Net Pay", 20, currentY + 6.5);
+        doc.text("Total Net Pay", 20, currentY + 6.5);
         doc.setTextColor(255, 184, 0);
         doc.text(`${rs(totalAmount)}`, pageWidth - 20, currentY + 6.5, { align: "right" });
 
@@ -1584,12 +1584,12 @@ export const exportBankAdviceReport = (
                 item.bankName,
                 item.branchName,
                 item.accountNumber,
-                toDecimalString(item.amount)
+                xlsNum(item.amount)
             ]);
         });
 
         wsData.push([]);
-        wsData.push(["", "", "", "", "Net Pay", toDecimalString(totalAmount)]);
+        wsData.push(["", "", "", "", "Total Net Pay", xlsNum(totalAmount)]);
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
 

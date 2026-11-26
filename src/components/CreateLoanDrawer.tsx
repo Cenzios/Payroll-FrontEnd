@@ -16,6 +16,9 @@ import loanInstallmentIcon from '../assets/images/loan-installment.svg';
 import loanStartIcon from '../assets/images/loan-start.svg';
 import loanEndIcon from '../assets/images/loan-end.svg';
 
+type RequiredField = 'employee' | 'amount' | 'installmentCount' | 'startDate';
+type RequiredErrors = Partial<Record<RequiredField, string>>;
+
 interface CreateLoanDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -58,6 +61,10 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
   };
 
   const [descriptionError, setDescriptionError] = useState('');
+  // Required-field errors shown together on submit (not one at a time)
+  const [requiredErrors, setRequiredErrors] = useState<RequiredErrors>({});
+  const clearRequiredError = (field: RequiredField): void =>
+    setRequiredErrors((prev) => ({ ...prev, [field]: undefined }));
   const [interestRateError, setInterestRateError] = useState('');
   const LOAN_DESCRIPTION_MAX_LENGTH = 100;
   const validateDescription = (value: string): string => {
@@ -131,8 +138,17 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     const rateError = interestRate.trim() === '' ? 'Interest rate is required' : '';
     setInterestRateError(rateError);
 
-    if (!companyId || !employeeId || !loanTitle || !amount || !installmentCount || !interestRate.trim() || titleError || descError || rateError) {
-      setToast({ message: titleError || descError || rateError || 'Please fill in all required fields', type: 'error' });
+    const missing: RequiredErrors = {
+      employee: employeeId ? undefined : 'Employee is required',
+      amount: toDecimal(amount).greaterThan(0) ? undefined : 'Amount is required',
+      installmentCount: installmentCount ? undefined : 'Installment count is required',
+      startDate: startDate ? undefined : 'Start date is required',
+    };
+    setRequiredErrors(missing);
+    const hasMissing = Object.values(missing).some(Boolean);
+
+    if (!companyId || hasMissing || titleError || descError || rateError) {
+      setToast({ message: 'Please fix the highlighted fields', type: 'error' });
       return;
     }
 
@@ -238,6 +254,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     setInstallmentCount('');
     setInterestRate('');
     setInterestRateError('');
+    setRequiredErrors({});
     setSupportingDocs([]);
     setFileTitles({});
   };
@@ -254,6 +271,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     }
     const num = parseInt(value);
     if (!isNaN(num)) {
+      clearRequiredError('installmentCount');
       if (num > 15) {
         setInstallmentCount('15');
         setToast({ message: 'Maximum installment count is 15', type: 'error' });
@@ -273,6 +291,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     const sanitized = sanitizeMoneyInput(value);
     if (sanitized === null) return;
     setAmount(sanitized);
+    clearRequiredError('amount');
   };
 
   const handleInterestRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -451,6 +470,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                           key={emp.id}
                           onClick={() => {
                             setEmployeeId(emp.id);
+                            clearRequiredError('employee');
                             setSelectedEmployeeName(`${emp.fullName} (${emp.employeeId})`);
                             setIsDropdownOpen(false);
                             setSearchTerm('');
@@ -478,6 +498,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                     )}
                   </div>
                 )}
+                {requiredErrors.employee && <p className="text-red-500 text-xs mt-1">{requiredErrors.employee}</p>}
               </div>
 
               {/* Amount */}
@@ -506,6 +527,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                       className="no-spinner w-full pl-11 pr-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                     />
                   </div>
+                  {requiredErrors.amount && <p className="text-red-500 text-xs mt-1">{requiredErrors.amount}</p>}
                 </div>
 
                 {/* Installments Count */}
@@ -528,7 +550,9 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                     onKeyDown={(e) => (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.preventDefault()}
                     className="no-spinner w-full px-4 py-3 text-[13px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900"
                   />
-                  <p className="text-[11px] text-gray-400 mt-1">Maximum 15 installments</p>
+                  {requiredErrors.installmentCount
+                    ? <p className="text-red-500 text-xs mt-1">{requiredErrors.installmentCount}</p>
+                    : <p className="text-[11px] text-gray-400 mt-1">Maximum 15 installments</p>}
                 </div>
               </div>
 
@@ -621,6 +645,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                         value={startDate ? dayjs(startDate) : null}
                         onChange={(newValue) => {
                           setStartDate(newValue ? newValue.format('YYYY-MM-DD') : '');
+                          if (newValue) clearRequiredError('startDate');
                         }}
                         minDate={
                           employeeId
@@ -651,6 +676,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                       />
                     </LocalizationProvider>
                   </div>
+                  {requiredErrors.startDate && <p className="text-red-500 text-xs mt-1">{requiredErrors.startDate}</p>}
                 </div>
 
                 <div>

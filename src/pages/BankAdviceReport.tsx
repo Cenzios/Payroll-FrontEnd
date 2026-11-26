@@ -340,7 +340,7 @@ const BankAdviceReport = () => {
                             {/* Total Footer */}
                             {!isLoadingEmployees && !isLoadingSalary && bankReportData.length > 0 && (
                                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end items-center gap-4">
-                                    <span className="text-sm font-bold text-blue-600">Total Contribution</span>
+                                    <span className="text-sm font-bold text-blue-600">Total Net Pay</span>
                                     <span className="text-xl font-bold text-blue-600">
                                         {formatRs(totalAmount)}
                                     </span>
@@ -370,7 +370,7 @@ const BankAdviceReport = () => {
                                         />))}
                                     {bankReportData.length > 0 && (
                                         <div className="bg-blue-50 rounded-2xl px-5 py-5 flex flex-col items-center gap-1 mt-1 border border-blue-200">
-                                            <span className="text-sm font-medium text-blue-400">Total Contribution</span>
+                                            <span className="text-sm font-medium text-blue-400">Total Net Pay</span>
                                             <span className="text-2xl font-bold text-blue-600">
                                                 {formatRs(totalAmount)}
                                             </span>
