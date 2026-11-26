@@ -4,6 +4,7 @@ import PlanPaymentManual from "./PlanPaymentManual";
 import { useState } from "react";
 import PlanPaymentPayhere from "./PlanPaymentPayhere";
 import { formatRs, toDecimal } from "../utils/money";
+import type { PendingInvoice } from "../types/subscription.types";
 
 interface PaymentMethodSelectorProps {
   value: "card" | "manual" | "payhere" | null;
@@ -14,6 +15,8 @@ interface PaymentMethodSelectorProps {
   pricePerEmployee: string; // decimal string (API contract)
   employeeCount: number;
   onEmployeeCountChange: (count: number) => void;
+  /** Pending REGISTRATION invoice: when present its totalAmount is what the user pays. */
+  pendingInvoice?: PendingInvoice | null;
 }
 
 const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
@@ -25,6 +28,7 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
   pricePerEmployee,
   employeeCount,
   onEmployeeCountChange,
+  pendingInvoice = null,
 }) => {
   const [internalStep, setInternalStep] = useState<"select" | "pay">(
     initialStep,
@@ -32,8 +36,13 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
 
   const step = controlledStep !== undefined ? controlledStep : internalStep;
 
-  // Subtotal = price per employee × employee count (decimal.js)
-  const subtotal = toDecimal(pricePerEmployee).times(employeeCount);
+  // The pending invoice is the source of truth (registration fee + first period);
+  // without one, fall back to price per employee × employee count (decimal.js).
+  const linePrice = pendingInvoice ? pendingInvoice.pricePerEmployee : pricePerEmployee;
+  const lineCount = pendingInvoice ? pendingInvoice.employeeCount : employeeCount;
+  const subtotal = toDecimal(linePrice).times(lineCount);
+  const registrationFee = pendingInvoice ? pendingInvoice.registrationFee : "0";
+  const total = pendingInvoice ? toDecimal(pendingInvoice.totalAmount) : subtotal;
 
   const handleSetStep = (newStep: "select" | "pay") => {
     if (onStepChange) onStepChange(newStep);
@@ -78,7 +87,7 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
 
               <div className="flex items-center gap-3">
                 <p className="text-lg font-bold w-12 text-center bg-[#F8FAFC]">
-                  {employeeCount}
+                  {lineCount}
                 </p>
 
                 {/* <button
@@ -171,12 +180,18 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
 
             {/* TOTAL + BUTTON */}
             <div className="flex flex-col gap-2 mt-6">
+              {toDecimal(registrationFee).gt(0) && (
+                <div className="flex justify-between">
+                  <p className="text-sm text-gray-500">Registration Fee (one-time)</p>
+                  <span className="font-semibold">{formatRs(registrationFee)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <p className="text-sm text-gray-500">Subscription Subtotal</p>
                 {/* <span className="font-semibold">Rs: 100.00</span> */}
                 <div className="text-right">
                   <p className="font-semibold">
-                    {formatRs(pricePerEmployee)} X {employeeCount}
+                    {formatRs(linePrice)} X {lineCount}
                   </p>
                   <span className="font-semibold">
                     {formatRs(subtotal)}
@@ -193,7 +208,7 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                 <h3 className="font-bold">Total</h3>
                 {/* <h3 className="font-bold text-blue-500">Rs: 100.00</h3> */}
                 <h3 className="font-bold text-blue-500">
-                  {formatRs(subtotal)}
+                  {formatRs(total)}
                 </h3>
               </div>
 
@@ -218,13 +233,11 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
             <PlanPaymentCard
               pricePerEmployee={pricePerEmployee}
               employeeCount={employeeCount}
+              isActive={value === "card"}
             />
           </div>
           <div style={{ display: value === "manual" ? "block" : "none" }}>
-            <PlanPaymentManual
-              pricePerEmployee={pricePerEmployee}
-              employeeCount={employeeCount}
-            />
+            <PlanPaymentManual totalAmount={total.toFixed(2)} />
           </div>
           {/* <div style={{ display: value === "payhere" ? "block" : "none" }}>
                         <PlanPaymentPayhere />

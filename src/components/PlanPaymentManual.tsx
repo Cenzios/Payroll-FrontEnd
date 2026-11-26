@@ -2,14 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { UploadCloud, Copy, Check, Loader2, X, AlertCircle } from "lucide-react";
 import PlanVerify from "./PlanVerify";
 import axiosInstance from "../api/axios";
-import { toDecimal, toMoneyString } from "../utils/money";
+import { toMoneyString } from "../utils/money";
 
 interface PlanPaymentManualProps {
-    pricePerEmployee: string; // decimal string (API contract)
-    employeeCount: number;
+    totalAmount: string; // decimal string (API contract): the pending invoice total
 }
 
-const PlanPaymentManual = ({ pricePerEmployee, employeeCount }: PlanPaymentManualProps) => {
+const PlanPaymentManual = ({ totalAmount }: PlanPaymentManualProps) => {
     const [file, setFile] = useState<File | null>(null);
     const [reference, setReference] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -117,7 +116,7 @@ const PlanPaymentManual = ({ pricePerEmployee, employeeCount }: PlanPaymentManua
         return (
             <PlanVerify
                 referenceId={reference || "N/A"}
-                totalAmount={toMoneyString(toDecimal(pricePerEmployee).times(employeeCount))}
+                totalAmount={toMoneyString(totalAmount)}
                 onResubmit={() => {
                     setIsSubmitted(false);
                     setFile(null);

@@ -1,32 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppSelector } from '../store/hooks';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
 import PlanOption from '../components/PlanOption';
 import { PLANS, getPlanById } from '../constants/plans';
-import bgIllustration from '../assets/images/Background-illustration.svg';
 import { useUpdateSubscriptionEmployeeCountMutation, useGetDashboardSummaryQuery } from '../store/apiSlice';
-import { isPositive, toDecimal, toMoneyString } from '../utils/money';
-
-// Stripe Imports
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
-import CheckoutForm from '../components/CheckoutForm';
-
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+import { isPositive } from '../utils/money';
+import type { CurrentSubscription } from '../types/subscription.types';
 
 const BuyPlan = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isPlanChange = searchParams.get('isPlanChange') === 'true';
   const isRenewal = searchParams.get('isRenewal') === 'true';
-  const { error: authError, user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { error: authError, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
-  const [isFetchingSub, setIsFetchingSub] = useState(true);
 
   const urlMethod = searchParams.get('method') as "card" | "manual" | "payhere" | null;
   const urlStep = searchParams.get('step') as "select" | "pay" | null;
@@ -70,7 +61,7 @@ const BuyPlan = () => {
   }, [employeeCount]);
 
 
-  const handleMethodChange = (method: "card" | "manual") => {
+  const handleMethodChange = (method: "card" | "manual" | "payhere") => {
     setPaymentMethod(method);
     setSearchParams(prev => {
       prev.set('method', method);
@@ -86,10 +77,6 @@ const BuyPlan = () => {
     }, { replace: true });
   };
 
-  // Stripe State
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [isLoadingSecret, setIsLoadingSecret] = useState(false);
-  const [intentError, setIntentError] = useState<string | null>(null);
   const [isManualPending, setIsManualPending] = useState(false);
 
   // ✅ Get selected plan dynamically
@@ -126,8 +113,6 @@ const BuyPlan = () => {
         }
       } catch (err) {
         console.error('❌ Failed to fetch subscription:', err);
-      } finally {
-        setIsFetchingSub(false);
       }
     };
 
@@ -165,53 +150,9 @@ const BuyPlan = () => {
     }
   }, [navigate]);
 
-  // ✅ Create Payment Intent on Mount (or when plan/user is ready)
-  useEffect(() => {
-    // Only create Stripe Intent if:
-    // 1. User and Sub data are loaded
-    // 2. User has NOT already submitted a manual payment (isManualPending is false)
-    // 3. Current selected method is 'card'
-    if (!user || isFetchingSub || isManualPending || paymentMethod !== 'card') return;
-
-    const createPaymentIntent = async () => {
-      setIsLoadingSecret(true);
-      setIntentError(null);
-      try {
-        if (!isAuthenticated) return;
-
-        const planId = isPlanChange ? selectedPlan.id : (localStorage.getItem('reg_planId') || PLANS.BASIC.id);
-        // Sent as a decimal string (API contract)
-        const amount = toMoneyString(toDecimal(effectivePlanPrice).times(employeeCount));
-
-        console.log('📝 Creating Stripe Intent for Plan:', planId);
-
-        const { data } = await axiosInstance.post('/payments/intents', {
-          planId,
-          amount,
-          currency: 'LKR'
-        });
-
-        if (data?.data?.clientSecret) {
-          setClientSecret(data.data.clientSecret);
-          console.log('✅ Client Secret received');
-        } else {
-          throw new Error('No client secret returned');
-        }
-
-      } catch (err: any) {
-        if (err.response?.data?.message === 'PENDING_ARREARS') {
-          navigate('/settle-invoice');
-          return;
-        }
-        console.error('❌ Failed to create Payment Intent:', err);
-        setIntentError(err.response?.data?.message || 'Failed to initialize payment.');
-      } finally {
-        setIsLoadingSecret(false);
-      }
-    };
-
-    createPaymentIntent();
-  }, [user, isFetchingSub, isPlanChange, selectedPlan.id, paymentMethod, isManualPending]); // Dependencies updated
+  // No payment intent is created here: PlanPaymentCard creates one only after the
+  // user picked Card and pressed "Proceed to Pay".
+  const pendingInvoice = (activeSubscription as CurrentSubscription | null)?.pendingInvoice ?? null;
 
   return (
     <div
@@ -233,9 +174,9 @@ const BuyPlan = () => {
           {isPlanChange ? 'Confirm Plan Change' : 'Complete Registration Payment'}
         </h1>
 
-        {(authError || intentError) && (
+        {authError && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center">
-            {authError || intentError}
+            {authError}
           </div>
         )}
 
@@ -254,6 +195,7 @@ const BuyPlan = () => {
               registrationFee={effectiveRegistrationFee}
               description={selectedPlan.description}
               features={selectedPlan.features}
+              maxEmployees={activeSubscription?.maxEmployees}
               showPerEmployeePrice={true}
               isHighlighted={true}
               showButton={false}
@@ -270,6 +212,7 @@ const BuyPlan = () => {
               pricePerEmployee={effectivePlanPrice}
               employeeCount={employeeCount}
               onEmployeeCountChange={setEmployeeCount}
+              pendingInvoice={pendingInvoice}
             />
           </div>
 

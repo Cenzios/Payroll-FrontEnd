@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { useSearchParams } from 'react-router-dom';
@@ -15,9 +15,11 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
 interface PlanPaymentCardProps {
     pricePerEmployee?: string; // decimal string (API contract)
     employeeCount?: number;
+    /** True only once the user picked Card and pressed "Proceed to Pay". */
+    isActive?: boolean;
 }
 
-const PlanPaymentCard = ({ pricePerEmployee = '0', employeeCount = 1 }: PlanPaymentCardProps) => {
+const PlanPaymentCard = ({ pricePerEmployee = '0', employeeCount = 1, isActive = false }: PlanPaymentCardProps): JSX.Element => {
     const [searchParams] = useSearchParams();
     const isPlanChange = searchParams.get('isPlanChange') === 'true';
     const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -30,6 +32,8 @@ const PlanPaymentCard = ({ pricePerEmployee = '0', employeeCount = 1 }: PlanPaym
     const [isLoadingSecret, setIsLoadingSecret] = useState(false);
     const [intentError, setIntentError] = useState<string | null>(null);
     const [actualAmount, setActualAmount] = useState<string | null>(null);
+    // One intent per plan per visit: never on mount, never on re-render
+    const intentPlanRef = useRef<string | null>(null);
 
     // Get selected plan dynamically
     const selectedPlanId = localStorage.getItem('reg_planId') || PLANS.BASIC.id;
@@ -57,9 +61,11 @@ const PlanPaymentCard = ({ pricePerEmployee = '0', employeeCount = 1 }: PlanPaym
         fetchSubscription();
     }, []);
 
-    // Create Payment Intent on Mount (or when plan/user is ready)
+    // Create the Payment Intent only after the user chose to pay by card (no payment rows before that)
     useEffect(() => {
-        if (!user || isFetchingSub) return;
+        if (!isActive || !user || isFetchingSub) return;
+        if (intentPlanRef.current === selectedPlan.id) return;
+        intentPlanRef.current = selectedPlan.id;
 
         const createPaymentIntent = async () => {
             setIsLoadingSecret(true);
@@ -97,7 +103,7 @@ const PlanPaymentCard = ({ pricePerEmployee = '0', employeeCount = 1 }: PlanPaym
         };
 
         createPaymentIntent();
-    }, [user, isFetchingSub, isPlanChange, selectedPlan.id, selectedPlan.price, employeeCount]); // Dependencies
+    }, [isActive, user, isFetchingSub, isPlanChange, selectedPlan.id]); // Dependencies
 
     return (
         <div className="bg-white rounded-[2.5rem] shadow-xl p-6 flex flex-col justify-center h-full min-h-[400px] max-sm:w-[22rem]">
