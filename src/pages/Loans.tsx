@@ -123,7 +123,10 @@ const Loans = () => {
             {formatRs(loan.amount)}
           </p>
         </div>
-        <p className="text-[12px] font-semibold text-[#6B7280]">{loan.loanTitle}</p>
+        <div className="text-right">
+          <p className="text-[12px] font-semibold text-[#6B7280]">{loan.loanTitle}</p>
+          {loan.loanId && <p className="text-[10px] text-[#A8B0B9] font-mono mt-0.5">{loan.loanId}</p>}
+        </div>
       </div>
 
       {/* Divider */}
@@ -313,7 +316,7 @@ const Loans = () => {
                           <thead className="bg-[#FAFBFC]">
                             <tr className="border-b-2 border-[#e1e2e4]">
                               <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Employee</th>
-                              <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Loan Title</th>
+                              <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Loan Title / Reference</th>
                               <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Amount</th>
                               <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Interest Rate</th>
                               <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Installments</th>
@@ -339,7 +342,10 @@ const Loans = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.loanTitle}</td>
+                                <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">
+                                  <div>{loan.loanTitle}</div>
+                                  {loan.loanId && <div className="text-[12px] text-[#A8B0B9] font-mono mt-0.5">{loan.loanId}</div>}
+                                </td>
                                 <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{formatRs(loan.amount)}</td>
                                 <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{toDecimalString(loan.interestRate)}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})</td>
                                 <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.installments?.filter((i: any) => i.status === 'PAID').length || 0} / {loan.installmentCount}</td>

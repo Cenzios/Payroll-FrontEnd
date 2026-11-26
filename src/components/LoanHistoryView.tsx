@@ -195,7 +195,12 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                     </div>
 
                     <div>
-                        <h2 className="text-xl font-bold text-[#141B3B] mb-2">{loan.employee?.fullName}</h2>
+                        <h2 className="text-xl font-bold text-[#141B3B] mb-1">{loan.employee?.fullName}</h2>
+                        {loan.loanId && (
+                            <p className="text-[12px] font-semibold text-blue-600 mb-2" data-testid="loan-reference">
+                                Loan reference: <span className="font-mono">{loan.loanId}</span>
+                            </p>
+                        )}
                         <div className="flex items-center gap-4 text-[13px] font-medium text-gray-500">
                             <div className="flex items-center gap-1.5">
                                 <span className="w-4 h-4 flex items-center justify-center bg-gray-200 rounded text-gray-600 text-[10px]">ID</span>
