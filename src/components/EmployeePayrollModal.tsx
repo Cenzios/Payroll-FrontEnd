@@ -102,6 +102,16 @@ const EmployeePayrollModal = ({
         }
     }, [isOpen, employeeId, companyId, month, year]);
 
+    // Close on Escape
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKeyDown = (e: KeyboardEvent): void => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [isOpen, onClose]);
+
     const fetchEmployeeData = async () => {
         setIsLoading(true);
         try {
@@ -186,11 +196,12 @@ const EmployeePayrollModal = ({
     return (
         <>
             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 max-sm:p-0">
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden max-sm:rounded-none max-sm:h-full max-sm:max-h-full max-sm:max-w-full relative">
+                <div role="dialog" aria-modal="true" className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden max-sm:rounded-none max-sm:h-full max-sm:max-h-full max-sm:max-w-full relative">
 
                     {/* Close Button overlaying the PayslipPreview */}
                     <button
                         onClick={onClose}
+                        aria-label="Close payslip"
                         className="absolute top-4 right-4 z-[70] p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center bg-white/80 backdrop-blur-sm shadow-sm"
                     >
                         <X className="w-5 h-5 text-gray-500" />
