@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
+import { PASSWORD_POLICY_HINT, passwordPolicyError } from '../utils/passwordPolicy';
 
 const ResetPassword = () => {
     const navigate = useNavigate();
@@ -17,8 +18,7 @@ const ResetPassword = () => {
 
     const validate = () => {
         const e = { password: '', confirmPassword: '' };
-        if (!formData.password) e.password = 'Password is required';
-        else if (formData.password.length < 6) e.password = 'At least 6 characters';
+        e.password = passwordPolicyError(formData.password);
         if (!formData.confirmPassword) e.confirmPassword = 'Please confirm your password';
         else if (formData.password !== formData.confirmPassword) e.confirmPassword = 'Passwords do not match';
         setErrors(e);
@@ -64,7 +64,7 @@ const ResetPassword = () => {
             title="Set New Password"
             subtitle="Choose a strong password for your account."
         >
-            <p className='text-xs text-gray-500 mb-8 -mt-8'>(Ex: Minimum 6 characters including Uppercase Letters, Lowercase Letters, Numbers and Special Characters.)</p>
+            <p className='text-xs text-gray-500 mb-8 -mt-8'>({PASSWORD_POLICY_HINT})</p>
             {apiError && (
                 <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                     {apiError}{' '}

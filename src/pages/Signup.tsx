@@ -112,7 +112,6 @@ const Signup = () => {
 
       const result = await dispatch(startSignup(formData));
       if (startSignup.fulfilled.match(result)) {
-        console.log('Signup initiated, session token stored:', result.payload.signupToken ? 'Yes' : 'No');
         navigate('/verify-info');
       }
     }

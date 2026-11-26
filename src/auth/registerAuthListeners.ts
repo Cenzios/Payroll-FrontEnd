@@ -30,6 +30,8 @@ export function purgeLegacyAuthStorage(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('signup_token');
+    localStorage.removeItem('reg_email');
+    localStorage.removeItem('reg_password');
   } catch (error) {
     console.warn('Unable to purge legacy auth storage', error);
   }

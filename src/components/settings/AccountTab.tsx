@@ -7,6 +7,7 @@ import { useGetSubscriptionQuery, useGetCompaniesQuery, apiSlice } from '../../s
 import { User, Building2, Loader2, Mail, Phone, MapPin, Lock, Eye, EyeOff, ArrowRight, Edit2 } from 'lucide-react';
 import { validateCompanyField } from '../drawers/drawerValidation';
 import Toast from "../../components/Toast";
+import { passwordPolicyError } from '../../utils/passwordPolicy';
 
 const AccountTab = () => {
     const dispatch = useAppDispatch();
@@ -164,7 +165,8 @@ const AccountTab = () => {
     const handleSavePassword = async () => {
         const errors: Record<string, string> = {};
         if (!passwordData.currentPassword) errors.currentPassword = 'Required';
-        if (passwordData.newPassword.length < 6) errors.newPassword = 'At least 6 characters';
+        const policyError = passwordPolicyError(passwordData.newPassword);
+        if (policyError) errors.newPassword = policyError;
         if (passwordData.newPassword !== passwordData.confirmPassword) errors.confirmPassword = 'Passwords do not match';
         if (passwordData.newPassword && passwordData.currentPassword && passwordData.newPassword === passwordData.currentPassword) {
             errors.newPassword = 'New password must be different from your current password';
@@ -500,8 +502,8 @@ const AccountTab = () => {
                                             setPasswordData({ ...passwordData, newPassword: val });
                                             setPasswordErrors(prev => ({
                                                 ...prev,
-                                                newPassword: val.length > 0 && val.length < 6
-                                                    ? 'At least 6 characters'
+                                                newPassword: val.length > 0 && passwordPolicyError(val)
+                                                    ? passwordPolicyError(val)
                                                     : val && passwordData.currentPassword && val === passwordData.currentPassword
                                                         ? 'New password must be different from your current password'
                                                         : '',

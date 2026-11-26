@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPassword, clearError, setSignupEmail } from '../store/slices/authSlice';
 import { loginUser } from '../store/slices/sessionThunks';
@@ -7,6 +7,7 @@ import { Lock, Loader2, Eye, EyeOff, Mail, ArrowRight } from 'lucide-react';
 import passwordIllustration from '../assets/images/password-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
 import lock from '../assets/images/lock-pw.svg';
+import { PASSWORD_POLICY_HINT, passwordPolicyError } from '../utils/passwordPolicy';
 
 const SetPassword = () => {
   const navigate = useNavigate();
@@ -35,10 +36,9 @@ const SetPassword = () => {
     setTouched(prev => ({ ...prev, [name]: true }));
 
     if (name === 'password') {
-      if (!value) {
-        setValidationErrors(prev => ({ ...prev, password: 'Password is required' }));
-      } else if (value.length < 6) {
-        setValidationErrors(prev => ({ ...prev, password: 'Password must be at least 6 characters' }));
+      const policyError = passwordPolicyError(value);
+      if (policyError) {
+        setValidationErrors(prev => ({ ...prev, password: policyError }));
       }
     }
 
@@ -81,11 +81,7 @@ const SetPassword = () => {
       confirmPassword: '',
     };
 
-    if (!formData.password) {
-      errors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
-    }
+    errors.password = passwordPolicyError(formData.password);
 
     if (!formData.confirmPassword) {
       errors.confirmPassword = 'Please confirm your password';
@@ -104,9 +100,7 @@ const SetPassword = () => {
     // validation when field has been touched
     if (touched[name]) {
       if (name === 'password') {
-        if (!value) setValidationErrors(prev => ({ ...prev, password: 'Password is required' }));
-        else if (value.length < 6) setValidationErrors(prev => ({ ...prev, password: 'Password must be at least 6 characters' }));
-        else setValidationErrors(prev => ({ ...prev, password: '' }));
+        setValidationErrors(prev => ({ ...prev, password: passwordPolicyError(value) }));
       }
       if (name === 'confirmPassword') {
         if (!value) setValidationErrors(prev => ({ ...prev, confirmPassword: 'Please confirm your password' }));
@@ -161,6 +155,12 @@ const SetPassword = () => {
       alert(error.message || 'Failed to set password. Please try again.');
     }
   };
+
+  // 0. Set-password needs the token from the emailed verification link.
+  //    Without it (e.g. opened directly after signup) go back to "check your email".
+  if (!signupToken) {
+    return <Navigate to={signupEmail ? '/verify-info' : '/signup'} replace />;
+  }
 
   // 1. If no email, show email input form
   if (!signupEmail) {
@@ -239,8 +239,8 @@ const SetPassword = () => {
       <div className="lg:hidden fixed top-14 left-36">
         <img src={lock} alt="Lock" className="mt-[70px] h-24" />
       </div>
-      <p className="sm:hidden text-gray-600 text-xs mb-4 flex justify-center items-center ">
-        Create a password that's at least 6 characters long.
+      <p className="text-gray-600 text-xs mb-4 flex justify-center items-center ">
+        {PASSWORD_POLICY_HINT}
       </p>
 
       {/* <hr className="sm:hidden my-4 mx-5 border-[1px] border-blue-200" /> */}

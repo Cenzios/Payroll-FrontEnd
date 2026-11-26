@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { startSignup } from '../store/slices/authSlice';
 import { Mail, Loader2 } from 'lucide-react';
 import verifyIllustration from '../assets/images/verify-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
@@ -9,12 +8,13 @@ import { resendVerificationEmail } from '../store/slices/authSlice';
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
-const VerifyInfo = () => {
-  const navigate = useNavigate();
+/** "Check your email" page shown after signup. The verification link is only ever emailed. */
+const VerifyInfo = (): JSX.Element => {
   const dispatch = useAppDispatch();
-  const { signupEmail, signupToken, isLoading } = useAppSelector((state) => state.auth);
+  const { signupEmail, signupFullName, isLoading } = useAppSelector((state) => state.auth);
 
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [resendError, setResendError] = useState('');
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
@@ -25,31 +25,23 @@ const VerifyInfo = () => {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  const handleResend = async () => {
-    if (cooldown > 0) return;
-    if (!signupEmail || !signupToken) {
-      navigate('/signup');
-      return;
-    }
+  const handleResend = async (): Promise<void> => {
+    if (cooldown > 0 || !signupEmail || !signupFullName) return;
+    setResendError('');
 
-    // const result = await dispatch(
-    //   startSignup({
-    //     fullName: '',
-    //     email: signupEmail,
-    //   })
-    // );
-    const result = await dispatch(resendVerificationEmail({ signupToken }));
+    const result = await dispatch(resendVerificationEmail({ fullName: signupFullName, email: signupEmail }));
 
     if (resendVerificationEmail.fulfilled.match(result)) {
       setResendSuccess(true);
       setCooldown(RESEND_COOLDOWN_SECONDS);
       setTimeout(() => setResendSuccess(false), 3000);
+    } else {
+      setResendError(typeof result.payload === 'string' ? result.payload : 'Could not resend the email. Please try again later.');
     }
   };
 
   if (!signupEmail) {
-    navigate('/signup');
-    return null;
+    return <Navigate to="/signup" replace />;
   }
 
   return (
@@ -59,7 +51,7 @@ const VerifyInfo = () => {
     >
       <div className="mb-6 text-center">
         <p className="text-gray-600">
-          We've sent a verification link to
+          We've sent an email with the next step to
         </p>
         <p className="text-blue-600 font-medium mt-1">
           {signupEmail}
@@ -68,7 +60,13 @@ const VerifyInfo = () => {
 
       {resendSuccess && (
         <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-          Verification email sent successfully!
+          Email sent again. Please check your inbox.
+        </div>
+      )}
+
+      {resendError && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          {resendError}
         </div>
       )}
 
@@ -78,7 +76,7 @@ const VerifyInfo = () => {
             <Mail className="w-5 h-5 text-blue-600 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm text-gray-700">
-                Please check your inbox and click the verification link to continue.
+                Please check your inbox and click the link in the email to continue.
                 Don't forget to check your spam folder!
               </p>
             </div>

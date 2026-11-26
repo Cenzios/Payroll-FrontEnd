@@ -2,6 +2,12 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axiosInstance from '../../api/axios';
 import { bootstrapSession, loginUser, logout } from './sessionThunks';
 import type { AuthSession } from '../../auth/authSession.types';
+import {
+  clearSignupIdentity,
+  clearUserFlowStorage,
+  readSignupIdentity,
+  saveSignupIdentity,
+} from '../../auth/userFlowStorage';
 
 import {
   AuthState,
@@ -17,14 +23,18 @@ import {
 
 // Auth identity is NOT persisted: the access token lives in memory
 // (src/auth/tokenStore.ts) and the session is restored on boot via
-// POST /auth/refresh (see bootstrapSession). The signup token is kept in
-// memory only as well.
+// POST /auth/refresh (see bootstrapSession). The signup token only ever comes
+// from the emailed /verify-email link and is kept in memory. The signup
+// name/email (not secrets) are kept in sessionStorage so "resend" survives a reload.
+const signupIdentity = readSignupIdentity();
+
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
   bootstrapStatus: 'pending',
   signupToken: null,
-  signupEmail: localStorage.getItem('reg_email') || null,
+  signupEmail: signupIdentity?.email ?? null,
+  signupFullName: signupIdentity?.fullName ?? null,
   isLoading: false,
   error: null,
   tempPassword: null,
@@ -42,12 +52,10 @@ export const startSignup = createAsyncThunk(
         '/auth/start-signup',
         userData
       );
-      // ✅ Store email in localStorage (the signup token stays in memory only)
-      localStorage.setItem('reg_email', userData.email);
+      saveSignupIdentity({ fullName: userData.fullName, email: userData.email });
       return {
         email: userData.email,
-        // signupToken: response.data.signupToken,
-        signupToken: response.data.data?.signupToken,
+        fullName: userData.fullName,
         message: response.data.message
       };
     } catch (error: any) {
@@ -68,11 +76,7 @@ export const resendVerificationEmail = createAsyncThunk(
         '/auth/resend-verification',
         data
       );
-      return {
-        // signupToken: response.data.signupToken,
-        signupToken: response.data.data?.signupToken,
-        message: response.data.message
-      };
+      return { message: response.data.message };
     } catch (error: any) {
       const message =
         error.response?.data?.message ||
@@ -90,7 +94,8 @@ export const checkAccessStatus = createAsyncThunk(
       const response = await axiosInstance.get('/subscription/access-status');
       return response.data.data; // { status: 'ACTIVE' | 'BLOCKED', message?: string }
     } catch (error: any) {
-      if (error.response?.status === 403 && error.response?.data?.code === 'SUBSCRIPTION_BLOCKED') {
+      const code = error.response?.data?.data?.code ?? error.response?.data?.code;
+      if (error.response?.status === 403 && code === 'SUBSCRIPTION_BLOCKED') {
         return { status: 'BLOCKED', message: error.response.data.message };
       }
       return rejectWithValue(error.response?.data?.message || 'Failed to check access status');
@@ -102,11 +107,15 @@ export const verifyEmail = createAsyncThunk(
   'auth/verifyEmail',
   async (token: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get<VerifyEmailResponse>(
-        `/auth/verify-email?token=${token}`
-      );
-      // Keep the verification JWT (in memory) as signupToken for the next step
-      return { ...response.data, signupToken: token };
+      const response = await axiosInstance.get<VerifyEmailResponse>('/auth/verify-email', {
+        params: { token },
+      });
+      // The emailed token (from the link the user opened) is kept in memory for set-password
+      return {
+        message: response.data.message,
+        email: response.data.data?.email,
+        signupToken: token,
+      };
     } catch (error: any) {
       const message =
         error.response?.data?.message ||
@@ -142,15 +151,16 @@ function clearIdentity(state: AuthState): void {
   state.isAuthenticated = false;
 }
 
-/** Explicit logout: clears identity, signup state and the signup-flow prefs. */
+/** Explicit logout: clears identity, signup state and every per-user flow key in storage. */
 function clearAuthState(state: AuthState): void {
   clearIdentity(state);
   state.error = null;
   state.signupEmail = null;
+  state.signupFullName = null;
   state.signupToken = null;
-  localStorage.removeItem('reg_email');
-  localStorage.removeItem('reg_password');
-  localStorage.removeItem('reg_planId');
+  state.tempPassword = null;
+  state.tempPlanId = null;
+  clearUserFlowStorage();
   // The selected company belongs to this user; never carry it into the next session
   state.selectedCompanyId = null;
   localStorage.removeItem('selectedCompanyId');
@@ -173,13 +183,13 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
-    setSignupEmail: (state, action) => {
+    setSignupEmail: (state, action: PayloadAction<string | null>) => {
       state.signupEmail = action.payload;
-      localStorage.setItem('reg_email', action.payload);
     },
     clearSignupEmail: (state) => {
       state.signupEmail = null;
-      localStorage.removeItem('reg_email');
+      state.signupFullName = null;
+      clearSignupIdentity();
     },
     setSignupToken: (state, action) => {
       state.signupToken = action.payload;
@@ -190,7 +200,10 @@ const authSlice = createSlice({
     setTempPlanId: (state, action) => {
       state.tempPlanId = action.payload;
     },
-    setSelectedCompanyId: (state, action) => {
+    setSelectedCompanyId: (state, action: PayloadAction<string>) => {
+      // Ignore late dispatches from pages still mounted during logout: a company id
+      // must never be stored while nobody is signed in.
+      if (!state.isAuthenticated) return;
       state.selectedCompanyId = action.payload;
       localStorage.setItem('selectedCompanyId', action.payload);
     },
@@ -213,7 +226,8 @@ const authSlice = createSlice({
       .addCase(startSignup.fulfilled, (state, action) => {
         state.isLoading = false;
         state.signupEmail = action.payload.email;
-        state.signupToken = action.payload.signupToken || null;
+        state.signupFullName = action.payload.fullName;
+        state.signupToken = null;
         state.error = null;
       })
       .addCase(startSignup.rejected, (state, action) => {
@@ -224,9 +238,8 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(resendVerificationEmail.fulfilled, (state, action) => {
+      .addCase(resendVerificationEmail.fulfilled, (state) => {
         state.isLoading = false;
-        state.signupToken = action.payload.signupToken || state.signupToken;
         state.error = null;
       })
       .addCase(resendVerificationEmail.rejected, (state, action) => {
@@ -259,6 +272,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = null;
         state.signupToken = null;
+        clearSignupIdentity();
       })
       .addCase(setPassword.rejected, (state, action) => {
         state.isLoading = false;
@@ -273,6 +287,9 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.isAuthenticated = true;
         state.signupEmail = null;
+        state.signupFullName = null;
+        state.signupToken = null;
+        clearSignupIdentity();
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {

@@ -12,32 +12,29 @@ export interface StartSignupRequest {
   email: string;
 }
 
+/** start-signup never returns a token: the verification link is only emailed. */
 export interface StartSignupResponse {
   success: boolean;
   message: string;
-  // signupToken?: string; 
-  data?: {
-      signupToken?: string;
-    };
 }
 
+/** Resend issues a brand-new emailed link for this name/email (no token involved). */
 export interface ResendVerificationRequest {
-  signupToken: string;
+  fullName: string;
+  email: string;
 }
 
 export interface ResendVerificationResponse {
   success: boolean;
   message: string;
-  // signupToken?: string;
-  data?: {
-      signupToken?: string;
-    };
 }
 
 export interface VerifyEmailResponse {
   success: boolean;
   message: string;
-  email?: string; // ✅ ADD
+  data?: {
+    email?: string;
+  };
 }
 
 export interface SetPasswordRequest {
@@ -61,10 +58,12 @@ export interface AuthState {
   isAuthenticated: boolean;
   /** 'pending' until the boot-time POST /auth/refresh has settled. */
   bootstrapStatus: 'pending' | 'done';
-  signupToken: string | null; // in memory only
+  /** Token from the emailed /verify-email link (in memory only); needed by set-password. */
+  signupToken: string | null;
   isLoading: boolean;
   error: string | null;
   signupEmail: string | null;
+  signupFullName: string | null;
   tempPassword: string | null;
   tempPlanId: string | null;
   selectedCompanyId: string | null;

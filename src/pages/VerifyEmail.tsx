@@ -31,7 +31,7 @@ const VerifyEmail = () => {
       // If we have an email but no token, users might land here manually? 
       // Usually they shouldn't. Let's assume invalid link if no token.
       setStatus('error');
-      setMessage('Invalid verification link. Please checks your email for the correct link.');
+      setMessage('Invalid verification link. Please check your email for the correct link.');
       return;
     }
 
@@ -39,11 +39,9 @@ const VerifyEmail = () => {
       hasVerified.current = true;
 
       try {
-        console.log('Initiating email verification with token:', token);
         const result = await dispatch(verifyEmail(token));
 
         if (verifyEmail.fulfilled.match(result)) {
-          console.log('Verification successful:', result.payload);
           setStatus('success');
           setMessage(result.payload.message || 'Email verified successfully!');
 
