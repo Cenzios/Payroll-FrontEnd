@@ -1,5 +1,6 @@
 import { ArrowBigLeft, ArrowLeft, Check, Loader2, MoveRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { CURRENCY_PREFIX, formatMoney } from '../utils/money';
 
 interface PlanCardProps {
     planId?: string; // ✅ ADDED
@@ -97,8 +98,8 @@ const PlanCard: React.FC<PlanCardProps> = ({
                         flex items-baseline gap-1 mt-1
                         max-sm:mt-2
                     ">
-                        <p className="text-xl text-white font-semibold max-sm:text-base">Rs.</p>
-                        <span className="text-5xl text-white font-bold max-sm:text-4xl">100</span>
+                        <p className="text-xl text-white font-semibold max-sm:text-base">{CURRENCY_PREFIX}</p>
+                        <span className="text-5xl text-white font-bold max-sm:text-4xl">{formatMoney(price)}</span>
                         <span className="text-[13px] text-white opacity-80 lowercase font-light ml-1 max-sm:text-[11px]">
                             / employee / month
                         </span>

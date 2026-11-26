@@ -267,7 +267,7 @@ const BuyPlan = () => {
               step={step}
               onStepChange={handleStepChange}
               initialStep={isManualPending ? 'pay' : 'select'}
-              pricePerEmployee={isPositive(subscriptionPrice) && subscriptionPrice ? subscriptionPrice : '100'}
+              pricePerEmployee={effectivePlanPrice}
               employeeCount={employeeCount}
               onEmployeeCountChange={setEmployeeCount}
             />

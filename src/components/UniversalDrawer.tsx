@@ -8,7 +8,8 @@
 import { useState, useEffect } from "react";
 import EmployeeDrawer from "./drawers/EmployeeDrawer";
 import CompanyDrawer from "./drawers/CompanyDrawer";
-import { useGetDashboardSummaryQuery } from "../store/apiSlice";
+import { useGetDashboardSummaryQuery, useGetSubscriptionQuery } from "../store/apiSlice";
+import { formatRs, isPositive } from "../utils/money";
 import { AlertTriangle } from "lucide-react";
 
 interface UniversalDrawerProps {
@@ -22,6 +23,10 @@ interface UniversalDrawerProps {
 
 const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialData }: UniversalDrawerProps) => {
   const { data: dashboardData } = useGetDashboardSummaryQuery(companyId, { skip: !companyId || mode !== "employee" });
+  const { data: subscription } = useGetSubscriptionQuery(undefined, { skip: mode !== "employee" });
+  // Per-employee price from the API (decimal string); never a hard-coded amount
+  const employeePrice: string | undefined = [subscription?.employeePrice, subscription?.pricePerEmployee]
+    .find((p): p is string => typeof p === "string" && isPositive(p));
 
   const [showLimitWarning, setShowLimitWarning] = useState(false);
   // const [isConfirmed, setIsConfirmed] = useState(false);
@@ -65,7 +70,7 @@ const UniversalDrawer = ({ isOpen, onClose, onSubmit, mode, companyId, initialDa
 
           {/* Message */}
           <p className="text-[15px] text-gray-500 leading-relaxed">
-            Each new employee adds Rs.100 to your upcoming monthly bills.
+            Each new employee adds {employeePrice ? formatRs(employeePrice) : "your plan's per-employee price"} to your upcoming monthly bills.
             This will show up on your next billing cycle.
           </p>
 
