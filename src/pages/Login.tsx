@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { clearError } from '../store/slices/authSlice';
 import { loginUser } from '../store/slices/sessionThunks';
@@ -40,6 +40,35 @@ const SUSPENDED_MESSAGES = [
 ];
 const BANNER_MESSAGES = [...LOCKED_MESSAGES, ...SUSPENDED_MESSAGES];
 
+/** `?error=` values the Google OAuth callback redirects with (server_error: older backends). */
+type GoogleLoginError = 'account_suspended' | 'oauth_cancelled' | 'oauth_failed';
+
+interface GoogleErrorNotice {
+  tone: 'info' | 'error';
+  message: string;
+}
+
+const GOOGLE_ERROR_NOTICES: Record<GoogleLoginError, GoogleErrorNotice> = {
+  account_suspended: {
+    tone: 'error',
+    message: 'Your account is suspended, so you cannot sign in with Google. Please contact support to have it reactivated.',
+  },
+  oauth_cancelled: {
+    tone: 'info',
+    message: 'Google sign-in was cancelled. You can try again, or log in with your email and password.',
+  },
+  oauth_failed: {
+    tone: 'error',
+    message: 'Google sign-in failed. Please try again, or log in with your email and password.',
+  },
+};
+
+const isGoogleLoginError = (value: string): value is GoogleLoginError => value in GOOGLE_ERROR_NOTICES;
+
+/** Notice for a `?error=` value; unknown values (e.g. the older server_error) read as a failed sign-in. */
+const googleErrorNotice = (value: string): GoogleErrorNotice =>
+  GOOGLE_ERROR_NOTICES[isGoogleLoginError(value) ? value : 'oauth_failed'];
+
 const Login = () => {
   const handleGoogleLogin = () => {
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -47,9 +76,9 @@ const Login = () => {
   };
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  // // const [searchParams] = useSearchParams();
-  // const reason = searchParams.get("reason");
-  // const errorParam = searchParams.get("error");
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Google OAuth failure (?error=...), kept in memory once it has been removed from the URL
+  const [googleError, setGoogleError] = useState<GoogleErrorNotice | null>(null);
 
   const [showPassword, setShowPassword] = useState(false);
   const { isLoading, error, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -129,6 +158,16 @@ const Login = () => {
     };
   }, [isAccountBlocked, blockedCredentials, blockedType, dispatch]);
 
+  // Show the Google OAuth error, then drop ?error= from the URL (a reload must not repeat it)
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam === null) return;
+    setGoogleError(googleErrorNotice(errorParam));
+    const next = new URLSearchParams(searchParams);
+    next.delete('error');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   // Clear any existing session (and its cached data) when user visits login page
   const performLogout = useLogout();
   useEffect(() => {
@@ -184,6 +223,7 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setGoogleError(null);
     if (validateForm()) {
       // Clear suspension params so banner disappears
       // if (isSuspension) {
@@ -264,6 +304,18 @@ const Login = () => {
               Contact Support
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Google sign-in outcome (from ?error=, already removed from the URL) */}
+      {googleError && !isAccountBlocked && (
+        <div
+          role="alert"
+          className={`mb-6 border px-4 py-3 rounded-lg max-sm:text-sm max-sm:rounded-xl max-sm:mx-0 ${googleError.tone === 'info'
+            ? 'bg-blue-50 border-blue-200 text-blue-800'
+            : 'bg-red-50 border-red-200 text-red-700'}`}
+        >
+          {googleError.message}
         </div>
       )}
 
