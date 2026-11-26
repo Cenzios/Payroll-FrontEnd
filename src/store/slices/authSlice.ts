@@ -151,6 +151,9 @@ function clearAuthState(state: AuthState): void {
   localStorage.removeItem('reg_email');
   localStorage.removeItem('reg_password');
   localStorage.removeItem('reg_planId');
+  // The selected company belongs to this user; never carry it into the next session
+  state.selectedCompanyId = null;
+  localStorage.removeItem('selectedCompanyId');
 }
 
 const authSlice = createSlice({
@@ -190,6 +193,10 @@ const authSlice = createSlice({
     setSelectedCompanyId: (state, action) => {
       state.selectedCompanyId = action.payload;
       localStorage.setItem('selectedCompanyId', action.payload);
+    },
+    clearSelectedCompanyId: (state) => {
+      state.selectedCompanyId = null;
+      localStorage.removeItem('selectedCompanyId');
     },
     updateUser: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {
@@ -299,5 +306,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { sessionEstablished, sessionCleared, clearError, setSignupEmail, clearSignupEmail, setSignupToken, setTempPassword, setTempPlanId, setSelectedCompanyId, updateUser } = authSlice.actions;
+export const { sessionEstablished, sessionCleared, clearError, setSignupEmail, clearSignupEmail, setSignupToken, setTempPassword, setTempPlanId, setSelectedCompanyId, clearSelectedCompanyId, updateUser } = authSlice.actions;
 export default authSlice.reducer;

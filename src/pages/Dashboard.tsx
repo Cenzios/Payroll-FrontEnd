@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setSelectedCompanyId } from '../store/slices/authSlice';
-import { logout } from '../store/slices/sessionThunks';
+import { useLogout } from '../hooks/useLogout';
 import axiosInstance from '../api/axios';
 import {
   Users,
@@ -38,8 +38,7 @@ import {
   useGetCompaniesQuery,
   useCreateCompanyMutation,
   useCreateEmployeeMutation,
-  useUploadEmployeeDocumentMutation,
-  apiSlice
+  useUploadEmployeeDocumentMutation
 } from '../store/apiSlice';
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import CompanySwitcher from '../components/CompanySwitcher';
@@ -53,6 +52,7 @@ import logo from '../assets/images/logo-login.svg';
 const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const handleLogout = useLogout();
   const { user, selectedCompanyId, isAuthenticated } = useAppSelector((state) => state.auth);
 
   // State
@@ -346,9 +346,7 @@ const Dashboard = () => {
                         data-logout-btn
                         onClick={() => {
                           setIsAvatarDropdownOpen(false);
-                          dispatch(logout());
-                          dispatch(apiSlice.util.resetApiState());
-                          navigate('/login');
+                          void handleLogout();
                         }}
                         className="w-full flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-red-50 text-sm text-red-700"
                       >

@@ -1,10 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, LogOut } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { logout } from '../store/slices/sessionThunks';
+import { useAppSelector } from '../store/hooks';
+import { useLogout } from '../hooks/useLogout';
 import {
-  apiSlice,
   useGetNotificationsQuery,
   useMarkNotificationAsReadMutation,
   useDeleteNotificationMutation,
@@ -20,7 +19,6 @@ interface HeaderActionsProps {
 
 const HeaderActions = ({ showLogout = true }: HeaderActionsProps = {}) => {
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
 
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
@@ -78,11 +76,7 @@ const HeaderActions = ({ showLogout = true }: HeaderActionsProps = {}) => {
     }
   };
 
-  const handleLogout = () => {
-    dispatch(logout());
-    dispatch(apiSlice.util.resetApiState());
-    navigate('/login');
-  };
+  const handleLogout = useLogout();
 
   return (
     <>

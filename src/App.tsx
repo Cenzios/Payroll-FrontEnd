@@ -33,6 +33,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import NotFound from './pages/NotFound';
 import AuthBootstrap from './components/AuthBootstrap';
+import CompanySelectionGuard from './components/CompanySelectionGuard';
 
 function App(): JSX.Element {
   const dispatch = useAppDispatch();
@@ -47,6 +48,7 @@ function App(): JSX.Element {
   return (
     <AuthBootstrap>
     <Router>
+      <CompanySelectionGuard />
       <RenewPlanModal />
       <TrialUpgradeModal />
       <Routes>
