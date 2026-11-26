@@ -64,8 +64,11 @@ const NotificationModal = ({ isOpen, onClose, notification, onDelete }: Notifica
                                 </div>
                             </div>
                             <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                                <h3 className="text-lg font-bold text-gray-900 leading-6">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                                     {getTitle()}
+                                </p>
+                                <h3 className="mt-1 text-lg font-bold text-gray-900 leading-6">
+                                    {notification.title?.trim() || getTitle()}
                                 </h3>
                                 <div className="mt-2 text-sm text-gray-500 font-medium">
                                     {notification.timestamp}

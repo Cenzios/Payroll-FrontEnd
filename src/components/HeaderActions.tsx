@@ -40,6 +40,7 @@ const HeaderActions = ({ showLogout = true }: HeaderActionsProps = {}) => {
   const uiNotifications: Notification[] = dbNotifications.map(n => ({
     id: n.id,
     type: n.type === 'ERROR' ? 'warning' : n.type.toLowerCase() as 'info' | 'warning',
+    title: n.title,
     message: n.message,
     timestamp: new Date(n.createdAt).toLocaleDateString(),
     read: n.isRead

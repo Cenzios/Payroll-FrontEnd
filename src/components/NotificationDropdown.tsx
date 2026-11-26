@@ -4,6 +4,8 @@ import { X, Bell, Info, AlertTriangle, AlertCircle } from 'lucide-react';
 export interface Notification {
     id: string;
     type: 'info' | 'warning' | 'alert';
+    /** Notification title from the API (may be empty on old rows). */
+    title?: string;
     message: string;
     timestamp: string;
     read: boolean;
