@@ -4,6 +4,7 @@ import { Company, CreateCompanyRequest } from '../types/company.types';
 import { Employee, CreateEmployeeRequest, EmployeeDocument } from '../types/employee.types';
 import { Notification } from '../types/notification.types';
 import type { LoanInstallment, SalaryRecord } from '../types/salary.types';
+import type { BankAdviceReportData } from '../types/report.types';
 
 // Define types locally if not exported from files, or reuse existing types
 // We'll trust the types exist or use 'any' where strict typing isn't critical for the task
@@ -372,6 +373,14 @@ export const apiSlice = createApi({
                 params,
             }),
         }),
+        getBankAdviceReport: builder.query<BankAdviceReportData, { companyId: string; month: number; year: number }>({
+            query: (params) => ({
+                url: '/reports/bank-advice',
+                method: 'GET',
+                params,
+            }),
+            providesTags: ['Salary', 'Employee'],
+        }),
         getUserDocuments: builder.query<any, void>({
             query: () => ({ url: '/user-documents', method: 'GET' }),
             providesTags: ['Subscription'],
@@ -415,5 +424,6 @@ export const {
     useLazyGetSalaryReportQuery,
     useGetCFormReportQuery,
     useLazyGetCFormReportQuery,
+    useGetBankAdviceReportQuery,
     useGetUserDocumentsQuery,
 } = apiSlice;

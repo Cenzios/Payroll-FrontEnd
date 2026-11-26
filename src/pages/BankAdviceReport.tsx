@@ -1,28 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ChevronDown, FileText, FileSpreadsheet, Download, Loader2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import PageHeader from '../components/PageHeader';
 import { useAppSelector } from '../store/hooks';
-import { useGetEmployeesQuery, useGetSalaryHistoryQuery, useGetCompaniesQuery } from '../store/apiSlice';
+import { useGetBankAdviceReportQuery, useGetCompaniesQuery } from '../store/apiSlice';
+import type { BankAdviceRow } from '../types/report.types';
 import { exportBankAdviceReport } from '../utils/exportService';
 import Toast from '../components/Toast';
 import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import logo from '../assets/images/logo-login.svg';
 import RoundedSelect from '../components/RoundedSelect';
-import { formatMoney, formatRs, isPositive, sumBy } from '../utils/money';
-
-/** One bank-advice line; `amount` (net salary) is a decimal string. */
-interface BankAdviceRow {
-    id: string;
-    employeeCode: string;
-    fullName: string;
-    accountHolderName: string;
-    bankName: string;
-    branchName: string;
-    accountNumber: string;
-    amount: string;
-}
+import { formatMoney, formatRs } from '../utils/money';
 
 const BankAdviceReport = () => {
     const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
@@ -37,14 +26,9 @@ const BankAdviceReport = () => {
     const [appliedFilters, setAppliedFilters] = useState({ month: currentDate.getMonth(), year: currentDate.getFullYear() });
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
-    // Data fetching
-    const { data: employeesData, isLoading: isLoadingEmployees } = useGetEmployeesQuery({
-        companyId: selectedCompanyId || '',
-        status: 'ACTIVE',
-        limit: 1000
-    });
-
-    const { data: salaryHistory, isLoading: isLoadingSalary } = useGetSalaryHistoryQuery({
+    // One line per salary row of the month (server-side), so employees who were paid and
+    // later deactivated or removed are still in the bank file and the total is complete.
+    const { data: report, isLoading: isLoadingReport } = useGetBankAdviceReportQuery({
         companyId: selectedCompanyId || '',
         month: appliedFilters.month + 1,
         year: appliedFilters.year
@@ -54,30 +38,8 @@ const BankAdviceReport = () => {
 
     const { data: companies } = useGetCompaniesQuery();
 
-    const [bankReportData, setBankReportData] = useState<BankAdviceRow[]>([]);
-    const [totalAmount, setTotalAmount] = useState<string>('0');
-
-    useEffect(() => {
-        if (employeesData && salaryHistory) {
-            const merged = employeesData.employees.map((emp): BankAdviceRow => {
-                const salaryRecord = salaryHistory.find(s => s.employeeId === emp.id);
-
-                return {
-                    id: emp.id,
-                    employeeCode: emp.employeeId,
-                    fullName: emp.fullName,
-                    accountHolderName: emp.accountHolderName || emp.fullName,
-                    bankName: emp.bankName || '-',
-                    branchName: emp.branchName || '-',
-                    accountNumber: emp.accountNumber || '-',
-                    amount: salaryRecord ? (salaryRecord.netSalary || '0') : '0'
-                };
-            }).filter(item => isPositive(item.amount));
-
-            setBankReportData(merged);
-            setTotalAmount(sumBy(merged, (item) => item.amount).toFixed(4));
-        }
-    }, [employeesData, salaryHistory]);
+    const bankReportData: BankAdviceRow[] = report?.rows ?? [];
+    const totalAmount: string = report?.totalAmount ?? '0';
 
     const handleApply = () => {
         setAppliedFilters({ month: selectedMonth, year: selectedYear });
@@ -107,7 +69,7 @@ const BankAdviceReport = () => {
         setToast({ message: `${format.toUpperCase()} exported successfully`, type: 'success' });
     };
 
-    const hasData = !isLoadingEmployees && !isLoadingSalary && bankReportData.length > 0;
+    const hasData = !isLoadingReport && bankReportData.length > 0;
 
     const months = [
         "January", "February", "March", "April", "May", "June",
@@ -304,7 +266,7 @@ const BankAdviceReport = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {isLoadingEmployees || isLoadingSalary ? (
+                                        {isLoadingReport ? (
                                             <tr>
                                                 <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
                                                     <div className="flex justify-center items-center gap-2">
@@ -323,7 +285,12 @@ const BankAdviceReport = () => {
                                             bankReportData.map((item) => (
                                                 <tr key={item.id} className="hover:bg-gray-50 transition-colors group">
                                                     <td className="px-6 py-4 text-sm font-medium text-gray-400">{item.employeeCode}</td>
-                                                    <td className="px-6 py-4 text-sm text-gray-500">{item.accountHolderName}</td>
+                                                    <td className="px-6 py-4 text-sm text-gray-500">
+                                                        {item.accountHolderName}
+                                                        {item.employeeStatus !== 'ACTIVE' && (
+                                                            <span className="ml-2 text-[10px] uppercase text-gray-400">({item.employeeStatus.toLowerCase()})</span>
+                                                        )}
+                                                    </td>
                                                     <td className="px-6 py-4 text-sm text-gray-500">{item.bankName}</td>
                                                     <td className="px-6 py-4 text-sm text-gray-500">{item.branchName}</td>
                                                     <td className="px-6 py-4 text-sm text-gray-500 font-mono">{item.accountNumber}</td>
@@ -338,7 +305,7 @@ const BankAdviceReport = () => {
                             </div>
 
                             {/* Total Footer */}
-                            {!isLoadingEmployees && !isLoadingSalary && bankReportData.length > 0 && (
+                            {!isLoadingReport && bankReportData.length > 0 && (
                                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end items-center gap-4">
                                     <span className="text-sm font-bold text-blue-600">Total Net Pay</span>
                                     <span className="text-xl font-bold text-blue-600">
@@ -350,7 +317,7 @@ const BankAdviceReport = () => {
 
                         {/* Mobile cards */}
                         <div className="hidden max-sm:flex flex-col gap-3">
-                            {isLoadingEmployees || isLoadingSalary ? (
+                            {isLoadingReport ? (
                                 <div className="flex justify-center items-center gap-2 py-12 text-gray-400">
                                     <Loader2 className="w-5 h-5 animate-spin" />
                                     Loading report data...

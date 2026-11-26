@@ -224,3 +224,25 @@ export interface CFormReportData {
         totalEarnings: string;
     };
 }
+
+/** One Bank Advice line (GET /reports/bank-advice): one per salary row of the month. */
+export interface BankAdviceRow {
+    id: string;
+    employeeCode: string;
+    fullName: string;
+    accountHolderName: string;
+    bankName: string;
+    branchName: string;
+    accountNumber: string;
+    /** Net salary, 2-dp decimal string. */
+    amount: string;
+    /** Current employee state; paid inactive/removed employees are still listed. */
+    employeeStatus: 'ACTIVE' | 'INACTIVE' | 'REMOVED';
+}
+
+export interface BankAdviceReportData {
+    month: number;
+    year: number;
+    rows: BankAdviceRow[];
+    totalAmount: string;
+}
