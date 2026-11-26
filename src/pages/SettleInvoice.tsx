@@ -70,7 +70,7 @@ const ChoosePlanCard = ({ message, onChoosePlan }: { message?: string; onChooseP
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Nothing to pay</h2>
         <p className="text-gray-600 text-center mb-2 max-w-md">{NO_INVOICE_MESSAGE}</p>
         <p className="text-gray-600 text-center mb-8 max-w-md">
-            {message || 'You do not have an active subscription.'} Choose a plan to continue.
+            {message || 'You do not have an active subscription. Choose a plan to continue.'}
         </p>
         <button onClick={onChoosePlan} className={PRIMARY_BTN}>Choose a plan</button>
     </div>
