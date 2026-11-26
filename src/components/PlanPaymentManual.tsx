@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { UploadCloud, Copy, Check, Loader2, X, AlertCircle } from "lucide-react";
 import PlanVerify from "./PlanVerify";
+import axios from "axios";
 import axiosInstance from "../api/axios";
 import { toMoneyString } from "../utils/money";
 
 interface PlanPaymentManualProps {
     totalAmount: string; // decimal string (API contract): the pending invoice total
+    /** The pending invoice this slip pays (the API falls back to the oldest open invoice). */
+    invoiceId?: string;
 }
 
-const PlanPaymentManual = ({ totalAmount }: PlanPaymentManualProps) => {
+const PlanPaymentManual = ({ totalAmount, invoiceId }: PlanPaymentManualProps) => {
     const [file, setFile] = useState<File | null>(null);
     const [reference, setReference] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -96,6 +99,9 @@ const PlanPaymentManual = ({ totalAmount }: PlanPaymentManualProps) => {
             if (reference) {
                 formData.append("referenceId", reference);
             }
+            if (invoiceId) {
+                formData.append("invoiceId", invoiceId);
+            }
 
             await axiosInstance.post("/user-documents", formData, {
                 headers: {
@@ -106,7 +112,8 @@ const PlanPaymentManual = ({ totalAmount }: PlanPaymentManualProps) => {
             setIsSubmitted(true);
         } catch (error) {
             console.error("Failed to upload manual payment doc", error);
-            alert("Upload failed. Please try again.");
+            const apiMessage = axios.isAxiosError<{ message?: string }>(error) ? error.response?.data?.message : undefined;
+            alert(apiMessage || "Upload failed. Please try again.");
         } finally {
             setIsSubmitting(false);
         }

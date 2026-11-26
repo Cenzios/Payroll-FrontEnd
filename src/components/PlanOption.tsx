@@ -237,7 +237,7 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
             />
           </div>
           <div style={{ display: value === "manual" ? "block" : "none" }}>
-            <PlanPaymentManual totalAmount={total.toFixed(2)} />
+            <PlanPaymentManual totalAmount={total.toFixed(2)} invoiceId={pendingInvoice?.id} />
           </div>
           {/* <div style={{ display: value === "payhere" ? "block" : "none" }}>
                         <PlanPaymentPayhere />
