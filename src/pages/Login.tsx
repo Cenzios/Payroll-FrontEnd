@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { clearError } from '../store/slices/authSlice';
-import { loginUser, logout } from '../store/slices/sessionThunks';
+import { loginUser } from '../store/slices/sessionThunks';
+import { useLogout } from '../hooks/useLogout';
 import { Mail, Lock, Loader2, EyeOff, Eye, ShieldAlert, Phone } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 import ContactModal from '../components/ContactModal';
@@ -69,7 +70,9 @@ const Login = () => {
   // Polling state: tracks if we're in "account locked" or "account suspended" mode
   const [isAccountBlocked, setIsAccountBlocked] = useState(false);
   const [blockedType, setBlockedType] = useState<'locked' | 'suspended' | null>(null);
-  const [blockedEmail, setBlockedEmail] = useState('');
+  // Credentials the blocked banner polls with (check-lock-status requires the password,
+  // so it reveals nothing about accounts the caller cannot log in to). Memory only.
+  const [blockedCredentials, setBlockedCredentials] = useState<{ email: string; password: string } | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Detect locked/suspended account from error message
@@ -77,11 +80,11 @@ const Login = () => {
     if (error && LOCKED_MESSAGES.includes(error)) {
       setIsAccountBlocked(true);
       setBlockedType('locked');
-      setBlockedEmail(formData.email);
+      setBlockedCredentials({ email: formData.email, password: formData.password });
     } else if (error && SUSPENDED_MESSAGES.includes(error)) {
       setIsAccountBlocked(true);
       setBlockedType('suspended');
-      setBlockedEmail(formData.email);
+      setBlockedCredentials({ email: formData.email, password: formData.password });
     } else if (!error) {
       setIsAccountBlocked(false);
       setBlockedType(null);
@@ -90,11 +93,11 @@ const Login = () => {
 
   // Poll for account unlock/unsuspend when blocked
   useEffect(() => {
-    if (!isAccountBlocked || !blockedEmail) return;
+    if (!isAccountBlocked || !blockedCredentials) return;
 
     const checkStatus = async () => {
       try {
-        const { data } = await axiosInstance.post('/auth/check-lock-status', { email: blockedEmail });
+        const { data } = await axiosInstance.post('/auth/check-lock-status', blockedCredentials);
         const result = data?.data;
         const stillBlocked =
           (blockedType === 'locked' && result?.isLocked === true) ||
@@ -115,8 +118,8 @@ const Login = () => {
       }
     };
 
-    // Poll every 10 seconds
-    pollIntervalRef.current = setInterval(checkStatus, 10000);
+    // Poll every 30 seconds (the endpoint is rate-limited per IP)
+    pollIntervalRef.current = setInterval(checkStatus, 30000);
 
     return () => {
       if (pollIntervalRef.current) {
@@ -124,12 +127,13 @@ const Login = () => {
         pollIntervalRef.current = null;
       }
     };
-  }, [isAccountBlocked, blockedEmail, blockedType, dispatch]);
+  }, [isAccountBlocked, blockedCredentials, blockedType, dispatch]);
 
-  // Clear any existing session when user visits login page
+  // Clear any existing session (and its cached data) when user visits login page
+  const performLogout = useLogout();
   useEffect(() => {
     if (isAuthenticated) {
-      dispatch(logout());
+      void performLogout();
     }
   }, []);
 
@@ -173,6 +177,7 @@ const Login = () => {
     if (isAccountBlocked) {
       setIsAccountBlocked(false);
       setBlockedType(null);
+      setBlockedCredentials(null);
       dispatch(clearError());
     }
   };

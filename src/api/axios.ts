@@ -23,8 +23,10 @@ interface RetriableRequestConfig extends InternalAxiosRequestConfig {
 }
 
 interface ApiErrorBody {
+  /** Legacy top-level code; the standard envelope carries it in data.code. */
   code?: string;
   message?: string;
+  data?: { code?: string } | null;
 }
 
 /** 401s from these endpoints are final; never try to refresh for them. */
@@ -105,7 +107,7 @@ axiosInstance.interceptors.response.use(
   (response: AxiosResponse): AxiosResponse => response,
   (error: AxiosError<ApiErrorBody>): Promise<AxiosResponse> => {
     const status = error.response?.status;
-    const code = error.response?.data?.code;
+    const code = error.response?.data?.data?.code ?? error.response?.data?.code;
 
     /* 🔥 TRIAL EXPIRATION HANDLING */
     if (status === 403 && code === 'TRIAL_EXPIRED') {
