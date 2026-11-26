@@ -16,7 +16,8 @@ import {
     PlusCircle,
 } from "lucide-react";
 import FileUploadModal from "./FileUploadModal";
-import { CreateEmployeeRequest } from "../types/employee.types";
+import { CreateEmployeeRequest, RecurringEntry } from "../types/employee.types";
+import { formatMoney, isPositive, toDecimal, toDecimalString } from "../utils/money";
 import Toast from "./Toast";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -92,7 +93,7 @@ const AddEmployeeDrawer = ({
         email: "",
         salaryType: "DAILY",
         paidLeave: 0,
-        otRate: 0,
+        otRate: "",
         epfEnabled: true,
         allowanceEnabled: false,
         deductionEnabled: false,
@@ -130,11 +131,11 @@ const AddEmployeeDrawer = ({
                         : new Date().toISOString().split("T")[0],
                 });
                 setEpfEnabled(initialData.epfEnabled ?? true);
-                setEpfEtf(initialData.epfEtfAmount?.toString() || "");
+                setEpfEtf(initialData.epfEtfAmount ? toDecimalString(initialData.epfEtfAmount) : "");
                 setAllowanceEnabled(initialData.allowanceEnabled ?? false);
                 setDeductionEnabled(initialData.deductionEnabled ?? false);
-                setAllowances(initialData.recurringAllowances?.length ? initialData.recurringAllowances.map((a: any) => ({ type: a.type, amount: a.amount.toString() })) : [{ type: "", amount: "" }]);
-                setDeductions(initialData.recurringDeductions?.length ? initialData.recurringDeductions.map((d: any) => ({ type: d.type, amount: d.amount.toString() })) : [{ type: "", amount: "" }]);
+                setAllowances(initialData.recurringAllowances?.length ? initialData.recurringAllowances.map((a: RecurringEntry) => ({ type: a.type, amount: toDecimalString(a.amount) })) : [{ type: "", amount: "" }]);
+                setDeductions(initialData.recurringDeductions?.length ? initialData.recurringDeductions.map((d: RecurringEntry) => ({ type: d.type, amount: toDecimalString(d.amount) })) : [{ type: "", amount: "" }]);
                 setEmployeeFiles([]);
             } else {
                 setEmployeeData({
@@ -146,10 +147,10 @@ const AddEmployeeDrawer = ({
                     designation: "",
                     department: "General",
                     email: "",
-                    basicSalary: 0,
+                    basicSalary: "",
                     salaryType: "DAILY",
                     paidLeave: 0,
-                    otRate: 0,
+                    otRate: "",
                     epfEnabled: true,
                     allowanceEnabled: false,
                     deductionEnabled: false,
@@ -223,11 +224,12 @@ const AddEmployeeDrawer = ({
                 if (epfEnabled) {
                     if (!value || value === "") error = "EPF/ETF amount is required";
                     else {
-                        const amount = Number(value);
-                        const basic = Number(employeeData.basicSalary) || 0;
-                        const limit = employeeData.salaryType === "MONTHLY" ? basic : basic * 20;
-                        if (amount > limit) {
-                            error = `Cannot exceed ${employeeData.salaryType === "MONTHLY" ? "monthly salary" : "20x daily rate"} (Rs. ${limit.toLocaleString()})`;
+                        // Money comparison via decimal.js
+                        const amount = toDecimal(value);
+                        const basic = toDecimal(employeeData.basicSalary);
+                        const limit = employeeData.salaryType === "MONTHLY" ? basic : basic.times(20);
+                        if (amount.greaterThan(limit)) {
+                            error = `Cannot exceed ${employeeData.salaryType === "MONTHLY" ? "monthly salary" : "20x daily rate"} (Rs. ${formatMoney(limit, { minFractionDigits: 0, maxFractionDigits: 3 })})`;
                         }
                     }
                 }
@@ -329,15 +331,15 @@ const AddEmployeeDrawer = ({
             // Build recurring allowances array
             const recurringAllowances = allowanceEnabled
                 ? allowances
-                    .filter((a) => a.type.trim() && a.amount.trim() && parseFloat(a.amount) > 0)
-                    .map((a) => ({ type: a.type.trim(), amount: parseFloat(a.amount) }))
+                    .filter((a) => a.type.trim() && a.amount.trim() && isPositive(a.amount))
+                    .map((a) => ({ type: a.type.trim(), amount: toDecimalString(a.amount) }))
                 : [];
 
             // Build recurring deductions array
             const recurringDeductions = deductionEnabled
                 ? deductions
-                    .filter((d) => d.type.trim() && d.amount.trim() && parseFloat(d.amount) > 0)
-                    .map((d) => ({ type: d.type.trim(), amount: parseFloat(d.amount) }))
+                    .filter((d) => d.type.trim() && d.amount.trim() && isPositive(d.amount))
+                    .map((d) => ({ type: d.type.trim(), amount: toDecimalString(d.amount) }))
                 : [];
 
             const finalEmployeeData = {
@@ -347,12 +349,12 @@ const AddEmployeeDrawer = ({
                 address: employeeData.address?.trim() || "",
                 companyId: companyId || (initialData?.companyId),
                 department: employeeData.department || "General",
-                basicSalary: parseFloat(String(employeeData.basicSalary)) || 0,
+                basicSalary: toDecimalString(employeeData.basicSalary),
                 salaryType: employeeData.salaryType || "DAILY",
                 paidLeave: employeeData.salaryType === "MONTHLY" ? (parseInt(String(employeeData.paidLeave)) || 0) : 0,
-                otRate: parseFloat(String(employeeData.otRate)) || 0,
+                otRate: toDecimalString(employeeData.otRate),
                 epfEnabled,
-                epfEtfAmount: epfEnabled && epfEtf ? parseFloat(epfEtf) : undefined,
+                epfEtfAmount: epfEnabled && epfEtf ? toDecimalString(epfEtf) : undefined,
                 allowanceEnabled,
                 deductionEnabled,
                 recurringAllowances,

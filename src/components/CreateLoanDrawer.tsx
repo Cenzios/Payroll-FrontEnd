@@ -10,6 +10,8 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import loanTitleIcon from '../assets/images/loan-title.svg';
 import loanAmountIcon from '../assets/images/loan-amount.svg';
+import { formatMoney, toDecimal, toDecimalString, toMoneyString } from '../utils/money';
+import { calculateMonthlyPremium } from '../utils/loanCalc';
 import loanInstallmentIcon from '../assets/images/loan-installment.svg';
 import loanStartIcon from '../assets/images/loan-start.svg';
 import loanEndIcon from '../assets/images/loan-end.svg';
@@ -36,7 +38,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
   const [amount, setAmount] = useState('');
   const [installmentCount, setInstallmentCount] = useState('');
   const [interestRate, setInterestRate] = useState('');
-  const [monthlyPremium, setMonthlyPremium] = useState(0);
+  const [monthlyPremium, setMonthlyPremium] = useState('0'); // decimal string
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [supportingDocs, setSupportingDocs] = useState<File[]>([]);
@@ -94,26 +96,10 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
   // Calculate Monthly Premium (Equated Monthly Installment - Reducing Balance)
   useEffect(() => {
-    const p = parseFloat(amount) || 0;
-    const rate = parseFloat(interestRate) || 0;
-    const n = parseInt(installmentCount) || 0;
-
-    if (p > 0 && n > 0) {
-      if (rate === 0) {
-        setMonthlyPremium(p / n);
-      } else {
-        // Convert to monthly decimal rate (r)
-        const r = interestRateType === 'ANNUALLY'
-          ? (rate / 12) / 100
-          : rate / 100;
-
-        // EMI Formula: [P * r * (1 + r)^n] / [(1 + r)^n - 1]
-        const emi = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-        setMonthlyPremium(emi);
-      }
-    } else {
-      setMonthlyPremium(0);
-    }
+    // decimal.js EMI (utils/loanCalc.ts)
+    setMonthlyPremium(
+      calculateMonthlyPremium(amount, interestRate, parseInt(installmentCount) || 0, interestRateType).toFixed(4),
+    );
   }, [amount, interestRate, installmentCount, interestRateType]);
 
   // Auto-calculate End Date based on Start Date and Installment Count
@@ -153,12 +139,12 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
     const selectedEmployee = employees.find((emp: Employee) => emp.id === employeeId);
     if (selectedEmployee) {
       const monthlySalary = selectedEmployee.salaryType === 'MONTHLY'
-        ? selectedEmployee.basicSalary
-        : selectedEmployee.basicSalary * 20;
+        ? toDecimal(selectedEmployee.basicSalary)
+        : toDecimal(selectedEmployee.basicSalary).times(20);
 
-      if (monthlyPremium > monthlySalary) {
+      if (toDecimal(monthlyPremium).greaterThan(monthlySalary)) {
         setToast({
-          message: `Monthly installment (Rs. ${monthlyPremium.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) exceeds the employee's monthly salary (Rs. ${monthlySalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}).`,
+          message: `Monthly installment (Rs. ${formatMoney(monthlyPremium)}) exceeds the employee's monthly salary (Rs. ${formatMoney(monthlySalary)}).`,
           type: 'error'
         });
         return;
@@ -213,10 +199,11 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
         startDate,
         endDate,
         interestRateType,
-        amount: parseFloat(amount),
+        // Money/rates sent as decimal strings (API contract)
+        amount: toDecimalString(amount),
         installmentCount: parseInt(installmentCount),
-        interestRate: parseFloat(interestRate) || 0,
-        monthlyPremium: monthlyPremium,
+        interestRate: toDecimalString(interestRate),
+        monthlyPremium: toMoneyString(monthlyPremium),
         supportingDocId: documentIds[0], // Keep first for backward compatibility
         supportingDocIds: documentIds
       }).unwrap();
@@ -707,7 +694,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                   <span className="text-[14px] font-semibold tracking-wide">Monthly Premium</span>
                 </div>
                 <div className="text-[20px] font-bold">
-                  Rs {monthlyPremium.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  Rs {formatMoney(monthlyPremium)}
                 </div>
               </div>
 

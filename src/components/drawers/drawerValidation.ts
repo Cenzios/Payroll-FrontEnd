@@ -1,4 +1,5 @@
 // Validation logic extracted from UniversalDrawer for both company and employee forms
+import { formatMoney, toDecimal } from "../../utils/money";
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const phoneRegex = /^\+94\s?\d{9}$/;
 // All Sri Lankan landline area codes + mobile prefixes
@@ -59,7 +60,7 @@ export const validateCompanyField = (field: string, value: any): string => {
 export const validateEmployeeField = (
     field: string,
     value: any,
-    context?: { epfEnabled?: boolean; epfEtf?: string; basicSalary?: number; salaryType?: string }
+    context?: { epfEnabled?: boolean; epfEtf?: string; basicSalary?: string; salaryType?: string }
 ): string => {
     let error = "";
     const { epfEnabled, epfEtf, basicSalary, salaryType } = context || {};
@@ -118,9 +119,9 @@ export const validateEmployeeField = (
             break;
         }
         case "basicSalary":
-            if (value === undefined || value === null || value === "" || isNaN(Number(value)) || Number(value) === 0)
+            if (value === undefined || value === null || value === "" || isNaN(Number(value)) || toDecimal(value).isZero())
                 error = "Basic salary is required";
-            else if (Number(value) < 0) error = "Basic salary cannot be negative";
+            else if (toDecimal(value).lessThan(0)) error = "Basic salary cannot be negative";
             break;
         case "paidLeave":
             if (value !== undefined && value !== null && value !== "" && Number(value) < 0)
@@ -131,18 +132,19 @@ export const validateEmployeeField = (
         case "otRate":
             if (value !== undefined && value !== null && value !== "" && isNaN(Number(value)))
                 error = "OT rate must be a number";
-            else if (Number(value) < 0) error = "OT rate cannot be negative";
+            else if (toDecimal(value).lessThan(0)) error = "OT rate cannot be negative";
             break;
         case "epfEtf":
             if (epfEnabled) {
                 if (value === undefined || value === null || value === "") {
                     error = "EPF/ETF amount is required";
                 } else {
-                    const amount = Number(value);
-                    const basic = Number(basicSalary) || 0;
-                    const limit = salaryType === "MONTHLY" ? basic : basic * 20;
-                    if (amount > limit)
-                        error = `Cannot exceed ${salaryType === "MONTHLY" ? "monthly salary" : "20x daily rate"} (Rs. ${limit.toLocaleString()})`;
+                    // Money comparison via decimal.js
+                    const amount = toDecimal(value);
+                    const basic = toDecimal(basicSalary);
+                    const limit = salaryType === "MONTHLY" ? basic : basic.times(20);
+                    if (amount.greaterThan(limit))
+                        error = `Cannot exceed ${salaryType === "MONTHLY" ? "monthly salary" : "20x daily rate"} (Rs. ${formatMoney(limit, { minFractionDigits: 0, maxFractionDigits: 3 })})`;
                 }
             }
             break;

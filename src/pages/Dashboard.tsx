@@ -45,8 +45,12 @@ import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import CompanySwitcher from '../components/CompanySwitcher';
 import PageHeader from '../components/PageHeader';
 import { salaryApi } from '../api/salaryApi';
+import { formatMoney, FormatMoneyOptions } from '../utils/money';
 import AlertBar from '../components/AlertBar';
 import logo from '../assets/images/logo-login.svg';
+
+/** Same visual format as the old `Number.toLocaleString()`. */
+const WHOLE_OR_FRACTION: FormatMoneyOptions = { minFractionDigits: 0, maxFractionDigits: 3 };
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -80,10 +84,11 @@ const Dashboard = () => {
     skip: !user,
   });
 
-  const { data: lastMonthData = { totalNetPay: 0, totalCompanyEPFETF: 0, totalEmployeeEPF: 0 } } = useQuery({
+  // Money totals are decimal strings (API contract)
+  const { data: lastMonthData = { totalNetPay: '0', totalCompanyEPFETF: '0', totalEmployeeEPF: '0' } } = useQuery({
     queryKey: ['lastMonthSalary', selectedCompanyId],
     queryFn: async () => {
-      if (!selectedCompanyId) return { totalNetPay: 0, totalCompanyEPFETF: 0, totalEmployeeEPF: 0 };
+      if (!selectedCompanyId) return { totalNetPay: '0', totalCompanyEPFETF: '0', totalEmployeeEPF: '0' };
       const now = new Date();
       const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
@@ -100,10 +105,10 @@ const Dashboard = () => {
       const totals = payload?.monthlyData?.[0]?.totals;
 
       return {
-        totalNetPay: totals?.totalNetPay || 0,
+        totalNetPay: String(totals?.totalNetPay ?? '0'),
         // totalCompanyEPFETF: (totals?.totalCompanyEPF || 0) + (totals?.totalCompanyETF || 0),
-        totalCompanyEPFETF: totals?.totalCompanyEPFETF || 0,
-        totalEmployeeEPF: totals?.totalEmployeeEPF || 0,
+        totalCompanyEPFETF: String(totals?.totalCompanyEPFETF ?? '0'),
+        totalEmployeeEPF: String(totals?.totalEmployeeEPF ?? '0'),
       };
     },
     enabled: !!selectedCompanyId,
@@ -458,21 +463,21 @@ const Dashboard = () => {
                   <StatCard
                     icon={DollarSign}
                     title="Total Salary Paid"
-                    value={`Rs ${lastMonthData.totalNetPay.toLocaleString()}`}
+                    value={`Rs ${formatMoney(lastMonthData.totalNetPay, WHOLE_OR_FRACTION)}`}
                     colorTheme="green"
                     showLastMonth={true}
                   />
                   <StatCard
                     icon={CalendarClock}
                     title="Company EPF/ETF Amount"
-                    value={`Rs ${lastMonthData.totalCompanyEPFETF.toLocaleString()}`}
+                    value={`Rs ${formatMoney(lastMonthData.totalCompanyEPFETF, WHOLE_OR_FRACTION)}`}
                     colorTheme="purple"
                     showLastMonth={true}
                   />
                   <StatCard
                     icon={PieChart}
                     title="Total Employee EPF"
-                    value={`Rs ${lastMonthData.totalEmployeeEPF.toLocaleString()}`}
+                    value={`Rs ${formatMoney(lastMonthData.totalEmployeeEPF, WHOLE_OR_FRACTION)}`}
                     colorTheme="orange"
                     showLastMonth={true}
                   />

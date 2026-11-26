@@ -1,6 +1,7 @@
+/** Money fields are decimal strings (API contract). */
 export interface RecurringEntry {
     type: string;
-    amount: number;
+    amount: string;
 }
 
 export interface EmployeeDocument {
@@ -24,13 +25,13 @@ export interface Employee {
     designation: string;
     department: string;
     email?: string;
-    basicSalary: number;
+    basicSalary: string;
     salaryType?: 'DAILY' | 'MONTHLY';
     paidLeave: number;
-    otRate: number;
+    otRate: string;
     epfEnabled: boolean;
     epfNumber?: string;
-    epfEtfAmount?: number;
+    epfEtfAmount?: string | null;
     allowanceEnabled: boolean;
     deductionEnabled: boolean;
     employeeNIC?: string;
@@ -58,13 +59,13 @@ export interface CreateEmployeeRequest {
     designation: string;
     department: string;
     email?: string;
-    basicSalary: number;
+    basicSalary: string;
     salaryType?: 'DAILY' | 'MONTHLY';
     paidLeave?: number;
-    otRate?: number;
+    otRate?: string;
     epfEnabled?: boolean;
     epfNumber?: string;
-    epfEtfAmount?: number;
+    epfEtfAmount?: string;
     allowanceEnabled?: boolean;
     deductionEnabled?: boolean;
     employeeNIC?: string;

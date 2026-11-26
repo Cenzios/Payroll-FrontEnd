@@ -6,6 +6,8 @@ import { useRef, useState } from 'react';
 import FileUploadModal from './FileUploadModal';
 import DocumentViewerModal from './DocumentViewerModal';
 import logo from '../assets/images/logo-login.svg';
+import Decimal from 'decimal.js';
+import { formatMoney, sumBy, toDecimal, toDecimalString } from '../utils/money';
 
 
 interface LoanHistoryViewProps {
@@ -99,20 +101,22 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
     }
 
     const installments = loan.installments || [];
-    const paidInstallmentsCount = installments.filter((i: any) => i.status === 'PAID').length;
+    const paidInstallmentsCount = installments.filter((i) => i.status === 'PAID').length;
     const totalInstallmentsCount = loan.installmentCount || installments.length || 1;
     const progressPercent = Math.min(Math.round((paidInstallmentsCount / totalInstallmentsCount) * 100), 100);
 
-    // Interest calculation based on rate and type
-    const interestRateVal = loan.interestRate || 0;
-    const totalInterest = loan.interestRateType === 'ANNUALLY'
-        ? loan.amount * (interestRateVal / 100) * (totalInstallmentsCount / 12)
-        : loan.amount * (interestRateVal / 100) * totalInstallmentsCount;
+    // Interest calculation based on rate and type (decimal.js; amounts are decimal strings)
+    const principal = toDecimal(loan.amount);
+    const rateFraction = toDecimal(loan.interestRate).dividedBy(100);
+    const totalInterest: Decimal = loan.interestRateType === 'ANNUALLY'
+        ? principal.times(rateFraction).times(new Decimal(totalInstallmentsCount).dividedBy(12))
+        : principal.times(rateFraction).times(totalInstallmentsCount);
 
-    const fullAmountWithInterest = loan.amount + totalInterest;
-    const currentPaidAmount = installments
-        .filter((i: any) => i.status === 'PAID')
-        .reduce((sum: number, i: any) => sum + i.amount, 0);
+    const fullAmountWithInterest = principal.plus(totalInterest);
+    const currentPaidAmount = sumBy(
+        installments.filter((i) => i.status === 'PAID'),
+        (i) => i.amount,
+    );
 
     // Consolidate documents: supportingDoc and supportingDocuments
     const allDocs = [
@@ -207,7 +211,7 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                                 <div className="w-px h-3 bg-gray-300"></div>
                                 <div className="flex items-center gap-1.5">
                                     <span className="font-bold">%</span>
-                                    {loan.interestRate}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})
+                                    {toDecimalString(loan.interestRate)}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})
                                 </div>
                             </div>
                         </div>
@@ -254,7 +258,7 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                     </div>
                     <div>
                         <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
-                            Rs: {loan.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            Rs: {formatMoney(loan.amount)}
                         </div>
                         <div className="text-[12px] text-gray-400 font-medium">Requested Amount</div>
                     </div>
@@ -269,9 +273,9 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                     </div>
                     <div>
                         <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
-                            Rs: {loan.monthlyPremium.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            Rs: {formatMoney(loan.monthlyPremium)}
                         </div>
-                        <div className="text-[12px] text-gray-400 font-medium">Next due: {installments.find((i: any) => i.status === 'PENDING')?.dueDate ? new Date(installments.find((i: any) => i.status === 'PENDING').dueDate).toLocaleDateString() : '-'}</div>
+                        <div className="text-[12px] text-gray-400 font-medium">Next due: {installments.find((i) => i.status === 'PENDING')?.dueDate ? new Date(installments.find((i) => i.status === 'PENDING')?.dueDate ?? '').toLocaleDateString() : '-'}</div>
                     </div>
                 </div>
 
@@ -284,9 +288,9 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                     </div>
                     <div>
                         <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
-                            Rs: {fullAmountWithInterest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            Rs: {formatMoney(fullAmountWithInterest)}
                         </div>
-                        <div className="text-[12px] text-gray-400 font-medium">Includes Rs: {totalInterest.toLocaleString('en-US', { minimumFractionDigits: 2 })} interest</div>
+                        <div className="text-[12px] text-gray-400 font-medium">Includes Rs: {formatMoney(totalInterest, { minFractionDigits: 2, maxFractionDigits: 3 })} interest</div>
                     </div>
                 </div>
 
@@ -299,7 +303,7 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                     </div>
                     <div>
                         <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
-                            Rs: {currentPaidAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            Rs: {formatMoney(currentPaidAmount)}
                         </div>
                         <div className="flex items-center gap-3 max-sm:mt-1">
                             <div className="text-[12px] text-gray-400 font-medium whitespace-nowrap">
@@ -320,7 +324,7 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                 <h3 className="text-lg font-bold text-[#141B3B] mb-6">Monthly Payment History</h3>
                 {/* Mobile Card View */}
                 <div className="flex flex-col gap-3 sm:hidden ">
-                    {installments.map((row: any) => (
+                    {installments.map((row) => (
                         <div key={row.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
                             {/* Top row: installment number + status badge */}
                             <div className="flex items-center justify-between mb-3">
@@ -338,25 +342,25 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                                 <div>
                                     <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Payment Date</div>
                                     <div className="text-[13px] font-semibold text-gray-700">
-                                        {row.status === 'PAID' ? new Date(row.updatedAt).toLocaleDateString() : '-'}
+                                        {row.status === 'PAID' ? new Date(row.updatedAt ?? '').toLocaleDateString() : '-'}
                                     </div>
                                 </div>
                                 <div>
                                     <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Principal</div>
                                     <div className="text-[13px] font-semibold text-gray-700">
-                                        Rs: {row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                        Rs: {formatMoney(row.amount, { minFractionDigits: 2, maxFractionDigits: 3 })}
                                     </div>
                                 </div>
                                 <div>
                                     <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Interest</div>
                                     <div className="text-[13px] font-semibold text-gray-700">
-                                        Rs: {(row.interest ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                        Rs: {formatMoney(row.interest ?? '0', { minFractionDigits: 2, maxFractionDigits: 3 })}
                                     </div>
                                 </div>
                                 <div>
                                     <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Total Premium</div>
                                     <div className="text-[13px] font-bold text-blue-500">
-                                        Rs: {row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                        Rs: {formatMoney(row.amount, { minFractionDigits: 2, maxFractionDigits: 3 })}
                                     </div>
                                 </div>
                             </div>
@@ -382,12 +386,12 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                         <div className="overflow-y-auto max-h-[143px]">
                             <table className="text-center"> */}
                             <tbody className="divide-y divide-gray-50">
-                                {installments.map((row: any) => (
+                                {installments.map((row) => (
                                     <tr key={row.id} className="hover:bg-gray-50/50 transition-colors">
                                         <td className=" min-w-[200px] py-4 px-2 text-[13px] font-semibold text-gray-400">{row.installmentNumber} / {totalInstallmentsCount}</td>
                                         <td className={` min-w-[200px] py-4 px-2 text-[13px] font-bold ${row.status === 'PENDING' ? 'text-[#141B3B]' : 'text-gray-500'}`}>{new Date(row.dueDate).toLocaleDateString()}</td>
-                                        <td className=" min-w-[200px] py-4 px-2 text-[13px] font-semibold text-gray-500">{row.status === 'PAID' ? new Date(row.updatedAt).toLocaleDateString() : '-'}</td>
-                                        <td className=" min-w-[350px] py-4 px-2 text-[13px] font-bold text-gray-500">Rs: {row.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                                        <td className=" min-w-[200px] py-4 px-2 text-[13px] font-semibold text-gray-500">{row.status === 'PAID' ? new Date(row.updatedAt ?? '').toLocaleDateString() : '-'}</td>
+                                        <td className=" min-w-[350px] py-4 px-2 text-[13px] font-bold text-gray-500">Rs: {formatMoney(row.amount, { minFractionDigits: 2, maxFractionDigits: 3 })}</td>
                                         <td className=" min-w-[200px] py-4 px-2">{getHistoryBadge(row.status)}</td>
                                     </tr>
                                 ))}

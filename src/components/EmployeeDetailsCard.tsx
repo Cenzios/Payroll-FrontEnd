@@ -27,6 +27,7 @@ import {
     UploadCloud
 } from "lucide-react";
 import { Employee } from "../types/employee.types";
+import { formatMoney, toDecimal } from '../utils/money';
 
 interface EmployeeDetailsCardProps {
     selectedEmployee: Employee | null;
@@ -257,10 +258,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     </span>
                                 </div>
                                 <div className="text-[13px] font-normal text-gray-800">
-                                    {(selectedEmployee.basicSalary ?? 0).toLocaleString("en-US", {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
+                                    {formatMoney(selectedEmployee.basicSalary)}
                                 </div>
                             </div> */}
 
@@ -387,10 +385,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     <span>Basic Salary</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
-                                    {selectedEmployee.basicSalary.toLocaleString("en-US", {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
+                                    {formatMoney(selectedEmployee.basicSalary)}
                                 </div>
                             </div> */}
 
@@ -405,10 +400,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     </span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
-                                    {(selectedEmployee.basicSalary ?? 0).toLocaleString("en-US", {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
+                                    {formatMoney(selectedEmployee.basicSalary)}
                                 </div>
                             </div>
 
@@ -419,12 +411,9 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                     <span>OT Rate (Rs./hr)</span>
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
-                                    {selectedEmployee.otRate === 0
+                                    {toDecimal(selectedEmployee.otRate).isZero()
                                         ? "N/A"
-                                        : selectedEmployee.otRate.toLocaleString("en-US", {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
+                                        : formatMoney(selectedEmployee.otRate)}
                                 </div>
                             </div>
 
@@ -436,10 +425,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                                 <div className="text-[13px] font-medium text-gray-800">
                                     {selectedEmployee.epfEnabled
-                                        ? Number(selectedEmployee.epfEtfAmount || 0).toLocaleString("en-US", {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })
+                                        ? formatMoney(selectedEmployee.epfEtfAmount)
                                         : "N/A"}
                                 </div>
                             </div>
@@ -474,10 +460,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                                     {allowance.type}
                                                 </div>
                                                 <div className="text-[13px] font-medium text-gray-800">
-                                                    {allowance.amount.toLocaleString("en-US", {
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2,
-                                                    })}
+                                                    {formatMoney(allowance.amount)}
                                                 </div>
                                             </div>
                                         ))
@@ -506,10 +489,7 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                                     {deduction.type}
                                                 </div>
                                                 <div className="text-[13px] font-medium text-gray-800">
-                                                    {deduction.amount.toLocaleString("en-US", {
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2,
-                                                    })}
+                                                    {formatMoney(deduction.amount)}
                                                 </div>
                                             </div>
                                         ))

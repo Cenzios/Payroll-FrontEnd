@@ -14,6 +14,7 @@ import { DollarSign, HandCoins, CircleDotDashed, Shapes } from 'lucide-react';
 import AlertBar from '../components/AlertBar';
 import logo from '../assets/images/logo-login.svg';
 import { useSearchParams } from 'react-router-dom';
+import { formatMoney, sumBy, toDecimalString, ZERO } from '../utils/money';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -54,15 +55,17 @@ const Loans = () => {
   };
 
   // Summary Calculations
-  const totalLoanAmount = loans.reduce((sum: number, l: any) => sum + (l.amount || 0), 0);
+  // Money totals via decimal.js (amounts are decimal strings)
+  const totalLoanAmount = sumBy(loans, (l) => l.amount);
   const totalActiveLoans = loans.filter((l: any) => {
     const status = (l.status || 'Active').toUpperCase();
     return status === 'ACTIVE' || status === 'PENDING';
   }).length;
-  const totalAmountCollected = loans.reduce((sum: number, l: any) =>
-    sum + (l.installments?.reduce((insSum: number, ins: any) => insSum + (ins.paidAmount || 0), 0) || 0), 0
+  const totalAmountCollected = loans.reduce(
+    (sum, l) => sum.plus(sumBy(l.installments, (ins) => ins.paidAmount)),
+    ZERO,
   );
-  const totalPendingPayment = totalLoanAmount - totalAmountCollected;
+  const totalPendingPayment = totalLoanAmount.minus(totalAmountCollected);
 
   const SummaryCard = ({ title, value, icon: Icon, iconBg, iconColor }: {
     title: string;
@@ -110,7 +113,7 @@ const Loans = () => {
         <div>
           <p className="text-[10px] text-[#989FA7] mb-0.5 font-medium">Loan Amount</p>
           <p className="text-[16px] font-bold text-[#1D1F24]">
-            Rs: {loan.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            Rs: {formatMoney(loan.amount, { minFractionDigits: 2, maxFractionDigits: 3 })}
           </p>
         </div>
         <p className="text-[12px] font-semibold text-[#6B7280]">{loan.loanTitle}</p>
@@ -124,7 +127,7 @@ const Loans = () => {
         <div className="text-center">
           <p className="text-[9px] text-[#989FA7] uppercase tracking-wide font-semibold mb-1">Interest</p>
           <p className="text-[11px] font-bold text-[#353843]">
-            {loan.interestRate}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})
+            {toDecimalString(loan.interestRate)}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})
           </p>
         </div>
         <div className="text-center border-x border-[#F0F0F0]">
@@ -136,7 +139,7 @@ const Loans = () => {
         <div className="text-center">
           <p className="text-[9px] text-[#989FA7] uppercase tracking-wide font-semibold mb-1">Premium</p>
           <p className="text-[11px] font-bold text-[#353843]">
-            Rs:{loan.monthlyPremium.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            Rs:{formatMoney(loan.monthlyPremium, { minFractionDigits: 2, maxFractionDigits: 3 })}
           </p>
         </div>
       </div>
@@ -267,21 +270,21 @@ const Loans = () => {
                         />
                         <SummaryCard
                           title="Total Loan Amount"
-                          value={`Rs ${totalLoanAmount.toLocaleString()}`}
+                          value={`Rs ${formatMoney(totalLoanAmount, { minFractionDigits: 0, maxFractionDigits: 3 })}`}
                           icon={DollarSign}
                           iconBg="bg-emerald-50"
                           iconColor="text-emerald-500"
                         />
                         <SummaryCard
                           title="Total Amount Collected"
-                          value={`Rs ${totalAmountCollected.toLocaleString()}`}
+                          value={`Rs ${formatMoney(totalAmountCollected, { minFractionDigits: 0, maxFractionDigits: 3 })}`}
                           icon={ScrollText}
                           iconBg="bg-purple-50"
                           iconColor="text-purple-500"
                         />
                         <SummaryCard
                           title="Pending Payment"
-                          value={`Rs ${totalPendingPayment.toLocaleString()}`}
+                          value={`Rs ${formatMoney(totalPendingPayment, { minFractionDigits: 0, maxFractionDigits: 3 })}`}
                           icon={CreditCard}
                           iconBg="bg-rose-50"
                           iconColor="text-rose-500"
@@ -330,10 +333,10 @@ const Loans = () => {
                                   </div>
                                 </td>
                                 <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.loanTitle}</td>
-                                <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">Rs: {loan.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                                <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.interestRate}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})</td>
+                                <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">Rs: {formatMoney(loan.amount, { minFractionDigits: 2, maxFractionDigits: 3 })}</td>
+                                <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{toDecimalString(loan.interestRate)}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})</td>
                                 <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.installments?.filter((i: any) => i.status === 'PAID').length || 0} / {loan.installmentCount}</td>
-                                <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">Rs:{loan.monthlyPremium.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                                <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">Rs:{formatMoney(loan.monthlyPremium, { minFractionDigits: 2, maxFractionDigits: 3 })}</td>
                                 <td className="py-4 px-6">
                                   {getStatusBadge(loan.status || 'Active')}
                                 </td>

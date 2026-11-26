@@ -5,7 +5,7 @@ import {
     ListFilter, X, Award, Calendar, Banknote, Wallet, ChevronDown, Check
 } from "lucide-react";
 import FileUploadModal from "../FileUploadModal";
-import { CreateEmployeeRequest } from "../../types/employee.types";
+import { CreateEmployeeRequest, RecurringEntry } from "../../types/employee.types";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -14,6 +14,7 @@ import { Toggle, SRI_LANKAN_BANKS } from "./drawerConstants";
 import { validateEmployeeField } from "./drawerValidation";
 import Toast from "../Toast";
 import axiosInstance from "../../api/axios";
+import { formatMoney, isPositive, MoneyInput, sumBy, toDecimal, toDecimalString } from "../../utils/money";
 
 interface EmployeeDrawerProps {
     isOpen: boolean;
@@ -28,7 +29,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         fullName: "", address: "", employeeId: "", contactNumber: "",
         joinedDate: new Date().toISOString().split("T")[0],
         designation: "", department: "General", email: "",
-        basicSalary: 0, salaryType: "DAILY", paidLeave: 0, otRate: 0,
+        basicSalary: "", salaryType: "DAILY", paidLeave: 0, otRate: "",
         epfEnabled: true, allowanceEnabled: false, deductionEnabled: false,
     });
 
@@ -81,7 +82,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                         : new Date().toISOString().split("T")[0],
                 });
                 setEpfEnabled(initialData.epfEnabled ?? true);
-                setEpfEtf(initialData.epfEtfAmount?.toString() || "");
+                setEpfEtf(initialData.epfEtfAmount ? toDecimalString(initialData.epfEtfAmount) : "");
                 setAllowanceEnabled(false);
                 setDeductionEnabled(false);
                 setAllowances([{ type: "", amount: "" }]);
@@ -107,7 +108,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                 //         fullName: "", address: "", employeeId: "", contactNumber: "",
                 //         joinedDate: new Date().toISOString().split("T")[0],
                 //         designation: "", department: "General", email: "",
-                //         basicSalary: 0, salaryType: "DAILY", paidLeave: 0, otRate: 0,
+                //         basicSalary: "", salaryType: "DAILY", paidLeave: 0, otRate: "",
                 //         epfEnabled: true, allowanceEnabled: false, deductionEnabled: false,
                 //     });
                 //     setEpfEnabled(true);
@@ -123,7 +124,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                     fullName: "", address: "", employeeId: "", contactNumber: "",
                     joinedDate: new Date().toISOString().split("T")[0],
                     designation: "", department: "General", email: "",
-                    basicSalary: 0, salaryType: "DAILY", paidLeave: 0, otRate: 0,
+                    basicSalary: "", salaryType: "DAILY", paidLeave: 0, otRate: "",
                     epfEnabled: true, allowanceEnabled: false, deductionEnabled: false,
                 });
                 setEpfEnabled(true);
@@ -148,14 +149,14 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
             const hasAllowances = internalAllowances.length > 0;
             setAllowanceEnabled(!!initialData.allowanceEnabled || hasAllowances);
             setAllowances(hasAllowances
-                ? internalAllowances.map((a: any) => ({ type: a.type || "", amount: a.amount !== undefined ? a.amount.toString() : "" }))
+                ? internalAllowances.map((a: RecurringEntry) => ({ type: a.type || "", amount: a.amount !== undefined ? toDecimalString(a.amount) : "" }))
                 : [{ type: "", amount: "" }]);
 
             const internalDeductions = initialData.recurringDeductions || [];
             const hasDeductions = internalDeductions.length > 0;
             setDeductionEnabled(!!initialData.deductionEnabled || hasDeductions);
             setDeductions(hasDeductions
-                ? internalDeductions.map((d: any) => ({ type: d.type || "", amount: d.amount !== undefined ? d.amount.toString() : "" }))
+                ? internalDeductions.map((d: RecurringEntry) => ({ type: d.type || "", amount: d.amount !== undefined ? toDecimalString(d.amount) : "" }))
                 : [{ type: "", amount: "" }]);
         }
     }, [isOpen, initialData]);
@@ -183,17 +184,19 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     const getValidationContext = () => ({
         epfEnabled,
         epfEtf,
-        basicSalary: Number(employeeData.basicSalary),
+        basicSalary: employeeData.basicSalary,
         salaryType: employeeData.salaryType,
     });
 
-    const validateDeductionsTotal = (deds: { type: string; amount: string }[], basic: any, type?: string) => {
-        const total = deds.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
-        const basicAmount = Number(basic) || 0;
+    const validateDeductionsTotal = (deds: { type: string; amount: string }[], basic: MoneyInput, type?: string): string => {
+        // Money maths via decimal.js
+        const total = sumBy(deds, (d) => d.amount);
+        const basicAmount = toDecimal(basic);
         const currentSalaryType = type || employeeData.salaryType;
-        const maxAllowed = currentSalaryType === "DAILY" ? basicAmount * 30 : basicAmount;
-        if (total > maxAllowed) {
-            return `Total deductions (Rs. ${total.toLocaleString()}) cannot exceed basic salary (Rs. ${maxAllowed.toLocaleString()})`;
+        const maxAllowed = currentSalaryType === "DAILY" ? basicAmount.times(30) : basicAmount;
+        if (total.greaterThan(maxAllowed)) {
+            const fmt = { minFractionDigits: 0, maxFractionDigits: 3 };
+            return `Total deductions (Rs. ${formatMoney(total, fmt)}) cannot exceed basic salary (Rs. ${formatMoney(maxAllowed, fmt)})`;
         }
         return "";
     };
@@ -381,12 +384,12 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         try {
             if (!companyId && !initialData && !employeeData.companyId) throw new Error("Company ID is missing");
             const recurringAllowances = allowanceEnabled
-                ? allowances.filter((a) => a.type.trim() && a.amount.trim() && parseFloat(a.amount) > 0)
-                    .map((a) => ({ type: a.type.trim(), amount: parseFloat(a.amount) }))
+                ? allowances.filter((a) => a.type.trim() && a.amount.trim() && isPositive(a.amount))
+                    .map((a) => ({ type: a.type.trim(), amount: toDecimalString(a.amount) }))
                 : [];
             const recurringDeductions = deductionEnabled
-                ? deductions.filter((d) => d.type.trim() && d.amount.trim() && parseFloat(d.amount) > 0)
-                    .map((d) => ({ type: d.type.trim(), amount: parseFloat(d.amount) }))
+                ? deductions.filter((d) => d.type.trim() && d.amount.trim() && isPositive(d.amount))
+                    .map((d) => ({ type: d.type.trim(), amount: toDecimalString(d.amount) }))
                 : [];
             const finalData = {
                 ...employeeData,
@@ -395,12 +398,13 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                 address: employeeData.address?.trim() || "",
                 companyId: companyId || employeeData.companyId,
                 department: employeeData.department || "General",
-                basicSalary: parseFloat(String(employeeData.basicSalary)) || 0,
+                // Money sent as decimal strings (API contract)
+                basicSalary: toDecimalString(employeeData.basicSalary),
                 salaryType: employeeData.salaryType || "DAILY",
                 paidLeave: parseInt(String(employeeData.paidLeave)) || 0,
-                otRate: parseFloat(String(employeeData.otRate)) || 0,
+                otRate: toDecimalString(employeeData.otRate),
                 epfEnabled,
-                epfEtfAmount: epfEnabled && epfEtf ? parseFloat(epfEtf) : undefined,
+                epfEtfAmount: epfEnabled && epfEtf ? toDecimalString(epfEtf) : undefined,
                 allowanceEnabled, deductionEnabled, recurringAllowances, recurringDeductions,
             } as CreateEmployeeRequest;
 
@@ -716,8 +720,8 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Basic Salary <strong className="text-red-600 text-[15px]">*</strong></label>
                                                 </div>
                                                 <div className="flex items-center">
-                                                    <input type="number" min="0" value={employeeData.basicSalary || ""}
-                                                        onChange={(e) => handleEmployeeChange("basicSalary", parseFloat(e.target.value) || 0)}
+                                                    <input type="number" min="0" value={toDecimal(employeeData.basicSalary).isZero() ? "" : toDecimalString(employeeData.basicSalary)}
+                                                        onChange={(e) => handleEmployeeChange("basicSalary", e.target.value)}
                                                         onBlur={() => handleBlur("basicSalary")}
                                                         onWheel={(e) => e.currentTarget.blur()}
                                                         onKeyDown={blockInvalidNumericKeys}
@@ -796,8 +800,8 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Banknote className="h-4 w-4 text-blue-500" /></div>
                                                     <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">OT Rate (Rs./hr)</label>
                                                 </div>
-                                                <input type="number" min="0" value={employeeData.otRate || ""}
-                                                    onChange={(e) => handleEmployeeChange("otRate", parseFloat(e.target.value) || 0)}
+                                                <input type="number" min="0" value={toDecimal(employeeData.otRate).isZero() ? "" : toDecimalString(employeeData.otRate)}
+                                                    onChange={(e) => handleEmployeeChange("otRate", e.target.value)}
                                                     onBlur={() => handleBlur("otRate")}
                                                     onWheel={(e) => e.currentTarget.blur()}
                                                     onKeyDown={blockInvalidNumericKeys}

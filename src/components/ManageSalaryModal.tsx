@@ -1,16 +1,21 @@
 import { X } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
+import type { SalaryEntry } from "../store/slices/salarySlice";
+import { formatMoney, isPositive, sumBy, toDecimal } from "../utils/money";
+
+/** Accepts a non-negative decimal with at most 7 integer digits ("" allowed). */
+const AMOUNT_PATTERN = /^\d{0,7}(\.\d*)?$/;
 
 interface ManageSalaryModalProps {
     manageModal: {
         type: "allowance" | "deduction";
         empId: string;
     } | null;
-    modalEntries: { type: string; amount: number }[];
-    setModalEntries: Dispatch<SetStateAction<{ type: string; amount: number }[]>>;
+    modalEntries: SalaryEntry[];
+    setModalEntries: Dispatch<SetStateAction<SalaryEntry[]>>;
     onSave: () => void;
     onCancel: () => void;
-    earningsLimit?: number; // For deduction: total deductions cannot exceed this
+    earningsLimit?: string; // Decimal string. For deduction: total deductions cannot exceed this
 }
 
 const ManageSalaryModal = ({
@@ -26,16 +31,14 @@ const ManageSalaryModal = ({
     const isAllowance = manageModal.type === "allowance";
 
     // Total of all valid entries (excluding the empty last row)
-    const total = modalEntries
-        // .slice(0, -1)
-        .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+    const total = sumBy(modalEntries, (e) => e.amount);
 
     // Deduction limit check
     const deductionExceedsEarnings =
         !isAllowance &&
         earningsLimit !== undefined &&
-        earningsLimit > 0 &&
-        total > earningsLimit;
+        isPositive(earningsLimit) &&
+        total.greaterThan(toDecimal(earningsLimit));
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -61,7 +64,7 @@ const ManageSalaryModal = ({
                 <div className="px-6 pb-4 space-y-3">
                     {modalEntries.map((entry, idx) => {
                         const isLastRow = idx === modalEntries.length - 1;
-                        const canAdd = entry.type.trim() && entry.amount > 0;
+                        const canAdd = entry.type.trim() && isPositive(entry.amount);
 
                         return (
                             <div key={idx} className="flex items-center gap-3">
@@ -91,14 +94,15 @@ const ManageSalaryModal = ({
                                     <div className="w-px bg-gray-200 my-2" />
                                     <input
                                         type="number"
-                                        value={entry.amount || ""}
+                                        value={entry.amount}
                                         onChange={(e) => {
                                             const val = e.target.value;
-                                            if (val.split('.')[0].length > 7) return;
+                                            // Keep money as a decimal string; reject >7 integer digits / invalid input
+                                            if (!AMOUNT_PATTERN.test(val)) return;
                                             const updated = [...modalEntries];
                                             updated[idx] = {
                                                 ...updated[idx],
-                                                amount: Math.max(0, parseFloat(val) || 0),
+                                                amount: val,
                                             };
                                             setModalEntries(updated);
                                         }}
@@ -119,7 +123,7 @@ const ManageSalaryModal = ({
                                             if (canAdd) {
                                                 setModalEntries((prev) => [
                                                     ...prev,
-                                                    { type: "", amount: 0 },
+                                                    { type: "", amount: "" },
                                                 ]);
                                             }
                                         }}
@@ -177,7 +181,7 @@ const ManageSalaryModal = ({
                             className={`text-sm font-semibold ${isAllowance ? "text-[#4785ff]" : "text-red-600"
                                 }`}
                         >
-                            LKR {total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            LKR {formatMoney(total)}
                         </span>
                     </div>
 
@@ -186,7 +190,7 @@ const ManageSalaryModal = ({
                         <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
                             <span className="text-red-500 text-base leading-none mt-0.5">⚠</span>
                             <p className="text-[12px] text-red-600 font-medium leading-snug">
-                                Total deductions (Rs. {total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) cannot exceed total earnings (Rs. {earningsLimit!.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                                Total deductions (Rs. {formatMoney(total)}) cannot exceed total earnings (Rs. {formatMoney(earningsLimit)})
                             </p>
                         </div>
                     )}

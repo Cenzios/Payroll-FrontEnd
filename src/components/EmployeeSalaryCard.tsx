@@ -3,20 +3,24 @@ import { createPortal } from 'react-dom';
 import { Loader2, ChevronRight, Lock, Loader, Eye, ArrowUpRight, LockKeyhole } from "lucide-react";
 import { Employee } from "../types/employee.types";
 import { useAppSelector } from "../store/hooks";
+import type { SalaryRecord } from "../types/salary.types";
+import type { SalaryEntry } from "../store/slices/salarySlice";
+import { formatMoney, MoneyInput, toDecimal } from "../utils/money";
+import { computeSalaryCardFigures } from "../utils/salaryCardCalc";
 
 interface EmployeeSalaryCardProps {
     emp: Employee;
-    generatedSalary?: any;
+    generatedSalary?: SalaryRecord;
     selectedEmployee: Employee | null;
     handleSelectEmployee: (emp: Employee) => void;
     workedDays: number;
     isEpfEnabled: boolean;
     isLoanEnabled: boolean;
     otHours: number;
-    salaryAdvance: number;
+    salaryAdvance: string; // decimal string
     leaveDays: number;
     sickLeaveDays: number;
-    loanDeduction: number;
+    loanDeduction: string; // decimal string
     companyWorkingDays: number;
     maxWorkedDays: number;
     hasLoanInstallment: boolean;
@@ -30,8 +34,8 @@ interface EmployeeSalaryCardProps {
     handleGeneratePayslip: (emp: Employee) => void;
     handleConfirmPayslip: (emp: Employee) => void;
     openManageModal: (type: "allowance" | "deduction", emp: Employee) => void;
-    salaryAllowances: Record<string, { type: string; amount: number }[]>;
-    salaryDeductions: Record<string, { type: string; amount: number }[]>;
+    salaryAllowances: Record<string, SalaryEntry[]>;
+    salaryDeductions: Record<string, SalaryEntry[]>;
     isSaving: boolean;
     hasAnyError: (emp: Employee) => boolean;
     setTouchedFields: React.Dispatch<React.SetStateAction<any>>;
@@ -39,8 +43,13 @@ interface EmployeeSalaryCardProps {
     selectedYear: number;
 }
 
-const fmt = (val: number) =>
-    val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt = (val: MoneyInput): string => formatMoney(val);
+
+/** Input display: '' for zero, otherwise the plain decimal (e.g. "1500" not "1500.0000"). */
+const inputDisplay = (val: MoneyInput): string => {
+    const d = toDecimal(val);
+    return d.isZero() ? "" : d.toFixed();
+};
 
 // Toggle Switch component
 const Toggle = ({
@@ -117,105 +126,41 @@ const EmployeeSalaryCard = ({
     // const displayOtHours = isLocked ? generatedSalary.otHours : otHours;
     // const displaySalaryAdvance = isLocked ? generatedSalary.salaryAdvance : salaryAdvance;
     const displayWorkedDays = isLocked && generatedSalary ? generatedSalary.workingDays : workedDays;
-    const displayOtHours = isLocked && generatedSalary ? generatedSalary.otHours : otHours;
-    const displaySalaryAdvance = isLocked && generatedSalary ? generatedSalary.salaryAdvance : salaryAdvance;
+    const displayOtHours: MoneyInput = isLocked && generatedSalary ? generatedSalary.otHours : otHours;
+    const displaySalaryAdvance: MoneyInput = isLocked && generatedSalary ? generatedSalary.salaryAdvance : salaryAdvance;
 
-    const basicSalary = emp.basicSalary || 0;
-    const otRate = emp.otRate || 0;
-    // const otAmount = isLocked ? generatedSalary.otAmount : displayOtHours * otRate;
-    const otAmount = isLocked && generatedSalary ? generatedSalary.otAmount : displayOtHours * otRate;
+    const basicSalary = emp.basicSalary || "0";
+    const otRate = emp.otRate || "0";
+    const hasOtRate = toDecimal(emp.otRate).greaterThan(0);
 
     const currentAllowances = salaryAllowances[emp.id] || emp.recurringAllowances || [];
-    // const totalAllowances = isLocked
-    const totalAllowances = isLocked && generatedSalary
-        // ? generatedSalary.allowanceTotal
-        ? (generatedSalary.allowances || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0)
-        : currentAllowances.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-
     const currentDeductions = salaryDeductions[emp.id] || emp.recurringDeductions || [];
-    // const totalDeductions_custom = isLocked
-    const totalDeductions_custom = isLocked && generatedSalary
-        // ? generatedSalary.deductionTotal - (generatedSalary.loanDeduction || 0)
-        ? (generatedSalary.deductions || []).reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0)
-        : currentDeductions.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
-    // Display Basic Pay: For Monthly, we show the full basic in Gross Earnings.
-    // For Daily, it's always rate * days worked.
-    const displayBasicPay = isLocked && generatedSalary
-        ? generatedSalary.basicPay
-        : emp.salaryType === "MONTHLY"
-            ? (companyWorkingDays > 0
-                ? (basicSalary / companyWorkingDays) * Math.min(displayWorkedDays + (Math.min(leaveDays, emp.paidLeave || 0)), companyWorkingDays)
-                : basicSalary)
-            : basicSalary * (displayWorkedDays + (Math.min(leaveDays, emp.paidLeave || 0)));
-
-    // Earned Basic Pay: This is the actual amount earned (reduced by unpaid leaves), 
-    // used primarily for EPF calculation to remain legally accurate.
-    const earnedBasicPay = isLocked && generatedSalary
-        ? generatedSalary.basicPay - (generatedSalary.nonPaidLeaveDeduction || 0)
-        : emp.salaryType === "MONTHLY" && companyWorkingDays > 0
-            ? (() => {
-                const applicableAnnualLeave = Math.min(leaveDays, emp.paidLeave || 0);
-                const payableDays = displayWorkedDays + applicableAnnualLeave;
-                return (basicSalary / companyWorkingDays) * Math.min(payableDays, companyWorkingDays);
-            })()
-            : displayBasicPay;
-
-
-    const nonPaidLeaveDeduction = isLocked && generatedSalary
-        // ? generatedSalary.nonPaidLeaveDeduction ?? 0
-        ? generatedSalary.nonPaidLeaveDeduction ?? (
-            emp.salaryType === "MONTHLY" && companyWorkingDays > 0
-                ? ((generatedSalary.basicSalary || basicSalary) / companyWorkingDays) * (generatedSalary.sickLeaveDays || sickLeaveDays || 0)
-                : 0
-        )
-        : emp.salaryType === "MONTHLY" && companyWorkingDays > 0
-            ? (basicSalary / companyWorkingDays) * sickLeaveDays
-            : 0;
-
-    // EPF/ETF always uses the configured epfEtfAmount from the employee form.
-    // No fallback to basic salary — if no amount is configured, EPF/ETF is 0.
-    const epfBasis = (emp.epfEtfAmount && emp.epfEtfAmount > 0)
-        ? emp.epfEtfAmount
-        : 0;
-    const epfAmount = isLocked && generatedSalary
-        ? generatedSalary.employeeEPF
-        : emp.epfEnabled && isEpfEnabled && epfBasis > 0
-            ? epfBasis * 0.08
-            : 0;
-
-    // Gross Earnings uses the FULL display basic pay for the UI, 
-    // and we show unpaid leaves as a deduction instead of pro-rating it directly here.
-    // const totalEarnings = isLocked && generatedSalary
-    //     ? generatedSalary.grossSalary + (generatedSalary.nonPaidLeaveDeduction ?? 0)
-    //     : displayBasicPay + (emp.otRate > 0 ? otAmount : 0) + totalAllowances;
-
-    console.log(generatedSalary);
-
-    const baseForEarnings = emp.salaryType === "DAILY"
-        ? displayBasicPay        // daily: rate × days
-        : basicSalary;           // monthly: always full basic salary
-
-    // const totalEarnings = isLocked && generatedSalary
-    // ? generatedSalary.grossSalary + (generatedSalary.nonPaidLeaveDeduction ?? 0)
-    // : baseForEarnings + otAmount + totalAllowances;
-    const totalEarnings = baseForEarnings + otAmount + totalAllowances;
-
-    // Total Deductions includes the unpaid leave deduction, epf, advance, and loans.
-    const totalDeductions = isLocked && generatedSalary
-        // ? generatedSalary.totalDeduction + (generatedSalary.nonPaidLeaveDeduction ?? 0)
-        ? (generatedSalary.totalDeduction != null
-            ? generatedSalary.totalDeduction + nonPaidLeaveDeduction
-            : displaySalaryAdvance + epfAmount + (generatedSalary.loanDeduction || 0) + totalDeductions_custom + nonPaidLeaveDeduction)
-        : displaySalaryAdvance +
-        epfAmount +
-        (hasLoanInstallment && isLoanEnabled ? loanDeduction : 0) +
-        totalDeductions_custom +
-        nonPaidLeaveDeduction;
-
-    // Net Salary is simply Gross - Deductions.
-    const netSalary = isLocked && generatedSalary
-        ? generatedSalary.netSalary : totalEarnings - totalDeductions;
+    // All money maths via decimal.js (utils/salaryCardCalc.ts)
+    const {
+        otAmount,
+        totalAllowances,
+        customDeductions: totalDeductions_custom,
+        epfAmount,
+        totalEarnings,
+        totalDeductions,
+        netSalary,
+    } = computeSalaryCardFigures({
+        emp,
+        saved: isLocked ? generatedSalary : undefined,
+        workedDays,
+        otHours,
+        salaryAdvance,
+        leaveDays,
+        sickLeaveDays,
+        loanDeduction,
+        companyWorkingDays,
+        isEpfEnabled,
+        isLoanEnabled,
+        hasLoanInstallment,
+        allowances: currentAllowances,
+        deductions: currentDeductions,
+    });
 
     // Current period label
     const periodLabel = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "short", year: "numeric" });
@@ -364,7 +309,7 @@ const EmployeeSalaryCard = ({
                     </div>
 
                     {/* OT Rate */}
-                    {emp.otRate > 0 && (
+                    {hasOtRate && (
                         <div className="px-4 md:px-6 border-r border-gray-200 w-1/2 md:w-auto max-sm:border-none">
                             <p className="text-[12px] text-gray-400 mb-0.5">OT rate</p>
                             <p className="text-[15px] font-bold text-gray-800">{fmt(otRate)}</p>
@@ -372,7 +317,7 @@ const EmployeeSalaryCard = ({
                     )}
 
                     {/* OT Amount */}
-                    {emp.otRate > 0 && (
+                    {hasOtRate && (
                         <div className="px-4 md:px-6 border-r border-gray-200 w-1/2 md:w-auto max-sm:border-none">
                             <p className="text-[12px] text-gray-400 mb-0.5">OT amount</p>
                             <p className="text-[15px] font-bold text-gray-800">{fmt(otAmount)}</p>
@@ -400,7 +345,7 @@ const EmployeeSalaryCard = ({
                                 }}
                                 disabled={isLocked}
                             />
-                            <span className="text-[16px] font-bold text-red-500">{fmt(isEpfEnabled ? epfAmount : 0)}</span>
+                            <span className="text-[16px] font-bold text-red-500">{fmt(isEpfEnabled ? epfAmount : "0")}</span>
                         </div>
                     )}
                 </div>
@@ -458,20 +403,20 @@ const EmployeeSalaryCard = ({
                         </div>
 
                         {/* OT Hours */}
-                        {emp.otRate > 0 && (
+                        {hasOtRate && (
                             <div className="px-2 w-[calc(50%-8px)] md:w-[120px] border-r border-gray-200
                         max-sm:border-none max-sm:w-[90px]">
                                 <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center">OT Hours</p>
                                 <input
                                     type="number"
                                     step="0.5"
-                                    value={displayOtHours === 0 ? "" : displayOtHours}
+                                    value={inputDisplay(displayOtHours)}
                                     onChange={(e) => handleEmployeeOtHoursChange(emp.id, parseFloat(e.target.value) || 0)}
                                     onWheel={(e) => e.currentTarget.blur()}
                                     onKeyDown={blockInvalidNumberKeys}
                                     className={inputClass(isLocked)}
                                     min="0"
-                                    disabled={isLocked || emp.otRate <= 0}
+                                    disabled={isLocked || !hasOtRate}
                                 />
                             </div>
                         )}
@@ -483,7 +428,7 @@ const EmployeeSalaryCard = ({
                             max-sm:top-0">Advance</p>
                             <input
                                 type="number"
-                                value={displaySalaryAdvance === 0 ? "" : displaySalaryAdvance}
+                                value={inputDisplay(displaySalaryAdvance)}
                                 onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
                                 onWheel={(e) => e.currentTarget.blur()}
                                 onKeyDown={blockInvalidNumberKeys}
@@ -558,7 +503,7 @@ const EmployeeSalaryCard = ({
                                             ? "bg-white border-gray-200 text-gray-800"
                                             : "bg-gray-50 border-gray-100 text-gray-300 line-through"
                                         }`}>
-                                        {fmt(isLoanEnabled ? loanDeduction : 0)}
+                                        {fmt(isLoanEnabled ? loanDeduction : "0")}
                                     </div>
                                 </div>
                             )}

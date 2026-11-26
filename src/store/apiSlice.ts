@@ -3,15 +3,17 @@ import { axiosBaseQuery } from '../api/baseQuery';
 import { Company, CreateCompanyRequest } from '../types/company.types';
 import { Employee, CreateEmployeeRequest, EmployeeDocument } from '../types/employee.types';
 import { Notification } from '../types/notification.types';
+import type { LoanInstallment, SalaryRecord } from '../types/salary.types';
 
 // Define types locally if not exported from files, or reuse existing types
 // We'll trust the types exist or use 'any' where strict typing isn't critical for the task
+// Money fields are decimal strings (API contract).
 interface DashboardSummary {
     totalEmployees: number;
-    totalSalaryPaidThisMonth: number;
-    totalCompanyEPF: number;
-    totalCompanyETF: number;
-    totalEmployeeEPF: number;
+    totalSalaryPaidThisMonth: string;
+    totalCompanyEPF: string;
+    totalCompanyETF: string;
+    totalEmployeeEPF: string;
     maxEmployees: number;
     planName: string;
     remainingSlots: number;
@@ -42,10 +44,10 @@ export interface Loan {
     startDate: string;
     endDate: string;
     interestRateType: 'MONTHLY' | 'ANNUALLY';
-    amount: number;
+    amount: string;
     installmentCount: number;
-    interestRate: number;
-    monthlyPremium: number;
+    interestRate: string;
+    monthlyPremium: string;
     supportingDocId?: string;
     supportingDoc?: EmployeeDocument;
     supportingDocuments?: EmployeeDocument[];
@@ -54,7 +56,7 @@ export interface Loan {
         fullName: string;
         employeeId: string;
     };
-    installments?: any[];
+    installments?: LoanInstallment[];
 }
 
 export interface CreateLoanRequest {
@@ -66,10 +68,10 @@ export interface CreateLoanRequest {
     startDate: string;
     endDate: string;
     interestRateType: 'MONTHLY' | 'ANNUALLY';
-    amount: number;
+    amount: string;
     installmentCount: number;
-    interestRate: number;
-    monthlyPremium: number;
+    interestRate: string;
+    monthlyPremium: string;
     supportingDocId?: string;
     supportingDocIds?: string[];
 }
@@ -256,7 +258,7 @@ export const apiSlice = createApi({
             invalidatesTags: ['Notification'],
         }),
 
-        getSalaryTrend: builder.query<{ name: string; total: number }[], { companyId?: string; range?: string }>({
+        getSalaryTrend: builder.query<{ name: string; total: string }[], { companyId?: string; range?: string }>({
             query: ({ companyId, range }) => ({
                 url: '/dashboard/salary-trend',
                 method: 'GET',
@@ -314,7 +316,7 @@ export const apiSlice = createApi({
             }),
             invalidatesTags: (result, error, { employeeId }) => [{ type: 'Employee', id: employeeId }],
         }),
-        getPendingLoanInstallments: builder.query<any[], { companyId: string; employeeId: string; month: number; year: number }>({
+        getPendingLoanInstallments: builder.query<LoanInstallment[], { companyId: string; employeeId: string; month: number; year: number }>({
             query: (params) => ({
                 url: '/loans/pending',
                 method: 'GET',
@@ -322,7 +324,7 @@ export const apiSlice = createApi({
             }),
             providesTags: (_result, _error, { employeeId }) => [{ type: 'Employee' as const, id: employeeId }],
         }),
-        getAllPendingLoanInstallments: builder.query<any[], { companyId: string; month: number; year: number }>({
+        getAllPendingLoanInstallments: builder.query<LoanInstallment[], { companyId: string; month: number; year: number }>({
             query: (params) => ({
                 url: '/loans/pending/all',
                 method: 'GET',
@@ -330,7 +332,7 @@ export const apiSlice = createApi({
             }),
             providesTags: ['Employee'],
         }),
-        getSalaryHistory: builder.query<any[], { companyId: string; employeeId?: string; month?: number; year?: number }>({
+        getSalaryHistory: builder.query<SalaryRecord[], { companyId: string; employeeId?: string; month?: number; year?: number }>({
             query: (params) => ({
                 url: '/salary/history',
                 method: 'GET',

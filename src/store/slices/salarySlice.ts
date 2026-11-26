@@ -1,31 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { SalaryDetails } from '../../types/salary.types';
 
-interface SalaryDetails {
-    salaryType: string;
-    basicSalary: number;
-    basicPay: number;
-    epfEmployee: number;
-    epfEmployer: number;
-    etfEmployer: number;
-    totalDeductions: number;
-    netSalary: number;
-    workedDays: number;
-    dailyRate: number;
-    isEpfEnabled: boolean;
-    otHours: number;
-    otAmount: number;
-    salaryAdvance: number;
-    loanDeduction: number;
-    paidLeave: number;
-    epf8: number;
-    epf12: number;
-    etf3: number;
-    allowances: { name: string; amount: number }[];
-    deductions: { name: string; amount: number }[];
-    leaveDays: number;
-    sickLeaveDays: number;
-    nonPaidLeaveDeduction: number;
+/** A user-edited allowance/deduction row; amount is a decimal string. */
+export interface SalaryEntry {
+    type: string;
+    amount: string;
 }
+
 
 interface SalaryState {
     companyWorkingDays: number;
@@ -35,15 +16,15 @@ interface SalaryState {
     employeeWorkedDays: Record<string, number>;
     // OT and Advance overrides
     employeeOtHours: Record<string, number>;
-    employeeSalaryAdvance: Record<string, number>;
+    employeeSalaryAdvance: Record<string, string>; // money as decimal string
     // Toggle state helper
     employeeEpfEtf: Record<string, boolean>; // Defaults to true
     employeeLoanEnabled: Record<string, boolean>; // Defaults to true
     employeeLeaveDays: Record<string, number>;
     employeeSickLeaveDays: Record<string, number>;
     // Recurring Allowances & Deductions
-    employeeAllowances: Record<string, { type: string; amount: number }[]>;
-    employeeDeductions: Record<string, { type: string; amount: number }[]>;
+    employeeAllowances: Record<string, SalaryEntry[]>;
+    employeeDeductions: Record<string, SalaryEntry[]>;
     // Preview data
     previewPayslip: SalaryDetails | null;
 }
@@ -87,7 +68,7 @@ const salarySlice = createSlice({
         setEmployeeOtHours: (state, action: PayloadAction<{ id: string; hours: number }>) => {
             state.employeeOtHours[action.payload.id] = action.payload.hours;
         },
-        setEmployeeSalaryAdvance: (state, action: PayloadAction<{ id: string; advance: number }>) => {
+        setEmployeeSalaryAdvance: (state, action: PayloadAction<{ id: string; advance: string }>) => {
             state.employeeSalaryAdvance[action.payload.id] = action.payload.advance;
         },
         setMonth: (state, action: PayloadAction<number>) => {
@@ -108,13 +89,13 @@ const salarySlice = createSlice({
         },
         setEmployeeAllowances: (
             state,
-            action: PayloadAction<{ id: string; allowances: { type: string; amount: number }[] }>
+            action: PayloadAction<{ id: string; allowances: SalaryEntry[] }>
         ) => {
             state.employeeAllowances[action.payload.id] = action.payload.allowances;
         },
         setEmployeeDeductions: (
             state,
-            action: PayloadAction<{ id: string; deductions: { type: string; amount: number }[] }>
+            action: PayloadAction<{ id: string; deductions: SalaryEntry[] }>
         ) => {
             state.employeeDeductions[action.payload.id] = action.payload.deductions;
         },
