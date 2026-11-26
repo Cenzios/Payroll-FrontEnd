@@ -479,7 +479,9 @@ const Dashboard = () => {
                   />
                 </div>
 
-                {/* add buttons */}
+                {/* add buttons: mobile layout only (index.css shows .hidden.max-sm:flex below 768 px, Tailwind's
+                    max-sm: stops at 640 px), so the buttons carry their gradient unconditionally - white
+                    text must never sit on a transparent background at any width the row is shown */}
                 <div className='hidden max-sm:flex items-center justify-center gap-6 mb-4'>
                   {/* add employee button */}
                   <button
@@ -493,7 +495,7 @@ const Dashboard = () => {
                       }
                       openAddEmployee();
                     }}
-                    className="w-[160px] flex items-center gap-2 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] text-white pl-5 pr-2 py-2 rounded-lg text-sm font-normal transition-colors"
+                    className="w-[160px] flex items-center gap-2 bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white pl-5 pr-2 py-2 rounded-lg text-sm font-normal transition-colors"
                     title={!selectedCompanyId ? "Please select a company from the Dashboard first" : ""}
                   >
                     <span className="whitespace-nowrap">Add Employee</span>
@@ -505,7 +507,7 @@ const Dashboard = () => {
                   {/* add company button */}
                   <button
                     onClick={openAddCompany}
-                    className="w-[160px] flex items-center gap-2 max-sm:bg-gradient-to-r max-sm:from-[#2054C8] max-sm:to-[#5C5CB7] text-white pl-5 pr-2 py-2 rounded-lg text-sm font-normal transition-colors"
+                    className="w-[160px] flex items-center gap-2 bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white pl-5 pr-2 py-2 rounded-lg text-sm font-normal transition-colors"
                     title="Add New Company"
                   >
                     <span className="whitespace-nowrap">Add Company</span>
