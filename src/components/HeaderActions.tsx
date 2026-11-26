@@ -81,7 +81,7 @@ const HeaderActions = ({ showLogout = true }: HeaderActionsProps = {}) => {
 
   return (
     <>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 shrink-0">
         {/* Notification Bell */}
         <div className="relative">
           <button
@@ -128,8 +128,8 @@ const HeaderActions = ({ showLogout = true }: HeaderActionsProps = {}) => {
           <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
             {user?.fullName?.charAt(0) || 'U'}
           </div>
-          <div className="leading-tight">
-            <div className="text-sm font-medium text-gray-900">{user?.fullName}</div>
+          <div className="leading-tight min-w-0">
+            <div className="text-sm font-medium text-gray-900 max-w-[160px] truncate">{user?.fullName}</div>
             <div className="text-xs text-gray-500">{user?.role || 'Admin'}</div>
           </div>
         </div>

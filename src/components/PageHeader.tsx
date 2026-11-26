@@ -10,8 +10,9 @@ interface PageHeaderProps {
 
 const PageHeader = ({ title, subtitle, showLogout = false, actionElement }: PageHeaderProps) => {
   return (
-    <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 shrink-0 gap-4">
-      <div>
+    // Wraps instead of overflowing at narrower desktop widths (e.g. 1024px), so Log Out stays visible
+    <header className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between mb-6 shrink-0 gap-4">
+      <div className="shrink-0">
         <h1 className="text-[28px] font-semibold text-gray-900 leading-tight">
           {title}
         </h1>
@@ -19,7 +20,7 @@ const PageHeader = ({ title, subtitle, showLogout = false, actionElement }: Page
           {subtitle}
         </p>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-end gap-3 sm:ml-auto min-w-0">
         {actionElement}
         <HeaderActions showLogout={showLogout} />
       </div>
