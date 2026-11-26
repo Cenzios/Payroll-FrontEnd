@@ -36,6 +36,7 @@ const getStatusBadge = (status: string) => {
 const Loans = () => {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   // const [selectedLoan, setSelectedLoan] = useState<any | null>(null);
   const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
 
@@ -370,7 +371,10 @@ const Loans = () => {
       <CreateLoanDrawer
         isOpen={isCreateDrawerOpen}
         onClose={() => setIsCreateDrawerOpen(false)}
-        onSuccess={() => setShowSuccessModal(true)}
+        onSuccess={(message: string): void => {
+          setSuccessMessage(message);
+          setShowSuccessModal(true);
+        }}
         companyId={selectedCompanyId}
       />
 
@@ -378,7 +382,7 @@ const Loans = () => {
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         title="Loan Created"
-        message="Loan Details Successfully Added."
+        message={successMessage || 'Loan Details Successfully Added.'}
       />
     </div>
 

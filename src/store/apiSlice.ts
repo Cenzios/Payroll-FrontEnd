@@ -1,5 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { axiosBaseQuery } from '../api/baseQuery';
+import { axiosBaseQuery, type ApiEnvelope } from '../api/baseQuery';
 import { Company, CreateCompanyRequest } from '../types/company.types';
 import { Employee, CreateEmployeeRequest, EmployeeDocument } from '../types/employee.types';
 import { Notification } from '../types/notification.types';
@@ -290,11 +290,13 @@ export const apiSlice = createApi({
                     : [{ type: 'Employee', id: 'LIST' }], // Reusing Employee tag for simplicity or add 'Loan'
         }),
 
-        createLoan: builder.mutation<Loan, CreateLoanRequest>({
+        /** Whole envelope, so the caller can show the API's message. */
+        createLoan: builder.mutation<ApiEnvelope<Loan>, CreateLoanRequest>({
             query: (data) => ({
                 url: '/loans',
                 method: 'POST',
                 data,
+                envelope: true,
             }),
             invalidatesTags: ['Employee', 'Dashboard'],
         }),
@@ -309,7 +311,8 @@ export const apiSlice = createApi({
         }),
 
         // --- BANK DETAILS ---
-        getBankDetails: builder.query<EmployeeBank, { employeeId: string; companyId: string }>({
+        /** null when no bank details are saved for the employee. */
+        getBankDetails: builder.query<EmployeeBank | null, { employeeId: string; companyId: string }>({
             query: ({ employeeId, companyId }) => ({
                 url: `/employee-bank/${employeeId}`,
                 method: 'GET',
@@ -318,11 +321,13 @@ export const apiSlice = createApi({
             providesTags: (_result, _error, { employeeId }) => [{ type: 'Employee', id: employeeId }],
         }),
 
-        saveBankDetails: builder.mutation<EmployeeBank, { employeeId: string; companyId: string } & EmployeeBank>({
+        /** Whole envelope, so the caller can show the API's message. */
+        saveBankDetails: builder.mutation<ApiEnvelope<EmployeeBank>, { employeeId: string; companyId: string } & EmployeeBank>({
             query: ({ employeeId, ...data }) => ({
                 url: `/employee-bank/${employeeId}`,
                 method: 'POST',
                 data,
+                envelope: true,
             }),
             invalidatesTags: (result, error, { employeeId }) => [{ type: 'Employee', id: employeeId }],
         }),

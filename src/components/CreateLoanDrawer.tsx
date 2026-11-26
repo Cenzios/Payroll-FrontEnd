@@ -22,7 +22,8 @@ type RequiredErrors = Partial<Record<RequiredField, string>>;
 interface CreateLoanDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  /** Called with the API's message after the loan is created. */
+  onSuccess?: (message: string) => void;
   companyId: string | null;
 }
 
@@ -206,7 +207,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
       }
 
       // The loan reference (LN-YYYYMM-NNNN) is generated and kept unique by the server
-      await createLoan({
+      const created = await createLoan({
         companyId,
         employeeId,
         loanTitle,
@@ -224,9 +225,9 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
       }).unwrap();
 
       if (onSuccess) {
-        onSuccess();
+        onSuccess(created.message);
       } else {
-        setToast({ message: 'Loan Created Successfully!', type: 'success' });
+        setToast({ message: created.message, type: 'success' });
       }
       onClose();
       setTimeout(() => {
