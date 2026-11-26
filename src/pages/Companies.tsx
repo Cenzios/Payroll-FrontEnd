@@ -5,15 +5,18 @@ import Sidebar from '../components/Sidebar';
 import CompanyCard from '../components/CompanyCard';
 import UniversalDrawer from '../components/UniversalDrawer';
 import Toast from '../components/Toast';
-import { CreateCompanyRequest } from '../types/company.types';
-import { useGetCompaniesQuery, useCreateCompanyMutation } from '../store/apiSlice';
+import { Company, CreateCompanyRequest } from '../types/company.types';
+import { useGetCompaniesQuery, useCreateCompanyMutation, useUpdateCompanyMutation } from '../store/apiSlice';
 import TableSkeleton from '../components/skeletons/TableSkeleton';
 
 const Companies = () => {
     const navigate = useNavigate();
     const { data: companies = [], isLoading, isError, error } = useGetCompaniesQuery();
     const [createCompany] = useCreateCompanyMutation();
+    const [updateCompany] = useUpdateCompanyMutation();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    // null → the drawer adds a company; a company → the drawer edits it
+    const [editingCompany, setEditingCompany] = useState<Company | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     // Redirect on 401 error
@@ -28,15 +31,30 @@ const Companies = () => {
         }
     }, [isError, error, navigate]);
 
-    const handleAddCompany = async (data: CreateCompanyRequest) => {
+    const openAddDrawer = (): void => {
+        setEditingCompany(null);
+        setIsDrawerOpen(true);
+    };
+
+    const closeDrawer = (): void => {
+        setIsDrawerOpen(false);
+        setEditingCompany(null);
+    };
+
+    const handleSubmitCompany = async (data: CreateCompanyRequest): Promise<void> => {
+        const isEdit = editingCompany !== null;
         try {
-            await createCompany(data).unwrap();
-            setToast({ message: 'Company created successfully!', type: 'success' });
-            setIsDrawerOpen(false);
+            if (editingCompany) {
+                await updateCompany({ id: editingCompany.id, data }).unwrap();
+            } else {
+                await createCompany(data).unwrap();
+            }
+            setToast({ message: isEdit ? 'Company updated successfully!' : 'Company created successfully!', type: 'success' });
+            closeDrawer();
             // Cache invalidation handles refresh
         } catch (error: any) {
-            const errorMsg = error?.data?.message || 'Failed to create company';
-            setToast({ message: errorMsg, type: 'error' });
+            const fallback = isEdit ? 'Failed to update company' : 'Failed to create company';
+            setToast({ message: error?.data?.message || fallback, type: 'error' });
         }
     };
 
@@ -56,7 +74,7 @@ const Companies = () => {
                             </p>
                         </div>
                         <button
-                            onClick={() => setIsDrawerOpen(true)}
+                            onClick={openAddDrawer}
                             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                         >
                             <Plus className="w-4 h-4" />
@@ -81,7 +99,7 @@ const Companies = () => {
                                 Get started by adding your first company
                             </p>
                             <button
-                                onClick={() => setIsDrawerOpen(true)}
+                                onClick={openAddDrawer}
                                 className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                             >
                                 <Plus className="w-5 h-5" />
@@ -94,14 +112,11 @@ const Companies = () => {
                                 <CompanyCard
                                     key={company.id}
                                     company={company}
-                                    onEdit={(company) => {
-                                        // TODO: Implement edit functionality
-                                        console.log('Edit company:', company);
+                                    onEdit={(selected) => {
+                                        setEditingCompany(selected);
+                                        setIsDrawerOpen(true);
                                     }}
-                                    onDelete={(companyId) => {
-                                        // TODO: Implement delete functionality
-                                        console.log('Delete company:', companyId);
-                                    }}
+                                    // No company delete endpoint exists in the API, so no Delete action is offered
                                 />
                             ))}
                         </div>
@@ -112,9 +127,10 @@ const Companies = () => {
             {/* Add Company Drawer */}
             <UniversalDrawer
                 isOpen={isDrawerOpen}
-                onClose={() => setIsDrawerOpen(false)}
-                onSubmit={handleAddCompany}
+                onClose={closeDrawer}
+                onSubmit={handleSubmitCompany}
                 mode="company"
+                initialData={editingCompany ?? undefined}
             />
 
             {/* Toast Notification */}

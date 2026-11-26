@@ -116,6 +116,16 @@ export const apiSlice = createApi({
             invalidatesTags: ['Company', 'Dashboard'],
         }),
 
+        /** PUT /company/:id — the same endpoint the Settings company form uses. */
+        updateCompany: builder.mutation<Company, { id: string; data: Partial<CreateCompanyRequest> }>({
+            query: ({ id, data }) => ({
+                url: `/company/${id}`,
+                method: 'PUT',
+                data,
+            }),
+            invalidatesTags: ['Company', 'Dashboard'],
+        }),
+
         // --- EMPLOYEES ---
         getEmployees: builder.query<GetEmployeesResponse, GetEmployeesParams>({
             query: (params) => ({
@@ -374,6 +384,7 @@ export const {
     useGetDashboardSummaryQuery,
     useGetCompaniesQuery,
     useCreateCompanyMutation,
+    useUpdateCompanyMutation,
     useGetEmployeesQuery,
     useCreateEmployeeMutation,
     useUpdateEmployeeMutation,
