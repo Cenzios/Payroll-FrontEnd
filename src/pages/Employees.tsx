@@ -403,7 +403,7 @@ const Employees = () => {
       isOpen: true,
       type: "danger",
       title: "Remove Employee?",
-      message: `Are you sure you want to permanently remove ${employee.fullName}? This action cannot be undone.`,
+      message: `Remove ${employee.fullName}? They will be removed from active employee lists and future payroll runs. Their salary and payroll history is kept for reports.`,
       showCancel: true,
       onConfirm: async () => {
         try {
