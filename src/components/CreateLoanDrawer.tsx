@@ -205,11 +205,10 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
         }
       }
 
-      const loanIdPrefix = 'LOAN-' + Math.floor(1000 + Math.random() * 9000);
+      // The loan reference (LN-YYYYMM-NNNN) is generated and kept unique by the server
       await createLoan({
         companyId,
         employeeId,
-        loanId: loanIdPrefix,
         loanTitle,
         description,
         startDate,

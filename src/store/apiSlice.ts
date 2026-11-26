@@ -62,7 +62,6 @@ export interface Loan {
 export interface CreateLoanRequest {
     companyId: string;
     employeeId: string;
-    loanId: string;
     loanTitle: string;
     description?: string;
     startDate: string;
