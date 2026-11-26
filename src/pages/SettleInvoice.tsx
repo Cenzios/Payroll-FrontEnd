@@ -19,6 +19,8 @@ interface AccessStatus {
     status: 'ACTIVE' | 'BLOCKED';
     code?: string;
     message?: string;
+    /** Whether an invoice can be paid now (older APIs omit it: treated as payable). */
+    hasPayableInvoice?: boolean;
 }
 
 interface ApiEnvelope<T> {
@@ -56,6 +58,21 @@ const NoPendingCard = ({ isActive, onDashboard }: { isActive: boolean; onDashboa
             {isActive ? `Your subscription is active. ${NO_INVOICE_MESSAGE}` : NO_INVOICE_MESSAGE}
         </p>
         <button onClick={onDashboard} className={PRIMARY_BTN}>Go to Dashboard</button>
+    </div>
+);
+
+/** Blocked, but there is no invoice to pay (e.g. no subscription yet, or an expired trial). */
+const ChoosePlanCard = ({ message, onChoosePlan }: { message?: string; onChoosePlan: () => void }): JSX.Element => (
+    <div className={`${CARD} py-16 border-blue-50`}>
+        <div className="bg-blue-50 rounded-full p-4 mb-4">
+            <Receipt className="w-10 h-10 text-blue-600" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Nothing to pay</h2>
+        <p className="text-gray-600 text-center mb-2 max-w-md">{NO_INVOICE_MESSAGE}</p>
+        <p className="text-gray-600 text-center mb-8 max-w-md">
+            {message || 'You do not have an active subscription.'} Choose a plan to continue.
+        </p>
+        <button onClick={onChoosePlan} className={PRIMARY_BTN}>Choose a plan</button>
     </div>
 );
 
@@ -150,7 +167,10 @@ const SettleInvoice = (): JSX.Element => {
     }, []);
 
     const isActive = access?.status === 'ACTIVE';
-    const nothingToPay = isActive || noPendingInvoice;
+    // Blocked without a payable invoice (e.g. NO_SUBSCRIPTION): offer a plan, never "Pay now"
+    const needsPlan = access?.status === 'BLOCKED' && (access.hasPayableInvoice === false || noPendingInvoice);
+    const canPay = access?.status === 'BLOCKED' && !needsPlan;
+    const nothingToPay = isActive || needsPlan;
     const title = nothingToPay ? 'Billing' : invoice && daysOverdue(invoice) > 0 ? 'Payment Overdue' : 'Payment Required';
 
     return (
@@ -173,16 +193,17 @@ const SettleInvoice = (): JSX.Element => {
                         <p className="text-gray-600 font-semibold text-lg">Checking your billing status...</p>
                     </div>
                 )}
-                {nothingToPay && <NoPendingCard isActive={isActive} onDashboard={() => navigate('/dashboard')} />}
+                {isActive && <NoPendingCard isActive={isActive} onDashboard={() => navigate('/dashboard')} />}
+                {needsPlan && <ChoosePlanCard message={access?.message} onChoosePlan={() => navigate('/get-plan')} />}
                 {error && !nothingToPay && (
                     <div className={`${CARD} py-12 border-red-100`}>
                         <p className="text-red-600 text-center max-w-md">{error}</p>
                     </div>
                 )}
-                {access?.status === 'BLOCKED' && !noPendingInvoice && !clientSecret && (
+                {canPay && !clientSecret && (
                     <PayNowCard message={access.message} isStarting={isStarting} onPay={() => void startPayment()} />
                 )}
-                {invoice && clientSecret && !noPendingInvoice && <CheckoutPanel invoice={invoice} clientSecret={clientSecret} />}
+                {canPay && invoice && clientSecret && <CheckoutPanel invoice={invoice} clientSecret={clientSecret} />}
             </div>
             <div className="absolute bottom-[-350px] right-[-200px] w-[700px] h-[700px] z-0 pointer-events-none">
                 <img src={bgIllustration} alt="Background Wave" className="w-full h-full object-contain" />
