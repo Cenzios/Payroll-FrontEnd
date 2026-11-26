@@ -19,6 +19,8 @@ interface ManageSalaryModalProps {
     /** When true, Save also stores the items as the employee's recurring items (default off). */
     saveAsRecurring: boolean;
     onSaveAsRecurringChange: (value: boolean) => void;
+    /** False when the employee's allowance/deduction toggle is off: items cannot be saved as recurring. */
+    canSaveAsRecurring: boolean;
 }
 
 const ManageSalaryModal = ({
@@ -30,6 +32,7 @@ const ManageSalaryModal = ({
     earningsLimit,
     saveAsRecurring,
     onSaveAsRecurringChange,
+    canSaveAsRecurring,
 }: ManageSalaryModalProps): JSX.Element | null => {
     if (!manageModal) return null;
 
@@ -203,22 +206,30 @@ const ManageSalaryModal = ({
 
                 {/* Scope: this salary only unless explicitly saved as recurring */}
                 <div className="mx-6 mb-4">
-                    <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                    <label className={`flex items-start gap-2.5 select-none ${canSaveAsRecurring ? "cursor-pointer" : "cursor-not-allowed opacity-70"}`}>
                         <input
                             type="checkbox"
-                            checked={saveAsRecurring}
+                            checked={canSaveAsRecurring && saveAsRecurring}
+                            disabled={!canSaveAsRecurring}
                             onChange={(e) => onSaveAsRecurringChange(e.target.checked)}
                             className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600"
                         />
                         <span className="text-[13px] text-gray-700">
                             Also save as recurring for this employee
                             <span className="block text-[11px] text-gray-400">
-                                {saveAsRecurring
-                                    ? `These ${isAllowance ? "allowances" : "deductions"} will also apply to future months.`
-                                    : "Unchecked: applies to this salary only."}
+                                {!canSaveAsRecurring
+                                    ? "Applies to this salary only."
+                                    : saveAsRecurring
+                                        ? `These ${isAllowance ? "allowances" : "deductions"} will also apply to future months.`
+                                        : "Unchecked: applies to this salary only."}
                             </span>
                         </span>
                     </label>
+                    {!canSaveAsRecurring && (
+                        <p className="mt-2 text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                            {isAllowance ? "Allowances" : "Deductions"} are turned off for this employee. To save recurring {isAllowance ? "allowances" : "deductions"}, first enable {isAllowance ? "allowances" : "deductions"} for the employee in Employees &rsaquo; Edit.
+                        </p>
+                    )}
                 </div>
 
                 {/* Footer */}

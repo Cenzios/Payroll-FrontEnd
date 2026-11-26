@@ -46,6 +46,15 @@ import ManageSalaryModal from "../components/ManageSalaryModal";
 import AlertBar from "../components/AlertBar";
 import logo from '../assets/images/logo-login.svg';
 
+/** Recurring items are only stored while the employee's allowance / deduction toggle is on. */
+const canSaveRecurring = (type: "allowance" | "deduction", emp: Employee | undefined): boolean =>
+  !emp || (type === "allowance" ? emp.allowanceEnabled : emp.deductionEnabled);
+
+const recurringDisabledMessage = (type: "allowance" | "deduction"): string =>
+  type === "allowance"
+    ? "Applied to this salary only. Allowances are turned off for this employee: enable allowances in Employees > Edit to save recurring allowances."
+    : "Applied to this salary only. Deductions are turned off for this employee: enable deductions in Employees > Edit to save recurring deductions.";
+
 const Salary = () => {
   const dispatch = useAppDispatch();
   const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
@@ -195,6 +204,11 @@ const Salary = () => {
 
     // Only change the employee's recurring items when explicitly asked to
     if (!saveAsRecurring || !selectedCompanyId) return;
+    if (!canSaveRecurring(type, manageModal.emp)) {
+      // Nothing is stored while the toggle is off: never show a success toast
+      setToast({ message: recurringDisabledMessage(type), type: "error" });
+      return;
+    }
     try {
       await updateEmployee({
         id: empId,
@@ -927,6 +941,7 @@ const Salary = () => {
             onCancel={handleModalCancel}
             saveAsRecurring={saveAsRecurring}
             onSaveAsRecurringChange={setSaveAsRecurring}
+            canSaveAsRecurring={manageModal ? canSaveRecurring(manageModal.type, manageModal.emp) : true}
             earningsLimit={(() => {
               if (!manageModal || manageModal.type !== "deduction" || !manageModal.emp) return undefined;
               const emp = manageModal.emp;
