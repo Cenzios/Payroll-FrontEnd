@@ -15,6 +15,7 @@ import Decimal from 'decimal.js';
 import type { Employee } from '../types/employee.types';
 import type { PayrollSummaryEmployee, PayrollSummaryMonth } from '../types/report.types';
 import { formatMoney, MoneyInput, ZERO, sumBy, toDecimal } from '../utils/money';
+import { rowGross } from '../utils/reportRow';
 
 /** Per-employee EPF/ETF row; money fields are decimal strings. */
 interface EpfEtfRow {
@@ -93,7 +94,8 @@ function aggregateEpfEtf(months: readonly PayrollSummaryMonth[], employees: read
             employeeMap.set(emp.employeeId, record);
 
             const displayBasic = Decimal.max(toDecimal(emp.basicPay), toDecimal(emp.basicSalary));
-            const computedGross = displayBasic.plus(toDecimal(emp.otAmount)).plus(toDecimal(emp.allowanceTotal));
+            // Stored salary-row gross (never recomputed from components)
+            const computedGross = toDecimal(rowGross(emp));
             const empEpf = firstNonZero(emp.employeeEPF, emp.employeeEpf);
             const companyEPFETF = toDecimal(emp.companyEPFETF);
             // Use direct fields if available, otherwise split companyEPFETF by ratio (12:3), rounded like Math.round

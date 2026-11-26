@@ -1,29 +1,11 @@
 import React from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import Decimal from 'decimal.js';
-import { formatMoney, toDecimal } from '../utils/money';
+import type { PayrollSummaryEmployee } from '../types/report.types';
+import { formatMoney } from '../utils/money';
+import { rowDeduction, rowGross, rowNet } from '../utils/reportRow';
 
 // Money fields are decimal strings (API contract).
-interface EmployeePayrollData {
-    employeeId: string;
-    employeeCode: string;
-    employeeName: string;
-    workingDays: number;
-    basicSalary: string;
-    basicPay: string;
-    otHours?: string;
-    otAmount: string;
-    grossPay: string;
-    netPay: string;
-    employeeEPF: string;
-    salaryAdvance: string;
-    companyEPFETF?: string;
-    allowanceTotal?: string;
-    deductionTotal?: string;
-    deductions?: string;
-    loanDeduction?: string;
-    salaryType?: "DAILY" | "MONTHLY";
-}
+type EmployeePayrollData = PayrollSummaryEmployee;
 
 interface MonthTotals {
     totalEmployees: number;
@@ -46,7 +28,8 @@ interface MonthSectionProps {
     onSelectEmployee: (id: string, month: number, year: number) => void;
     onViewEmployee: (id: string, companyId: string) => void;
     companyId: string;
-    searchQuery?: string;
+    /** Rows in this month before the search filter (to pick the empty-state message). */
+    unfilteredCount: number;
 }
 
 const MonthSection: React.FC<MonthSectionProps> = ({
@@ -62,15 +45,10 @@ const MonthSection: React.FC<MonthSectionProps> = ({
     onSelectEmployee,
     onViewEmployee,
     companyId,
-    searchQuery = ''
+    unfilteredCount
 }) => {
-    // Filter employees based on search query
-    const filteredEmployees = employees.filter(emp => {
-        const query = searchQuery.toLowerCase();
-        const name = emp.employeeName?.toLowerCase() || '';
-        const code = emp.employeeCode?.toLowerCase() || '';
-        return name.includes(query) || code.includes(query);
-    });
+    // Rows arrive already filtered by the page's search box
+    const filteredEmployees = employees;
 
     return (
         <div className="border border-gray-200 rounded-xl mb-4 bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -131,7 +109,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                 <div className="border-t border-gray-200">
                     {filteredEmployees.length === 0 ? (
                         <div className="px-6 py-12 text-center text-gray-500">
-                            {employees.length === 0 ? 'No payroll records found for the selected period.' : 'No matching employees found.'}
+                            {unfilteredCount === 0 ? 'No payroll records found for the selected period.' : 'No matching employees found.'}
                         </div>
                     ) : (
                         <>
@@ -164,7 +142,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                             <th className="px-6 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-left">Employee ID</th>
                                             <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 whitespace-nowrap text-left">Employee Name</th>
                                             <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200">Worked Days</th>
-                                            <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-end">Basic Salary</th>
+                                            <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-end">Basic Pay</th>
                                             <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-end">OT</th>
                                             <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-end">Allowance</th>
                                             <th className="px-4 py-3 text-gray-900 font-bold text-[12.5px] border-b border-gray-200 text-end">Gross</th>
@@ -175,17 +153,10 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
                                         {filteredEmployees.map((employee, index) => {
-                                            // Mirror the PayslipPreview / Salary page calculation:
-                                            // Gross = max(basicPay, basicSalary) + otAmount + allowanceTotal
-                                            // Total Deductions = EPF + salaryAdvance + custom deductions + nonPaidLeaveDeduction
-                                            //   (loan is excluded, same as PayslipPreview which filters out "Loan Deduction")
-                                            // (decimal.js — money fields are decimal strings)
-                                            const displayBasic = Decimal.max(toDecimal(employee.basicPay), toDecimal(employee.basicSalary));
-                                            const grossEarnings = displayBasic.plus(toDecimal(employee.otAmount)).plus(toDecimal(employee.allowanceTotal));
-                                            const netPay = toDecimal(employee.netPay);
-                                            const loanDeduction = toDecimal(employee.loanDeduction);
-                                            // grossEarnings - netPay gives ALL deductions including loan; remove loan to match PayslipPreview
-                                            const totalDeductions = grossEarnings.minus(netPay).minus(loanDeduction);
+                                            // Stored salary-row figures; never recomputed here
+                                            const grossEarnings = rowGross(employee);
+                                            const totalDeductions = rowDeduction(employee);
+                                            const netPay = rowNet(employee);
 
                                             return (
                                                 <tr key={index} className="hover:bg-gray-50 transition-colors">
@@ -202,7 +173,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                     <td className="px-4 py-3 text-gray-500 text-center">{employee.workingDays}</td>
                                                     {/* <td className="px-4 py-3 text-gray-500 font-medium text-end">{employee.basicSalary?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td> */}
                                                     <td className="px-4 py-3 text-gray-500 font-medium text-end">
-                                                        {formatMoney(displayBasic)}
+                                                        {formatMoney(employee.basicPay)}
                                                     </td>
                                                     <td className="px-4 py-3 text-gray-500">
                                                         <div className="font-medium text-gray-500 text-end">{formatMoney(employee.otAmount)}</div>

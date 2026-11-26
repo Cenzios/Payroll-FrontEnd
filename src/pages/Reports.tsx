@@ -13,9 +13,9 @@ import { exportPayrollSummaryReport } from '../utils/exportService';
 import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import logo from '../assets/images/logo-login.svg';
-import Decimal from 'decimal.js';
-import type { CompanyPayrollSummary, PayrollSummaryEmployee, PayrollSummaryMonth, PayrollSummaryOverallTotals } from '../types/report.types';
-import { formatMoney, MoneyInput, sumBy, toDecimal } from '../utils/money';
+import type { CompanyPayrollSummary, PayrollSummaryMonth, PayrollSummaryOverallTotals } from '../types/report.types';
+import { formatMoney } from '../utils/money';
+import { matchesEmployeeSearch, sumRows } from '../utils/reportRow';
 
 /** Money fields are decimal strings (API contract). */
 const EMPTY_OVERALL_TOTALS: PayrollSummaryOverallTotals = {
@@ -29,12 +29,29 @@ const EMPTY_OVERALL_TOTALS: PayrollSummaryOverallTotals = {
     totalDeduction: '0'
 };
 
-/** Report "basic" column: the larger of basic pay and basic salary. */
-const displayBasic = (emp: PayrollSummaryEmployee): Decimal =>
-    Decimal.max(toDecimal(emp.basicPay), toDecimal(emp.basicSalary));
+/**
+ * Applies the search box to every month: rows are filtered and, when a search
+ * is active, the month totals are re-summed from the visible rows so the
+ * headers, summary cards and exports all describe the same set of rows.
+ */
+const applySearch = (months: PayrollSummaryMonth[], query: string): PayrollSummaryMonth[] => {
+    if (query.trim() === '') return months;
+    return months.map((month) => {
+        const employees = (month.employees || []).filter((emp) => matchesEmployeeSearch(emp, query));
+        return { ...month, employees, totals: { ...month.totals, ...sumRows(employees) } };
+    });
+};
 
-/** Look of toLocaleString(undefined, { minimumFractionDigits: 2 }). */
-const fmt2to3 = (value: MoneyInput): string => formatMoney(value, { minFractionDigits: 2, maxFractionDigits: 3 });
+/** Overall totals for the visible months (API totals when nothing is filtered). */
+const overallFor = (
+    months: PayrollSummaryMonth[],
+    apiTotals: PayrollSummaryOverallTotals,
+    isFiltered: boolean
+): PayrollSummaryOverallTotals => {
+    if (!isFiltered) return apiTotals;
+    const totals = sumRows(months.flatMap((m) => m.employees));
+    return { ...apiTotals, ...totals };
+};
 
 const Reports = () => {
     const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
@@ -101,31 +118,9 @@ const Reports = () => {
             const reportData: CompanyPayrollSummary = response;
             console.log('✅ Report Data Received:', reportData);
 
-            // Recompute gross per employee with decimal.js: max(basicPay, basicSalary) + OT + allowances
-            const updatedMonthlyData = (reportData.monthlyData || []).map((month) => {
-                const updatedEmployees = (month.employees || []).map((emp) => {
-                    const grossEarnings = displayBasic(emp)
-                        .plus(toDecimal(emp.otAmount))
-                        .plus(toDecimal(emp.allowanceTotal));
-                    return { ...emp, grossPay: grossEarnings.toFixed(4) };
-                });
-                const computedMonthGross = sumBy(updatedEmployees, (emp) => emp.grossPay);
-                return {
-                    ...month,
-                    employees: updatedEmployees,
-                    totals: { ...month.totals, totalGrossPay: computedMonthGross.toFixed(4) }
-                };
-            });
-
-            const computedOverallGross = sumBy(updatedMonthlyData, (month) => month.totals.totalGrossPay);
-
-            setMonthlyData(updatedMonthlyData);
-            setOverallTotals({
-                ...(reportData.overallTotals || EMPTY_OVERALL_TOTALS),
-                totalGrossPay: !computedOverallGross.isZero()
-                    ? computedOverallGross.toFixed(4)
-                    : reportData.overallTotals?.totalGrossPay || '0'
-            });
+            // Display the stored salary-row figures as returned (no client-side recompute)
+            setMonthlyData(reportData.monthlyData || []);
+            setOverallTotals(reportData.overallTotals || EMPTY_OVERALL_TOTALS);
 
         } catch (error: any) {
             console.group('❌ Reports Page Error');
@@ -204,8 +199,13 @@ const Reports = () => {
         );
     };
 
-    const getFilteredData = () =>
-        monthlyData.map(monthData => ({
+    const searchQuery = search.trim();
+    const isSearchActive = searchQuery !== '';
+    const visibleMonthlyData = applySearch(monthlyData, searchQuery);
+    const visibleOverallTotals = overallFor(visibleMonthlyData, overallTotals, isSearchActive);
+
+    const getFilteredData = (): PayrollSummaryMonth[] =>
+        visibleMonthlyData.map(monthData => ({
             ...monthData,
             employees: selectedEmployeeIds.length > 0
                 ? monthData.employees.filter((emp) =>
@@ -217,14 +217,8 @@ const Reports = () => {
     const getExportData = () => {
         const filteredMonthlyData = getFilteredData();
         const selectedCompany = companies?.find(c => c.id === selectedCompanyId);
-
-        // Totals over the (filtered) employees — decimal.js, returned as strings
-        const allEmployees = filteredMonthlyData.flatMap((month) => month.employees);
-        const totalBasicPay = sumBy(allEmployees, displayBasic).toFixed(4);
-        const totalGrossPay = sumBy(allEmployees, (emp) => emp.grossPay).toFixed(4);
-        const totalEmployeeEPF = sumBy(allEmployees, (emp) => emp.employeeEPF).toFixed(4);
-        const totalSalaryAdvance = sumBy(allEmployees, (emp) => emp.salaryAdvance).toFixed(4);
-        const totalNetPay = sumBy(allEmployees, (emp) => emp.netPay).toFixed(4);
+        // Totals are sums of the stored per-row values of exactly the exported rows
+        const totals = sumRows(filteredMonthlyData.flatMap((month) => month.employees));
 
         return {
             companyName: selectedCompany?.name || 'Company Name',
@@ -234,13 +228,8 @@ const Reports = () => {
             startYear,
             endMonth,
             endYear,
-            overallTotals: {
-                totalBasicPay,
-                totalGrossPay,
-                totalEmployeeEPF,
-                totalSalaryAdvance,
-                totalNetPay
-            }
+            filterLabel: isSearchActive ? `Filtered by search "${searchQuery}"` : undefined,
+            overallTotals: totals
         };
     };
 
@@ -259,7 +248,7 @@ const Reports = () => {
         setToast({ message: 'CSV exported successfully', type: 'success' });
     };
 
-    const hasData = !isLoading && monthlyData.some(m => m.employees && m.employees.length > 0);
+    const hasData = !isLoading && visibleMonthlyData.some(m => m.employees && m.employees.length > 0);
 
     return (
         <div className="flex flex-col h-screen md:overflow-hidden overflow-x-hidden bg-gray-50 font-sans">
@@ -401,7 +390,7 @@ const Reports = () => {
                                 {/* Total Employees */}
                                 <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-2xl font-regular text-gray-900">
-                                        {overallTotals.totalEmployees}
+                                        {visibleOverallTotals.totalEmployees}
                                     </div>
                                     <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
                                         Total Employees
@@ -411,7 +400,7 @@ const Reports = () => {
                                 {/* Total Gross Pay */}
                                 <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-xl font-regular text-[#1f6feb]">
-                                        Rs. {fmt2to3(overallTotals.totalGrossPay)}
+                                        Rs. {formatMoney(visibleOverallTotals.totalGrossPay)}
                                     </div>
                                     <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
                                         Total Gross Pay
@@ -421,7 +410,7 @@ const Reports = () => {
                                 {/* Total Net Pay */}
                                 <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-xl font-regular text-[#1f6feb]">
-                                        Rs. {fmt2to3(overallTotals.totalNetPay)}
+                                        Rs. {formatMoney(visibleOverallTotals.totalNetPay)}
                                     </div>
                                     <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
                                         Total Net Pay
@@ -431,7 +420,7 @@ const Reports = () => {
                                 {/* Total Employee EPF */}
                                 <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-xl font-regular text-[#1f6feb]">
-                                        Rs. {fmt2to3(overallTotals.totalEmployeeEPF)}
+                                        Rs. {formatMoney(visibleOverallTotals.totalEmployeeEPF)}
                                     </div>
                                     <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
                                         Total Employee EPF
@@ -441,7 +430,7 @@ const Reports = () => {
                                 {/* Total Company EPF/ETF */}
                                 <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-xl font-regular text-[#1f6feb]">
-                                        Rs. {fmt2to3(overallTotals.totalCompanyEPFETF)}
+                                        Rs. {formatMoney(visibleOverallTotals.totalCompanyEPFETF)}
                                     </div>
                                     <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
                                         Total Company EPF/ETF
@@ -459,7 +448,7 @@ const Reports = () => {
                                     No payroll records found for the selected period.
                                 </div>
                             ) : (
-                                monthlyData.map((monthData) => {
+                                visibleMonthlyData.map((monthData, index) => {
                                     const monthKey = `${monthData.year}-${monthData.monthNumber}`;
                                     return (
                                         <MonthSection
@@ -484,13 +473,16 @@ const Reports = () => {
                                                 setIsModalOpen(true);
                                             }}
                                             companyId={selectedCompanyId || ''}
-                                            searchQuery={search}
+                                            unfilteredCount={monthlyData[index]?.employees?.length ?? 0}
                                         />
                                     );
                                 })
                             )}
                         </div>
-                        <p className="text-end text-gray-400 text-[10px] mt-2 mr-4">All values are display in LKR</p>
+                        <p className="text-end text-gray-400 text-[10px] mt-2 mr-4">
+                            {isSearchActive && `Totals and exports reflect employees matching "${searchQuery}". `}
+                            All values are in LKR (Rs.)
+                        </p>
 
                     </div>
                     {toast && (

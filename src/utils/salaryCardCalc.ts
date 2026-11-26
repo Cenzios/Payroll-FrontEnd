@@ -66,8 +66,24 @@ function nonPaidLeave(input: SalaryCardInput): Decimal {
     return calculateNonPaidLeaveDeduction(emp.salaryType, emp.basicSalary, companyWorkingDays, sickLeaveDays);
 }
 
+/** A generated salary: show the stored gross / total deduction / net as-is. */
+function storedCardFigures(saved: SalaryRecord): SalaryCardFigures {
+    return {
+        otAmount: toDecimal(saved.otAmount),
+        totalAllowances: sumBy(saved.allowances, (item) => item.amount),
+        customDeductions: sumBy(saved.deductions, (item) => item.amount),
+        epfAmount: toDecimal(saved.employeeEPF),
+        totalEarnings: toDecimal(saved.grossSalary),
+        totalDeductions: toDecimal(saved.totalDeduction),
+        netSalary: toDecimal(saved.netSalary),
+    };
+}
+
 export function computeSalaryCardFigures(input: SalaryCardInput): SalaryCardFigures {
     const { emp, saved } = input;
+    if (saved && saved.grossSalary != null && saved.totalDeduction != null) {
+        return storedCardFigures(saved);
+    }
     const workedDays = saved ? saved.workingDays : input.workedDays;
     const advance = toDecimal(saved ? saved.salaryAdvance : input.salaryAdvance);
 

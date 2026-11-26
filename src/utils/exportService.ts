@@ -4,7 +4,9 @@ import * as XLSX from "xlsx";
 import Decimal from "decimal.js";
 import type { SalaryDetails } from "../types/salary.types";
 import type { EmployeeAnnualTotals, EmployeeMonthlyRow, SelectedSummaryEmployee, SelectedSummaryTotals } from "../types/report.types";
-import { formatMoney, MoneyInput, sumBy, toChartNumber, toDecimal, toDecimalString } from "./money";
+import { formatMoney, MoneyInput, toChartNumber, toDecimal, toDecimalString } from "./money";
+import { rowDeduction, rowGross, rowNet, sumRows } from "./reportRow";
+import { LOAN_TOTAL_LINE, payslipBasicLine, payslipTotals } from "./payslipTotals";
 
 // --- Types ---
 
@@ -40,12 +42,17 @@ export interface ReportEmployee {
     otAmount: string;
     otHours?: string;
     grossPay: string;
+    /** Stored salary-row gross / total deduction (newer backends). */
+    grossSalary?: string;
+    totalDeduction?: string;
+    deductionTotal?: string;
     employeeEPF: string;
     salaryAdvance: string;
     netPay: string;
     tax?: string;
     deductions?: string;
     companyEPFETF?: string;
+    salaryType?: string;
     loanDeduction?: string;
     allowances?: Allowance[];
     customDeductions?: Deduction[];
@@ -95,21 +102,19 @@ const fmt2to3 = (amount: MoneyInput): string =>
 /** Numeric spreadsheet cell (xlsx needs a JS number). */
 const xlsNum = (amount: MoneyInput): number => toChartNumber(amount);
 
-/** Payslip gross earnings: basic (daily: basic pay) + OT + allowances. */
-const payslipGross = (p: PayslipData): Decimal =>
-    toDecimal(p.salaryType === "DAILY" ? p.basicPay : p.basicSalary)
-        .plus(toDecimal(p.otAmount))
-        .plus(sumBy(p.allowances, (a) => a.amount));
+/** Payslip gross earnings (stored value for saved salaries). */
+const payslipGross = (p: PayslipData): Decimal => payslipTotals(p).gross;
 
-/** Payslip total deductions: unpaid leave + EPF 8% (if enabled) + all deduction lines. */
-const payslipDeductions = (p: PayslipData): Decimal =>
-    toDecimal(p.nonPaidLeaveDeduction)
-        .plus(p.isEpfEnabled ? toDecimal(p.epf8) : 0)
-        .plus(sumBy(p.deductions, (d) => d.amount));
+/** Payslip total deductions (stored value for saved salaries). */
+const payslipDeductions = (p: PayslipData): Decimal => payslipTotals(p).deductions;
 
-/** Summary-report "basic" column: the larger of basic pay and basic salary. */
-const basicColumn = (e: ReportEmployee): Decimal =>
-    Decimal.max(toDecimal(e.basicPay), toDecimal(e.basicSalary));
+/** Deduction lines shown on a payslip (the row's loan total is never listed twice). */
+const payslipDeductionLines = (p: PayslipData): PayslipData["deductions"] =>
+    p.deductions.filter((d) => d.name !== LOAN_TOTAL_LINE && toDecimal(d.amount).greaterThan(0));
+
+/** Excel header for the basic rate column: daily staff carry a day rate, monthly staff a monthly salary. */
+const basicRateLabel = (e: ReportEmployee): string =>
+    e.salaryType === "DAILY" ? "Daily rate" : e.salaryType === "MONTHLY" ? "Monthly salary" : "";
 
 // --- Export Functions ---
 
@@ -529,11 +534,8 @@ export const exportPayslip = (
         doc.setLineDash([], 0);
         currentY += 8;
 
-        if (previewPayslip.salaryType === "DAILY") {
-            addRow("Daily Wage Earnings", formatCurrency(previewPayslip.basicPay));
-        } else {
-            addRow("Monthly Basic Salary", formatCurrency(previewPayslip.basicSalary));
-        }
+        const basicLine = payslipBasicLine(previewPayslip);
+        addRow(basicLine.label, formatCurrency(basicLine.amount));
 
         if (toDecimal(previewPayslip.otAmount).greaterThan(0)) {
             addRow(`OT Amount (${previewPayslip.otHours} hrs)`, formatCurrency(previewPayslip.otAmount));
@@ -593,10 +595,8 @@ export const exportPayslip = (
         // if (previewPayslip.loanDeduction > 0) {
         //     addRow("Loan Installment", formatCurrency(previewPayslip.loanDeduction));
         // }
-        previewPayslip.deductions.forEach(d => {
-            if (toDecimal(d.amount).greaterThan(0)) {
-                addRow(d.name, formatCurrency(d.amount));
-            }
+        payslipDeductionLines(previewPayslip).forEach(d => {
+            addRow(d.name, formatCurrency(d.amount));
         });
 
         currentY += 1;
@@ -623,7 +623,7 @@ export const exportPayslip = (
         doc.setFont("helvetica", "bold");
         doc.text("NET SALARY", 20, currentY + 9);
 
-        const amountStr = formatCurrency(previewPayslip.netSalary);
+        const amountStr = formatCurrency(payslipTotals(previewPayslip).net);
         const amountWidth = doc.getTextWidth(amountStr);
 
         doc.setTextColor(255, 255, 255);
@@ -666,8 +666,8 @@ export const exportPayslip = (
             [],
             ["EARNINGS", "Amount (Rs.)"],
             ["Salary Type", previewPayslip.salaryType],
-            ["Basic Rate", xlsNum(previewPayslip.basicSalary)],
-            ["Calculated Basic Pay", xlsNum(previewPayslip.basicPay)],
+            [previewPayslip.salaryType === "DAILY" ? "Daily Rate" : "Monthly Basic Salary", xlsNum(previewPayslip.basicSalary)],
+            ["Basic Pay (earned)", xlsNum(previewPayslip.basicPay)],
             ...(toDecimal(previewPayslip.otAmount).greaterThan(0)
                 ? [
                     [
@@ -686,15 +686,16 @@ export const exportPayslip = (
             ...(previewPayslip.isEpfEnabled
                 ? [["EPF Employee (8%)", xlsNum(previewPayslip.epf8)]]
                 : []),
-            ...previewPayslip.deductions
-                .filter((d) => toDecimal(d.amount).greaterThan(0))
-                .map((d) => [d.name, xlsNum(d.amount)]),
+            ...(toDecimal(previewPayslip.nonPaidLeaveDeduction).greaterThan(0)
+                ? [["Unpaid Leave Deduction", xlsNum(previewPayslip.nonPaidLeaveDeduction)]]
+                : []),
+            ...payslipDeductionLines(previewPayslip).map((d) => [d.name, xlsNum(d.amount)]),
             [
                 "Total Deductions",
                 xlsNum(payslipDeductions(previewPayslip)),
             ],
             [],
-            ["NET SALARY PAYABLE", xlsNum(previewPayslip.netSalary)],
+            ["NET SALARY PAYABLE", xlsNum(payslipTotals(previewPayslip).net)],
             [],
             ...(previewPayslip.isEpfEnabled
                 ? [
@@ -742,9 +743,10 @@ export const exportPayrollSummaryReport = (
             totalEmployeeEPF: string;
             totalSalaryAdvance: string;
             totalNetPay: string;
-            totalAllowance?: string;
-            totalDeduction?: string;
+            totalDeductions?: string;
         };
+        /** Set when the exported rows are a search-filtered subset. */
+        filterLabel?: string;
     }
 ) => {
     const {
@@ -755,8 +757,10 @@ export const exportPayrollSummaryReport = (
         startYear,
         endMonth,
         endYear,
-        overallTotals
+        overallTotals,
+        filterLabel
     } = data;
+    const fileSuffix = filterLabel ? "_Filtered" : "";
     const dateRangeText = `${new Date(startYear, startMonth).toLocaleString("default", { month: "long", year: "numeric" })} - ${new Date(endYear, endMonth).toLocaleString("default", { month: "long", year: "numeric" })} `;
 
     if (format === "pdf") {
@@ -803,6 +807,11 @@ export const exportPayrollSummaryReport = (
         doc.setFont("helvetica", "normal");
         // doc.text(`Here's your Payroll History • ${periodStr}`, 19, 36);
         doc.text(`Here's your Payroll History • ${isSingleMonth ? endPeriodStr : periodStr}`, 19, 36);
+        if (filterLabel) {
+            doc.setTextColor(252, 163, 17);
+            doc.setFontSize(8);
+            doc.text(`${filterLabel} - totals cover the listed employees only`, 19, 43);
+        }
 
         // Right Header Texts
         doc.setTextColor(255, 255, 255);
@@ -848,22 +857,16 @@ export const exportPayrollSummaryReport = (
             : `${shortMonths[startMonth]} ${startYear} - ${shortMonths[endMonth]} ${endYear}`;
         doc.text(`Period Summary ( ${periodRange} )`, 20, currentY + 5.5);
 
-        // Replaced overallTotals.totalBasicPay in the summary boxes with
-        const computedTotalBasic = monthlyData.reduce<Decimal>(
-            (sum, month) => sum.plus(sumBy(month.employees, basicColumn)),
-            new Decimal(0)
-        );
-
         // Summary Boxes
         currentY += 8;
         const boxWidth = (pageWidth - 28) / 5;
         const boxHeight = 18;
         const summaries = [
             // { label: "Total Basic", value: `Rs ${overallTotals.totalBasicPay.toLocaleString()}` },
-            { label: "Total Basic", value: `Rs ${fmtPlain(computedTotalBasic)}` },
+            { label: "Total Basic Pay", value: `Rs ${fmtPlain(overallTotals.totalBasicPay)}` },
             { label: "Total Gross", value: `Rs ${fmtPlain(overallTotals.totalGrossPay)}` },
             { label: "Total EPF (8%)", value: `Rs ${fmtPlain(overallTotals.totalEmployeeEPF)}` },
-            { label: "Total Advance", value: `Rs ${fmtPlain(overallTotals.totalSalaryAdvance)}` },
+            { label: "Total Deductions", value: `Rs ${fmtPlain(overallTotals.totalDeductions ?? "0")}` },
             { label: "Total Net Pay", value: `Rs ${fmtPlain(overallTotals.totalNetPay)}`, isNet: true }
         ];
 
@@ -910,45 +913,38 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                 emp.employeeCode || "-",
                 emp.employeeName || "-",
                 emp.workingDays,
-                // (emp.basicSalary || 0).toLocaleString(),
-                fmtPlain(basicColumn(emp)),
+                fmtPlain(emp.basicPay),
                 fmtPlain(emp.otAmount),
-                fmtPlain(emp.grossPay),
+                fmtPlain(rowGross(emp)),
                 fmtPlain(emp.employeeEPF),
-                fmtPlain(emp.salaryAdvance),
-                fmtPlain(emp.netPay),
+                fmtPlain(rowDeduction(emp)),
+                fmtPlain(rowNet(emp)),
             ]);
 
-            // Monthly Totals
-            // const mTotalBasic = monthData.employees.reduce((s: number, e: ReportEmployee) => s + (e.basicSalary || 0), 0);
-            const mTotalBasic = sumBy(monthData.employees, basicColumn);
-            const mTotalOT = sumBy(monthData.employees, (e) => e.otAmount);
-            const mTotalGross = sumBy(monthData.employees, (e) => e.grossPay);
-            const mTotalEPF = sumBy(monthData.employees, (e) => e.employeeEPF);
-            const mTotalAdvance = sumBy(monthData.employees, (e) => e.salaryAdvance);
-            const mTotalNet = sumBy(monthData.employees, (e) => e.netPay);
+            // Monthly totals: sums of the stored per-row values
+            const m = sumRows(monthData.employees);
 
             tableBody.push([
                 "", "Monthly Total", "",
-                fmtPlain(mTotalBasic),
-                fmtPlain(mTotalOT),
-                fmtPlain(mTotalGross),
-                fmtPlain(mTotalEPF),
-                fmtPlain(mTotalAdvance),
-                fmtPlain(mTotalNet)
+                fmtPlain(m.totalBasicPay),
+                fmtPlain(m.totalOtAmount),
+                fmtPlain(m.totalGrossPay),
+                fmtPlain(m.totalEmployeeEPF),
+                fmtPlain(m.totalDeductions),
+                fmtPlain(m.totalNetPay)
             ]);
 
             autoTable(doc, {
                 startY: currentY,
-                head: [["Emp ID", "Name", "Worked Days", "Basic Salary", "OT", "Gross", "EPF (8%)", "Advance", "Net Pay"]],
+                head: [["Emp ID", "Name", "Worked Days", "Basic Pay", "OT", "Gross", "EPF (8%)", "Deductions", "Net Pay"]],
                 body: tableBody,
                 theme: "plain",
                 styles: { fontSize: 8, cellPadding: 2 },
                 headStyles: { fillColor: [243, 246, 253], textColor: [23, 44, 108], fontStyle: "bold" },
                 columnStyles: {
                     0: { cellWidth: 15 },
-                    1: { cellWidth: 45 },
-                    2: { cellWidth: 25, halign: 'center' },
+                    1: { cellWidth: 38 },
+                    2: { cellWidth: 18, halign: 'center' },
                     3: { halign: 'right' },
                     4: { halign: 'right' },
                     5: { halign: 'right' },
@@ -985,9 +981,9 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
             doc.text(`Page ${i} / ${totalPages}`, pageWidth - 14, pageHeight - 6, { align: "right" });
         }
 
-        doc.save(`Payroll_Summary_Report.pdf`);
+        doc.save(`Payroll_Summary_Report${fileSuffix}.pdf`);
     } else {
-        const wsData: any[] = [["Payroll Summary Report"], [dateRangeText], []];
+        const wsData: any[] = [["Payroll Summary Report"], [dateRangeText], ...(filterLabel ? [[filterLabel]] : []), []];
 
         monthlyData.forEach((monthData: MonthData) => {
             if (monthData.employees.length === 0) return;
@@ -997,11 +993,14 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                 "Emp ID",
                 "Name",
                 "Days",
-                "Basic Salary",
+                "Basic Rate (monthly salary / daily rate)",
+                "Rate Type",
+                "Basic Pay (earned)",
                 "OT Amount",
                 "Gross Pay",
                 "EPF (8%)",
                 "Salary Advance",
+                "Total Deductions",
                 "Net Pay",
             ]);
 
@@ -1011,13 +1010,27 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                     emp.employeeName || "-",
                     emp.workingDays,
                     xlsNum(emp.basicSalary),
+                    basicRateLabel(emp),
+                    xlsNum(emp.basicPay),
                     xlsNum(emp.otAmount),
-                    xlsNum(emp.grossPay),
+                    xlsNum(rowGross(emp)),
                     xlsNum(emp.employeeEPF),
                     xlsNum(emp.salaryAdvance),
-                    xlsNum(emp.netPay),
+                    xlsNum(rowDeduction(emp)),
+                    xlsNum(rowNet(emp)),
                 ]);
             });
+            const m = sumRows(monthData.employees);
+            wsData.push([
+                "", "Monthly Total", "", "", "",
+                xlsNum(m.totalBasicPay),
+                xlsNum(m.totalOtAmount),
+                xlsNum(m.totalGrossPay),
+                xlsNum(m.totalEmployeeEPF),
+                xlsNum(m.totalSalaryAdvance),
+                xlsNum(m.totalDeductions),
+                xlsNum(m.totalNetPay),
+            ]);
             wsData.push([]);
         });
 
@@ -1026,14 +1039,14 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
         if (format === "excel") {
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Report");
-            XLSX.writeFile(wb, "Payroll_Summary_Report.xlsx");
+            XLSX.writeFile(wb, `Payroll_Summary_Report${fileSuffix}.xlsx`);
         } else {
             const csv = XLSX.utils.sheet_to_csv(ws);
             const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
             link.setAttribute("href", url);
-            link.setAttribute("download", "Payroll_Summary_Report.csv");
+            link.setAttribute("download", `Payroll_Summary_Report${fileSuffix}.csv`);
             link.style.visibility = "hidden";
             document.body.appendChild(link);
             link.click();
@@ -1090,10 +1103,10 @@ export const exportEmployeeMonthlySummary = (
             row.workedDays.toString(),
             `RS ${fmtPlain(row.basicPay)} `,
             `RS ${fmtPlain(row.otAmount)} (${row.otHours}h)`,
-            `RS ${fmtPlain(row.grossPay)} `,
+            `RS ${fmtPlain(rowGross(row))} `,
             `RS ${fmtPlain(row.netPay)} `,
             `RS ${fmtPlain(row.salaryAdvance)} `,
-            `RS ${fmtPlain(row.deductions)} `,
+            `RS ${fmtPlain(rowDeduction(row))} `,
             `RS ${fmtPlain(row.employeeEPF)} `,
             `RS ${fmtPlain(row.companyEPFETF)} `,
         ]);
@@ -1173,10 +1186,10 @@ export const exportEmployeeMonthlySummary = (
                 row.workedDays,
                 xlsNum(row.basicSalary),
                 xlsNum(row.otAmount),
-                xlsNum(row.grossPay),
+                xlsNum(rowGross(row)),
                 xlsNum(row.netPay),
                 xlsNum(row.salaryAdvance),
-                xlsNum(row.deductions),
+                xlsNum(rowDeduction(row)),
                 xlsNum(row.employeeEPF),
                 xlsNum(row.companyEPFETF),
             ]),
@@ -1260,9 +1273,9 @@ export const exportAllEmployeesSummary = (
             emp.workedDays.toString(),
             `RS ${fmtPlain(emp.basicSalary)} `,
             `RS ${fmtPlain(emp.otAmount)} (${emp.otHours || 0}h)`,
-            `RS ${fmtPlain(emp.grossPay)} `,
+            `RS ${fmtPlain(rowGross(emp))} `,
             `RS ${fmtPlain(emp.salaryAdvance)} `,
-            `RS ${fmtPlain(emp.deductions)} `,
+            `RS ${fmtPlain(rowDeduction(emp))} `,
             `RS ${fmtPlain(emp.netPay)} `,
         ]);
 
@@ -1346,9 +1359,9 @@ export const exportAllEmployeesSummary = (
                 emp.workedDays,
                 xlsNum(emp.basicSalary),
                 xlsNum(emp.otAmount),
-                xlsNum(emp.grossPay),
+                xlsNum(rowGross(emp)),
                 xlsNum(emp.salaryAdvance),
-                xlsNum(emp.deductions),
+                xlsNum(rowDeduction(emp)),
                 xlsNum(emp.netPay),
             ]),
             [

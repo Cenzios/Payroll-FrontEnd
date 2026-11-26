@@ -23,6 +23,10 @@ export interface PayrollSummaryEmployee {
     otHours?: string;
     otAmount: string;
     grossPay: string;
+    /** Stored salary-row gross (newer backends); fall back to grossPay. */
+    grossSalary?: string;
+    /** Stored salary-row total deduction (newer backends). */
+    totalDeduction?: string;
     netPay: string;
     tax?: string;
     employeeEPF: string;
@@ -32,6 +36,7 @@ export interface PayrollSummaryEmployee {
     companyEPFETF?: string;
     allowanceTotal?: string;
     deductionTotal?: string;
+    salaryType?: 'DAILY' | 'MONTHLY';
 }
 
 export interface PayrollSummaryMonthTotals {
@@ -92,6 +97,10 @@ export interface SelectedSummaryEmployee {
     otHours?: string;
     otAmount: string;
     grossPay: string;
+    /** Stored salary-row gross (newer backends); fall back to grossPay. */
+    grossSalary?: string;
+    /** Stored salary-row total deduction (newer backends). */
+    totalDeduction?: string;
     netPay: string;
     tax?: string;
     salaryAdvance: string;
@@ -139,6 +148,10 @@ export interface EmployeeMonthlyRow {
     otHours: string;
     otAmount: string;
     grossPay: string;
+    /** Stored salary-row gross (newer backends); fall back to grossPay. */
+    grossSalary?: string;
+    /** Stored salary-row total deduction (newer backends). */
+    totalDeduction?: string;
     netPay: string;
     tax: string;
     salaryAdvance: string;

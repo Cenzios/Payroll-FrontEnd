@@ -81,6 +81,12 @@ export interface SalaryDetails {
     epfEmployer: string;
     etfEmployer: string;
     tax?: string;
+    /**
+     * Stored gross of a saved salary row. Present only for saved salaries; when
+     * set, gross / totalDeductions / netSalary are the stored values and are
+     * displayed as-is instead of being recomputed.
+     */
+    grossSalary?: string;
     totalDeductions: string;
     netSalary: string;
     workedDays: number;

@@ -10,6 +10,8 @@ import type { EmployeeMonthlyRow, EmployeePayrollSummary } from '../types/report
 import type { SalaryDetails, SalaryRecord } from '../types/salary.types';
 import { isPositive, toDecimal } from '../utils/money';
 import { calculateDailyRate } from '../utils/salaryCalc';
+import { buildSavedDetails } from '../utils/payslipDetails';
+import { rowDeduction, rowGross, rowNet } from '../utils/reportRow';
 
 interface EmployeePayrollModalProps {
     isOpen: boolean;
@@ -27,6 +29,55 @@ type EmployeeData = EmployeePayrollSummary;
 /** EPF 12% / ETF 3% split of the combined 15% company contribution. */
 const EMPLOYER_EPF_SHARE = new Decimal(12).dividedBy(15);
 const ETF_SHARE = new Decimal(3).dividedBy(15);
+
+/**
+ * Fallback when the salary row itself is unavailable: map the report row,
+ * keeping its stored gross / total deduction / net (never recomputed).
+ */
+const mapReportRow = (
+    row: MonthlyData,
+    employeeData: EmployeeData,
+    salaryType: string,
+    cWorkingDays: number,
+    leaveDays: number,
+    sickLeaveDays: number
+): SalaryDetails => {
+    const basicSalary = row.basicSalary ?? (isPositive(employeeData.basicSalary) ? employeeData.basicSalary : row.basicPay);
+    const companyEPFETF = toDecimal(row.companyEPFETF);
+    const epf12 = companyEPFETF.times(EMPLOYER_EPF_SHARE).toFixed(4);
+    const etf3 = companyEPFETF.times(ETF_SHARE).toFixed(4);
+    return {
+        salaryType,
+        basicSalary,
+        workedDays: row.workedDays,
+        basicPay: row.basicPay,
+        otAmount: row.otAmount,
+        otHours: row.otHours,
+        allowances: (row.allowances || []).map(a => ({ name: a.type, amount: a.amount })),
+        isEpfEnabled: isPositive(row.employeeEPF),
+        epf8: row.employeeEPF,
+        epfEmployee: row.employeeEPF,
+        epfEmployer: epf12,
+        etfEmployer: etf3,
+        loanDeduction: row.loanDeduction || '0',
+        salaryAdvance: row.salaryAdvance,
+        deductions: [
+            ...(isPositive(row.salaryAdvance) ? [{ name: 'Salary Advance', amount: row.salaryAdvance }] : []),
+            ...(row.customDeductions || []).map(d => ({ name: d.type, amount: d.amount })),
+        ],
+        grossSalary: rowGross(row),
+        totalDeductions: rowDeduction(row),
+        netSalary: rowNet(row),
+        epf12,
+        etf3,
+        paidLeave: leaveDays,
+        dailyRate: calculateDailyRate(salaryType, basicSalary, cWorkingDays).toFixed(4),
+        leaveDays,
+        sickLeaveDays,
+        // basicPay is already prorated; unpaid leave is not a separate stored deduction
+        nonPaidLeaveDeduction: '0',
+    };
+};
 
 const EmployeePayrollModal = ({
     isOpen,
@@ -69,7 +120,9 @@ const EmployeePayrollModal = ({
     if (!isOpen) return null;
 
     const row: MonthlyData | undefined = employeeData?.monthlyBreakdown?.[0];
-    const rawSalary: SalaryRecord | undefined = salaryHistoryResponse?.[0];
+    const rawSalary: SalaryRecord | undefined = salaryHistoryResponse?.find(
+        (s) => s.employeeId === employeeId && s.month === month && s.year === year
+    );
     const selectedCompany = companies?.find(c => c.id === companyId);
     const companyName = selectedCompany?.name || 'Company Name';
     const companyAddress = selectedCompany?.address || '';
@@ -96,49 +149,13 @@ const EmployeePayrollModal = ({
         const actualSickLeaveDays = row.sickLeaveDays || rawSalary?.sickLeaveDays || 0;
         const actualLeaveDays = row.leaveDays || rawSalary?.leaveDays || 0;
 
-        const basicSalary = isPositive(employeeData.basicSalary) ? employeeData.basicSalary : row.basicPay;
-        const nonPaidLeaveDeduction = isPositive(row.nonPaidLeaveDeduction)
-            ? (row.nonPaidLeaveDeduction ?? '0')
-            : actualSalaryType === 'MONTHLY' && cWorkingDays > 0
-                ? toDecimal(basicSalary).dividedBy(cWorkingDays).times(actualSickLeaveDays).toFixed(4)
-                : '0';
-
-        const payslipDeductions = [
-            ...(row.customDeductions || []).map(d => ({ name: d.type, amount: d.amount })),
-            ...(isPositive(row.salaryAdvance) ? [{ name: 'Salary Advance', amount: row.salaryAdvance }] : []),
-        ];
-
-        const companyEPFETF = toDecimal(row.companyEPFETF);
-        const epf12 = companyEPFETF.times(EMPLOYER_EPF_SHARE).toFixed(4);
-        const etf3 = companyEPFETF.times(ETF_SHARE).toFixed(4);
+        // Prefer the stored salary row (same mapping as the Salary page payslip)
+        const previewPayslip: SalaryDetails = rawSalary
+            ? buildSavedDetails(rawSalary, cWorkingDays)
+            : mapReportRow(row, employeeData, actualSalaryType, cWorkingDays, actualLeaveDays, actualSickLeaveDays);
 
         return {
-            previewPayslip: {
-                salaryType: row.salaryType || employeeData.salaryType || 'MONTHLY',
-                basicSalary,
-                workedDays: row.workedDays,
-                basicPay: row.basicPay,
-                otAmount: row.otAmount,
-                otHours: row.otHours,
-                allowances: (row.allowances || []).map(a => ({ name: a.type, amount: a.amount })),
-                isEpfEnabled: isPositive(row.employeeEPF),
-                epf8: row.employeeEPF,
-                epfEmployee: row.employeeEPF,
-                epfEmployer: epf12,
-                etfEmployer: etf3,
-                loanDeduction: row.loanDeduction || '0',
-                salaryAdvance: row.salaryAdvance,
-                deductions: payslipDeductions,
-                totalDeductions: row.deductions,
-                netSalary: row.netPay,
-                epf12,
-                etf3,
-                paidLeave: actualLeaveDays,
-                dailyRate: calculateDailyRate(actualSalaryType, basicSalary, cWorkingDays).toFixed(4),
-                leaveDays: actualLeaveDays,
-                sickLeaveDays: actualSickLeaveDays,
-                nonPaidLeaveDeduction,
-            },
+            previewPayslip,
             companyWorkingDays: cWorkingDays,
             selectedEmployee: {
                 id: employeeId,

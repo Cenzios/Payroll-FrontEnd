@@ -1,9 +1,9 @@
 import type Decimal from 'decimal.js';
 import type { Employee } from '../types/employee.types';
-import type { LoanInstallment, SalaryDetails, SalaryRecord } from '../types/salary.types';
+import type { LoanInstallment, PayslipLine, SalaryDetails, SalaryRecord } from '../types/salary.types';
 import type { SalaryEntry } from '../store/slices/salarySlice';
 import { isPositive, toDecimal } from './money';
-import { applicableAnnualLeave, calculateDailyRate, calculateNonPaidLeaveDeduction, PayslipAmounts } from './salaryCalc';
+import { applicableAnnualLeave, calculateDailyRate, PayslipAmounts } from './salaryCalc';
 
 /** Internal precision for preview amounts (matches DECIMAL(19,4)). */
 const PREVIEW_DP = 4;
@@ -69,6 +69,20 @@ export function buildPreviewDetails(ctx: PreviewContext): SalaryDetails {
     };
 }
 
+/**
+ * Deduction lines of a saved salary. Loan installments are stored as their own
+ * deduction lines; the row's loan total is listed only for legacy rows without them.
+ */
+function savedDeductionLines(record: SalaryRecord): PayslipLine[] {
+    const lines = (record.deductions || []).map((d) => ({ name: d.type, amount: d.amount }));
+    const hasItemisedLoan = lines.some((d) => d.name.startsWith('Loan Installment'));
+    return [
+        ...(isPositive(record.salaryAdvance) ? [{ name: 'Salary Advance', amount: record.salaryAdvance }] : []),
+        ...(!hasItemisedLoan && isPositive(record.loanDeduction) ? [{ name: 'Loan Installments', amount: record.loanDeduction }] : []),
+        ...lines,
+    ];
+}
+
 /** Payslip preview for a salary already saved in the backend. */
 export function buildSavedDetails(record: SalaryRecord, companyWorkingDays: number): SalaryDetails {
     const basicSalary = record.basicSalary || '0';
@@ -80,6 +94,8 @@ export function buildSavedDetails(record: SalaryRecord, companyWorkingDays: numb
         epfEmployee: record.employeeEPF,
         epfEmployer: record.employerEPF,
         etfEmployer: record.etfAmount,
+        // Stored figures: displayed as-is (gross − totalDeduction = netSalary)
+        grossSalary: record.grossSalary,
         totalDeductions: record.totalDeduction,
         netSalary: record.netSalary,
         workedDays: record.workingDays,
@@ -87,9 +103,8 @@ export function buildSavedDetails(record: SalaryRecord, companyWorkingDays: numb
         otHours: record.otHours,
         otAmount: record.otAmount,
         salaryAdvance: record.salaryAdvance,
-        nonPaidLeaveDeduction: record.nonPaidLeaveDeduction
-            ?? calculateNonPaidLeaveDeduction(salaryType, basicSalary, companyWorkingDays, record.sickLeaveDays || 0)
-                .toFixed(PREVIEW_DP),
+        // basicPay is already prorated for unpaid leave; it is not a separate stored deduction
+        nonPaidLeaveDeduction: '0',
         leaveDays: record.leaveDays || 0,
         sickLeaveDays: record.sickLeaveDays || 0,
         loanDeduction: record.loanDeduction,
@@ -98,11 +113,7 @@ export function buildSavedDetails(record: SalaryRecord, companyWorkingDays: numb
         etf3: record.etfAmount,
         paidLeave: record.paidLeave || 0,
         dailyRate: calculateDailyRate(salaryType, basicSalary, companyWorkingDays).toFixed(PREVIEW_DP),
-        deductions: [
-            ...(isPositive(record.salaryAdvance) ? [{ name: 'Salary Advance', amount: record.salaryAdvance }] : []),
-            ...(isPositive(record.loanDeduction) ? [{ name: 'Loan Deduction', amount: record.loanDeduction }] : []),
-            ...(record.deductions || []).map((d) => ({ name: d.type, amount: d.amount })),
-        ],
+        deductions: savedDeductionLines(record),
         allowances: (record.allowances || []).map((a) => ({ name: a.type, amount: a.amount })),
     };
 }

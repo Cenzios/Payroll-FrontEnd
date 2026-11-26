@@ -3,6 +3,7 @@ import { X, Loader2, FileSpreadsheet, Download } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
 import Toast from './Toast';
 import { exportAllEmployeesSummary } from '../utils/exportService';
+import { rowDeduction, rowGross } from '../utils/reportRow';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import type { SelectedEmployeesSummary } from '../types/report.types';
 import { formatMoney, MoneyInput } from '../utils/money';
@@ -155,9 +156,9 @@ const AllEmployeesSummaryModal = ({
                                                             <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">{emp.workedDays}</td>
                                                             <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {fmtPlain(emp.basicSalary)}</td>
                                                             <td className="px-3 py-3 text-center text-green-600 border-x border-gray-200 font-medium">RS: {fmtPlain(emp.otAmount)}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-900 border-x border-gray-200 font-bold">RS: {fmtPlain(emp.grossPay)}</td>
+                                                            <td className="px-3 py-3 text-center text-gray-900 border-x border-gray-200 font-bold">RS: {fmtPlain(rowGross(emp))}</td>
                                                             <td className="px-3 py-3 text-center text-red-600 border-x border-gray-200">RS: {fmtPlain(emp.salaryAdvance)}</td>
-                                                            <td className="px-3 py-3 text-center text-red-700 border-x border-gray-200 font-medium">RS: {fmtPlain(emp.deductions)}</td>
+                                                            <td className="px-3 py-3 text-center text-red-700 border-x border-gray-200 font-medium">RS: {fmtPlain(rowDeduction(emp))}</td>
                                                             <td className="px-3 py-3 text-center text-blue-600 border-x border-gray-200 font-bold">RS: {fmtPlain(emp.netPay)}</td>
                                                         </tr>
                                                     ))}
