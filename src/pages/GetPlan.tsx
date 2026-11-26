@@ -6,6 +6,7 @@ import { setTempPlanId } from '../store/slices/authSlice';
 import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
 import ContactModal from '../components/ContactModal';
+import LogoutButton from '../components/LogoutButton';
 import { PLANS, PLAN_IDS, Plan } from '../constants/plans';
 import { isPositive } from '../utils/money';
 
@@ -128,6 +129,8 @@ const GetPlan = () => {
         <ArrowLeft className="w-4 h-4" />
         Back
       </button>
+
+      <LogoutButton className="fixed top-8 right-8 max-sm:top-4 max-sm:right-4" />
 
       {/* Title */}
       <div className="text-center mb-10 relative z-10
