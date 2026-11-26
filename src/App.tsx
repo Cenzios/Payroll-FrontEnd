@@ -34,6 +34,7 @@ import ResetPassword from './pages/ResetPassword';
 import NotFound from './pages/NotFound';
 import AuthBootstrap from './components/AuthBootstrap';
 import CompanySelectionGuard from './components/CompanySelectionGuard';
+import CrossTabAuthSync from './components/CrossTabAuthSync';
 
 function App(): JSX.Element {
   const dispatch = useAppDispatch();
@@ -48,6 +49,7 @@ function App(): JSX.Element {
   return (
     <AuthBootstrap>
     <Router>
+      <CrossTabAuthSync />
       <CompanySelectionGuard>
       <RenewPlanModal />
       <TrialUpgradeModal />

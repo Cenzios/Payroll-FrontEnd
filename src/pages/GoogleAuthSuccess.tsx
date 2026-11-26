@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setSignupEmail } from '../store/slices/authSlice';
 import { refreshAccessToken } from '../auth/refreshSession';
+import { publishAuthEvent } from '../auth/crossTabAuth';
 import { Loader2 } from 'lucide-react';
 
 /**
@@ -27,6 +28,7 @@ function GoogleAuthSuccess(): JSX.Element {
             // <AuthBootstrap> normally already exchanged the cookie on page load;
             // only refresh again if that did not yield a session.
             let email = user?.email ?? '';
+            let userId = user?.id ?? '';
             if (!isAuthenticated) {
                 const { session } = await refreshAccessToken();
                 if (!session) {
@@ -35,6 +37,10 @@ function GoogleAuthSuccess(): JSX.Element {
                     return;
                 }
                 email = session.user.email;
+                userId = session.user.id;
+            }
+            if (userId) {
+                publishAuthEvent({ type: 'login', userId });
             }
 
             localStorage.setItem('signup_method', 'google'); // ✅ Flag as google signup (non-secret)

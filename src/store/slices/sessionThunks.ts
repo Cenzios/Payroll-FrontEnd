@@ -4,6 +4,7 @@ import axiosInstance from '../../api/axios';
 import { clearAccessToken, setAccessToken } from '../../auth/tokenStore';
 import { refreshAccessToken } from '../../auth/refreshSession';
 import { toAuthSession } from '../../auth/toAuthSession';
+import { publishAuthEvent } from '../../auth/crossTabAuth';
 import type { AuthSession, AuthSessionPayload } from '../../auth/authSession.types';
 import type { LoginRequest, User } from '../../types/auth.types';
 
@@ -52,6 +53,7 @@ export const loginUser = createAsyncThunk<LoginResult, LoginRequest, { rejectVal
         return rejectWithValue('Login failed');
       }
       setAccessToken(session.token);
+      publishAuthEvent({ type: 'login', userId: session.user.id });
       return {
         user: session.user,
         hasActivePlan: session.hasActivePlan,
@@ -73,6 +75,7 @@ export const logout = createAsyncThunk<void, void>(
       console.warn('Logout request failed; clearing local session anyway', error);
     } finally {
       clearAccessToken();
+      publishAuthEvent({ type: 'logout' });
     }
   }
 );

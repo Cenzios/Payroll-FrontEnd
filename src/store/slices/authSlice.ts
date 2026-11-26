@@ -180,6 +180,18 @@ const authSlice = createSlice({
     sessionCleared: (state) => {
       clearIdentity(state);
     },
+    /**
+     * Another tab logged out: drop this tab's in-memory session. Storage is left alone
+     * (the other tab already cleaned it and may have written the next user's values).
+     */
+    sessionEndedElsewhere: (state) => {
+      clearIdentity(state);
+      state.error = null;
+      state.signupToken = null;
+      state.tempPassword = null;
+      state.tempPlanId = null;
+      state.selectedCompanyId = null;
+    },
     clearError: (state) => {
       state.error = null;
     },
@@ -323,5 +335,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { sessionEstablished, sessionCleared, clearError, setSignupEmail, clearSignupEmail, setSignupToken, setTempPassword, setTempPlanId, setSelectedCompanyId, clearSelectedCompanyId, updateUser } = authSlice.actions;
+export const { sessionEstablished, sessionCleared, sessionEndedElsewhere, clearError, setSignupEmail, clearSignupEmail, setSignupToken, setTempPassword, setTempPlanId, setSelectedCompanyId, clearSelectedCompanyId, updateUser } = authSlice.actions;
 export default authSlice.reducer;

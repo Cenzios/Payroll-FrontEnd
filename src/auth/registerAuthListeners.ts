@@ -15,6 +15,14 @@ export function registerAuthListeners(store: AppStore): void {
   registered = true;
 
   onSessionRefreshed((session) => {
+    // The shared refresh cookie now belongs to another user (logged in from another tab):
+    // never mix that user's token with this tab's state; reload into the new session
+    // (CompanySelectionGuard revalidates the company id on load).
+    const currentUserId = store.getState().auth.user?.id;
+    if (currentUserId && currentUserId !== session.user.id) {
+      window.location.replace('/dashboard');
+      return;
+    }
     store.dispatch(sessionEstablished(session));
   });
 
