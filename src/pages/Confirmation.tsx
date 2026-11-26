@@ -210,7 +210,7 @@ const Confirmation = () => {
                     Your Stripe payment was successful!
                   </p>
                   <p className="text-gray-600">
-                    and your CenzHRM account is now active.
+                    and your CenzPayroll account is now active.
                   </p>
                 </div>
 

@@ -121,7 +121,7 @@ const Signup = () => {
   return (
     <AuthLayout
       title="Create Account"
-      subtitle="Get started with CenzHRM today"
+      subtitle="Get started with CenzPayroll today"
     >
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
