@@ -282,8 +282,9 @@ const Dashboard = () => {
 
           {/* ── MOBILE HEADER (replaces PageHeader on mobile) ── */}
           <div className="hidden max-sm:flex items-center justify-between pt-5 pb-3 border-b border-gray-100">
-            <div>
-              <img src={logo} alt="logo" />
+            <div className="shrink-0">
+              {/* Same compact size as the other pages' headers, at every width */}
+              <img src={logo} alt="logo" className="w-40 h-10 max-w-[40vw] object-contain object-left" />
             </div>
             <div className="flex items-center gap-2 ml-6">
 
