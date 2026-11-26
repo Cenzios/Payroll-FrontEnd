@@ -14,7 +14,7 @@ import { Toggle, SRI_LANKAN_BANKS } from "./drawerConstants";
 import { validateEmployeeField } from "./drawerValidation";
 import Toast from "../Toast";
 import axiosInstance from "../../api/axios";
-import { formatRs, isPositive, MoneyInput, sumBy, toDecimal, toDecimalString } from "../../utils/money";
+import { formatRs, isPositive, MoneyInput, sanitizeMoneyInput, sumBy, toDecimal, toDecimalString } from "../../utils/money";
 
 interface EmployeeDrawerProps {
     isOpen: boolean;
@@ -201,6 +201,8 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
     };
 
     const handleEmployeeChange = (field: keyof CreateEmployeeRequest, value: any) => {
+        // Money fields stay decimal strings with at most 2 decimals (never parseInt/parseFloat)
+        if ((field === "basicSalary" || field === "otRate") && sanitizeMoneyInput(String(value ?? "")) === null) return;
         setEmployeeData((prev) => ({ ...prev, [field]: value }));
         const error = validateEmployeeField(field, value, getValidationContext());
         setErrors((prev) => ({ ...prev, [field]: error }));

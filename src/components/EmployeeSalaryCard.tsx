@@ -26,7 +26,7 @@ interface EmployeeSalaryCardProps {
     hasLoanInstallment: boolean;
     handleEmployeeWorkedDaysChange: (empId: string, val: number) => void;
     handleEmployeeOtHoursChange: (empId: string, val: number) => void;
-    handleEmployeeSalaryAdvanceChange: (empId: string, val: number) => void;
+    handleEmployeeSalaryAdvanceChange: (empId: string, raw: string) => void;
     handleEmployeeLeaveDaysChange: (empId: string, val: number) => void;
     handleEmployeeSickLeaveDaysChange: (empId: string, val: number) => void;
     handleToggleLoan: (empId: string) => void;
@@ -46,6 +46,9 @@ interface EmployeeSalaryCardProps {
 const fmt = (val: MoneyInput): string => formatMoney(val);
 
 /** Input display: '' for zero, otherwise the plain decimal (e.g. "1500" not "1500.0000"). */
+/** Unsaved advance exactly as typed ("1000.", "1000.25"); "0" shows as empty. */
+const advanceInputValue = (val: string): string => (toDecimal(val).isZero() && !val.includes('.') ? "" : val);
+
 const inputDisplay = (val: MoneyInput): string => {
     const d = toDecimal(val);
     return d.isZero() ? "" : d.toFixed();
@@ -427,14 +430,12 @@ const EmployeeSalaryCard = ({
                             <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase mb-2 h-6 flex items-center
                             max-sm:top-0">Advance</p>
                             <input
-                                type="number"
-                                value={inputDisplay(displaySalaryAdvance)}
-                                onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, parseFloat(e.target.value) || 0)}
-                                onWheel={(e) => e.currentTarget.blur()}
-                                onKeyDown={blockInvalidNumberKeys}
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="0.00"
+                                value={isLocked ? inputDisplay(displaySalaryAdvance) : advanceInputValue(salaryAdvance)}
+                                onChange={(e) => handleEmployeeSalaryAdvanceChange(emp.id, e.target.value)}
                                 className={inputClass(isLocked)}
-                                min="0"
-                                maxLength={7}
                                 disabled={isLocked}
                             />
                         </div>

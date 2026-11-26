@@ -16,7 +16,7 @@ import {
 } from "../store/apiSlice";
 import { Employee } from "../types/employee.types";
 import type { SalaryRecord } from "../types/salary.types";
-import { isPositive, toDecimal, toDecimalString, toMoneyString } from "../utils/money";
+import { isPositive, sanitizeMoneyInput, toDecimal, toDecimalString, toMoneyString } from "../utils/money";
 import { calculateEarningsLimit, calculatePayslip, wouldNetSalaryBeNegative } from "../utils/salaryCalc";
 import { buildPreviewDetails, buildSavedDetails, installmentRemaining } from "../utils/payslipDetails";
 import Toast from "../components/Toast";
@@ -468,10 +468,11 @@ const Salary = () => {
     dispatch(setEmployeeOtHours({ id: empId, hours: capped }));
   };
 
-  const handleEmployeeSalaryAdvanceChange = (empId: string, val: number) => {
-    const str = Math.max(0, val).toString().slice(0, 7);
-    const capped = str === "" ? 0 : parseInt(str, 10);
-    dispatch(setEmployeeSalaryAdvance({ id: empId, advance: String(capped) }));
+  /** Advance stays a decimal string (up to 7 integer digits, 2 decimals); never parsed to a number. */
+  const handleEmployeeSalaryAdvanceChange = (empId: string, raw: string): void => {
+    const value = sanitizeMoneyInput(raw, 7);
+    if (value === null) return;
+    dispatch(setEmployeeSalaryAdvance({ id: empId, advance: value === "" ? "0" : value }));
   };
 
   const handleEmployeeLeaveDaysChange = (empId: string, val: number) => {

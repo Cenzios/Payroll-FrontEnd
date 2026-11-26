@@ -75,6 +75,19 @@ export function formatRs(value: MoneyInput): string {
     return `${CURRENCY_PREFIX} ${formatMoney(value)}`;
 }
 
+/**
+ * Validates a money input as the user types it: digits with at most 2
+ * decimals (partial values such as "12." are allowed). Returns the value to
+ * keep as a string, '' for an empty field, or null to reject the keystroke.
+ * Never parses to a number, so cents are not dropped.
+ */
+export function sanitizeMoneyInput(raw: string, maxIntegerDigits = 12): string | null {
+    const value = raw.trim();
+    if (value === '') return '';
+    const pattern = new RegExp(`^\\d{0,${maxIntegerDigits}}(\\.\\d{0,2})?$`);
+    return pattern.test(value) ? value : null;
+}
+
 /** Fixed-point string for request bodies / inputs (no exponent, no separators). */
 export function toMoneyString(value: MoneyInput, decimalPlaces = 2): string {
   return toDecimal(value).toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP).toFixed(decimalPlaces);

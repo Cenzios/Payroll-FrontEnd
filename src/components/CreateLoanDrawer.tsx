@@ -10,7 +10,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import loanTitleIcon from '../assets/images/loan-title.svg';
 import loanAmountIcon from '../assets/images/loan-amount.svg';
-import { formatRs, toDecimal, toDecimalString, toMoneyString } from '../utils/money';
+import { formatRs, sanitizeMoneyInput, toDecimal, toDecimalString, toMoneyString } from '../utils/money';
 import { calculateMonthlyPremium } from '../utils/loanCalc';
 import loanInstallmentIcon from '../assets/images/loan-installment.svg';
 import loanStartIcon from '../assets/images/loan-start.svg';
@@ -265,11 +265,14 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value.includes('-') || parseFloat(value) < 0) {
+    if (value.includes('-')) {
       setToast({ message: 'Amount cannot be negative', type: 'error' });
       return;
     }
-    setAmount(value);
+    // Keep the typed decimal string; at most 2 decimals
+    const sanitized = sanitizeMoneyInput(value);
+    if (sanitized === null) return;
+    setAmount(sanitized);
   };
 
   const handleInterestRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -490,11 +493,11 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                   </div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <span className="text-gray-400 text-[13px] font-medium">Rs</span>
+                      <span className="text-gray-400 text-[13px] font-medium">Rs.</span>
                     </div>
                     <input
-                      type="number"
-                      min="0"
+                      type="text"
+                      inputMode="decimal"
                       value={amount}
                       onChange={handleAmountChange}
                       placeholder="120000"
