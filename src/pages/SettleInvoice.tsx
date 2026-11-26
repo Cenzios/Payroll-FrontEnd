@@ -7,6 +7,7 @@ import axiosInstance from '../api/axios';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 import { useLogout } from '../hooks/useLogout';
 import InvoiceSummaryCard, { BlockingInvoice, daysOverdue } from '../components/InvoiceSummaryCard';
+import { formatRs } from '../utils/money';
 
 // Stripe Imports
 import { loadStripe } from '@stripe/stripe-js';
@@ -15,12 +16,26 @@ import CheckoutForm from '../components/CheckoutForm';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
+/** Invoice "Pay now" collects (GET /subscription/access-status → pendingInvoice). */
+interface PendingInvoice {
+    id: string;
+    billingType: 'MONTHLY' | 'REGISTRATION';
+    billingMonth: string;
+    employeeCount: number;
+    /** 2-dp decimal string. */
+    totalAmount: string;
+    dueDate: string | null;
+    planName: string | null;
+}
+
 interface AccessStatus {
     status: 'ACTIVE' | 'BLOCKED';
     code?: string;
     message?: string;
-    /** Whether an invoice can be paid now (older APIs omit it: treated as payable). */
+    /** Whether an invoice can be paid now (older APIs omit it: payable only when BLOCKED). */
     hasPayableInvoice?: boolean;
+    /** The payable invoice, whatever the status (older APIs omit it). */
+    pendingInvoice?: PendingInvoice | null;
 }
 
 interface ApiEnvelope<T> {
@@ -77,14 +92,42 @@ const ChoosePlanCard = ({ message, onChoosePlan }: { message?: string; onChooseP
 );
 
 interface PayNowCardProps {
+    heading?: string;
     message?: string;
     isStarting: boolean;
     onPay: () => void;
 }
 
-const PayNowCard = ({ message, isStarting, onPay }: PayNowCardProps): JSX.Element => (
+/** Whether "Pay now" applies: the API's pendingInvoice / hasPayableInvoice (older APIs: only when BLOCKED). */
+function hasPayable(access: AccessStatus): boolean {
+    if (access.pendingInvoice) return true;
+    return access.hasPayableInvoice ?? access.status === 'BLOCKED';
+}
+
+/** Summary-card shape of the pending invoice (employee count only for per-employee invoices). */
+function toBlockingInvoice(pending: PendingInvoice): BlockingInvoice {
+    return {
+        id: pending.id,
+        totalAmount: pending.totalAmount,
+        billingMonth: pending.billingMonth,
+        dueDate: pending.dueDate ?? undefined,
+        employeeCount: pending.employeeCount > 0 ? pending.employeeCount : undefined,
+    };
+}
+
+/** Wording that matches the data: an ACTIVE account can still have an unpaid (e.g. registration) invoice. */
+function payNowMessage(access: AccessStatus): string | undefined {
+    const pending = access.pendingInvoice;
+    if (access.status !== 'ACTIVE' || !pending) return access.message;
+    const kind = pending.billingType === 'REGISTRATION' ? 'registration' : 'monthly';
+    const plan = pending.planName ? ` for the ${pending.planName} plan` : '';
+    const due = pending.dueDate ? `, due on ${new Date(pending.dueDate).toLocaleDateString('en-GB').replace(/\//g, '.')}` : '';
+    return `Your subscription is active, but your ${kind} invoice${plan} of ${formatRs(pending.totalAmount)} is still unpaid${due}. Pay it now to keep your account in good standing.`;
+}
+
+const PayNowCard = ({ heading, message, isStarting, onPay }: PayNowCardProps): JSX.Element => (
     <div className={`${CARD} py-16 border-blue-50`}>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Required</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{heading || 'Payment Required'}</h2>
         <p className="text-gray-600 text-center mb-8 max-w-md">
             {message || 'Your account has an outstanding invoice. Settle it to continue.'}
         </p>
@@ -115,7 +158,8 @@ const CheckoutPanel = ({ invoice, clientSecret }: { invoice: BlockingInvoice; cl
 );
 
 /**
- * Billing page for blocked accounts. Opening it only READS the access status;
+ * Billing page: pays the outstanding invoice of a blocked account, or an active account's
+ * unpaid (e.g. registration) invoice. Opening it only READS the access status;
  * a payment intent is created only when the user clicks "Pay now".
  */
 const SettleInvoice = (): JSX.Element => {
@@ -166,12 +210,16 @@ const SettleInvoice = (): JSX.Element => {
         }
     }, []);
 
-    const isActive = access?.status === 'ACTIVE';
+    // "Pay now" whenever the API reports a payable invoice, ACTIVE or BLOCKED
+    const canPay = access !== null && hasPayable(access) && !noPendingInvoice;
+    // Active with nothing payable: "No Pending Invoices"
+    const isActive = access?.status === 'ACTIVE' && !canPay;
     // Blocked without a payable invoice (e.g. NO_SUBSCRIPTION): offer a plan, never "Pay now"
-    const needsPlan = access?.status === 'BLOCKED' && (access.hasPayableInvoice === false || noPendingInvoice);
-    const canPay = access?.status === 'BLOCKED' && !needsPlan;
+    const needsPlan = access?.status === 'BLOCKED' && !canPay;
     const nothingToPay = isActive || needsPlan;
-    const title = nothingToPay ? 'Billing' : invoice && daysOverdue(invoice) > 0 ? 'Payment Overdue' : 'Payment Required';
+    const pendingInvoice = access?.pendingInvoice ?? null;
+    const shownInvoice = invoice ?? (pendingInvoice ? toBlockingInvoice(pendingInvoice) : null);
+    const title = nothingToPay ? 'Billing' : shownInvoice && daysOverdue(shownInvoice) > 0 ? 'Payment Overdue' : 'Payment Required';
 
     return (
         <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col pt-12 px-4 pb-12">
@@ -200,7 +248,13 @@ const SettleInvoice = (): JSX.Element => {
                         <p className="text-red-600 text-center max-w-md">{error}</p>
                     </div>
                 )}
-                {canPay && !clientSecret && (
+                {canPay && !clientSecret && pendingInvoice && (
+                    <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-8 items-stretch">
+                        <InvoiceSummaryCard invoice={toBlockingInvoice(pendingInvoice)} />
+                        <PayNowCard heading="Settle this invoice" message={payNowMessage(access)} isStarting={isStarting} onPay={() => void startPayment()} />
+                    </div>
+                )}
+                {canPay && !clientSecret && !pendingInvoice && (
                     <PayNowCard message={access.message} isStarting={isStarting} onPay={() => void startPayment()} />
                 )}
                 {canPay && invoice && clientSecret && <CheckoutPanel invoice={invoice} clientSecret={clientSecret} />}
