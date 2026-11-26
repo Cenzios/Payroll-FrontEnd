@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { updateUser } from '../../store/slices/authSlice';
-import { updateProfile, changePassword } from '../../api/authApi';
+import { updateProfile, changePassword, apiErrorMessage } from '../../api/authApi';
 import { companyApi } from '../../api/companyApi';
 import { useGetSubscriptionQuery, useGetCompaniesQuery, apiSlice } from '../../store/apiSlice';
 import { User, Building2, Loader2, Mail, Phone, MapPin, Lock, Eye, EyeOff, ArrowRight, Edit2 } from 'lucide-react';
@@ -133,10 +133,11 @@ const AccountTab = () => {
             const response = await updateProfile({ fullName: personalData.fullName });
             if (response.data) dispatch(updateUser(response.data));
             setIsEditingPersonal(false);
-            setToast({ message: "Personal info updated successfully", type: "success" });
-        } catch (err: any) {
-            setPersonalErrors({ fullName: err.message || 'Failed to update' });
-            setToast({ message: err.message || "Failed to update personal info", type: "error" });
+            setToast({ message: response.message, type: "success" });
+        } catch (err: unknown) {
+            const message = apiErrorMessage(err, 'Failed to update personal info');
+            setPersonalErrors({ fullName: message });
+            setToast({ message, type: "error" });
         } finally { setIsSavingPersonal(false); }
     };
 
@@ -150,10 +151,10 @@ const AccountTab = () => {
         if (Object.keys(errors).length > 0) { setCompanyErrors(errors); return; }
         setIsSavingCompany(true);
         try {
-            await companyApi.updateCompanyProfile(selectedCompany.id, companyData);
+            const { message } = await companyApi.updateCompanyProfile(selectedCompany.id, companyData);
             dispatch(apiSlice.util.invalidateTags(['Company']));
             setIsEditingCompany(false);
-            setToast({ message: "Company info updated successfully", type: "success" });
+            setToast({ message, type: "success" });
         } catch (err: any) {
             setCompanyErrors({ name: err.message || 'Failed to update' });
             setToast({ message: err.message || "Failed to update company info", type: "error" });
@@ -171,16 +172,15 @@ const AccountTab = () => {
         if (Object.keys(errors).length > 0) { setPasswordErrors(errors); return; }
         setIsSavingPassword(true);
         try {
-            await changePassword({ currentPassword: passwordData.currentPassword, newPassword: passwordData.newPassword });
+            const response = await changePassword({ currentPassword: passwordData.currentPassword, newPassword: passwordData.newPassword });
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
             setPasswordErrors({});
             setShowPasswords({ current: false, new: false, confirm: false });
-            setToast({ message: "Password changed successfully", type: "success" });
-        } catch (err: any) {
-            setPasswordErrors({
-                currentPassword: 'The current password you entered is incorrect.'
-            });
-            setToast({ message: "The current password you entered is incorrect.", type: "error" });
+            setToast({ message: response.message, type: "success" });
+        } catch (err: unknown) {
+            const message = apiErrorMessage(err, 'Failed to change password');
+            setPasswordErrors({ currentPassword: message });
+            setToast({ message, type: "error" });
         } finally {
             setIsSavingPassword(false);
         }

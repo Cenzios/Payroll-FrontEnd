@@ -27,11 +27,11 @@ export const companyApi = {
         }
     },
 
-    // Update company profile
-    updateCompanyProfile: async (id: string, data: Partial<CreateCompanyRequest>): Promise<Company> => {
+    // Update company profile (message comes from the API service layer)
+    updateCompanyProfile: async (id: string, data: Partial<CreateCompanyRequest>): Promise<{ company: Company; message: string }> => {
         try {
-            const response = await axiosInstance.put<{ data: Company }>(`/company/${id}`, data);
-            return response.data.data;
+            const response = await axiosInstance.put<{ data: Company; message: string }>(`/company/${id}`, data);
+            return { company: response.data.data, message: response.data.message };
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Failed to update company profile');
         }
