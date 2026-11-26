@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import Decimal from 'decimal.js';
 import { X, Loader2 } from 'lucide-react';
 import { reportApi } from '../api/reportApi';
 import { exportPayslip } from '../utils/exportService';
 import { useGetCompaniesQuery, useGetSalaryHistoryQuery } from '../store/apiSlice';
 import Toast from './Toast';
 import PayslipPreview from './PayslipPreview';
+import type { EmployeeMonthlyRow, EmployeePayrollSummary } from '../types/report.types';
+import type { SalaryDetails, SalaryRecord } from '../types/salary.types';
+import { isPositive, toDecimal } from '../utils/money';
+import { calculateDailyRate } from '../utils/salaryCalc';
 
 interface EmployeePayrollModalProps {
     isOpen: boolean;
@@ -15,50 +20,13 @@ interface EmployeePayrollModalProps {
     year: number;
 }
 
-interface MonthlyData {
-    month: string;
-    salaryType?: string;
-    workedDays: number;
-    companyWorkingDays?: number;
-    basicPay: number;
-    otHours: number;
-    otAmount: number;
-    grossPay: number;
-    netPay: number;
-    tax: number;
-    salaryAdvance: number;
-    deductions: number;
-    employeeEPF: number;
-    companyEPFETF: number;
-    loanDeduction?: number;
-    allowances?: { type: string; amount: number }[];
-    customDeductions?: { type: string; amount: number }[];
-    leaveDays?: number;
-    sickLeaveDays?: number;
-    nonPaidLeaveDeduction?: number;
-}
+// Report response shapes (money as decimal strings) live in types/report.types.ts
+type MonthlyData = EmployeeMonthlyRow;
+type EmployeeData = EmployeePayrollSummary;
 
-interface EmployeeData {
-    employeeName: string;
-    employeeCode: string;
-    designation: string;
-    salaryType?: string;
-    basicSalary: number;
-    joinedDate: string;
-    monthlyBreakdown: MonthlyData[];
-    annualTotals: {
-        workedDays: number;
-        basicPay: number;
-        otAmount: number;
-        grossPay: number;
-        netPay: number;
-        tax: number;
-        salaryAdvance: number;
-        deductions: number;
-        employeeEPF: number;
-        companyEPFETF: number;
-    };
-}
+/** EPF 12% / ETF 3% split of the combined 15% company contribution. */
+const EMPLOYER_EPF_SHARE = new Decimal(12).dividedBy(15);
+const ETF_SHARE = new Decimal(3).dividedBy(15);
 
 const EmployeePayrollModal = ({
     isOpen,
@@ -87,8 +55,7 @@ const EmployeePayrollModal = ({
         setIsLoading(true);
         try {
             const response = await reportApi.getEmployeePayrollSummary(employeeId, companyId, month, year);
-            const actualData = response.data || response;
-            setEmployeeData(actualData);
+            setEmployeeData(response.data);
         } catch (error: any) {
             setToast({
                 message: error.response?.data?.message || 'Failed to fetch employee data',
@@ -102,22 +69,23 @@ const EmployeePayrollModal = ({
     if (!isOpen) return null;
 
     const row: MonthlyData | undefined = employeeData?.monthlyBreakdown?.[0];
-    const rawSalary = salaryHistoryResponse?.data?.[0] || salaryHistoryResponse?.[0];
+    const rawSalary: SalaryRecord | undefined = salaryHistoryResponse?.[0];
     const selectedCompany = companies?.find(c => c.id === companyId);
     const companyName = selectedCompany?.name || 'Company Name';
     const companyAddress = selectedCompany?.address || '';
 
-    // Data Mapper for PayslipPreview
-    const getPayslipData = () => {
+    // Data Mapper for PayslipPreview (money stays as decimal strings; maths via decimal.js)
+    const getPayslipData = (): {
+        previewPayslip: SalaryDetails;
+        companyWorkingDays: number;
+        selectedEmployee: { id: string; fullName: string; employeeId: string; designation: string };
+    } | null => {
         if (!employeeData || !row) return null;
 
-        // Use the saved companyWorkingDays from the generated salary record (same value the Salary page used).
-        // rawSalary?.companyWorkingDays is the direct salary history record fallback.
+        // Use the saved companyWorkingDays from the report row (same value the Salary page used).
         // Never fall back to calendar days — that caused the mismatch with the Salary page payslip.
-        // const cWorkingDays = row.companyWorkingDays || rawSalary?.companyWorkingDays || 0;
         const cWorkingDays =
             row.companyWorkingDays ||
-            rawSalary?.companyWorkingDays ||
             (
                 (row.workedDays || 0) +
                 (row.leaveDays || 0) +
@@ -128,37 +96,50 @@ const EmployeePayrollModal = ({
         const actualSickLeaveDays = row.sickLeaveDays || rawSalary?.sickLeaveDays || 0;
         const actualLeaveDays = row.leaveDays || rawSalary?.leaveDays || 0;
 
-        const nonPaidLeaveDeduction = row.nonPaidLeaveDeduction || (actualSalaryType === 'MONTHLY' && cWorkingDays > 0
-            ? ((employeeData.basicSalary || row.basicPay) / cWorkingDays) * actualSickLeaveDays
-            : 0);
+        const basicSalary = isPositive(employeeData.basicSalary) ? employeeData.basicSalary : row.basicPay;
+        const nonPaidLeaveDeduction = isPositive(row.nonPaidLeaveDeduction)
+            ? (row.nonPaidLeaveDeduction ?? '0')
+            : actualSalaryType === 'MONTHLY' && cWorkingDays > 0
+                ? toDecimal(basicSalary).dividedBy(cWorkingDays).times(actualSickLeaveDays).toFixed(4)
+                : '0';
 
         const payslipDeductions = [
             ...(row.customDeductions || []).map(d => ({ name: d.type, amount: d.amount })),
-            ...(row.salaryAdvance && row.salaryAdvance > 0 ? [{ name: 'Salary Advance', amount: row.salaryAdvance }] : []),
+            ...(isPositive(row.salaryAdvance) ? [{ name: 'Salary Advance', amount: row.salaryAdvance }] : []),
         ];
+
+        const companyEPFETF = toDecimal(row.companyEPFETF);
+        const epf12 = companyEPFETF.times(EMPLOYER_EPF_SHARE).toFixed(4);
+        const etf3 = companyEPFETF.times(ETF_SHARE).toFixed(4);
 
         return {
             previewPayslip: {
                 salaryType: row.salaryType || employeeData.salaryType || 'MONTHLY',
-                basicSalary: employeeData.basicSalary || row.basicPay,
+                basicSalary,
                 workedDays: row.workedDays,
                 basicPay: row.basicPay,
                 otAmount: row.otAmount,
                 otHours: row.otHours,
                 allowances: (row.allowances || []).map(a => ({ name: a.type, amount: a.amount })),
-                isEpfEnabled: !!row.employeeEPF,
+                isEpfEnabled: isPositive(row.employeeEPF),
                 epf8: row.employeeEPF,
-                loanDeduction: row.loanDeduction || 0,
+                epfEmployee: row.employeeEPF,
+                epfEmployer: epf12,
+                etfEmployer: etf3,
+                loanDeduction: row.loanDeduction || '0',
+                salaryAdvance: row.salaryAdvance,
                 deductions: payslipDeductions,
                 totalDeductions: row.deductions,
                 netSalary: row.netPay,
-                epf12: row.companyEPFETF * (12 / 15),
-                etf3: row.companyEPFETF * (3 / 15),
+                epf12,
+                etf3,
+                paidLeave: actualLeaveDays,
+                dailyRate: calculateDailyRate(actualSalaryType, basicSalary, cWorkingDays).toFixed(4),
                 leaveDays: actualLeaveDays,
                 sickLeaveDays: actualSickLeaveDays,
-                nonPaidLeaveDeduction: nonPaidLeaveDeduction,
-                workingDays: cWorkingDays
+                nonPaidLeaveDeduction,
             },
+            companyWorkingDays: cWorkingDays,
             selectedEmployee: {
                 id: employeeId,
                 fullName: employeeData.employeeName,
@@ -174,13 +155,13 @@ const EmployeePayrollModal = ({
         if (!payslipData) return;
 
         exportPayslip(format, {
-            previewPayslip: payslipData.previewPayslip as any,
-            selectedEmployee: payslipData.selectedEmployee as any,
+            previewPayslip: payslipData.previewPayslip,
+            selectedEmployee: payslipData.selectedEmployee,
             companyName,
             companyAddress,
             selectedMonth: month - 1, // 0-indexed for export service
             selectedYear: year,
-            companyWorkingDays: payslipData.previewPayslip.workingDays,
+            companyWorkingDays: payslipData.companyWorkingDays,
             title: "Pay Slip"
         });
     };
@@ -214,7 +195,7 @@ const EmployeePayrollModal = ({
                                 companyName={companyName}
                                 selectedYear={year}
                                 selectedMonth={month - 1} // 0-indexed for component
-                                companyWorkingDays={payslipData.previewPayslip.workingDays}
+                                companyWorkingDays={payslipData.companyWorkingDays}
                                 exportPDF={() => handleExport('pdf')}
                                 exportExcel={() => handleExport('excel')}
                                 exportCSV={() => handleExport('csv')}

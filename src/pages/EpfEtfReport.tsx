@@ -11,6 +11,138 @@ import SingleMonthPicker from '../components/SingleMonthPicker';
 import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import logo from '../assets/images/logo-login.svg';
+import Decimal from 'decimal.js';
+import type { Employee } from '../types/employee.types';
+import type { PayrollSummaryEmployee, PayrollSummaryMonth } from '../types/report.types';
+import { formatMoney, MoneyInput, ZERO, sumBy, toDecimal } from '../utils/money';
+
+/** Per-employee EPF/ETF row; money fields are decimal strings. */
+interface EpfEtfRow {
+    employeeId: string;
+    employeeCode: string;
+    fullName: string;
+    epfNo: string;
+    basicSalary: string;
+    epfEtfAmount: string;
+    grossPay: string;
+    empEpf: string;
+    employerEpf: string;
+    etf: string;
+    totalContribution: string;
+    netPay: string;
+}
+
+interface EpfEtfTotals {
+    count: number;
+    basicSalary: string;
+    grossPay: string;
+    empEpf: string;
+    employerEpf: string;
+    etf: string;
+    totalContribution: string;
+    netPay: string;
+}
+
+const EMPTY_TOTALS: EpfEtfTotals = {
+    count: 0, basicSalary: '0', grossPay: '0', empEpf: '0', employerEpf: '0', etf: '0', totalContribution: '0', netPay: '0'
+};
+
+/** Report rows may use either API naming; all money is read as decimal strings. */
+type ReportEmployeeRow = PayrollSummaryEmployee & {
+    fullName?: string;
+    epfNumber?: string;
+    employeeEpf?: string;
+    employerEpf?: string;
+    etf?: string;
+    netSalary?: string;
+};
+
+interface EpfAccumulator {
+    base: Omit<EpfEtfRow, 'basicSalary' | 'epfEtfAmount' | 'grossPay' | 'empEpf' | 'employerEpf' | 'etf' | 'totalContribution' | 'netPay'>;
+    basicSalary: Decimal;
+    epfEtfAmount: Decimal;
+    grossPay: Decimal;
+    empEpf: Decimal;
+    employerEpf: Decimal;
+    etf: Decimal;
+    netPay: Decimal;
+}
+
+/** First non-zero value (mirrors the previous `a || b || 0` fallbacks). */
+const firstNonZero = (...values: MoneyInput[]): Decimal => {
+    const found = values.map(toDecimal).find((d) => !d.isZero());
+    return found ?? ZERO;
+};
+
+/** Aggregates the monthly report per employee with decimal.js. */
+function aggregateEpfEtf(months: readonly PayrollSummaryMonth[], employees: readonly Employee[] | undefined): EpfEtfRow[] {
+    const employeeMap = new Map<string, EpfAccumulator>();
+    months.forEach((month) => {
+        month.employees.forEach((rawEmp) => {
+            const emp: ReportEmployeeRow = rawEmp;
+            const employeeInfo = employees?.find(e => e.id === emp.employeeId);
+            const record: EpfAccumulator = employeeMap.get(emp.employeeId) ?? {
+                base: {
+                    employeeId: emp.employeeId,
+                    employeeCode: emp.employeeCode || employeeInfo?.employeeId || '-',
+                    fullName: emp.fullName || employeeInfo?.fullName || '-',
+                    epfNo: employeeInfo?.epfNumber || emp.epfNumber || '-',
+                },
+                basicSalary: ZERO, epfEtfAmount: ZERO, grossPay: ZERO, empEpf: ZERO, employerEpf: ZERO, etf: ZERO, netPay: ZERO,
+            };
+            employeeMap.set(emp.employeeId, record);
+
+            const displayBasic = Decimal.max(toDecimal(emp.basicPay), toDecimal(emp.basicSalary));
+            const computedGross = displayBasic.plus(toDecimal(emp.otAmount)).plus(toDecimal(emp.allowanceTotal));
+            const empEpf = firstNonZero(emp.employeeEPF, emp.employeeEpf);
+            const companyEPFETF = toDecimal(emp.companyEPFETF);
+            // Use direct fields if available, otherwise split companyEPFETF by ratio (12:3), rounded like Math.round
+            const directEmployerEpf = firstNonZero(emp.employerEPF, emp.employerEpf);
+            const directEtf = firstNonZero(emp.etfAmount, emp.etf);
+            const employerEpf = directEmployerEpf.greaterThan(0)
+                ? directEmployerEpf
+                : companyEPFETF.times(12).dividedBy(15).toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
+            const etf = directEtf.greaterThan(0)
+                ? directEtf
+                : companyEPFETF.times(3).dividedBy(15).toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
+
+            record.basicSalary = record.basicSalary.plus(displayBasic);
+            record.epfEtfAmount = record.epfEtfAmount.plus(firstNonZero(emp.epfEtfAmount, employeeInfo?.epfEtfAmount));
+            record.grossPay = record.grossPay.plus(computedGross);
+            record.netPay = record.netPay.plus(firstNonZero(emp.netPay, emp.netSalary));
+            if (empEpf.greaterThan(0)) {
+                record.empEpf = record.empEpf.plus(empEpf);
+                record.employerEpf = record.employerEpf.plus(employerEpf);
+                record.etf = record.etf.plus(etf);
+            }
+        });
+    });
+    return Array.from(employeeMap.values()).map((r) => ({
+        ...r.base,
+        basicSalary: r.basicSalary.toFixed(4),
+        epfEtfAmount: r.epfEtfAmount.toFixed(4),
+        grossPay: r.grossPay.toFixed(4),
+        empEpf: r.empEpf.toFixed(4),
+        employerEpf: r.employerEpf.toFixed(4),
+        etf: r.etf.toFixed(4),
+        totalContribution: r.empEpf.plus(r.employerEpf).plus(r.etf).toFixed(4),
+        netPay: r.netPay.toFixed(4),
+    }));
+}
+
+/** Overall totals across employees (decimal strings). */
+function totalsOf(rows: readonly EpfEtfRow[]): EpfEtfTotals {
+    return {
+        count: rows.length,
+        basicSalary: sumBy(rows, (r) => r.basicSalary).toFixed(4),
+        grossPay: sumBy(rows, (r) => r.grossPay).toFixed(4),
+        empEpf: sumBy(rows, (r) => r.empEpf).toFixed(4),
+        employerEpf: sumBy(rows, (r) => r.employerEpf).toFixed(4),
+        etf: sumBy(rows, (r) => r.etf).toFixed(4),
+        totalContribution: sumBy(rows, (r) => r.totalContribution).toFixed(4),
+        netPay: sumBy(rows, (r) => r.netPay).toFixed(4),
+    };
+}
 
 const EpfEtfReport = () => {
     const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
@@ -25,18 +157,9 @@ const EpfEtfReport = () => {
 
     const [isLoading, setIsLoading] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
-    const [rawReportData, setRawReportData] = useState<any[]>([]);
-    const [reportData, setReportData] = useState<any[]>([]);
-    const [totals, setTotals] = useState({
-        count: 0,
-        basicSalary: 0,
-        grossPay: 0,
-        empEpf: 0,
-        employerEpf: 0,
-        etf: 0,
-        totalContribution: 0,
-        netPay: 0
-    });
+    const [rawReportData, setRawReportData] = useState<PayrollSummaryMonth[]>([]);
+    const [reportData, setReportData] = useState<EpfEtfRow[]>([]);
+    const [totals, setTotals] = useState<EpfEtfTotals>(EMPTY_TOTALS);
 
     const { data: companies } = useGetCompaniesQuery();
     const { data: employeesData } = useGetEmployeesQuery({
@@ -73,93 +196,14 @@ const EpfEtfReport = () => {
     useEffect(() => {
         if (!rawReportData.length) {
             setReportData([]);
-            setTotals({ count: 0, basicSalary: 0, grossPay: 0, empEpf: 0, employerEpf: 0, etf: 0, totalContribution: 0, netPay: 0 });
+            setTotals(EMPTY_TOTALS);
             return;
         }
 
-        // Aggregate data by employee
-        const employeeMap = new Map();
-
-        rawReportData.forEach((month: any) => {
-            month.employees.forEach((emp: any) => {
-                if (!employeeMap.has(emp.employeeId)) {
-                    const employeeInfo = employeesData?.employees.find(e => e.id === emp.employeeId);
-                    employeeMap.set(emp.employeeId, {
-                        employeeId: emp.employeeId,
-                        employeeCode: emp.employeeCode || employeeInfo?.employeeId || '-',
-                        fullName: emp.fullName || employeeInfo?.fullName || '-',
-                        epfNo: employeeInfo?.epfNumber || emp.epfNumber || '-',
-                        basicSalary: 0,
-                        epfEtfAmount: 0,
-                        grossPay: 0,
-                        empEpf: 0,
-                        employerEpf: 0,
-                        etf: 0,
-                        totalContribution: 0,
-                        netPay: 0
-                    });
-                }
-
-                const record = employeeMap.get(emp.employeeId);
-                const employeeInfo = employeesData?.employees.find(e => e.id === emp.employeeId);
-
-                // Fields from API (try various naming conventions)
-                const displayBasic = (emp.basicPay > emp.basicSalary ? emp.basicPay : emp.basicSalary) || 0;
-                const computedGross = displayBasic + (emp.otAmount || 0) + (emp.allowanceTotal || 0);
-
-                const basicPay = displayBasic;
-                const epfEtfAmount = emp.epfEtfAmount || employeeInfo?.epfEtfAmount || 0;
-                const empEpf = emp.employeeEPF || emp.employeeEpf || 0;
-                const employerEpf = emp.employerEPF || emp.employerEpf || 0;
-                const etf = emp.etfAmount || emp.etf || 0;
-                const companyEPFETF = emp.companyEPFETF || 0;
-
-                // Use direct fields if available, otherwise split companyEPFETF by ratio (12:3)
-                const resolvedEmployerEpf = employerEpf > 0 ? employerEpf : Math.round((companyEPFETF * 12) / 15);
-                const resolvedEtf = etf > 0 ? etf : Math.round((companyEPFETF * 3) / 15);
-
-
-                // Fallback calculations if they are missing but EPF is enabled
-                const isEpfEnabled = emp.epfEnabled ?? employeeInfo?.epfEnabled ?? (empEpf > 0);
-
-                record.basicSalary += basicPay;
-                record.epfEtfAmount += epfEtfAmount;
-                // record.grossPay += emp.grossPay || 0;
-                record.grossPay += computedGross;
-                record.netPay += emp.netPay || emp.netSalary || 0;
-
-                if (empEpf > 0) {
-                    record.empEpf += empEpf;
-                    record.employerEpf += resolvedEmployerEpf;
-                    record.etf += resolvedEtf;
-                }
-                // else if (isEpfEnabled && basicPay > 0) {
-                //     // If EPF is enabled but fields are missing, calculate them
-                //     record.empEpf += basicPay * 0.08;
-                //     record.employerEpf += basicPay * 0.12;
-                //     record.etf += basicPay * 0.03;
-                // }
-
-                record.totalContribution = record.empEpf + record.employerEpf + record.etf;
-            });
-        });
-
-        const aggregated = Array.from(employeeMap.values());
+        // Aggregate data by employee (decimal.js)
+        const aggregated = aggregateEpfEtf(rawReportData, employeesData?.employees);
         setReportData(aggregated);
-
-        // Calculate overall totals
-        const overall = aggregated.reduce((acc, curr) => ({
-            count: acc.count + 1,
-            basicSalary: acc.basicSalary + curr.basicSalary,
-            grossPay: acc.grossPay + curr.grossPay,
-            empEpf: acc.empEpf + curr.empEpf,
-            employerEpf: acc.employerEpf + curr.employerEpf,
-            etf: acc.etf + curr.etf,
-            totalContribution: acc.totalContribution + curr.totalContribution,
-            netPay: acc.netPay + curr.netPay
-        }), { count: 0, basicSalary: 0, grossPay: 0, empEpf: 0, employerEpf: 0, etf: 0, totalContribution: 0, netPay: 0 });
-
-        setTotals(overall);
+        setTotals(totalsOf(aggregated));
     }, [rawReportData, employeesData]);
 
     useEffect(() => {
@@ -200,10 +244,10 @@ const EpfEtfReport = () => {
     };
 
 
-    const fmt = (val: number | undefined | null) => (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmt = (val: MoneyInput): string => formatMoney(val);
 
     const MobileCard = ({ item, expandedId, setExpandedId }: {
-        item: any,
+        item: EpfEtfRow,
         expandedId: string | null,
         setExpandedId: (id: string | null) => void
     }) => {
@@ -399,7 +443,7 @@ const EpfEtfReport = () => {
                                 </div>
                                 <div className="text-start border border-gray-300 pl-4 p-2 w-full rounded-lg">
                                     <p className="text-[10px] uppercase font-bold text-[#757575] mb-1">Company EPF/ETF (15%)</p>
-                                    <p className="text-lg font-bold text-[#757575]">{fmt(totals.employerEpf + totals.etf)}</p>
+                                    <p className="text-lg font-bold text-[#757575]">{fmt(toDecimal(totals.employerEpf).plus(toDecimal(totals.etf)))}</p>
                                 </div>
                             </div>
 

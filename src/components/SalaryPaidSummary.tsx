@@ -11,6 +11,15 @@ import {
 } from 'recharts';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { salaryApi } from '../api/salaryApi';
+import type { PayrollSummaryMonth } from '../types/report.types';
+import { formatMoney, toChartNumber } from '../utils/money';
+
+interface SalaryChartPoint {
+    name: string;
+    /** recharts needs a JS number: converted from the decimal string only here. */
+    value: number;
+    fullValue: number;
+}
 
 interface SalaryPaidSummaryProps {
     companyId: string;
@@ -60,10 +69,11 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
                 end.getFullYear()
             );
 
-            return (response.data.monthlyData || []).map((m: any) => ({
+            const months: PayrollSummaryMonth[] = response.data.monthlyData || [];
+            return months.map((m): SalaryChartPoint => ({
                 name: m.month.substring(0, 3),
-                value: m.totals?.totalNetPay || 0,
-                fullValue: m.totals?.totalNetPay || 0
+                value: toChartNumber(m.totals?.totalNetPay),
+                fullValue: toChartNumber(m.totals?.totalNetPay)
             }));
         },
         enabled: !!companyId,
@@ -80,7 +90,7 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-black text-white px-3 py-1.5 rounded-lg text-sm font-semibold shadow-lg">
-                    RS: {payload[0].value.toLocaleString()}
+                    RS: {formatMoney(payload[0].value, { minFractionDigits: 0, maxFractionDigits: 3 })}
                 </div>
             );
         }

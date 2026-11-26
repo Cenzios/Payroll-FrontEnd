@@ -1,4 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { formatMoney, MoneyInput, toDecimal } from './money';
 
 // ─── DEBUG MODE ────────────────────────────────────────────────────────────────
 // Set to true to draw red dots at each text position for coordinate calibration.
@@ -10,17 +11,18 @@ export interface EPFEmployee {
     employeeName: string;
     nationalId: string;
     memberNo: string;
-    basicPay: number;
-    employerEpf: number;
-    employeeEpf: number;
-    totalEarnings: number;
+    // Money fields are decimal strings (API contract).
+    basicPay: string;
+    employerEpf: string;
+    employeeEpf: string;
+    totalEarnings: string;
 }
 
 export interface EPFTotals {
-    basicPay: number;
-    employerEpf: number;
-    employeeEpf: number;
-    totalEarnings: number;
+    basicPay: string;
+    employerEpf: string;
+    employeeEpf: string;
+    totalEarnings: string;
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -29,8 +31,7 @@ const MONTH_NAMES = [
     'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-const fmt = (val: number): string =>
-    val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt = (val: MoneyInput): string => formatMoney(val);
 
 // ─── Main Function ─────────────────────────────────────────────────────────────
 export async function fillEPFFormC(params: {
@@ -133,7 +134,7 @@ export async function fillEPFFormC(params: {
             ? emp.employeeName.substring(0, 21) + '…'
             : emp.employeeName;
 
-        const totalContrib = emp.employerEpf + emp.employeeEpf;
+        const totalContrib = toDecimal(emp.employerEpf).plus(toDecimal(emp.employeeEpf));
 
         const yFromTop = TABLE_START_Y + i * ROW_HEIGHT + 2;
 
@@ -160,7 +161,7 @@ export async function fillEPFFormC(params: {
     // drawText(fmt(totals.employeeEpf), COL.employee, TOTALS_Y);
     // drawText(fmt(totals.basicPay), COL.earnings, TOTALS_Y);
 
-     const totalContribTotal = totals.employerEpf + totals.employeeEpf;
+     const totalContribTotal = toDecimal(totals.employerEpf).plus(toDecimal(totals.employeeEpf));
 
     const TOTAL_BOX_Y = 685;  
 

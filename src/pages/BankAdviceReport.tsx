@@ -10,6 +10,19 @@ import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import logo from '../assets/images/logo-login.svg';
 import RoundedSelect from '../components/RoundedSelect';
+import { formatMoney, isPositive, sumBy } from '../utils/money';
+
+/** One bank-advice line; `amount` (net salary) is a decimal string. */
+interface BankAdviceRow {
+    id: string;
+    employeeCode: string;
+    fullName: string;
+    accountHolderName: string;
+    bankName: string;
+    branchName: string;
+    accountNumber: string;
+    amount: string;
+}
 
 const BankAdviceReport = () => {
     const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
@@ -41,12 +54,12 @@ const BankAdviceReport = () => {
 
     const { data: companies } = useGetCompaniesQuery();
 
-    const [bankReportData, setBankReportData] = useState<any[]>([]);
-    const [totalAmount, setTotalAmount] = useState(0);
+    const [bankReportData, setBankReportData] = useState<BankAdviceRow[]>([]);
+    const [totalAmount, setTotalAmount] = useState<string>('0');
 
     useEffect(() => {
         if (employeesData && salaryHistory) {
-            const merged = employeesData.employees.map(emp => {
+            const merged = employeesData.employees.map((emp): BankAdviceRow => {
                 const salaryRecord = salaryHistory.find(s => s.employeeId === emp.id);
 
                 return {
@@ -57,12 +70,12 @@ const BankAdviceReport = () => {
                     bankName: emp.bankName || '-',
                     branchName: emp.branchName || '-',
                     accountNumber: emp.accountNumber || '-',
-                    amount: salaryRecord ? (salaryRecord.netSalary || salaryRecord.netPay || 0) : 0
+                    amount: salaryRecord ? (salaryRecord.netSalary || '0') : '0'
                 };
-            }).filter(item => item.amount > 0);
+            }).filter(item => isPositive(item.amount));
 
             setBankReportData(merged);
-            setTotalAmount(merged.reduce((sum, item) => sum + item.amount, 0));
+            setTotalAmount(sumBy(merged, (item) => item.amount).toFixed(4));
         }
     }, [employeesData, salaryHistory]);
 
@@ -108,7 +121,7 @@ const BankAdviceReport = () => {
     const monthsOptions = months.map((m, i) => ({ value: i, label: m }));
 
     const MobileCard = ({ item, expandedId, setExpandedId }: {
-        item: any,
+        item: BankAdviceRow,
         expandedId: string | null,
         setExpandedId: (id: string | null) => void
     }) => {
@@ -135,7 +148,7 @@ const BankAdviceReport = () => {
                         <p className="text-xs text-gray-400">{item.employeeCode}</p>
                     </div>
                     <span className="text-sm font-bold text-gray-800 whitespace-nowrap mr-1">
-                        Rs. {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        Rs. {formatMoney(item.amount)}
                     </span>
                     <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
                 </button>
@@ -315,7 +328,7 @@ const BankAdviceReport = () => {
                                                     <td className="px-6 py-4 text-sm text-gray-500">{item.branchName}</td>
                                                     <td className="px-6 py-4 text-sm text-gray-500 font-mono">{item.accountNumber}</td>
                                                     <td className="px-6 py-4 text-sm font-bold text-blue-600 text-right">
-                                                        {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                        {formatMoney(item.amount)}
                                                     </td>
                                                 </tr>
                                             ))
@@ -329,7 +342,7 @@ const BankAdviceReport = () => {
                                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end items-center gap-4">
                                     <span className="text-sm font-bold text-blue-600">Total Contribution</span>
                                     <span className="text-xl font-bold text-blue-600">
-                                        Rs. {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        Rs. {formatMoney(totalAmount)}
                                     </span>
                                 </div>
                             )}
@@ -359,7 +372,7 @@ const BankAdviceReport = () => {
                                         <div className="bg-blue-50 rounded-2xl px-5 py-5 flex flex-col items-center gap-1 mt-1 border border-blue-200">
                                             <span className="text-sm font-medium text-blue-400">Total Contribution</span>
                                             <span className="text-2xl font-bold text-blue-600">
-                                                Rs {totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                Rs {formatMoney(totalAmount)}
                                             </span>
                                         </div>
                                     )}

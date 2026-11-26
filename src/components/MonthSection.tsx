@@ -1,33 +1,36 @@
 import React from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import Decimal from 'decimal.js';
+import { formatMoney, toDecimal } from '../utils/money';
 
+// Money fields are decimal strings (API contract).
 interface EmployeePayrollData {
     employeeId: string;
     employeeCode: string;
     employeeName: string;
     workingDays: number;
-    basicSalary: number;
-    basicPay: number;
-    otHours: number;
-    otAmount: number;
-    grossPay: number;
-    netPay: number;
-    employeeEPF: number;
-    salaryAdvance: number;
-    companyEPFETF: number;
-    allowanceTotal?: number;
-    deductionTotal?: number;
-    deductions?: number;
-    loanDeduction?: number;
+    basicSalary: string;
+    basicPay: string;
+    otHours?: string;
+    otAmount: string;
+    grossPay: string;
+    netPay: string;
+    employeeEPF: string;
+    salaryAdvance: string;
+    companyEPFETF?: string;
+    allowanceTotal?: string;
+    deductionTotal?: string;
+    deductions?: string;
+    loanDeduction?: string;
     salaryType?: "DAILY" | "MONTHLY";
 }
 
 interface MonthTotals {
     totalEmployees: number;
-    totalGrossPay: number;
-    totalNetPay: number;
-    totalEmployeeEPF: number;
-    totalCompanyEPFETF: number;
+    totalGrossPay: string;
+    totalNetPay: string;
+    totalEmployeeEPF: string;
+    totalCompanyEPFETF: string;
 }
 
 interface MonthSectionProps {
@@ -109,15 +112,15 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                         </div>
                         <div className="flex flex-col items-end shrink-0 w-44 text-right">
                             <div className="text-sm text-gray-500 whitespace-nowrap">Employee EPF</div>
-                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">Rs {totals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">Rs {formatMoney(totals.totalEmployeeEPF)}</div>
                         </div>
                         <div className="flex flex-col items-end shrink-0 w-44 text-right">
                             <div className="text-sm text-gray-500 whitespace-nowrap">Company EPF/ETF</div>
-                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">Rs {totals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">Rs {formatMoney(totals.totalCompanyEPFETF)}</div>
                         </div>
                         <div className="flex flex-col items-end shrink-0 w-44 text-right">
                             <div className="text-sm text-gray-500 whitespace-nowrap">Total Net Pay</div>
-                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">Rs {totals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">Rs {formatMoney(totals.totalNetPay)}</div>
                         </div>
                     </div>
                 </div>
@@ -176,12 +179,13 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                             // Gross = max(basicPay, basicSalary) + otAmount + allowanceTotal
                                             // Total Deductions = EPF + salaryAdvance + custom deductions + nonPaidLeaveDeduction
                                             //   (loan is excluded, same as PayslipPreview which filters out "Loan Deduction")
-                                            const displayBasic = (employee.basicPay > employee.basicSalary ? employee.basicPay : employee.basicSalary) || 0;
-                                            const grossEarnings = displayBasic + (employee.otAmount || 0) + (employee.allowanceTotal || 0);
-                                            const netPay = employee.netPay || 0;
-                                            const loanDeduction = employee.loanDeduction || 0;
+                                            // (decimal.js — money fields are decimal strings)
+                                            const displayBasic = Decimal.max(toDecimal(employee.basicPay), toDecimal(employee.basicSalary));
+                                            const grossEarnings = displayBasic.plus(toDecimal(employee.otAmount)).plus(toDecimal(employee.allowanceTotal));
+                                            const netPay = toDecimal(employee.netPay);
+                                            const loanDeduction = toDecimal(employee.loanDeduction);
                                             // grossEarnings - netPay gives ALL deductions including loan; remove loan to match PayslipPreview
-                                            const totalDeductions = grossEarnings - netPay - loanDeduction;
+                                            const totalDeductions = grossEarnings.minus(netPay).minus(loanDeduction);
 
                                             return (
                                                 <tr key={index} className="hover:bg-gray-50 transition-colors">
@@ -198,16 +202,16 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                                     <td className="px-4 py-3 text-gray-500 text-center">{employee.workingDays}</td>
                                                     {/* <td className="px-4 py-3 text-gray-500 font-medium text-end">{employee.basicSalary?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td> */}
                                                     <td className="px-4 py-3 text-gray-500 font-medium text-end">
-                                                        {displayBasic.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                        {formatMoney(displayBasic)}
                                                     </td>
                                                     <td className="px-4 py-3 text-gray-500">
-                                                        <div className="font-medium text-gray-500 text-end">{(employee.otAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                                        <div className="font-medium text-gray-500 text-end">{formatMoney(employee.otAmount)}</div>
                                                         {/* <div className="text-[10px] text-gray-400">({employee.otHours} hrs)</div> */}
                                                     </td>
-                                                    <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{(employee.allowanceTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                    <td className="px-4 py-3 font-regular text-gray-500 whitespace-nowrap text-end">{grossEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                    <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                                    <td className="px-4 py-3 font-regular text-blue-600 whitespace-nowrap text-end">{netPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                    <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{formatMoney(employee.allowanceTotal)}</td>
+                                                    <td className="px-4 py-3 font-regular text-gray-500 whitespace-nowrap text-end">{formatMoney(grossEarnings)}</td>
+                                                    <td className="px-4 py-3 text-gray-500 font-regular whitespace-nowrap text-end">{formatMoney(totalDeductions)}</td>
+                                                    <td className="px-4 py-3 font-regular text-blue-600 whitespace-nowrap text-end">{formatMoney(netPay)}</td>
                                                     <td className="px-4 py-3 text-end">
                                                         <button
                                                             onClick={() => onViewEmployee(employee.employeeId, companyId)}
@@ -232,19 +236,19 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                     </div>
                                     <div className="text-center">
                                         <div className="text-sm text-gray-600 font-medium">Gross Pay</div>
-                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {totals.totalGrossPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {formatMoney(totals.totalGrossPay)}</div>
                                     </div>
                                     <div className="text-center">
                                         <div className="text-sm text-gray-600 font-medium">Net Pay</div>
-                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {totals.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {formatMoney(totals.totalNetPay)}</div>
                                     </div>
                                     <div className="text-center">
                                         <div className="text-sm text-gray-600 font-medium">Employee EPF</div>
-                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {totals.totalEmployeeEPF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {formatMoney(totals.totalEmployeeEPF)}</div>
                                     </div>
                                     <div className="text-center">
                                         <div className="text-sm text-gray-600 font-medium">Company EPF/ETF</div>
-                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {totals.totalCompanyEPFETF.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {formatMoney(totals.totalCompanyEPFETF)}</div>
                                     </div>
                                 </div>
                             </div> */}

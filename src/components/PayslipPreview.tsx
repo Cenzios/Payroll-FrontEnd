@@ -3,9 +3,11 @@ import { FileText, ArrowDownIcon } from "lucide-react";
 import PortalDropdown from "./PortalDropdown";
 import { Employee } from "../types/employee.types";
 import { useTrialStatus } from "../hooks/useTrialStatus";
+import type { SalaryDetails } from "../types/salary.types";
+import { formatMoney, isPositive, MoneyInput, sumBy, toDecimal } from "../utils/money";
 
 interface PayslipPreviewProps {
-    previewPayslip: any;
+    previewPayslip: SalaryDetails | null;
     selectedEmployee: Employee | null;
     companyName: string;
     selectedYear: number;
@@ -51,20 +53,16 @@ const PayslipPreview = ({
         );
     }
 
-    const fmt = (val: number) => (val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmt = (val: MoneyInput): string => formatMoney(val);
 
-    const grossEarnings =
-        (previewPayslip.salaryType === "DAILY" ? previewPayslip.basicPay : previewPayslip.basicSalary) +
-        previewPayslip.otAmount +
-        (previewPayslip.allowances || []).reduce((sum: number, a: any) => sum + a.amount, 0);
+    // decimal.js: money fields are decimal strings
+    const grossEarnings = toDecimal(previewPayslip.salaryType === "DAILY" ? previewPayslip.basicPay : previewPayslip.basicSalary)
+        .plus(toDecimal(previewPayslip.otAmount))
+        .plus(sumBy(previewPayslip.allowances, (a) => a.amount));
 
-    const totalDeductions =
-        (previewPayslip.nonPaidLeaveDeduction || 0) +
-        (previewPayslip.isEpfEnabled ? previewPayslip.epf8 : 0) +
-        // previewPayslip.deductions.reduce((sum: number, d: any) => sum + d.amount, 0);
-        previewPayslip.deductions
-            .filter((d: any) => d.name !== "Loan Deduction")
-            .reduce((sum: number, d: any) => sum + d.amount, 0);
+    const totalDeductions = toDecimal(previewPayslip.nonPaidLeaveDeduction)
+        .plus(previewPayslip.isEpfEnabled ? toDecimal(previewPayslip.epf8) : 0)
+        .plus(sumBy(previewPayslip.deductions.filter((d) => d.name !== "Loan Deduction"), (d) => d.amount));
 
     const monthLabel = new Date(selectedYear, selectedMonth).toLocaleString("default", {
         month: "long",
@@ -117,7 +115,7 @@ const PayslipPreview = ({
 
                         <div className="flex items-center text-[11px]">
                             <span className="text-[#718096]">Worked Days</span>
-                            <span className="text-[#1D1F24] font-bold tracking-tight ml-auto">{previewPayslip.workedDays ?? previewPayslip.workingDays}</span>
+                            <span className="text-[#1D1F24] font-bold tracking-tight ml-auto">{previewPayslip.workedDays}</span>
                         </div>
 
                         {previewPayslip.salaryType === "MONTHLY" && (previewPayslip.leaveDays || 0) > 0 && (
@@ -158,20 +156,20 @@ const PayslipPreview = ({
                             {previewPayslip.salaryType === "DAILY" && (
                                 <div className="flex justify-between items-center text-[12px]">
                                     <span className="text-[#718096]">
-                                        Daily Wage Earnings ({fmt(previewPayslip.basicSalary)} × {previewPayslip.workedDays ?? previewPayslip.workingDays})
+                                        Daily Wage Earnings ({fmt(previewPayslip.basicSalary)} × {previewPayslip.workedDays})
                                     </span>
                                     <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.basicPay)}</span>
                                 </div>
                             )}
 
-                            {previewPayslip.allowances?.map((a: any, i: number) => (
+                            {previewPayslip.allowances?.map((a, i: number) => (
                                 <div key={i} className="flex justify-between items-center text-[12px]">
                                     <span className="text-[#718096]">{a.name}</span>
                                     <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(a.amount)}</span>
                                 </div>
                             ))}
 
-                            {previewPayslip.otAmount > 0 && (
+                            {isPositive(previewPayslip.otAmount) && (
                                 <div className="flex justify-between items-center text-[12px]">
                                     <span className="text-[#718096]">OT ({previewPayslip.otHours} hrs)</span>
                                     <span className="text-[#1D1F24] font-bold tracking-tight">{fmt(previewPayslip.otAmount)}</span>
@@ -187,7 +185,7 @@ const PayslipPreview = ({
                             DEDUCTIONS
                         </h3>
                         <div className="space-y-2">
-                            {previewPayslip.nonPaidLeaveDeduction > 0 && (
+                            {isPositive(previewPayslip.nonPaidLeaveDeduction) && (
                                 <div className="flex justify-between items-center text-[12px]">
                                     <span className="text-[#718096]">Unpaid Leave Deduction</span>
                                     <span className="text-[#E11D48] font-bold tracking-tight">{fmt(previewPayslip.nonPaidLeaveDeduction)}</span>
@@ -205,7 +203,7 @@ const PayslipPreview = ({
                                     <span className="text-[#E11D48] font-bold tracking-tight">{fmt(d.amount)}</span>
                                 </div>
                             ))} */}
-                            {previewPayslip.deductions?.filter((d: any) => d.amount > 0 && d.name !== "Loan Deduction").map((d: any, i: number) => (
+                            {previewPayslip.deductions?.filter((d) => isPositive(d.amount) && d.name !== "Loan Deduction").map((d, i: number) => (
                                 <div key={i} className="flex justify-between items-center text-[12px]">
                                     <span className="text-[#718096]">{d.name}</span>
                                     <span className="text-[#E11D48] font-bold tracking-tight">{fmt(d.amount)}</span>
@@ -232,7 +230,7 @@ const PayslipPreview = ({
                     max-sm:grid max-sm:grid-cols-2 max-sm:gap-5">
                         <div>
                             <p className="text-[10px] font-bold text-[#407BFF] tracking-widest uppercase mb-1">NET SALARY PAYABLE</p>
-                            <h2 className="text-[16px] font-bold text-[#407BFF] tracking-tight">Rs. {previewPayslip.netSalary.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+                            <h2 className="text-[16px] font-bold text-[#407BFF] tracking-tight">Rs. {fmt(previewPayslip.netSalary)}</h2>
                         </div>
                         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                             <div className="text-right">

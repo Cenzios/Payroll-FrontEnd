@@ -11,14 +11,19 @@ import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import logo from '../assets/images/logo-login.svg';
 import RoundedSelect from '../components/RoundedSelect';
+import type { CFormReportData, CFormRow } from '../types/report.types';
+import { formatMoney, MoneyInput, toChartNumber, toDecimal } from '../utils/money';
+
+/** Employer + employee EPF (decimal.js). */
+const contributionTotal = (r: { employerEpf: string; employeeEpf: string }): string =>
+    toDecimal(r.employerEpf).plus(toDecimal(r.employeeEpf)).toFixed(4);
 
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-const fmt = (val: number) =>
-    val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt = (val: MoneyInput): string => formatMoney(val);
 
 const CFormReport = () => {
     const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
@@ -28,7 +33,7 @@ const CFormReport = () => {
     const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1); // 1-based
 
-    const [reportData, setReportData] = useState<any>(null);
+    const [reportData, setReportData] = useState<CFormReportData | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [hasApplied, setHasApplied] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -80,7 +85,7 @@ const CFormReport = () => {
         }
     }, [selectedCompanyId]);
 
-    const rows: any[] = reportData?.rows || [];
+    const rows: CFormRow[] = reportData?.rows || [];
     const totals = reportData?.totals;
     const appliedPeriodLabel = `${MONTHS[appliedPeriod.month - 1]} ${appliedPeriod.year}`;
 
@@ -89,7 +94,7 @@ const CFormReport = () => {
         if (!reportData || rows.length === 0) return;
         try {
             await fillEPFFormC({
-                employees: rows.map((r: any) => ({
+                employees: rows.map((r) => ({
                     employeeName: r.employeeName,
                     nationalId: r.nationalId,
                     memberNo: r.memberNo,
@@ -99,10 +104,10 @@ const CFormReport = () => {
                     totalEarnings: r.totalEarnings,
                 })),
                 totals: {
-                    basicPay: totals?.basicPay ?? 0,
-                    employerEpf: totals?.employerEpf ?? 0,
-                    employeeEpf: totals?.employeeEpf ?? 0,
-                    totalEarnings: totals?.totalEarnings ?? 0,
+                    basicPay: totals?.basicPay ?? '0',
+                    employerEpf: totals?.employerEpf ?? '0',
+                    employeeEpf: totals?.employeeEpf ?? '0',
+                    totalEarnings: totals?.totalEarnings ?? '0',
                 },
                 month: selectedMonth,
                 year: selectedYear,
@@ -121,13 +126,13 @@ const CFormReport = () => {
             [`Period: ${appliedPeriodLabel}`],
             [],
             ["Employee's Name", 'National ID No.', 'Member No.', 'Total (Rs.)', 'Employer Contribution (Rs.)', 'Employee Contribution (Rs.)', 'Total Earnings (Rs.)'],
-            ...rows.map((r: any) => [
+            ...rows.map((r) => [
                 r.employeeName, r.nationalId, r.memberNo,
-                (r.employerEpf + r.employeeEpf), r.employerEpf, r.employeeEpf, r.totalEarnings,
+                toChartNumber(contributionTotal(r)), toChartNumber(r.employerEpf), toChartNumber(r.employeeEpf), toChartNumber(r.totalEarnings),
             ]),
         ];
         if (totals) {
-            wsData.push(['Total', '', '', (totals.employerEpf + totals.employeeEpf), totals.employerEpf, totals.employeeEpf, totals.totalEarnings]);
+            wsData.push(['Total', '', '', toChartNumber(contributionTotal(totals)), toChartNumber(totals.employerEpf), toChartNumber(totals.employeeEpf), toChartNumber(totals.totalEarnings)]);
         }
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         const wb = XLSX.utils.book_new();
@@ -142,13 +147,13 @@ const CFormReport = () => {
             [`Period: ${appliedPeriodLabel}`],
             [],
             ["Employee's Name", 'National ID No.', 'Member No.', 'Total (Rs.)', 'Employer Contribution (Rs.)', 'Employee Contribution (Rs.)', 'Total Earnings (Rs.)'],
-            ...rows.map((r: any) => [
+            ...rows.map((r) => [
                 r.employeeName, r.nationalId, r.memberNo,
-                (r.employerEpf + r.employeeEpf), r.employerEpf, r.employeeEpf, r.totalEarnings,
+                toChartNumber(contributionTotal(r)), toChartNumber(r.employerEpf), toChartNumber(r.employeeEpf), toChartNumber(r.totalEarnings),
             ]),
         ];
         if (totals) {
-            wsData.push(['Total', '', '', (totals.employerEpf + totals.employeeEpf), totals.employerEpf, totals.employeeEpf, totals.totalEarnings]);
+            wsData.push(['Total', '', '', toChartNumber(contributionTotal(totals)), toChartNumber(totals.employerEpf), toChartNumber(totals.employeeEpf), toChartNumber(totals.totalEarnings)]);
         }
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         const csv = XLSX.utils.sheet_to_csv(ws);
@@ -330,12 +335,12 @@ const CFormReport = () => {
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-50">
-                                                {rows.map((row: any, idx: number) => (
+                                                {rows.map((row, idx: number) => (
                                                     <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
                                                         <td className="px-4 py-3 text-[13px] font-medium text-gray-800">{row.employeeName}</td>
                                                         <td className="px-4 py-3 text-[13px] text-blue-400">{row.nationalId}</td>
                                                         <td className="px-4 py-3 text-[13px] text-blue-400">{row.memberNo}</td>
-                                                        <td className="px-4 py-3 text-[13px] text-gray-600 text-right">{fmt(row.employerEpf + row.employeeEpf)}</td>
+                                                        <td className="px-4 py-3 text-[13px] text-gray-600 text-right">{fmt(contributionTotal(row))}</td>
                                                         <td className="px-4 py-3 text-[13px] text-gray-600 border-l border-gray-100">{fmt(row.employerEpf)}</td>
                                                         <td className="px-4 py-3 text-[13px] text-gray-600">{fmt(row.employeeEpf)}</td>
                                                         <td className="px-4 py-3 text-[13px] font-semibold text-gray-700 text-right">{fmt(row.totalEarnings)}</td>
@@ -346,7 +351,7 @@ const CFormReport = () => {
                                                 <tfoot>
                                                     <tr className="border-t-2 border-gray-200 bg-gray-50">
                                                         <td className="px-4 py-3 text-sm font-bold text-gray-800" colSpan={3}>Total</td>
-                                                        <td className="px-4 py-3 text-sm font-bold text-gray-800 text-right">{fmt(totals.employerEpf + totals.employeeEpf)}</td>
+                                                        <td className="px-4 py-3 text-sm font-bold text-gray-800 text-right">{fmt(contributionTotal(totals))}</td>
                                                         <td className="px-4 py-3 text-sm font-bold text-gray-800 border-l border-gray-100">{fmt(totals.employerEpf)}</td>
                                                         <td className="px-4 py-3 text-sm font-bold text-gray-800">{fmt(totals.employeeEpf)}</td>
                                                         <td className="px-4 py-3 text-sm font-bold text-gray-800 text-right">{fmt(totals.totalEarnings)}</td>

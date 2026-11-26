@@ -4,6 +4,11 @@ import { reportApi } from '../api/reportApi';
 import Toast from './Toast';
 import { exportAllEmployeesSummary } from '../utils/exportService';
 import { useTrialStatus } from '../hooks/useTrialStatus';
+import type { SelectedEmployeesSummary } from '../types/report.types';
+import { formatMoney, MoneyInput } from '../utils/money';
+
+/** Same look as a bare number.toLocaleString() (0–3 fraction digits). */
+const fmtPlain = (value: MoneyInput): string => formatMoney(value, { minFractionDigits: 0, maxFractionDigits: 3 });
 
 interface AllEmployeesSummaryModalProps {
     isOpen: boolean;
@@ -14,45 +19,8 @@ interface AllEmployeesSummaryModalProps {
     year: number;
 }
 
-interface EmployeeRow {
-    employeeId: string;
-    employeeCode: string;
-    employeeName: string;
-    workingDays: number;
-    basicSalary: number;
-    basicPay: number;
-    otHours: number;
-    otAmount: number;
-    grossPay: number;
-    netPay: number;
-    tax: number;
-    salaryAdvance: number;
-    deductions: number;
-    employeeEPF: number;
-    companyEPFETF: number;
-}
-
-interface SummaryData {
-    metadata: {
-        employeeCount: number;
-        datePeriod: string;
-        department: string;
-        reportType: string;
-        totalGrossPay: number;
-    };
-    employees: EmployeeRow[];
-    totals: {
-        basicSalary?: number;
-        basicPay: number;
-        otAmount: number;
-        grossPay: number;
-        salaryAdvance: number;
-        deductions: number;
-        netPay: number;
-        employeeEPF: number;
-        companyEPFETF: number;
-    };
-}
+// Response shape (money as decimal strings) lives in types/report.types.ts
+type SummaryData = SelectedEmployeesSummary;
 
 const AllEmployeesSummaryModal = ({
     isOpen,
@@ -156,7 +124,7 @@ const AllEmployeesSummaryModal = ({
                                     </div>
                                     <div className="flex gap-2">
                                         <span className="text-sm font-bold text-gray-700 min-w-[120px]">Total Gross Pay:</span>
-                                        <span className="text-sm text-gray-600">RS: {summaryData.metadata.totalGrossPay.toLocaleString()}</span>
+                                        <span className="text-sm text-gray-600">RS: {fmtPlain(summaryData.metadata.totalGrossPay)}</span>
                                     </div>
                                 </div>
 
@@ -185,24 +153,24 @@ const AllEmployeesSummaryModal = ({
                                                             <td className="px-3 py-3 text-gray-900 border-x border-gray-200 text-center font-medium">{emp.employeeCode}</td>
                                                             <td className="px-3 py-3 text-gray-700 border-x border-gray-200">{emp.employeeName}</td>
                                                             <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">{emp.workingDays}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {emp.basicSalary.toLocaleString()}</td>
-                                                            <td className="px-3 py-3 text-center text-green-600 border-x border-gray-200 font-medium">RS: {emp.otAmount.toLocaleString()}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-900 border-x border-gray-200 font-bold">RS: {emp.grossPay.toLocaleString()}</td>
-                                                            <td className="px-3 py-3 text-center text-red-600 border-x border-gray-200">RS: {emp.salaryAdvance.toLocaleString()}</td>
-                                                            <td className="px-3 py-3 text-center text-red-700 border-x border-gray-200 font-medium">RS: {emp.deductions.toLocaleString()}</td>
-                                                            <td className="px-3 py-3 text-center text-blue-600 border-x border-gray-200 font-bold">RS: {emp.netPay.toLocaleString()}</td>
+                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {fmtPlain(emp.basicSalary)}</td>
+                                                            <td className="px-3 py-3 text-center text-green-600 border-x border-gray-200 font-medium">RS: {fmtPlain(emp.otAmount)}</td>
+                                                            <td className="px-3 py-3 text-center text-gray-900 border-x border-gray-200 font-bold">RS: {fmtPlain(emp.grossPay)}</td>
+                                                            <td className="px-3 py-3 text-center text-red-600 border-x border-gray-200">RS: {fmtPlain(emp.salaryAdvance)}</td>
+                                                            <td className="px-3 py-3 text-center text-red-700 border-x border-gray-200 font-medium">RS: {fmtPlain(emp.deductions)}</td>
+                                                            <td className="px-3 py-3 text-center text-blue-600 border-x border-gray-200 font-bold">RS: {fmtPlain(emp.netPay)}</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
                                                 <tfoot className="bg-[#3b82f6] text-white">
                                                     <tr className="font-bold">
                                                         <td colSpan={3} className="px-3 py-3 uppercase">TOTAL AMOUNTS</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.basicSalary?.toLocaleString() || summaryData.totals.basicPay.toLocaleString()}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.otAmount.toLocaleString()}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.grossPay.toLocaleString()}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.salaryAdvance.toLocaleString()}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.deductions.toLocaleString()}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {summaryData.totals.netPay.toLocaleString()}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {fmtPlain(summaryData.totals.basicSalary ?? summaryData.totals.basicPay)}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {fmtPlain(summaryData.totals.otAmount)}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {fmtPlain(summaryData.totals.grossPay)}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {fmtPlain(summaryData.totals.salaryAdvance)}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {fmtPlain(summaryData.totals.deductions)}</td>
+                                                        <td className="px-3 py-3 text-center">RS: {fmtPlain(summaryData.totals.netPay)}</td>
                                                     </tr>
                                                 </tfoot>
                                             </table>
