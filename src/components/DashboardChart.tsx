@@ -10,6 +10,7 @@ import {
     TooltipProps
 } from 'recharts';
 import { ChevronDown } from 'lucide-react';
+import { formatRs } from '../utils/money';
 
 interface ChartData {
     name: string;
@@ -29,7 +30,7 @@ const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
             <div className="bg-white p-3 shadow-xl border border-gray-100 rounded-xl">
                 <p className="text-sm font-semibold text-gray-900 mb-1">{payload[0].payload.name}</p>
                 <p className="text-sm text-blue-600 font-bold">
-                    RS: {payload[0].value?.toLocaleString()}
+                    {formatRs(payload[0].value)}
                 </p>
             </div>
         );

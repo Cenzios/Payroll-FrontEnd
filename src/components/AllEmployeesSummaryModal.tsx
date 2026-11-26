@@ -6,10 +6,9 @@ import { exportAllEmployeesSummary } from '../utils/exportService';
 import { rowDeduction, rowGross } from '../utils/reportRow';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import type { SelectedEmployeesSummary } from '../types/report.types';
-import { formatMoney, MoneyInput } from '../utils/money';
+import { formatRs } from '../utils/money';
 
-/** Same look as a bare number.toLocaleString() (0–3 fraction digits). */
-const fmtPlain = (value: MoneyInput): string => formatMoney(value, { minFractionDigits: 0, maxFractionDigits: 3 });
+
 
 interface AllEmployeesSummaryModalProps {
     isOpen: boolean;
@@ -125,7 +124,7 @@ const AllEmployeesSummaryModal = ({
                                     </div>
                                     <div className="flex gap-2">
                                         <span className="text-sm font-bold text-gray-700 min-w-[120px]">Total Gross Pay:</span>
-                                        <span className="text-sm text-gray-600">RS: {fmtPlain(summaryData.metadata.totalGrossPay)}</span>
+                                        <span className="text-sm text-gray-600">{formatRs(summaryData.metadata.totalGrossPay)}</span>
                                     </div>
                                 </div>
 
@@ -154,24 +153,24 @@ const AllEmployeesSummaryModal = ({
                                                             <td className="px-3 py-3 text-gray-900 border-x border-gray-200 text-center font-medium">{emp.employeeCode}</td>
                                                             <td className="px-3 py-3 text-gray-700 border-x border-gray-200">{emp.employeeName}</td>
                                                             <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">{emp.workedDays}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">RS: {fmtPlain(emp.basicSalary)}</td>
-                                                            <td className="px-3 py-3 text-center text-green-600 border-x border-gray-200 font-medium">RS: {fmtPlain(emp.otAmount)}</td>
-                                                            <td className="px-3 py-3 text-center text-gray-900 border-x border-gray-200 font-bold">RS: {fmtPlain(rowGross(emp))}</td>
-                                                            <td className="px-3 py-3 text-center text-red-600 border-x border-gray-200">RS: {fmtPlain(emp.salaryAdvance)}</td>
-                                                            <td className="px-3 py-3 text-center text-red-700 border-x border-gray-200 font-medium">RS: {fmtPlain(rowDeduction(emp))}</td>
-                                                            <td className="px-3 py-3 text-center text-blue-600 border-x border-gray-200 font-bold">RS: {fmtPlain(emp.netPay)}</td>
+                                                            <td className="px-3 py-3 text-center text-gray-700 border-x border-gray-200">{formatRs(emp.basicSalary)}</td>
+                                                            <td className="px-3 py-3 text-center text-green-600 border-x border-gray-200 font-medium">{formatRs(emp.otAmount)}</td>
+                                                            <td className="px-3 py-3 text-center text-gray-900 border-x border-gray-200 font-bold">{formatRs(rowGross(emp))}</td>
+                                                            <td className="px-3 py-3 text-center text-red-600 border-x border-gray-200">{formatRs(emp.salaryAdvance)}</td>
+                                                            <td className="px-3 py-3 text-center text-red-700 border-x border-gray-200 font-medium">{formatRs(rowDeduction(emp))}</td>
+                                                            <td className="px-3 py-3 text-center text-blue-600 border-x border-gray-200 font-bold">{formatRs(emp.netPay)}</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
                                                 <tfoot className="bg-[#3b82f6] text-white">
                                                     <tr className="font-bold">
                                                         <td colSpan={3} className="px-3 py-3 uppercase">TOTAL AMOUNTS</td>
-                                                        <td className="px-3 py-3 text-center">RS: {fmtPlain(summaryData.totals.basicSalary ?? summaryData.totals.basicPay)}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {fmtPlain(summaryData.totals.otAmount)}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {fmtPlain(summaryData.totals.grossPay)}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {fmtPlain(summaryData.totals.salaryAdvance)}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {fmtPlain(summaryData.totals.deductions)}</td>
-                                                        <td className="px-3 py-3 text-center">RS: {fmtPlain(summaryData.totals.netPay)}</td>
+                                                        <td className="px-3 py-3 text-center">{formatRs(summaryData.totals.basicSalary ?? summaryData.totals.basicPay)}</td>
+                                                        <td className="px-3 py-3 text-center">{formatRs(summaryData.totals.otAmount)}</td>
+                                                        <td className="px-3 py-3 text-center">{formatRs(summaryData.totals.grossPay)}</td>
+                                                        <td className="px-3 py-3 text-center">{formatRs(summaryData.totals.salaryAdvance)}</td>
+                                                        <td className="px-3 py-3 text-center">{formatRs(summaryData.totals.deductions)}</td>
+                                                        <td className="px-3 py-3 text-center">{formatRs(summaryData.totals.netPay)}</td>
                                                     </tr>
                                                 </tfoot>
                                             </table>

@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 import Decimal from "decimal.js";
 import type { SalaryDetails } from "../types/salary.types";
 import type { EmployeeAnnualTotals, EmployeeMonthlyRow, SelectedSummaryEmployee, SelectedSummaryTotals } from "../types/report.types";
-import { formatMoney, MoneyInput, toChartNumber, toDecimal, toDecimalString } from "./money";
+import { formatMoney, formatRs, MoneyInput, toChartNumber, toDecimal, toDecimalString } from "./money";
 import { rowDeduction, rowGross, rowNet, sumRows } from "./reportRow";
 import { LOAN_TOTAL_LINE, payslipBasicLine, payslipTotals } from "./payslipTotals";
 
@@ -91,13 +91,8 @@ export interface EmployeeModalReportData {
 /** 2-decimal money display ("1,234.50"). */
 const formatCurrency = (amount: MoneyInput): string => formatMoney(amount);
 
-/** Look of a bare number.toLocaleString(): 0–3 fraction digits. */
-const fmtPlain = (amount: MoneyInput): string =>
-    formatMoney(amount, { minFractionDigits: 0, maxFractionDigits: 3 });
-
-/** Look of toLocaleString(undefined, { minimumFractionDigits: 2 }): 2–3 fraction digits. */
-const fmt2to3 = (amount: MoneyInput): string =>
-    formatMoney(amount, { minFractionDigits: 2, maxFractionDigits: 3 });
+/** Money with the shared currency prefix ("Rs. 1,234.50"). */
+const rs = (amount: MoneyInput): string => formatRs(amount);
 
 /** Numeric spreadsheet cell (xlsx needs a JS number). */
 const xlsNum = (amount: MoneyInput): number => toChartNumber(amount);
@@ -222,11 +217,11 @@ export const exportEmployeeModalReport = (data: EmployeeModalReportData) => {
     doc.setLineWidth(0.3);
 
     const summaries = [
-        { label: "Basic Salary", value: `Rs ${fmtPlain(basicSalary)}` },
-        { label: "Total Allowances", value: `Rs ${fmtPlain(totalAllowances)}` },
-        { label: "Gross Pay", value: `Rs ${fmtPlain(grossPay)}` },
-        { label: "Total Deduction", value: `Rs ${fmtPlain(totalDeductions)}` },
-        { label: "Net Pay", value: fmt2to3(netPay) }
+        { label: "Basic Salary", value: `${rs(basicSalary)}` },
+        { label: "Total Allowances", value: `${rs(totalAllowances)}` },
+        { label: "Gross Pay", value: `${rs(grossPay)}` },
+        { label: "Total Deduction", value: `${rs(totalDeductions)}` },
+        { label: "Net Pay", value: formatCurrency(netPay) }
     ];
 
     summaries.forEach((summary, index) => {
@@ -275,8 +270,8 @@ export const exportEmployeeModalReport = (data: EmployeeModalReportData) => {
     doc.setFont("helvetica", "bold");
     doc.text("Component", 18, currentY + 6.5);
     doc.text("Units", 100, currentY + 6.5, { align: "center" });
-    doc.text("Rate (Rs)", 140, currentY + 6.5, { align: "center" });
-    doc.text("Amount (Rs)", pageWidth - 18, currentY + 6.5, { align: "right" });
+    doc.text("Rate (Rs.)", 140, currentY + 6.5, { align: "center" });
+    doc.text("Amount (Rs.)", pageWidth - 18, currentY + 6.5, { align: "right" });
 
     currentY += 10;
 
@@ -331,7 +326,7 @@ export const exportEmployeeModalReport = (data: EmployeeModalReportData) => {
     doc.text("Net Pay", 18, currentY + 8);
 
     doc.setTextColor(252, 163, 17);
-    doc.text(`Rs. ${fmt2to3(netPay)}`, pageWidth - 18, currentY + 8, { align: "right" });
+    doc.text(`${rs(netPay)}`, pageWidth - 18, currentY + 8, { align: "right" });
 
     // 6. FOOTER
     doc.setFillColor(16, 24, 54);
@@ -738,7 +733,7 @@ export const exportPayrollSummaryReport = (
         endMonth: number;
         endYear: number;
         overallTotals: {
-            totalBasicPay: string;
+            totalBasicPayEarned: string;
             totalGrossPay: string;
             totalEmployeeEPF: string;
             totalSalaryAdvance: string;
@@ -862,12 +857,11 @@ export const exportPayrollSummaryReport = (
         const boxWidth = (pageWidth - 28) / 5;
         const boxHeight = 18;
         const summaries = [
-            // { label: "Total Basic", value: `Rs ${overallTotals.totalBasicPay.toLocaleString()}` },
-            { label: "Total Basic Pay", value: `Rs ${fmtPlain(overallTotals.totalBasicPay)}` },
-            { label: "Total Gross", value: `Rs ${fmtPlain(overallTotals.totalGrossPay)}` },
-            { label: "Total EPF (8%)", value: `Rs ${fmtPlain(overallTotals.totalEmployeeEPF)}` },
-            { label: "Total Deductions", value: `Rs ${fmtPlain(overallTotals.totalDeductions ?? "0")}` },
-            { label: "Total Net Pay", value: `Rs ${fmtPlain(overallTotals.totalNetPay)}`, isNet: true }
+            { label: "Total Basic Pay", value: `${rs(overallTotals.totalBasicPayEarned)}` },
+            { label: "Total Gross", value: `${rs(overallTotals.totalGrossPay)}` },
+            { label: "Total EPF (8%)", value: `${rs(overallTotals.totalEmployeeEPF)}` },
+            { label: "Total Deductions", value: `${rs(overallTotals.totalDeductions ?? "0")}` },
+            { label: "Total Net Pay", value: `${rs(overallTotals.totalNetPay)}`, isNet: true }
         ];
 
         summaries.forEach((box, i) => {
@@ -913,12 +907,12 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
                 emp.employeeCode || "-",
                 emp.employeeName || "-",
                 emp.workingDays,
-                fmtPlain(emp.basicPay),
-                fmtPlain(emp.otAmount),
-                fmtPlain(rowGross(emp)),
-                fmtPlain(emp.employeeEPF),
-                fmtPlain(rowDeduction(emp)),
-                fmtPlain(rowNet(emp)),
+                formatCurrency(emp.basicPay),
+                formatCurrency(emp.otAmount),
+                formatCurrency(rowGross(emp)),
+                formatCurrency(emp.employeeEPF),
+                formatCurrency(rowDeduction(emp)),
+                formatCurrency(rowNet(emp)),
             ]);
 
             // Monthly totals: sums of the stored per-row values
@@ -926,12 +920,12 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
 
             tableBody.push([
                 "", "Monthly Total", "",
-                fmtPlain(m.totalBasicPay),
-                fmtPlain(m.totalOtAmount),
-                fmtPlain(m.totalGrossPay),
-                fmtPlain(m.totalEmployeeEPF),
-                fmtPlain(m.totalDeductions),
-                fmtPlain(m.totalNetPay)
+                formatCurrency(m.totalBasicPayEarned),
+                formatCurrency(m.totalOtAmount),
+                formatCurrency(m.totalGrossPay),
+                formatCurrency(m.totalEmployeeEPF),
+                formatCurrency(m.totalDeductions),
+                formatCurrency(m.totalNetPay)
             ]);
 
             autoTable(doc, {
@@ -1023,7 +1017,7 @@ doc.text(`${monthData.employees.length} ${monthData.employees.length === 1 ? "Em
             const m = sumRows(monthData.employees);
             wsData.push([
                 "", "Monthly Total", "", "", "",
-                xlsNum(m.totalBasicPay),
+                xlsNum(m.totalBasicPayEarned),
                 xlsNum(m.totalOtAmount),
                 xlsNum(m.totalGrossPay),
                 xlsNum(m.totalEmployeeEPF),
@@ -1092,7 +1086,7 @@ export const exportEmployeeMonthlySummary = (
         yPos += 7;
 
         doc.text(`Position: ${designation} `, 14, yPos);
-        doc.text(`Basic Salary: RS ${fmtPlain(basicSalary)} `, 120, yPos);
+        doc.text(`Basic Salary: ${rs(basicSalary)} `, 120, yPos);
         yPos += 7;
 
         doc.text(`Joined Date: ${joinedDate} `, 14, yPos);
@@ -1101,27 +1095,27 @@ export const exportEmployeeMonthlySummary = (
         const tableData = monthlyBreakdown.map((row) => [
             row.month,
             row.workedDays.toString(),
-            `RS ${fmtPlain(row.basicPay)} `,
-            `RS ${fmtPlain(row.otAmount)} (${row.otHours}h)`,
-            `RS ${fmtPlain(rowGross(row))} `,
-            `RS ${fmtPlain(row.netPay)} `,
-            `RS ${fmtPlain(row.salaryAdvance)} `,
-            `RS ${fmtPlain(rowDeduction(row))} `,
-            `RS ${fmtPlain(row.employeeEPF)} `,
-            `RS ${fmtPlain(row.companyEPFETF)} `,
+            `${rs(row.basicPay)} `,
+            `${rs(row.otAmount)} (${row.otHours}h)`,
+            `${rs(rowGross(row))} `,
+            `${rs(row.netPay)} `,
+            `${rs(row.salaryAdvance)} `,
+            `${rs(rowDeduction(row))} `,
+            `${rs(row.employeeEPF)} `,
+            `${rs(row.companyEPFETF)} `,
         ]);
 
         tableData.push([
             "SELECTED MONTH TOTALS",
             annualTotals.workedDays.toString(),
-            `RS ${fmtPlain(annualTotals.basicPay)} `,
-            `RS ${fmtPlain(annualTotals.otAmount)} `,
-            `RS ${fmtPlain(annualTotals.grossPay)} `,
-            `RS ${fmtPlain(annualTotals.netPay)} `,
-            `RS ${fmtPlain(annualTotals.salaryAdvance)} `,
-            `RS ${fmtPlain(annualTotals.deductions)} `,
-            `RS ${fmtPlain(annualTotals.employeeEPF)} `,
-            `RS ${fmtPlain(annualTotals.companyEPFETF)} `,
+            `${rs(annualTotals.basicPay)} `,
+            `${rs(annualTotals.otAmount)} `,
+            `${rs(annualTotals.grossPay)} `,
+            `${rs(annualTotals.netPay)} `,
+            `${rs(annualTotals.salaryAdvance)} `,
+            `${rs(annualTotals.deductions)} `,
+            `${rs(annualTotals.employeeEPF)} `,
+            `${rs(annualTotals.companyEPFETF)} `,
         ]);
 
         autoTable(doc, {
@@ -1164,7 +1158,7 @@ export const exportEmployeeMonthlySummary = (
                 designation,
                 "",
                 "Basic Salary:",
-                `RS ${fmtPlain(basicSalary)} `,
+                `${rs(basicSalary)} `,
             ],
             ["Joined Date:", joinedDate],
             [],
@@ -1261,7 +1255,7 @@ export const exportAllEmployeesSummary = (
         doc.text(`Report Type: ${metadata.reportType} `, 100, yPos);
         yPos += 7;
         doc.text(
-            `Total Gross Pay: RS ${fmtPlain(metadata.totalGrossPay)} `,
+            `Total Gross Pay: ${rs(metadata.totalGrossPay)} `,
             14,
             yPos
         );
@@ -1271,24 +1265,24 @@ export const exportAllEmployeesSummary = (
             emp.employeeCode,
             emp.employeeName,
             emp.workedDays.toString(),
-            `RS ${fmtPlain(emp.basicSalary)} `,
-            `RS ${fmtPlain(emp.otAmount)} (${emp.otHours || 0}h)`,
-            `RS ${fmtPlain(rowGross(emp))} `,
-            `RS ${fmtPlain(emp.salaryAdvance)} `,
-            `RS ${fmtPlain(rowDeduction(emp))} `,
-            `RS ${fmtPlain(emp.netPay)} `,
+            `${rs(emp.basicSalary)} `,
+            `${rs(emp.otAmount)} (${emp.otHours || 0}h)`,
+            `${rs(rowGross(emp))} `,
+            `${rs(emp.salaryAdvance)} `,
+            `${rs(rowDeduction(emp))} `,
+            `${rs(emp.netPay)} `,
         ]);
 
         tableData.push([
             "TOTAL AMOUNTS",
             "",
             "",
-            `RS ${fmtPlain(totals.basicSalary ?? totals.basicPay)} `,
-            `RS ${fmtPlain(totals.otAmount)} `,
-            `RS ${fmtPlain(totals.grossPay)} `,
-            `RS ${fmtPlain(totals.salaryAdvance)} `,
-            `RS ${fmtPlain(totals.deductions)} `,
-            `RS ${fmtPlain(totals.netPay)} `,
+            `${rs(totals.basicSalary ?? totals.basicPay)} `,
+            `${rs(totals.otAmount)} `,
+            `${rs(totals.grossPay)} `,
+            `${rs(totals.salaryAdvance)} `,
+            `${rs(totals.deductions)} `,
+            `${rs(totals.netPay)} `,
         ]);
 
         autoTable(doc, {
@@ -1339,7 +1333,7 @@ export const exportAllEmployeesSummary = (
                 "Report Type:",
                 metadata.reportType,
             ],
-            ["Total Gross Pay:", `RS ${fmtPlain(metadata.totalGrossPay)} `],
+            ["Total Gross Pay:", `${rs(metadata.totalGrossPay)} `],
             [],
             ["Breakdown Table"],
             [
@@ -1499,7 +1493,7 @@ export const exportBankAdviceReport = (
             item.bankName,
             item.branchName,
             item.accountNumber,
-            `Rs ${fmt2to3(item.amount)}`
+            `${rs(item.amount)}`
         ]);
 
         autoTable(doc, {
@@ -1537,7 +1531,7 @@ export const exportBankAdviceReport = (
         doc.setFont("helvetica", "bold");
         doc.text("Net Pay", 20, currentY + 6.5);
         doc.setTextColor(255, 184, 0);
-        doc.text(`Rs. ${fmt2to3(totalAmount)}`, pageWidth - 20, currentY + 6.5, { align: "right" });
+        doc.text(`${rs(totalAmount)}`, pageWidth - 20, currentY + 6.5, { align: "right" });
 
         currentY += 25;
 
@@ -1719,21 +1713,21 @@ export const exportEpfEtfReport = (
             item.employeeCode,
             item.fullName,
             item.epfNo,
-            fmt2to3(item.basicSalary),
-            fmt2to3(item.empEpf),
-            fmt2to3(item.employerEpf),
-            fmt2to3(item.etf),
-            fmt2to3(item.totalContribution)
+            formatCurrency(item.basicSalary),
+            formatCurrency(item.empEpf),
+            formatCurrency(item.employerEpf),
+            formatCurrency(item.etf),
+            formatCurrency(item.totalContribution)
         ]);
 
         // Add Total row to table body
         tableBody.push([
             "", "Total", "",
-            fmt2to3(totals.basicSalary),
-            fmt2to3(totals.empEpf),
-            fmt2to3(totals.employerEpf),
-            fmt2to3(totals.etf),
-            fmt2to3(totals.totalContribution)
+            formatCurrency(totals.basicSalary),
+            formatCurrency(totals.empEpf),
+            formatCurrency(totals.employerEpf),
+            formatCurrency(totals.etf),
+            formatCurrency(totals.totalContribution)
         ]);
 
         autoTable(doc, {
@@ -1781,7 +1775,7 @@ export const exportEpfEtfReport = (
         doc.setTextColor(23, 44, 108);
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text(`Rs ${fmt2to3(totals.empEpf)}`, 14 + boxWidth / 2, finalY + 14, { align: "center" });
+        doc.text(`${rs(totals.empEpf)}`, 14 + boxWidth / 2, finalY + 14, { align: "center" });
 
         // Employer EPF
         doc.setFillColor(252, 252, 252);
@@ -1793,7 +1787,7 @@ export const exportEpfEtfReport = (
         doc.setTextColor(23, 44, 108);
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text(`Rs ${fmt2to3(totals.employerEpf)}`, 14 + boxWidth + 5 + boxWidth / 2, finalY + 14, { align: "center" });
+        doc.text(`${rs(totals.employerEpf)}`, 14 + boxWidth + 5 + boxWidth / 2, finalY + 14, { align: "center" });
 
         // ETF
         doc.setFillColor(252, 252, 252);
@@ -1805,7 +1799,7 @@ export const exportEpfEtfReport = (
         doc.setTextColor(23, 44, 108);
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text(`Rs ${fmt2to3(totals.etf)}`, 14 + (boxWidth + 5) * 2 + boxWidth / 2, finalY + 14, { align: "center" });
+        doc.text(`${rs(totals.etf)}`, 14 + (boxWidth + 5) * 2 + boxWidth / 2, finalY + 14, { align: "center" });
 
         // Total
         doc.setFillColor(43, 116, 255);
@@ -1817,7 +1811,7 @@ export const exportEpfEtfReport = (
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text(`Rs ${fmt2to3(totals.totalContribution)}`, 14 + (boxWidth + 5) * 3 + boxWidth / 2, finalY + 14, { align: "center" });
+        doc.text(`${rs(totals.totalContribution)}`, 14 + (boxWidth + 5) * 3 + boxWidth / 2, finalY + 14, { align: "center" });
 
         // 4. Approved By Box
         const sigY = finalY + 35;

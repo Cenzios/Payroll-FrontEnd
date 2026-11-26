@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { Loader2 } from 'lucide-react';
-import { MoneyInput, toMoneyString } from '../utils/money';
+import { formatMoney, formatRs, MoneyInput } from '../utils/money';
 
 interface CheckoutFormProps {
     amount: MoneyInput; // decimal string from the API (display only)
@@ -67,7 +67,7 @@ const CheckoutForm = ({ amount, currency }: CheckoutFormProps) => {
                         Processing...
                     </>
                 ) : (
-                    `Pay ${currency} ${toMoneyString(amount)}`
+                    currency === 'LKR' ? `Pay ${formatRs(amount)}` : `Pay ${currency} ${formatMoney(amount)}`
                 )}
             </button>
 

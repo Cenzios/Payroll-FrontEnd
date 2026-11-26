@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Minus, Plus, CreditCard, Loader2 } from 'lucide-react';
 import { subscriptionApi } from '../api/subscriptionApi';
 import { useGetActiveSubscriptionQuery } from '../store/apiSlice';
-import { toDecimal, toMoneyString } from '../utils/money';
+import { formatRs, toDecimal } from '../utils/money';
 
 interface AddonModalProps {
     isOpen: boolean;
@@ -103,7 +103,7 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
                             <>
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-600">Price per slot</span>
-                                    <span className="font-medium text-green-600">Rs. {toMoneyString(pricePerSlot)}</span>
+                                    <span className="font-medium text-green-600">{formatRs(pricePerSlot)}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-600">Number of additional slots</span>
@@ -111,7 +111,7 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
                                 </div>
                                 <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
                                     <span className="font-bold text-gray-900">Total</span>
-                                    <span className="font-bold text-xl text-blue-600">Rs. {toMoneyString(toDecimal(pricePerSlot).times(slots))}</span>
+                                    <span className="font-bold text-xl text-blue-600">{formatRs(toDecimal(pricePerSlot).times(slots))}</span>
                                 </div>
                             </>
                         )}

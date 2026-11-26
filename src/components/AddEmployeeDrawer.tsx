@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import FileUploadModal from "./FileUploadModal";
 import { CreateEmployeeRequest, RecurringEntry } from "../types/employee.types";
-import { formatMoney, isPositive, toDecimal, toDecimalString } from "../utils/money";
+import { formatRs, isPositive, toDecimal, toDecimalString } from "../utils/money";
 import Toast from "./Toast";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -229,7 +229,7 @@ const AddEmployeeDrawer = ({
                         const basic = toDecimal(employeeData.basicSalary);
                         const limit = employeeData.salaryType === "MONTHLY" ? basic : basic.times(20);
                         if (amount.greaterThan(limit)) {
-                            error = `Cannot exceed ${employeeData.salaryType === "MONTHLY" ? "monthly salary" : "20x daily rate"} (Rs. ${formatMoney(limit, { minFractionDigits: 0, maxFractionDigits: 3 })})`;
+                            error = `Cannot exceed ${employeeData.salaryType === "MONTHLY" ? "monthly salary" : "20x daily rate"} (${formatRs(limit)})`;
                         }
                     }
                 }
@@ -702,7 +702,7 @@ const AddEmployeeDrawer = ({
                                     <div className="flex gap-4">
                                         <div className="relative flex-1">
                                             <div className="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none">
-                                                <div className="bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100 text-[12px] font-bold text-gray-400">Rs</div>
+                                                <div className="bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100 text-[12px] font-bold text-gray-400">Rs.</div>
                                             </div>
                                             <input
                                                 type="number"
@@ -753,7 +753,7 @@ const AddEmployeeDrawer = ({
                                     <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">OT Rate (Optional)</label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none">
-                                            <div className="bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100 text-[12px] font-bold text-gray-400">Rs</div>
+                                            <div className="bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100 text-[12px] font-bold text-gray-400">Rs.</div>
                                         </div>
                                         <input
                                             type="number"
@@ -790,7 +790,7 @@ const AddEmployeeDrawer = ({
                                             </label>
                                             <div className="relative">
                                                 <div className="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none">
-                                                    <div className="bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100 text-[12px] font-bold text-gray-400">Rs</div>
+                                                    <div className="bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100 text-[12px] font-bold text-gray-400">Rs.</div>
                                                 </div>
                                                 <input
                                                     type="number"

@@ -1,4 +1,4 @@
-import { sumBy } from './money';
+import { sumBy, toDecimal } from './money';
 
 /**
  * Report rows carry the figures stored on the salary row. The UI must display
@@ -15,9 +15,13 @@ export interface StoredSalaryFigures {
     netPay?: string;
 }
 
-/** Stored gross salary of a report row. */
+/**
+ * Stored gross salary of a report row. Legacy rows stored a 0 gross; for those
+ * the backend's grossPay carries the computed value, so it is used instead.
+ */
 export function rowGross(row: StoredSalaryFigures): string {
-    return row.grossSalary ?? row.grossPay ?? '0';
+    if (row.grossSalary !== undefined && !toDecimal(row.grossSalary).isZero()) return row.grossSalary;
+    return row.grossPay ?? row.grossSalary ?? '0';
 }
 
 /** Stored total deduction of a report row. */
@@ -54,7 +58,8 @@ export interface SummaryRow extends StoredSalaryFigures {
 
 export interface RowTotals {
     totalEmployees: number;
-    totalBasicPay: string;
+    /** Sum of earned (prorated) basic pay. */
+    totalBasicPayEarned: string;
     totalOtAmount: string;
     totalGrossPay: string;
     totalDeductions: string;
@@ -69,7 +74,7 @@ export function sumRows(rows: readonly SummaryRow[]): RowTotals {
     const fixed = (pick: (row: SummaryRow) => string | undefined): string => sumBy(rows, pick).toFixed(2);
     return {
         totalEmployees: rows.length,
-        totalBasicPay: fixed((r) => r.basicPay),
+        totalBasicPayEarned: fixed((r) => r.basicPay),
         totalOtAmount: fixed((r) => r.otAmount),
         totalGrossPay: fixed(rowGross),
         totalDeductions: fixed(rowDeduction),

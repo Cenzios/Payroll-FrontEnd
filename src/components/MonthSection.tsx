@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { PayrollSummaryEmployee } from '../types/report.types';
-import { formatMoney } from '../utils/money';
+import { formatMoney, formatRs } from '../utils/money';
 import { rowDeduction, rowGross, rowNet } from '../utils/reportRow';
 
 // Money fields are decimal strings (API contract).
@@ -90,15 +90,15 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                         </div>
                         <div className="flex flex-col items-end shrink-0 w-44 text-right">
                             <div className="text-sm text-gray-500 whitespace-nowrap">Employee EPF</div>
-                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">Rs {formatMoney(totals.totalEmployeeEPF)}</div>
+                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">{formatRs(totals.totalEmployeeEPF)}</div>
                         </div>
                         <div className="flex flex-col items-end shrink-0 w-44 text-right">
                             <div className="text-sm text-gray-500 whitespace-nowrap">Company EPF/ETF</div>
-                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">Rs {formatMoney(totals.totalCompanyEPFETF)}</div>
+                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">{formatRs(totals.totalCompanyEPFETF)}</div>
                         </div>
                         <div className="flex flex-col items-end shrink-0 w-44 text-right">
                             <div className="text-sm text-gray-500 whitespace-nowrap">Total Net Pay</div>
-                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">Rs {formatMoney(totals.totalNetPay)}</div>
+                            <div className="text-base font-medium text-blue-600 whitespace-nowrap">{formatRs(totals.totalNetPay)}</div>
                         </div>
                     </div>
                 </div>
@@ -207,19 +207,19 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                                     </div>
                                     <div className="text-center">
                                         <div className="text-sm text-gray-600 font-medium">Gross Pay</div>
-                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {formatMoney(totals.totalGrossPay)}</div>
+                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">{formatRs(totals.totalGrossPay)}</div>
                                     </div>
                                     <div className="text-center">
                                         <div className="text-sm text-gray-600 font-medium">Net Pay</div>
-                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {formatMoney(totals.totalNetPay)}</div>
+                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">{formatRs(totals.totalNetPay)}</div>
                                     </div>
                                     <div className="text-center">
                                         <div className="text-sm text-gray-600 font-medium">Employee EPF</div>
-                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {formatMoney(totals.totalEmployeeEPF)}</div>
+                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">{formatRs(totals.totalEmployeeEPF)}</div>
                                     </div>
                                     <div className="text-center">
                                         <div className="text-sm text-gray-600 font-medium">Company EPF/ETF</div>
-                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">Rs {formatMoney(totals.totalCompanyEPFETF)}</div>
+                                        <div className="text-lg text-blue-600 mt-1 max-sm:text-base">{formatRs(totals.totalCompanyEPFETF)}</div>
                                     </div>
                                 </div>
                             </div> */}

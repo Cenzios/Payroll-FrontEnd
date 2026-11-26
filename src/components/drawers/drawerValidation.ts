@@ -1,5 +1,5 @@
 // Validation logic extracted from UniversalDrawer for both company and employee forms
-import { formatMoney, toDecimal } from "../../utils/money";
+import { formatRs, toDecimal } from "../../utils/money";
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const phoneRegex = /^\+94\s?\d{9}$/;
 // All Sri Lankan landline area codes + mobile prefixes
@@ -148,7 +148,7 @@ export const validateEmployeeField = (
                     const basic = toDecimal(basicSalary);
                     const limit = salaryType === "MONTHLY" ? basic : basic.times(20);
                     if (amount.greaterThan(limit))
-                        error = `Cannot exceed ${salaryType === "MONTHLY" ? "monthly salary" : "20x daily rate"} (Rs. ${formatMoney(limit, { minFractionDigits: 0, maxFractionDigits: 3 })})`;
+                        error = `Cannot exceed ${salaryType === "MONTHLY" ? "monthly salary" : "20x daily rate"} (${formatRs(limit)})`;
                 }
             }
             break;

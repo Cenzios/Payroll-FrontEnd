@@ -14,7 +14,7 @@ import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import logo from '../assets/images/logo-login.svg';
 import type { CompanyPayrollSummary, PayrollSummaryMonth, PayrollSummaryOverallTotals } from '../types/report.types';
-import { formatMoney } from '../utils/money';
+import { formatRs } from '../utils/money';
 import { matchesEmployeeSearch, sumRows } from '../utils/reportRow';
 
 /** Money fields are decimal strings (API contract). */
@@ -400,7 +400,7 @@ const Reports = () => {
                                 {/* Total Gross Pay */}
                                 <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-xl font-regular text-[#1f6feb]">
-                                        Rs. {formatMoney(visibleOverallTotals.totalGrossPay)}
+                                        {formatRs(visibleOverallTotals.totalGrossPay)}
                                     </div>
                                     <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
                                         Total Gross Pay
@@ -410,7 +410,7 @@ const Reports = () => {
                                 {/* Total Net Pay */}
                                 <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-xl font-regular text-[#1f6feb]">
-                                        Rs. {formatMoney(visibleOverallTotals.totalNetPay)}
+                                        {formatRs(visibleOverallTotals.totalNetPay)}
                                     </div>
                                     <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
                                         Total Net Pay
@@ -420,7 +420,7 @@ const Reports = () => {
                                 {/* Total Employee EPF */}
                                 <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-xl font-regular text-[#1f6feb]">
-                                        Rs. {formatMoney(visibleOverallTotals.totalEmployeeEPF)}
+                                        {formatRs(visibleOverallTotals.totalEmployeeEPF)}
                                     </div>
                                     <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
                                         Total Employee EPF
@@ -430,7 +430,7 @@ const Reports = () => {
                                 {/* Total Company EPF/ETF */}
                                 <div className="text-center flex-1 max-sm:shrink-0 max-sm:min-w-[150px] px-3 md:px-4 first:pl-0">
                                     <div className="text-xl font-regular text-[#1f6feb]">
-                                        Rs. {formatMoney(visibleOverallTotals.totalCompanyEPFETF)}
+                                        {formatRs(visibleOverallTotals.totalCompanyEPFETF)}
                                     </div>
                                     <div className="text-xs text-gray-400 mt-1 uppercase tracking-wide font-medium">
                                         Total Company EPF/ETF

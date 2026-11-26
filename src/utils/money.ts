@@ -67,6 +67,14 @@ export function formatMoney(value: MoneyInput, options: FormatMoneyOptions = {})
   return isNegative ? `-${body}` : body;
 }
 
+/** The one currency prefix used on every screen and export ("Rs. 1,234.50"). */
+export const CURRENCY_PREFIX = 'Rs.';
+
+/** Money with the currency prefix: "Rs. 1,234.50" (always 2 decimals). */
+export function formatRs(value: MoneyInput): string {
+    return `${CURRENCY_PREFIX} ${formatMoney(value)}`;
+}
+
 /** Fixed-point string for request bodies / inputs (no exponent, no separators). */
 export function toMoneyString(value: MoneyInput, decimalPlaces = 2): string {
   return toDecimal(value).toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP).toFixed(decimalPlaces);

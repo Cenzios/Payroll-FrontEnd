@@ -14,7 +14,7 @@ import { Toggle, SRI_LANKAN_BANKS } from "./drawerConstants";
 import { validateEmployeeField } from "./drawerValidation";
 import Toast from "../Toast";
 import axiosInstance from "../../api/axios";
-import { formatMoney, isPositive, MoneyInput, sumBy, toDecimal, toDecimalString } from "../../utils/money";
+import { formatRs, isPositive, MoneyInput, sumBy, toDecimal, toDecimalString } from "../../utils/money";
 
 interface EmployeeDrawerProps {
     isOpen: boolean;
@@ -195,8 +195,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         const currentSalaryType = type || employeeData.salaryType;
         const maxAllowed = currentSalaryType === "DAILY" ? basicAmount.times(30) : basicAmount;
         if (total.greaterThan(maxAllowed)) {
-            const fmt = { minFractionDigits: 0, maxFractionDigits: 3 };
-            return `Total deductions (Rs. ${formatMoney(total, fmt)}) cannot exceed basic salary (Rs. ${formatMoney(maxAllowed, fmt)})`;
+            return `Total deductions (${formatRs(total)}) cannot exceed basic salary (${formatRs(maxAllowed)})`;
         }
         return "";
     };
@@ -805,7 +804,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                                     onBlur={() => handleBlur("otRate")}
                                                     onWheel={(e) => e.currentTarget.blur()}
                                                     onKeyDown={blockInvalidNumericKeys}
-                                                    placeholder="Enter OT Rate (Rs)"
+                                                    placeholder="Enter OT Rate (Rs.)"
                                                     className={`text-[13px] w-full px-4 py-1.5 border rounded-xl focus:ring-2 outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${touched.otRate && errors.otRate ? "border-red-500 focus:ring-red-100" : "border-gray-200 focus:ring-[#367AFF] focus:border-transparent"}`} />
                                                 {touched.otRate && errors.otRate && <p className="text-red-500 text-xs mt-1">{errors.otRate}</p>}
                                             </div>

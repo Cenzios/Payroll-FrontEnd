@@ -10,7 +10,7 @@ import AlertBar from '../components/AlertBar';
 import { useTrialStatus } from '../hooks/useTrialStatus';
 import logo from '../assets/images/logo-login.svg';
 import RoundedSelect from '../components/RoundedSelect';
-import { formatMoney, isPositive, sumBy } from '../utils/money';
+import { formatMoney, formatRs, isPositive, sumBy } from '../utils/money';
 
 /** One bank-advice line; `amount` (net salary) is a decimal string. */
 interface BankAdviceRow {
@@ -148,7 +148,7 @@ const BankAdviceReport = () => {
                         <p className="text-xs text-gray-400">{item.employeeCode}</p>
                     </div>
                     <span className="text-sm font-bold text-gray-800 whitespace-nowrap mr-1">
-                        Rs. {formatMoney(item.amount)}
+                        {formatRs(item.amount)}
                     </span>
                     <ChevronDown className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
                 </button>
@@ -342,7 +342,7 @@ const BankAdviceReport = () => {
                                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end items-center gap-4">
                                     <span className="text-sm font-bold text-blue-600">Total Contribution</span>
                                     <span className="text-xl font-bold text-blue-600">
-                                        Rs. {formatMoney(totalAmount)}
+                                        {formatRs(totalAmount)}
                                     </span>
                                 </div>
                             )}
@@ -372,7 +372,7 @@ const BankAdviceReport = () => {
                                         <div className="bg-blue-50 rounded-2xl px-5 py-5 flex flex-col items-center gap-1 mt-1 border border-blue-200">
                                             <span className="text-sm font-medium text-blue-400">Total Contribution</span>
                                             <span className="text-2xl font-bold text-blue-600">
-                                                Rs {formatMoney(totalAmount)}
+                                                {formatRs(totalAmount)}
                                             </span>
                                         </div>
                                     )}

@@ -7,7 +7,7 @@ import FileUploadModal from './FileUploadModal';
 import DocumentViewerModal from './DocumentViewerModal';
 import logo from '../assets/images/logo-login.svg';
 import Decimal from 'decimal.js';
-import { formatMoney, sumBy, toDecimal, toDecimalString } from '../utils/money';
+import { formatRs, sumBy, toDecimal, toDecimalString } from '../utils/money';
 
 
 interface LoanHistoryViewProps {
@@ -258,7 +258,7 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                     </div>
                     <div>
                         <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
-                            Rs: {formatMoney(loan.amount)}
+                            {formatRs(loan.amount)}
                         </div>
                         <div className="text-[12px] text-gray-400 font-medium">Requested Amount</div>
                     </div>
@@ -273,7 +273,7 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                     </div>
                     <div>
                         <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
-                            Rs: {formatMoney(loan.monthlyPremium)}
+                            {formatRs(loan.monthlyPremium)}
                         </div>
                         <div className="text-[12px] text-gray-400 font-medium">Next due: {installments.find((i) => i.status === 'PENDING')?.dueDate ? new Date(installments.find((i) => i.status === 'PENDING')?.dueDate ?? '').toLocaleDateString() : '-'}</div>
                     </div>
@@ -288,9 +288,9 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                     </div>
                     <div>
                         <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
-                            Rs: {formatMoney(fullAmountWithInterest)}
+                            {formatRs(fullAmountWithInterest)}
                         </div>
-                        <div className="text-[12px] text-gray-400 font-medium">Includes Rs: {formatMoney(totalInterest, { minFractionDigits: 2, maxFractionDigits: 3 })} interest</div>
+                        <div className="text-[12px] text-gray-400 font-medium">Includes {formatRs(totalInterest)} interest</div>
                     </div>
                 </div>
 
@@ -303,7 +303,7 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                     </div>
                     <div>
                         <div className="text-[16px] sm:text-[22px] font-bold text-[#141B3B] mb-1">
-                            Rs: {formatMoney(currentPaidAmount)}
+                            {formatRs(currentPaidAmount)}
                         </div>
                         <div className="flex items-center gap-3 max-sm:mt-1">
                             <div className="text-[12px] text-gray-400 font-medium whitespace-nowrap">
@@ -348,19 +348,19 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                                 <div>
                                     <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Principal</div>
                                     <div className="text-[13px] font-semibold text-gray-700">
-                                        Rs: {formatMoney(row.amount, { minFractionDigits: 2, maxFractionDigits: 3 })}
+                                        {formatRs(row.amount)}
                                     </div>
                                 </div>
                                 <div>
                                     <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Interest</div>
                                     <div className="text-[13px] font-semibold text-gray-700">
-                                        Rs: {formatMoney(row.interest ?? '0', { minFractionDigits: 2, maxFractionDigits: 3 })}
+                                        {formatRs(row.interest ?? '0')}
                                     </div>
                                 </div>
                                 <div>
                                     <div className="text-[10px] font-semibold text-[#989FA7] uppercase tracking-wide mb-0.5">Total Premium</div>
                                     <div className="text-[13px] font-bold text-blue-500">
-                                        Rs: {formatMoney(row.amount, { minFractionDigits: 2, maxFractionDigits: 3 })}
+                                        {formatRs(row.amount)}
                                     </div>
                                 </div>
                             </div>
@@ -391,7 +391,7 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                                         <td className=" min-w-[200px] py-4 px-2 text-[13px] font-semibold text-gray-400">{row.installmentNumber} / {totalInstallmentsCount}</td>
                                         <td className={` min-w-[200px] py-4 px-2 text-[13px] font-bold ${row.status === 'PENDING' ? 'text-[#141B3B]' : 'text-gray-500'}`}>{new Date(row.dueDate).toLocaleDateString()}</td>
                                         <td className=" min-w-[200px] py-4 px-2 text-[13px] font-semibold text-gray-500">{row.status === 'PAID' ? new Date(row.updatedAt ?? '').toLocaleDateString() : '-'}</td>
-                                        <td className=" min-w-[350px] py-4 px-2 text-[13px] font-bold text-gray-500">Rs: {formatMoney(row.amount, { minFractionDigits: 2, maxFractionDigits: 3 })}</td>
+                                        <td className=" min-w-[350px] py-4 px-2 text-[13px] font-bold text-gray-500">{formatRs(row.amount)}</td>
                                         <td className=" min-w-[200px] py-4 px-2">{getHistoryBadge(row.status)}</td>
                                     </tr>
                                 ))}

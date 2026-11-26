@@ -12,7 +12,7 @@ import {
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { salaryApi } from '../api/salaryApi';
 import type { PayrollSummaryMonth } from '../types/report.types';
-import { formatMoney, toChartNumber } from '../utils/money';
+import { formatRs, toChartNumber } from '../utils/money';
 
 interface SalaryChartPoint {
     name: string;
@@ -90,7 +90,7 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-black text-white px-3 py-1.5 rounded-lg text-sm font-semibold shadow-lg">
-                    RS: {formatMoney(payload[0].value, { minFractionDigits: 0, maxFractionDigits: 3 })}
+                    {formatRs(payload[0].value)}
                 </div>
             );
         }

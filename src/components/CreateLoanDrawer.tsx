@@ -10,7 +10,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import loanTitleIcon from '../assets/images/loan-title.svg';
 import loanAmountIcon from '../assets/images/loan-amount.svg';
-import { formatMoney, toDecimal, toDecimalString, toMoneyString } from '../utils/money';
+import { formatRs, toDecimal, toDecimalString, toMoneyString } from '../utils/money';
 import { calculateMonthlyPremium } from '../utils/loanCalc';
 import loanInstallmentIcon from '../assets/images/loan-installment.svg';
 import loanStartIcon from '../assets/images/loan-start.svg';
@@ -144,7 +144,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
 
       if (toDecimal(monthlyPremium).greaterThan(monthlySalary)) {
         setToast({
-          message: `Monthly installment (Rs. ${formatMoney(monthlyPremium)}) exceeds the employee's monthly salary (Rs. ${formatMoney(monthlySalary)}).`,
+          message: `Monthly installment (${formatRs(monthlyPremium)}) exceeds the employee's monthly salary (${formatRs(monthlySalary)}).`,
           type: 'error'
         });
         return;
@@ -694,7 +694,7 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
                   <span className="text-[14px] font-semibold tracking-wide">Monthly Premium</span>
                 </div>
                 <div className="text-[20px] font-bold">
-                  Rs {formatMoney(monthlyPremium)}
+                  {formatRs(monthlyPremium)}
                 </div>
               </div>
 

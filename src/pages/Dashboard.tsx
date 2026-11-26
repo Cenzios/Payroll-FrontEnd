@@ -45,12 +45,10 @@ import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import CompanySwitcher from '../components/CompanySwitcher';
 import PageHeader from '../components/PageHeader';
 import { salaryApi } from '../api/salaryApi';
-import { formatMoney, FormatMoneyOptions } from '../utils/money';
+import { formatRs } from '../utils/money';
 import AlertBar from '../components/AlertBar';
 import logo from '../assets/images/logo-login.svg';
 
-/** Same visual format as the old `Number.toLocaleString()`. */
-const WHOLE_OR_FRACTION: FormatMoneyOptions = { minFractionDigits: 0, maxFractionDigits: 3 };
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -463,21 +461,21 @@ const Dashboard = () => {
                   <StatCard
                     icon={DollarSign}
                     title="Total Salary Paid"
-                    value={`Rs ${formatMoney(lastMonthData.totalNetPay, WHOLE_OR_FRACTION)}`}
+                    value={formatRs(lastMonthData.totalNetPay)}
                     colorTheme="green"
                     showLastMonth={true}
                   />
                   <StatCard
                     icon={CalendarClock}
                     title="Company EPF/ETF Amount"
-                    value={`Rs ${formatMoney(lastMonthData.totalCompanyEPFETF, WHOLE_OR_FRACTION)}`}
+                    value={formatRs(lastMonthData.totalCompanyEPFETF)}
                     colorTheme="purple"
                     showLastMonth={true}
                   />
                   <StatCard
                     icon={PieChart}
                     title="Total Employee EPF"
-                    value={`Rs ${formatMoney(lastMonthData.totalEmployeeEPF, WHOLE_OR_FRACTION)}`}
+                    value={formatRs(lastMonthData.totalEmployeeEPF)}
                     colorTheme="orange"
                     showLastMonth={true}
                   />

@@ -6,7 +6,7 @@ import PaymentPlanSkeleton from '../../components/skeletons/PaymentPlanSkeleton'
 import ConfirmationModal from '../../components/ConfirmationModal';
 import Toast from '../../components/Toast';
 import logo from '../../assets/images/logo-login.svg';
-import { toDecimalString } from '../../utils/money';
+import { CURRENCY_PREFIX, formatMoney, formatRs } from '../../utils/money';
 
 const SubscriptionSection = () => {
     const navigate = useNavigate();
@@ -121,13 +121,13 @@ const SubscriptionSection = () => {
                                                 </span>
                                             </h4>
                                             <div className="flex items-center gap-2 text-blue-600 font-medium mt-1 max-sm:hidden">
-                                                <span className="text-sm font-semibold">Rs</span>
-                                                <span className="text-xl">{toDecimalString(subscription.pricePerEmployee)}</span>
+                                                <span className="text-sm font-semibold">{CURRENCY_PREFIX}</span>
+                                                <span className="text-xl">{formatMoney(subscription.pricePerEmployee)}</span>
                                                 <span className="text-sm text-gray-400 font-normal">/per employee</span>
                                             </div>
                                             {/* Mobile price*/}
                                             <div className="hidden max-sm:flex flex-col items-end">
-                                                <span className="text-sm font-bold text-gray-900">RS: {toDecimalString(subscription.pricePerEmployee)}</span>
+                                                <span className="text-sm font-bold text-gray-900">{formatRs(subscription.pricePerEmployee)}</span>
                                                 <span className="text-[11px] text-gray-400">/per employee</span>
                                             </div>
                                         </div>

@@ -45,7 +45,12 @@ export interface PayrollSummaryMonthTotals {
     totalNetPay: string;
     totalEmployeeEPF: string;
     totalCompanyEPFETF: string;
+    /** Legacy key: SUM OF RATES (basicSalary), not earned basic pay. */
     totalBasicPay?: string;
+    totalBasicSalary?: string;
+    /** Sum of earned (prorated) basic pay. */
+    totalBasicPayEarned?: string;
+    totalGrossSalary?: string;
     totalOtAmount?: string;
     totalTax?: string;
     totalSalaryAdvance?: string;
@@ -64,7 +69,12 @@ export interface PayrollSummaryMonth {
 export interface PayrollSummaryOverallTotals {
     totalMonths: number;
     totalEmployees: number;
+    /** Legacy key: SUM OF RATES (basicSalary), not earned basic pay. */
     totalBasicPay?: string;
+    totalBasicSalary?: string;
+    /** Sum of earned (prorated) basic pay. */
+    totalBasicPayEarned?: string;
+    totalGrossSalary?: string;
     totalOtAmount?: string;
     totalGrossPay: string;
     totalTax?: string;

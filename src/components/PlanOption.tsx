@@ -3,7 +3,7 @@ import PlanPaymentCard from "./PlanPaymentCard";
 import PlanPaymentManual from "./PlanPaymentManual";
 import { useState } from "react";
 import PlanPaymentPayhere from "./PlanPaymentPayhere";
-import { toDecimal, toMoneyString } from "../utils/money";
+import { formatRs, toDecimal } from "../utils/money";
 
 interface PaymentMethodSelectorProps {
   value: "card" | "manual" | "payhere" | null;
@@ -176,10 +176,10 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                 {/* <span className="font-semibold">Rs: 100.00</span> */}
                 <div className="text-right">
                   <p className="font-semibold">
-                    Rs. {toMoneyString(pricePerEmployee)} X {employeeCount}
+                    {formatRs(pricePerEmployee)} X {employeeCount}
                   </p>
                   <span className="font-semibold">
-                    Rs. {toMoneyString(subtotal)}
+                    {formatRs(subtotal)}
                   </span>
                 </div>
               </div>
@@ -193,7 +193,7 @@ const PlanOption: React.FC<PaymentMethodSelectorProps> = ({
                 <h3 className="font-bold">Total</h3>
                 {/* <h3 className="font-bold text-blue-500">Rs: 100.00</h3> */}
                 <h3 className="font-bold text-blue-500">
-                  Rs. {toMoneyString(subtotal)}
+                  {formatRs(subtotal)}
                 </h3>
               </div>
 

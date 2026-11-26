@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import type { SalaryEntry } from "../store/slices/salarySlice";
-import { formatMoney, isPositive, sumBy, toDecimal } from "../utils/money";
+import { formatRs, isPositive, sumBy, toDecimal } from "../utils/money";
 
 /** Accepts a non-negative decimal with at most 7 integer digits ("" allowed). */
 const AMOUNT_PATTERN = /^\d{0,7}(\.\d*)?$/;
@@ -181,7 +181,7 @@ const ManageSalaryModal = ({
                             className={`text-sm font-semibold ${isAllowance ? "text-[#4785ff]" : "text-red-600"
                                 }`}
                         >
-                            LKR {formatMoney(total)}
+                            {formatRs(total)}
                         </span>
                     </div>
 
@@ -190,7 +190,7 @@ const ManageSalaryModal = ({
                         <div className="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
                             <span className="text-red-500 text-base leading-none mt-0.5">⚠</span>
                             <p className="text-[12px] text-red-600 font-medium leading-snug">
-                                Total deductions (Rs. {formatMoney(total)}) cannot exceed total earnings (Rs. {formatMoney(earningsLimit)})
+                                Total deductions ({formatRs(total)}) cannot exceed total earnings ({formatRs(earningsLimit)})
                             </p>
                         </div>
                     )}
