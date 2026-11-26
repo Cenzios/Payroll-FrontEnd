@@ -18,11 +18,16 @@ const CompanySelectionGuard = ({ children }: CompanySelectionGuardProps): JSX.El
     const dispatch = useAppDispatch();
     const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
     const selectedCompanyId = useAppSelector((state) => state.auth.selectedCompanyId);
-    const { data: companies, isSuccess, isLoading } = useGetCompaniesQuery(undefined, { skip: !isAuthenticated });
+    const { data: companies, isSuccess, isLoading, isError } = useGetCompaniesQuery(undefined, { skip: !isAuthenticated });
 
     const isKnown = !!selectedCompanyId && !!companies?.some((c) => c.id === selectedCompanyId);
 
     useEffect(() => {
+        // No company list for this user (e.g. 403: no plan yet): a stored id can't be theirs
+        if (isAuthenticated && isError && selectedCompanyId) {
+            dispatch(clearSelectedCompanyId());
+            return;
+        }
         if (!isAuthenticated || !isSuccess || !companies || isKnown) return;
         const first = companies[0];
         if (first) {
@@ -30,10 +35,11 @@ const CompanySelectionGuard = ({ children }: CompanySelectionGuardProps): JSX.El
         } else if (selectedCompanyId) {
             dispatch(clearSelectedCompanyId());
         }
-    }, [isAuthenticated, isSuccess, companies, selectedCompanyId, isKnown, dispatch]);
+    }, [isAuthenticated, isSuccess, isError, companies, selectedCompanyId, isKnown, dispatch]);
 
-    // Hold pages only while a stored id is unverified (loading, or about to be replaced)
-    const isChecking = isAuthenticated && !!selectedCompanyId && (isLoading || (isSuccess && !isKnown));
+    // Hold pages only while a stored id is unverified (loading, about to be replaced, or the
+    // list failed and the id is about to be cleared), so no page requests another user's company
+    const isChecking = isAuthenticated && !!selectedCompanyId && (isLoading || isError || (isSuccess && !isKnown));
     if (isChecking) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">

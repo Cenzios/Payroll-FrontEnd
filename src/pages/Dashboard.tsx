@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
@@ -119,10 +119,13 @@ const Dashboard = () => {
   const selectedCompany = companies.find(c => c.id === selectedCompanyId) || null;
 
   // ✅ 1. Automatic Company Creation for Trial Users
+  // Guards against creating the company twice (effect re-runs / StrictMode double mount)
+  const pendingCompanyCreation = useRef(false);
   useEffect(() => {
     const createPendingCompany = async () => {
       const tempName = localStorage.getItem('temp_companyName');
-      if (tempName && isAuthenticated && user) {
+      if (tempName && isAuthenticated && user && !pendingCompanyCreation.current) {
+        pendingCompanyCreation.current = true;
         try {
           console.log('🏢 Transitioning Trial User: Creating company detected in localStorage...');
           const companyData = {
@@ -146,20 +149,14 @@ const Dashboard = () => {
           localStorage.removeItem('temp_companyPhone');
         } catch (err) {
           console.error('❌ Failed to create trial company:', err);
+          pendingCompanyCreation.current = false;
         }
       }
     };
     if (isAuthenticated && user) createPendingCompany();
   }, [isAuthenticated, user, createCompanyMutation, refetchCompanies]);
 
-  // Effect to set default selected company
-  useEffect(() => {
-    if (companies.length > 0 && !selectedCompanyId) {
-      dispatch(setSelectedCompanyId(companies[0].id));
-    } else if (companies.length > 0 && selectedCompanyId && !companies.find(c => c.id === selectedCompanyId)) {
-      dispatch(setSelectedCompanyId(companies[0].id));
-    }
-  }, [companies, selectedCompanyId, dispatch]);
+  // The default / verified selected company is maintained by <CompanySelectionGuard>.
 
   const [confirmation, setConfirmation] = useState<{
     isOpen: boolean;
@@ -181,7 +178,9 @@ const Dashboard = () => {
       isOpen: true,
       type: 'warning',
       title: `${type === 'company' ? 'Companies' : 'Employees'} Limit Reached`,
-      message: `You’ve reached the maximum number of ${type === 'company' ? 'Companies' : 'Employees'} allowed on your current plan. To add more ${type === 'company' ? 'Companies' : 'Employees'}, please ${type === 'company' ? 'upgrade your plan' : 'purchase more slots'}.`,
+      message: type === 'company'
+        ? 'You’ve reached the maximum number of Companies allowed on your current plan. To add more Companies, please upgrade your plan.'
+        : 'This company has reached the maximum number of employees your plan allows per company. To add more employees to this company, please upgrade your plan.',
       confirmText: 'Update Plan',
       onConfirm: () => {
         if (type === 'company') {

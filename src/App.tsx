@@ -146,7 +146,7 @@ function App(): JSX.Element {
         <Route
           path="/settings"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requireOnboarding={false}>
               <Settings />
             </ProtectedRoute>
           }
