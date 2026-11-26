@@ -51,7 +51,6 @@ const EMPTY_TOTALS: EpfEtfTotals = {
 /** Report rows may use either API naming; all money is read as decimal strings. */
 type ReportEmployeeRow = PayrollSummaryEmployee & {
     fullName?: string;
-    epfNumber?: string;
     employeeEpf?: string;
     employerEpf?: string;
     etf?: string;
@@ -86,8 +85,9 @@ function aggregateEpfEtf(months: readonly PayrollSummaryMonth[], employees: read
                 base: {
                     employeeId: emp.employeeId,
                     employeeCode: emp.employeeCode || employeeInfo?.employeeId || '-',
-                    fullName: emp.fullName || employeeInfo?.fullName || '-',
-                    epfNo: employeeInfo?.epfNumber || emp.epfNumber || '-',
+                    // Name/EPF no. from the report row first: removed employees are not in the employee list
+                    fullName: emp.employeeName || emp.fullName || employeeInfo?.fullName || emp.employeeCode,
+                    epfNo: emp.epfNumber || employeeInfo?.epfNumber || '-',
                 },
                 basicPay: ZERO, epfEtfAmount: ZERO, grossPay: ZERO, empEpf: ZERO, employerEpf: ZERO, etf: ZERO, netPay: ZERO,
             };

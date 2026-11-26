@@ -16,6 +16,10 @@ export interface PayrollSummaryEmployee {
     employeeId: string;
     employeeCode: string;
     employeeName: string;
+    /** EPF member number from the employee row (newer backends; null when not set). */
+    epfNumber?: string | null;
+    /** Current state of the employee; paid rows are reported whatever it is. */
+    employeeStatus?: 'ACTIVE' | 'INACTIVE' | 'REMOVED';
     workingDays: number;
     basicSalary: string;
     basicPay: string;
