@@ -130,7 +130,7 @@ const GetPlan = () => {
         Back
       </button>
 
-      <LogoutButton className="fixed top-8 right-8 max-sm:top-4 max-sm:right-4" />
+      <LogoutButton className="fixed top-8 right-8 max-lg:static max-lg:self-end max-lg:mb-4" />
 
       {/* Title */}
       <div className="text-center mb-10 relative z-10

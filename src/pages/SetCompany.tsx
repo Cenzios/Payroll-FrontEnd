@@ -177,8 +177,8 @@ const SetCompany = () => {
       illustration={companyIllustration}
       title="About Your Company"
       subtitle="Tell us about your company"
+      headerAction={<LogoutButton className="max-lg:py-1.5 max-lg:px-3" />}
     >
-      <LogoutButton className="fixed top-6 right-6 max-sm:top-4 max-sm:right-4" />
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
           {error}

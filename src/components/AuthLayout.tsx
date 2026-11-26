@@ -10,9 +10,11 @@ interface AuthLayoutProps {
   title?: string;
   subtitle?: string;
   illustration?: string;
+  /** Top-right control (e.g. Log Out): in the mobile header bar, top-right of the form panel on desktop. */
+  headerAction?: ReactNode;
 }
 
-const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
+const AuthLayout = ({ children, title, subtitle, headerAction }: AuthLayoutProps) => {
   return (
     <div className="min-h-screen flex font-sans">
       {/* Left Side - Grey Background with Illustrations */}
@@ -82,6 +84,7 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
 
       {/* Right Side - White Background with Form */}
       <div className="flex-1 flex flex-col justify-center px-4 py-12 bg-white relative overflow-hidden">
+        {headerAction && <div className="hidden lg:block absolute top-6 right-6 z-20">{headerAction}</div>}
 
         {/* Background Waves - Top Right */}
         <div className="absolute -top-60 -right-28 w-96 h-96 z-0 opacity-100 pointer-events-none">
@@ -95,6 +98,7 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
             {/* Mobile Logo (visible only on small screens) */}
             <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 shadow-sm h-14 flex items-center px-5">
               <img src={logo} alt="Payroll Logo" className="h-8" />
+              {headerAction && <div className="ml-auto">{headerAction}</div>}
             </div>
 
             {title && (
