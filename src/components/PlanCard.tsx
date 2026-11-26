@@ -1,6 +1,6 @@
-import { ArrowBigLeft, ArrowLeft, Check, Loader2, MoveRight } from 'lucide-react';
+import { Check, Loader2, MoveRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { CURRENCY_PREFIX, formatMoney } from '../utils/money';
+import { CURRENCY_PREFIX, formatMoney, formatRs, isPositive } from '../utils/money';
 
 interface PlanCardProps {
     planId?: string; // ✅ ADDED
@@ -17,13 +17,23 @@ interface PlanCardProps {
 
     isMobileExpanded?: boolean;
     onMobileToggle?: () => void;
+    /** Per-company employee limit from the plan data (plan.maxEmployees). Hidden when unknown. */
+    maxEmployees?: number | null;
+    /** Free-trial plan's per-company employee limit, shown under the trial button. */
+    trialMaxEmployees?: number | null;
+    /** One-time registration fee (decimal string), shown under the price when positive. */
+    registrationFee?: string;
+    showPerEmployeePrice?: boolean;
 }
+
+/** "up to N employees per company" (the limit is enforced per company). */
+const employeeLimitText = (max: number): string =>
+    `Up to ${max} employee${max === 1 ? '' : 's'} per company`;
 
 const PlanCard: React.FC<PlanCardProps> = ({
     planId, // ✅ ADDED
     planName,
     price,
-    description,
     features,
     isHighlighted = false,
     showButton = true,
@@ -32,8 +42,15 @@ const PlanCard: React.FC<PlanCardProps> = ({
     showFreeTrial = true,
     className = '',
     isMobileExpanded = false,
-    onMobileToggle
+    onMobileToggle,
+    maxEmployees = null,
+    trialMaxEmployees = null,
+    registrationFee,
 }) => {
+    const hasLimit = typeof maxEmployees === 'number' && maxEmployees > 0;
+    const allFeatures = hasLimit
+        ? [`Payroll processing for ${employeeLimitText(maxEmployees).toLowerCase()}`, ...features]
+        : features;
 
     const navigate = useNavigate();
 
@@ -79,12 +96,14 @@ const PlanCard: React.FC<PlanCardProps> = ({
                         {planName} Plan
                     </p>
 
-                    <p className="
-                        text-xs font-light flex items-start text-white mt-[18px]
-                        max-sm:mt-3\4 max-sm:text-sm max-sm:opacity-80
-                    ">
-                        No employee limit - scales as your team grows
-                    </p>
+                    {hasLimit && (
+                        <p className="
+                            text-xs font-light flex items-start text-white mt-[18px]
+                            max-sm:mt-3\4 max-sm:text-sm max-sm:opacity-80
+                        ">
+                            {employeeLimitText(maxEmployees)}
+                        </p>
+                    )}
 
                     <p className="
                         text-[10px] font-medium flex items-start text-white mt-3
@@ -104,6 +123,11 @@ const PlanCard: React.FC<PlanCardProps> = ({
                             / employee / month
                         </span>
                     </div>
+                    {registrationFee !== undefined && isPositive(registrationFee) && (
+                        <p className="text-[11px] text-white opacity-80 mt-1">
+                            + {formatRs(registrationFee)} one-time registration fee
+                        </p>
+                    )}
                 </div>
 
                 {/* drop down icon */}
@@ -134,7 +158,7 @@ const PlanCard: React.FC<PlanCardProps> = ({
 
                 {/* Features List */}
                 <div className="flex flex-col gap-4 max-sm:gap-3 mb-6 max-sm:mb-5">
-                    {features.map((feature, index) => (
+                    {allFeatures.map((feature, index) => (
                         <div key={index} className="flex items-center gap-4 group">
                             <div className="
                                 w-4 h-4 rounded-full bg-[#255DAD]
@@ -197,6 +221,12 @@ const PlanCard: React.FC<PlanCardProps> = ({
                         </button>
                     )}
                 </div>
+
+                {showButton && showFreeTrial && typeof trialMaxEmployees === 'number' && trialMaxEmployees > 0 && (
+                    <p className="text-[11px] text-gray-500 mb-4 -mt-2">
+                        Free trial: {employeeLimitText(trialMaxEmployees).toLowerCase()}
+                    </p>
+                )}
 
             </div>
         </div>

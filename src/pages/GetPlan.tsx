@@ -6,9 +6,8 @@ import { setTempPlanId } from '../store/slices/authSlice';
 import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
 import ContactModal from '../components/ContactModal';
-import { PLANS, Plan } from '../constants/plans';
+import { PLANS, PLAN_IDS, Plan } from '../constants/plans';
 import { isPositive } from '../utils/money';
-import bgIllustration from '../assets/images/Background-illustration.svg';
 
 const GetPlan = () => {
   const navigate = useNavigate();
@@ -106,10 +105,12 @@ const GetPlan = () => {
       ...localPlan,
       employeePrice: [apiPlan?.employeePrice, localPlan.employeePrice, localPlan.price].find((p) => isPositive(p)) ?? '0',
       registrationFee: [apiPlan?.registrationFee, localPlan.registrationFee].find((p) => isPositive(p)) ?? '0',
+      maxEmployees: apiPlan?.maxEmployees,
     };
   };
 
   const basicPlan = mergePlanDetails(PLANS.BASIC);
+  const trialMaxEmployees = apiPlans.find((p) => p.id === PLAN_IDS.FREE_TRIAL)?.maxEmployees;
 
   return (
     <div className="min-h-screen relative overflow-hidden 
@@ -154,6 +155,8 @@ const GetPlan = () => {
             price={basicPlan.employeePrice}
             description={basicPlan.description}
             features={basicPlan.features}
+            maxEmployees={basicPlan.maxEmployees}
+            trialMaxEmployees={trialMaxEmployees}
             isHighlighted={true}
             showButton={true}
             showFreeTrial={searchParams.get('isUpgrade') !== 'true'}
@@ -227,7 +230,7 @@ const GetPlan = () => {
               </p>
 
               {[
-                "Unlimited employees",
+                "Employee limit sized to your business",
                 "Custom integration",
                 "Dedicated support",
                 "SLA guarantee",

@@ -153,7 +153,7 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
                         <div className="flex items-center justify-between p-3 bg-gray-900 text-white rounded-xl">
                             <div>
                                 <p className="text-xs font-semibold text-gray-200">Need even more capacity?</p>
-                                <p className="text-[10px] text-gray-400">Upgrade to Enterprise plan for unlimited employees</p>
+                                <p className="text-[10px] text-gray-400">Upgrade your plan for a higher employee limit per company</p>
                             </div>
                             <button
                                 onClick={onUpgradePlan}

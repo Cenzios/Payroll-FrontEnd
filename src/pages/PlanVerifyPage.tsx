@@ -68,6 +68,7 @@ const PlanVerifyPage = () => {
                             price={planPrice}
                             description={selectedPlan.description}
                             features={planFeatures}
+                            maxEmployees={activeSubscription?.maxEmployees}
                             isHighlighted={true}
                             showButton={false}
                         />

@@ -14,7 +14,10 @@ export interface Plan {
     employeePrice: string;
     registrationFee: string;
     description: string;
+    /** Static marketing features. The employee limit is NOT listed here: it comes from plan.maxEmployees. */
     features: string[];
+    /** Per-company employee limit from the plans API (undefined until loaded). */
+    maxEmployees?: number;
 }
 
 export const PLANS: Record<string, Plan> = {
@@ -26,7 +29,6 @@ export const PLANS: Record<string, Plan> = {
         registrationFee: "2500",
         description: "",
         features: [
-            'Payroll processing for unlimited employees',
             'Automatic salary & deduction calculations',
             'Monthly payslip generation (PDF / CSV / Excel)',
             'Employee profile management',
@@ -43,7 +45,6 @@ export const PLANS: Record<string, Plan> = {
         registrationFee: "5000",
         description: "Get essential payroll features with basic plan. Pay only a one-time Rs. 5,000 registration fee in the first month. From the second month, your subscription is based on the number of employees—simple, flexible, and affordable.",
         features: [
-            'Payroll processing for 30-99 employees',
             'Automatic salary & deduction calculations',
             'Monthly payslip generation (PDF / CSV / Excel)',
             'Employee profile management',
@@ -60,7 +61,6 @@ export const PLANS: Record<string, Plan> = {
         registrationFee: "7500",
         description: "Get essential payroll features with basic plan. Pay only a one-time Rs. 7,500 registration fee in the first month. From the second month, your subscription is based on the number of employees—simple, flexible, and affordable.",
         features: [
-            'Payroll processing for 100 or more employees',
             'Automatic salary & deduction calculations',
             'Monthly payslip generation (PDF / CSV / Excel)',
             'Employee profile management',
