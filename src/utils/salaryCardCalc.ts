@@ -100,8 +100,11 @@ export function computeSalaryCardFigures(input: SalaryCardInput): SalaryCardFigu
     const unpaidLeave = nonPaidLeave(input);
     const epfAmount = saved ? toDecimal(saved.employeeEPF) : calculateEmployeeEpf(emp, input.isEpfEnabled);
 
-    // Monthly: always the full basic salary in gross earnings; daily: rate × days.
-    const baseForEarnings = emp.salaryType === 'DAILY'
+    // Unsaved: same breakdown the backend stores - the basic pay is pro-rated for the
+    // payable days (unpaid leave is already out of it), so there is no separate unpaid-leave
+    // deduction and gross matches the saved payslip.
+    // Legacy saved rows (no stored gross): previous display (full basic + unpaid-leave line).
+    const baseForEarnings = !saved || emp.salaryType === 'DAILY'
         ? displayBasicPay(input, workedDays)
         : toDecimal(emp.basicSalary);
     const totalEarnings = baseForEarnings.plus(otAmount).plus(totalAllowances);
@@ -113,7 +116,7 @@ export function computeSalaryCardFigures(input: SalaryCardInput): SalaryCardFigu
         const loan = saved
             ? toDecimal(saved.loanDeduction)
             : input.hasLoanInstallment && input.isLoanEnabled ? toDecimal(input.loanDeduction) : ZERO;
-        totalDeductions = advance.plus(epfAmount).plus(loan).plus(customDeductions).plus(unpaidLeave);
+        totalDeductions = advance.plus(epfAmount).plus(loan).plus(customDeductions).plus(saved ? unpaidLeave : ZERO);
     }
 
     const netSalary = saved ? toDecimal(saved.netSalary) : totalEarnings.minus(totalDeductions);

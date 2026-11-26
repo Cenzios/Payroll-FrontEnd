@@ -32,7 +32,8 @@ export function payslipTotals(p: SalaryDetails): PayslipTotals {
             net: toDecimal(p.netSalary),
         };
     }
-    const gross = toDecimal(p.salaryType === 'DAILY' ? p.basicPay : p.basicSalary)
+    // Earned (pro-rated) basic pay for every salary type, as the backend stores it
+    const gross = toDecimal(p.basicPay)
         .plus(toDecimal(p.otAmount))
         .plus(sumBy(p.allowances, (a) => a.amount));
     const deductions = toDecimal(p.nonPaidLeaveDeduction)
@@ -47,9 +48,8 @@ export interface PayslipLineView {
 }
 
 /**
- * The basic earnings line. Daily staff: rate × days. Saved monthly salaries
- * show the prorated basic pay that went into the stored gross; unsaved
- * previews show the monthly salary (unpaid leave appears as a deduction).
+ * The basic earnings line. Daily staff: rate × days. Monthly staff (preview and
+ * saved alike): the pro-rated basic pay that goes into gross.
  */
 export function payslipBasicLine(p: SalaryDetails): PayslipLineView {
     if (p.salaryType === 'DAILY') {
@@ -58,8 +58,8 @@ export function payslipBasicLine(p: SalaryDetails): PayslipLineView {
             amount: p.basicPay,
         };
     }
-    if (isStoredPayslip(p) && !toDecimal(p.basicPay).equals(toDecimal(p.basicSalary))) {
+    if (!toDecimal(p.basicPay).equals(toDecimal(p.basicSalary))) {
         return { label: `Basic Pay (monthly salary ${formatMoney(p.basicSalary)})`, amount: p.basicPay };
     }
-    return { label: 'Monthly Basic Salary', amount: isStoredPayslip(p) ? p.basicPay : p.basicSalary };
+    return { label: 'Monthly Basic Salary', amount: p.basicPay };
 }

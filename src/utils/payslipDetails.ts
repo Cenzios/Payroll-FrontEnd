@@ -48,7 +48,9 @@ export function buildPreviewDetails(ctx: PreviewContext): SalaryDetails {
         otHours: String(ctx.otHours),
         otAmount: fx(amounts.otAmount),
         salaryAdvance: toDecimal(ctx.salaryAdvance).toFixed(PREVIEW_DP),
-        nonPaidLeaveDeduction: fx(amounts.nonPaidLeaveDeduction),
+        // basicPay is already pro-rated for unpaid leave (same as the saved salary), so it is
+        // not shown as a separate deduction - preview and saved payslip match line for line
+        nonPaidLeaveDeduction: '0',
         leaveDays: ctx.leaveDays,
         sickLeaveDays: ctx.sickLeaveDays,
         loanDeduction: toDecimal(ctx.loanDeduction).toFixed(PREVIEW_DP),
