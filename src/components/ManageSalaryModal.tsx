@@ -16,6 +16,9 @@ interface ManageSalaryModalProps {
     onSave: () => void;
     onCancel: () => void;
     earningsLimit?: string; // Decimal string. For deduction: total deductions cannot exceed this
+    /** When true, Save also stores the items as the employee's recurring items (default off). */
+    saveAsRecurring: boolean;
+    onSaveAsRecurringChange: (value: boolean) => void;
 }
 
 const ManageSalaryModal = ({
@@ -25,7 +28,9 @@ const ManageSalaryModal = ({
     onSave,
     onCancel,
     earningsLimit,
-}: ManageSalaryModalProps) => {
+    saveAsRecurring,
+    onSaveAsRecurringChange,
+}: ManageSalaryModalProps): JSX.Element | null => {
     if (!manageModal) return null;
 
     const isAllowance = manageModal.type === "allowance";
@@ -194,6 +199,26 @@ const ManageSalaryModal = ({
                             </p>
                         </div>
                     )}
+                </div>
+
+                {/* Scope: this salary only unless explicitly saved as recurring */}
+                <div className="mx-6 mb-4">
+                    <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            checked={saveAsRecurring}
+                            onChange={(e) => onSaveAsRecurringChange(e.target.checked)}
+                            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600"
+                        />
+                        <span className="text-[13px] text-gray-700">
+                            Also save as recurring for this employee
+                            <span className="block text-[11px] text-gray-400">
+                                {saveAsRecurring
+                                    ? `These ${isAllowance ? "allowances" : "deductions"} will also apply to future months.`
+                                    : "Unchecked: applies to this salary only."}
+                            </span>
+                        </span>
+                    </label>
                 </div>
 
                 {/* Footer */}

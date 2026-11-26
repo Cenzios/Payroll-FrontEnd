@@ -136,6 +136,7 @@ const Salary = () => {
     emp?: Employee;
   } | null>(null);
   const [modalEntries, setModalEntries] = useState<SalaryEntry[]>([]);
+  const [saveAsRecurring, setSaveAsRecurring] = useState(false);
 
   const openManageModal = (type: "allowance" | "deduction", emp: Employee) => {
     const empId = emp.id;
@@ -170,6 +171,7 @@ const Salary = () => {
     }
 
     setModalEntries([...existing, { type: "", amount: "" }]);
+    setSaveAsRecurring(false); // one-off for this salary unless the user opts in
     setManageModal({ type, empId, emp });
   };
 
@@ -181,7 +183,7 @@ const Salary = () => {
 
     const { type, empId } = manageModal;
 
-    // Update Redux immediately so the UI reflects the change without waiting on a refetch
+    // Redux holds the items for THIS salary run (used when the payslip is generated)
     if (type === "allowance") {
       dispatch(setEmployeeAllowances({ id: empId, allowances: validEntries }));
     } else {
@@ -191,8 +193,8 @@ const Salary = () => {
     setManageModal(null);
     setModalEntries([]);
 
-    // Persist to the employee record so it survives refresh / navigation
-    if (!selectedCompanyId) return;
+    // Only change the employee's recurring items when explicitly asked to
+    if (!saveAsRecurring || !selectedCompanyId) return;
     try {
       await updateEmployee({
         id: empId,
@@ -202,6 +204,7 @@ const Salary = () => {
             ? { recurringAllowances: validEntries }
             : { recurringDeductions: validEntries },
       }).unwrap();
+      setToast({ message: `Saved as recurring ${type}s for this employee`, type: "success" });
     } catch (error: any) {
       setToast({
         message: error.data?.message || `Failed to save ${type}s`,
@@ -922,6 +925,8 @@ const Salary = () => {
             setModalEntries={setModalEntries}
             onSave={handleModalSave}
             onCancel={handleModalCancel}
+            saveAsRecurring={saveAsRecurring}
+            onSaveAsRecurringChange={setSaveAsRecurring}
             earningsLimit={(() => {
               if (!manageModal || manageModal.type !== "deduction" || !manageModal.emp) return undefined;
               const emp = manageModal.emp;
