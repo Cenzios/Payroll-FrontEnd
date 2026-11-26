@@ -102,17 +102,21 @@ export const validateEmployeeField = (
             else if (!sriLankaPhoneRegex.test(value))
                 error = "Enter a valid Sri Lankan number (e.g. 0771234567 or +94771234567)";
             break;
-        case "address":
+        case "address": {
             const address = value?.trim();
-            if (!address) break;
+            if (!address)
+                error = "Address is required";
             else if (value.trim().length > 50)
                 error = "Address must be less than 50 characters";
             else if (!/[a-zA-Z0-9]/.test(value.trim()))
                 error = "Address must contain letters or numbers";
             break;
+        }
         case "designation": {
             const designationRegex = /^[A-Za-z\s\-&.()\\/]+$/;
-            if (value && !designationRegex.test(value))
+            if (!value || !value.trim())
+                error = "Designation is required";
+            else if (!designationRegex.test(value))
                 error = "Designation can contain letters, spaces, /, \\, dots, hyphens, &, and parentheses";
             else if (value.trim().length > 20)
                 error = "Designation must be less than 20 characters";

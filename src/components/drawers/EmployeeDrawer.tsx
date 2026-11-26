@@ -310,7 +310,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         //     );
         // }
         if (tab === "employee") {
-            const hasFormatErrors = ["fullName", "employeeId", "contactNumber", "joinedDate", "employeeNIC", "epfNumber"].some(
+            const hasFormatErrors = ["fullName", "employeeId", "contactNumber", "joinedDate", "employeeNIC", "epfNumber", "address", "designation"].some(
                 (f) => !!validateEmployeeField(f, (employeeData as any)[f], getValidationContext())
             );
             const hasDuplicateErrors = !!(duplicateErrors.employeeId || duplicateErrors.employeeNIC);
@@ -537,7 +537,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                             <div>
                                                 <div className="relative mt-4">
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><MapPin className="h-4 w-4 text-blue-500" /></div>
-                                                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Address</label>
+                                                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Address <strong className="text-red-600 text-[15px]">*</strong></label>
                                                 </div>
                                                 <input type="text" value={employeeData.address} onChange={(e) => handleEmployeeChange("address", e.target.value)} onBlur={() => handleBlur("address")} placeholder="Enter Address"
                                                     className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.address && errors.address ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
@@ -587,7 +587,7 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                                             <div>
                                                 <div className="relative mt-4">
                                                     <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none"><Award className="h-4 w-4 text-blue-500" /></div>
-                                                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Designation</label>
+                                                    <label className="block text-[13px] font-medium text-gray-700 mb-1 pl-6">Designation <strong className="text-red-600 text-[15px]">*</strong></label>
                                                 </div>
                                                 <input type="text" value={employeeData.designation} onChange={(e) => handleEmployeeChange("designation", e.target.value.replace(/[0-9]/g, ""))} onBlur={() => handleBlur("designation")} placeholder="Enter Employee Designation"
                                                     className={`text-[13px] w-full pl-3 pr-4 py-1.5 border rounded-lg focus:ring-2 outline-none transition-all ${touched.designation && errors.designation ? "border-red-500 focus:ring-red-100" : "border-gray-300 focus:ring-[#367AFF] focus:border-transparent"}`} />
