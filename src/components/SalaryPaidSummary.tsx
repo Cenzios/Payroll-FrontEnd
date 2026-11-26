@@ -15,6 +15,9 @@ import type { PayrollSummaryMonth } from '../types/report.types';
 import { formatRs, toChartNumber } from '../utils/money';
 
 interface SalaryChartPoint {
+    /** Unique per month across years ("2026-11"); month names alone collide in the yearly view. */
+    key: string;
+    /** Display label ("Nov 2026"). */
     name: string;
     /** recharts needs a JS number: converted from the decimal string only here. */
     value: number;
@@ -23,6 +26,14 @@ interface SalaryChartPoint {
 
 interface SalaryPaidSummaryProps {
     companyId: string;
+}
+
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** "2026-11" → "Nov 26" (year kept so the same month of two years stays distinct). */
+function formatMonthTick(key: string): string {
+    const [year, month] = key.split('-');
+    return `${SHORT_MONTHS[Number(month) - 1] ?? month} ${year?.slice(2) ?? ''}`;
 }
 
 const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
@@ -71,7 +82,8 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
 
             const months: PayrollSummaryMonth[] = response.data.monthlyData || [];
             return months.map((m): SalaryChartPoint => ({
-                name: m.month.substring(0, 3),
+                key: `${m.year}-${String(m.monthNumber).padStart(2, '0')}`,
+                name: `${m.month.substring(0, 3)} ${m.year}`,
                 value: toChartNumber(m.totals?.totalNetPay),
                 fullValue: toChartNumber(m.totals?.totalNetPay)
             }));
@@ -90,6 +102,7 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-black text-white px-3 py-1.5 rounded-lg text-sm font-semibold shadow-lg">
+                    <div className="text-[11px] font-normal text-gray-300">{payload[0].payload?.name}</div>
                     {formatRs(payload[0].value)}
                 </div>
             );
@@ -149,7 +162,8 @@ const SalaryPaidSummary = ({ companyId }: SalaryPaidSummaryProps) => {
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                         <XAxis
-                            dataKey="name"
+                            dataKey="key"
+                            tickFormatter={formatMonthTick}
                             axisLine={false}
                             tickLine={false}
                             tick={{ fill: '#9ca3af', fontSize: 12 }}
