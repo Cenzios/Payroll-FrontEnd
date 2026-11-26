@@ -167,7 +167,7 @@ const Employees = () => {
       type: "warning",
       title: "Employee Limit Reached",
       message:
-        "You've reached the maximum number of Employees allowed on your current plan. To add more Employees, please upgrade your plan.",
+        "This company has reached the maximum number of employees your plan allows per company. To add more employees to this company, please upgrade your plan.",
       confirmText: "Update Plan",
       onConfirm: () => {
         setIsAddonModalOpen(true);
