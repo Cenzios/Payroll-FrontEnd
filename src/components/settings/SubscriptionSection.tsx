@@ -7,10 +7,14 @@ import ConfirmationModal from '../../components/ConfirmationModal';
 import Toast from '../../components/Toast';
 import logo from '../../assets/images/logo-login.svg';
 import { CURRENCY_PREFIX, formatMoney, formatRs } from '../../utils/money';
+import type { CurrentSubscription } from '../../types/subscription.types';
+
+const formatDate = (value: string | null): string => (value ? new Date(value).toLocaleDateString() : '-');
 
 const SubscriptionSection = () => {
     const navigate = useNavigate();
-    const { data: subscription, isLoading: loading, refetch } = useGetSubscriptionQuery();
+    const { data, isLoading: loading, refetch } = useGetSubscriptionQuery();
+    const subscription = data as CurrentSubscription | undefined;
     const [cancelSubscription, { isLoading: isCancelling }] = useCancelSubscriptionMutation();
 
     const [showCancelModal, setShowCancelModal] = useState(false);
@@ -32,10 +36,25 @@ const SubscriptionSection = () => {
         }
     };
 
-    const isCancelled = (subscription as any)?.isCancelled === true;
-    const cancelledEndDate = (subscription as any)?.cancelledEndDate
-        ? new Date((subscription as any).cancelledEndDate)
+    const isCancelled = subscription?.isCancelled === true;
+    const cancelledEndDate = subscription?.cancelledEndDate
+        ? new Date(subscription.cancelledEndDate)
         : null;
+    // A free trial does not bill or auto-renew: it just ends on trialEndsAt
+    const isTrial = subscription?.isTrial === true;
+
+    const dateLabel = (): string => {
+        if (isCancelled) return 'Access Until:';
+        if (isTrial) return 'Trial ends:';
+        return 'Next Billing:';
+    };
+
+    const dateValue = (): string => {
+        if (!subscription) return '-';
+        if (isCancelled && cancelledEndDate) return cancelledEndDate.toLocaleDateString();
+        if (isTrial) return formatDate(subscription.trialEndsAt);
+        return formatDate(subscription.nextBillingDate);
+    };
 
     return (
         <section className="mt-8 max-sm:mt-2">
@@ -152,13 +171,10 @@ const SubscriptionSection = () => {
                                         </div>
                                         <div className="flex items-center gap-1 whitespace-nowrap max-sm:whitespace-normal">
                                             <span className="text-xs text-gray-400">
-                                                {isCancelled ? 'Access Until:' : 'Next Billing:'}
+                                                {dateLabel()}
                                             </span>
                                             <span className="text-sm font-semibold text-gray-900">
-                                                {isCancelled && cancelledEndDate
-                                                    ? cancelledEndDate.toLocaleDateString()
-                                                    : new Date(subscription.nextBillingDate).toLocaleDateString()
-                                                }
+                                                {dateValue()}
                                             </span>
                                         </div>
                                     </div>
@@ -180,7 +196,7 @@ const SubscriptionSection = () => {
                         </div>
                     </div>
 
-                    {!isCancelled && (
+                    {!isCancelled && !isTrial && (
                         <div className="mt-4 flex items-center gap-2 text-xs text-gray-400 font-medium">
                             <RefreshCcw className="h-3 w-3" /> Auto-renewal is enabled for this subscription
                         </div>
