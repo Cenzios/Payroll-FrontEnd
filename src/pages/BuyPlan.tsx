@@ -8,6 +8,7 @@ import PlanOption from '../components/PlanOption';
 import { PLANS, getPlanById } from '../constants/plans';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 import { useUpdateSubscriptionEmployeeCountMutation, useGetDashboardSummaryQuery } from '../store/apiSlice';
+import { isPositive, toDecimal, toMoneyString } from '../utils/money';
 
 // Stripe Imports
 import { loadStripe } from '@stripe/stripe-js';
@@ -95,6 +96,14 @@ const BuyPlan = () => {
   const selectedPlanId = localStorage.getItem('reg_planId') || PLANS.BASIC.id;
   const selectedPlan = getPlanById(selectedPlanId) || PLANS.BASIC;
 
+  // Money is a decimal string (API contract). Old `a || b || c` fallbacks relied on 0 being
+  // falsy; "0.0000" is truthy, so pick the first positive value explicitly.
+  const subscriptionPrice: string | undefined = activeSubscription?.pricePerEmployee;
+  const effectivePlanPrice: string =
+    [subscriptionPrice, selectedPlan.employeePrice, selectedPlan.price].find((p) => isPositive(p)) ?? '0';
+  const effectiveRegistrationFee: string =
+    [activeSubscription?.registrationFee as string | undefined, selectedPlan.registrationFee].find((p) => isPositive(p)) ?? '0';
+
   // ✅ Fetch current subscription from backend
   useEffect(() => {
     const fetchSubscription = async () => {
@@ -171,7 +180,8 @@ const BuyPlan = () => {
         if (!isAuthenticated) return;
 
         const planId = isPlanChange ? selectedPlan.id : (localStorage.getItem('reg_planId') || PLANS.BASIC.id);
-        const amount = (activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price) * employeeCount;
+        // Sent as a decimal string (API contract)
+        const amount = toMoneyString(toDecimal(effectivePlanPrice).times(employeeCount));
 
         console.log('📝 Creating Stripe Intent for Plan:', planId);
 
@@ -240,8 +250,8 @@ const BuyPlan = () => {
           <div className='max-sm:hidden'>
             <PlanCard
               planName={activeSubscription?.planName || selectedPlan.name}
-              price={activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price}
-              registrationFee={activeSubscription?.registrationFee || selectedPlan.registrationFee}
+              price={effectivePlanPrice}
+              registrationFee={effectiveRegistrationFee}
               description={selectedPlan.description}
               features={selectedPlan.features}
               showPerEmployeePrice={true}
@@ -257,7 +267,7 @@ const BuyPlan = () => {
               step={step}
               onStepChange={handleStepChange}
               initialStep={isManualPending ? 'pay' : 'select'}
-              pricePerEmployee={activeSubscription?.pricePerEmployee || 100}
+              pricePerEmployee={isPositive(subscriptionPrice) && subscriptionPrice ? subscriptionPrice : '100'}
               employeeCount={employeeCount}
               onEmployeeCountChange={setEmployeeCount}
             />

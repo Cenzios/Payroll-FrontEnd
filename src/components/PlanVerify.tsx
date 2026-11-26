@@ -4,8 +4,9 @@ import ContactModal from "./ContactModal";
 import { useState, useEffect } from "react";
 import axiosInstance from "../api/axios";
 import { useGetUserDocumentsQuery } from "../store/apiSlice";
+import { toMoneyString } from "../utils/money";
 
-const PlanVerify = ({ referenceId, totalAmount, onResubmit }: { referenceId?: string; totalAmount?: number; onResubmit?: () => void }) => {
+const PlanVerify = ({ referenceId, totalAmount, onResubmit }: { referenceId?: string; totalAmount?: string; onResubmit?: () => void }) => {
     const navigate = useNavigate();
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [status, setStatus] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
@@ -129,7 +130,7 @@ const PlanVerify = ({ referenceId, totalAmount, onResubmit }: { referenceId?: st
                     <div className="flex justify-between">
                         <span className="text-gray-500">Amount Submitted</span>
                         <span className="font-semibold text-base text-end">
-                            Rs. {totalAmount !== undefined ? totalAmount.toFixed(2) : "100.00"}
+                            Rs. {totalAmount !== undefined ? toMoneyString(totalAmount) : "100.00"}
                         </span>
                     </div>
 

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 interface PlanCardProps {
     planId?: string; // ✅ ADDED
     planName: string;
-    price: number;
+    price: string; // decimal string (API contract)
     description: string;
     features: string[];
     isHighlighted?: boolean;

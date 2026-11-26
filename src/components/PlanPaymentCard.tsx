@@ -7,16 +7,17 @@ import CheckoutForm from './CheckoutForm';
 import axiosInstance from '../api/axios';
 import { PLANS, getPlanById } from '../constants/plans';
 import { Loader2 } from 'lucide-react';
+import { isPositive, toDecimal, toMoneyString } from '../utils/money';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
 // ADDED: Props interface for PlanPaymentCard
 interface PlanPaymentCardProps {
-    pricePerEmployee?: number;
+    pricePerEmployee?: string; // decimal string (API contract)
     employeeCount?: number;
 }
 
-const PlanPaymentCard = ({ pricePerEmployee = 0, employeeCount = 1 }: PlanPaymentCardProps) => {
+const PlanPaymentCard = ({ pricePerEmployee = '0', employeeCount = 1 }: PlanPaymentCardProps) => {
     const [searchParams] = useSearchParams();
     const isPlanChange = searchParams.get('isPlanChange') === 'true';
     const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -28,14 +29,14 @@ const PlanPaymentCard = ({ pricePerEmployee = 0, employeeCount = 1 }: PlanPaymen
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [isLoadingSecret, setIsLoadingSecret] = useState(false);
     const [intentError, setIntentError] = useState<string | null>(null);
-    const [actualAmount, setActualAmount] = useState<number | null>(null);
+    const [actualAmount, setActualAmount] = useState<string | null>(null);
 
     // Get selected plan dynamically
     const selectedPlanId = localStorage.getItem('reg_planId') || PLANS.BASIC.id;
     const selectedPlan = getPlanById(selectedPlanId) || PLANS.BASIC;
 
-    // Calculate total amount: pricePerEmployee * employeeCount
-    const calculatedTotal = pricePerEmployee * employeeCount;
+    // Calculate total amount: pricePerEmployee * employeeCount (decimal.js, sent as string)
+    const calculatedTotal = toMoneyString(toDecimal(pricePerEmployee).times(employeeCount));
 
     // Fetch current subscription from backend
     useEffect(() => {
@@ -80,7 +81,8 @@ const PlanPaymentCard = ({ pricePerEmployee = 0, employeeCount = 1 }: PlanPaymen
 
                 if (data?.data?.clientSecret) {
                     setClientSecret(data.data.clientSecret);
-                    setActualAmount(data?.data?.intent?.amount || amount);
+                    const intentAmount: string | undefined = data?.data?.intent?.amount;
+                    setActualAmount(isPositive(intentAmount) && intentAmount ? intentAmount : amount);
                     console.log('Client Secret received');
                 } else {
                     throw new Error('No client secret returned');

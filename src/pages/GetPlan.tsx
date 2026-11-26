@@ -7,6 +7,7 @@ import axiosInstance from '../api/axios';
 import PlanCard from '../components/PlanCard';
 import ContactModal from '../components/ContactModal';
 import { PLANS, Plan } from '../constants/plans';
+import { isPositive } from '../utils/money';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 
 const GetPlan = () => {
@@ -98,12 +99,13 @@ const GetPlan = () => {
   }
 
   // Map API plans to their respective slots by name or ID, merging pricing only
-  const mergePlanDetails = (localPlan: any) => {
+  // Money fields are decimal strings; "0.0000" is truthy, so fall back on the first positive value.
+  const mergePlanDetails = (localPlan: Plan): Plan => {
     const apiPlan = apiPlans.find(p => p.id === localPlan.id);
     return {
       ...localPlan,
-      employeePrice: apiPlan?.employeePrice || localPlan.employeePrice || localPlan.price,
-      registrationFee: apiPlan?.registrationFee || localPlan.registrationFee,
+      employeePrice: [apiPlan?.employeePrice, localPlan.employeePrice, localPlan.price].find((p) => isPositive(p)) ?? '0',
+      registrationFee: [apiPlan?.registrationFee, localPlan.registrationFee].find((p) => isPositive(p)) ?? '0',
     };
   };
 
@@ -149,7 +151,7 @@ const GetPlan = () => {
           <PlanCard
             planId={basicPlan.id}
             planName={basicPlan.name}
-            price={basicPlan.employeePrice || basicPlan.price}
+            price={basicPlan.employeePrice}
             description={basicPlan.description}
             features={basicPlan.features}
             isHighlighted={true}

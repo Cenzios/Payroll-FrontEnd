@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Minus, Plus, CreditCard, Loader2 } from 'lucide-react';
 import { subscriptionApi } from '../api/subscriptionApi';
 import { useGetActiveSubscriptionQuery } from '../store/apiSlice';
+import { toDecimal, toMoneyString } from '../utils/money';
 
 interface AddonModalProps {
     isOpen: boolean;
@@ -19,7 +20,8 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState('');
 
-    const pricePerSlot = activeSub?.subscription?.plan?.employeePrice || 0;
+    // employeePrice is a decimal string (API contract); arithmetic via decimal.js
+    const pricePerSlot: string = activeSub?.subscription?.plan?.employeePrice || '0';
 
     const handleIncrement = () => setSlots(prev => prev + 1);
     const handleDecrement = () => setSlots(prev => (prev > 1 ? prev - 1 : 1));
@@ -101,7 +103,7 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
                             <>
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-600">Price per slot</span>
-                                    <span className="font-medium text-green-600">Rs. {pricePerSlot.toFixed(2)}</span>
+                                    <span className="font-medium text-green-600">Rs. {toMoneyString(pricePerSlot)}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-600">Number of additional slots</span>
@@ -109,7 +111,7 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
                                 </div>
                                 <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
                                     <span className="font-bold text-gray-900">Total</span>
-                                    <span className="font-bold text-xl text-blue-600">Rs. {(pricePerSlot * slots).toFixed(2)}</span>
+                                    <span className="font-bold text-xl text-blue-600">Rs. {toMoneyString(toDecimal(pricePerSlot).times(slots))}</span>
                                 </div>
                             </>
                         )}

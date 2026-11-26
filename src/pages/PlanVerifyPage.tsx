@@ -4,6 +4,7 @@ import { PLANS, getPlanById } from '../constants/plans';
 import PlanCard from '../components/PlanCard';
 import PlanVerify from '../components/PlanVerify';
 import { Loader2 } from 'lucide-react';
+import { isPositive } from '../utils/money';
 
 const PlanVerifyPage = () => {
     const [activeSubscription, setActiveSubscription] = useState<any>(null);
@@ -39,7 +40,10 @@ const PlanVerifyPage = () => {
     const selectedPlan = getPlanById(selectedPlanId) || PLANS.BASIC;
 
     const planName = activeSubscription?.planName || selectedPlan.name;
-    const planPrice = activeSubscription?.pricePerEmployee || selectedPlan.employeePrice || selectedPlan.price;
+    // Decimal strings: pick the first positive price ("0.0000" is truthy)
+    const subscriptionPrice: string | undefined = activeSubscription?.pricePerEmployee;
+    const planPrice: string =
+        [subscriptionPrice, selectedPlan.employeePrice, selectedPlan.price].find((p) => isPositive(p)) ?? '0';
     const planFeatures = selectedPlan.features;
 
     return (

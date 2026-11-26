@@ -9,6 +9,7 @@ import bgIllustration from '../assets/images/Background-illustration.svg';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import CheckoutForm from '../components/CheckoutForm';
+import { formatMoney } from '../utils/money';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
@@ -150,7 +151,7 @@ const SettleInvoice = () => {
                                     <div className="space-y-1">
                                         <p className="text-[#64748B] text-[15px] mb-2">Total Outstanding Balance</p>
                                         <p className="text-[28px] font-semibold text-[#EF4444]">
-                                            Rs. {invoice.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            Rs. {formatMoney(invoice.totalAmount)}
                                         </p>
                                         <p className="text-[#64748B] text-[14px] mt-4 font-medium">
                                             Payment for {invoice.employeeCount} employee(s) in {formattedBillingMonth}.
