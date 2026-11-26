@@ -90,10 +90,10 @@ const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
 
 
 
-        <div className="w-full max-w-md mx-auto relative z-10 animate-[fadeInUp_0.6s_ease-out]">
+        <div className="w-full max-w-md mx-auto relative z-10 animate-[fadeInUp_0.6s_ease-out] max-sm:pt-16">
           <div className="mb-8">
             {/* Mobile Logo (visible only on small screens) */}
-            <div className="lg:hidden fixed top-14 left-8 flex items-start justify-start gap-2">
+            <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 shadow-sm h-14 flex items-center px-5">
               <img src={logo} alt="Payroll Logo" className="h-8" />
             </div>
 
