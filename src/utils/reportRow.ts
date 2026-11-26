@@ -1,4 +1,4 @@
-import { sumBy, toDecimal } from './money';
+import { sumCentsBy, toDecimal } from './money';
 
 /**
  * Report rows carry the figures stored on the salary row. The UI must display
@@ -71,9 +71,12 @@ export interface RowTotals {
     totalSalaryAdvance: string;
 }
 
-/** Totals over a set of report rows (sums of the stored per-row values). */
+/**
+ * Totals over a set of report rows: each row value is rounded to cents first, then summed,
+ * so a total always equals the sum of the rows it is shown under.
+ */
 export function sumRows(rows: readonly SummaryRow[]): RowTotals {
-    const fixed = (pick: (row: SummaryRow) => string | undefined): string => sumBy(rows, pick).toFixed(2);
+    const fixed = (pick: (row: SummaryRow) => string | undefined): string => sumCentsBy(rows, pick).toFixed(2);
     return {
         totalEmployees: rows.length,
         totalBasicPayEarned: fixed((r) => r.basicPay),

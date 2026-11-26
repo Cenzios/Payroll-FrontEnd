@@ -38,6 +38,19 @@ export function sumBy<T>(items: readonly T[] | null | undefined, pick: (item: T)
   return (items ?? []).reduce<Decimal>((acc, item) => acc.plus(toDecimal(pick(item))), ZERO);
 }
 
+/** Payroll rounding policy: one money amount rounded to cents (2 decimals, half-up). */
+export function toCents(value: MoneyInput): Decimal {
+  return toDecimal(value).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+}
+
+/**
+ * Sum a money field over a list of records, rounding each value to cents first, so the
+ * total always equals the sum of the 2-decimal rows it is displayed under.
+ */
+export function sumCentsBy<T>(items: readonly T[] | null | undefined, pick: (item: T) => MoneyInput): Decimal {
+  return (items ?? []).reduce<Decimal>((acc, item) => acc.plus(toCents(pick(item))), ZERO);
+}
+
 export interface FormatMoneyOptions {
   /** Minimum fraction digits (default 2). */
   minFractionDigits?: number;

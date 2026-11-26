@@ -14,7 +14,7 @@ import logo from '../assets/images/logo-login.svg';
 import Decimal from 'decimal.js';
 import type { Employee } from '../types/employee.types';
 import type { PayrollSummaryEmployee, PayrollSummaryMonth } from '../types/report.types';
-import { formatMoney, MoneyInput, ZERO, sumBy, toDecimal } from '../utils/money';
+import { formatMoney, MoneyInput, ZERO, sumCentsBy, toCents, toDecimal } from '../utils/money';
 import { rowGross } from '../utils/reportRow';
 
 /** Per-employee EPF/ETF row; money fields are decimal strings. */
@@ -68,13 +68,16 @@ interface EpfAccumulator {
     netPay: Decimal;
 }
 
-/** First non-zero value (mirrors the previous `a || b || 0` fallbacks). */
+/** First non-zero value (mirrors the previous `a || b || 0` fallbacks), rounded to cents. */
 const firstNonZero = (...values: MoneyInput[]): Decimal => {
     const found = values.map(toDecimal).find((d) => !d.isZero());
-    return found ?? ZERO;
+    return toCents(found ?? ZERO);
 };
 
-/** Aggregates the monthly report per employee with decimal.js. */
+/**
+ * Aggregates the monthly report per employee with decimal.js. Payroll rounding policy: each
+ * month's amount is rounded to cents before it is added, like the backend reports.
+ */
 function aggregateEpfEtf(months: readonly PayrollSummaryMonth[], employees: readonly Employee[] | undefined): EpfEtfRow[] {
     const employeeMap = new Map<string, EpfAccumulator>();
     months.forEach((month) => {
@@ -95,11 +98,11 @@ function aggregateEpfEtf(months: readonly PayrollSummaryMonth[], employees: read
 
             // Earned basic pay for the month for every salary type (monthly: pro-rated contract
             // salary; daily: rate x days) - never the monthly contract vs a daily rate mix.
-            const earnedBasic = toDecimal(emp.basicPay);
+            const earnedBasic = toCents(emp.basicPay);
             // Stored salary-row gross (never recomputed from components)
-            const computedGross = toDecimal(rowGross(emp));
+            const computedGross = toCents(rowGross(emp));
             const empEpf = firstNonZero(emp.employeeEPF, emp.employeeEpf);
-            const companyEPFETF = toDecimal(emp.companyEPFETF);
+            const companyEPFETF = toCents(emp.companyEPFETF);
             // Use direct fields if available, otherwise split companyEPFETF by ratio (12:3), rounded like Math.round
             const directEmployerEpf = firstNonZero(emp.employerEPF, emp.employerEpf);
             const directEtf = firstNonZero(emp.etfAmount, emp.etf);
@@ -123,28 +126,28 @@ function aggregateEpfEtf(months: readonly PayrollSummaryMonth[], employees: read
     });
     return Array.from(employeeMap.values()).map((r) => ({
         ...r.base,
-        basicPay: r.basicPay.toFixed(4),
-        epfEtfAmount: r.epfEtfAmount.toFixed(4),
-        grossPay: r.grossPay.toFixed(4),
-        empEpf: r.empEpf.toFixed(4),
-        employerEpf: r.employerEpf.toFixed(4),
-        etf: r.etf.toFixed(4),
-        totalContribution: r.empEpf.plus(r.employerEpf).plus(r.etf).toFixed(4),
-        netPay: r.netPay.toFixed(4),
+        basicPay: r.basicPay.toFixed(2),
+        epfEtfAmount: r.epfEtfAmount.toFixed(2),
+        grossPay: r.grossPay.toFixed(2),
+        empEpf: r.empEpf.toFixed(2),
+        employerEpf: r.employerEpf.toFixed(2),
+        etf: r.etf.toFixed(2),
+        totalContribution: r.empEpf.plus(r.employerEpf).plus(r.etf).toFixed(2),
+        netPay: r.netPay.toFixed(2),
     }));
 }
 
-/** Overall totals across employees (decimal strings). */
+/** Overall totals across employees: sums of the cent-rounded rows (2-decimal strings). */
 function totalsOf(rows: readonly EpfEtfRow[]): EpfEtfTotals {
     return {
         count: rows.length,
-        basicPay: sumBy(rows, (r) => r.basicPay).toFixed(4),
-        grossPay: sumBy(rows, (r) => r.grossPay).toFixed(4),
-        empEpf: sumBy(rows, (r) => r.empEpf).toFixed(4),
-        employerEpf: sumBy(rows, (r) => r.employerEpf).toFixed(4),
-        etf: sumBy(rows, (r) => r.etf).toFixed(4),
-        totalContribution: sumBy(rows, (r) => r.totalContribution).toFixed(4),
-        netPay: sumBy(rows, (r) => r.netPay).toFixed(4),
+        basicPay: sumCentsBy(rows, (r) => r.basicPay).toFixed(2),
+        grossPay: sumCentsBy(rows, (r) => r.grossPay).toFixed(2),
+        empEpf: sumCentsBy(rows, (r) => r.empEpf).toFixed(2),
+        employerEpf: sumCentsBy(rows, (r) => r.employerEpf).toFixed(2),
+        etf: sumCentsBy(rows, (r) => r.etf).toFixed(2),
+        totalContribution: sumCentsBy(rows, (r) => r.totalContribution).toFixed(2),
+        netPay: sumCentsBy(rows, (r) => r.netPay).toFixed(2),
     };
 }
 

@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import { MoneyInput, ZERO, sumBy, toDecimal } from './money';
+import { MoneyInput, ZERO, sumBy, sumCentsBy, toCents, toDecimal } from './money';
 
 /**
  * Client-side salary PREVIEW maths (the backend recomputes and is the source
@@ -108,25 +108,29 @@ export function calculateEmployeeEpf(emp: SalaryEmployeeInput, isEpfEnabled: boo
     return emp.epfEnabled && isEpfEnabled && basis.greaterThan(0) ? basis.times(EPF_EMPLOYEE_RATE) : ZERO;
 }
 
-/** Full payslip preview used by the Salary page (generate / save). */
+/**
+ * Full payslip preview used by the Salary page (generate / save). Same rounding policy as
+ * the backend: every component is rounded to cents (half-up) and gross / deductions / net
+ * are derived from the rounded components, so the preview matches the saved salary.
+ */
 export function calculatePayslip(emp: SalaryEmployeeInput, input: PayslipInput): PayslipAmounts {
-    const basicPay = calculateBasicPay(emp, input);
-    const otAmount = calculateOtAmount(emp.otRate, input.otHours);
-    const allowanceTotal = sumBy(input.allowances, (a) => a.amount);
-    const deductionTotal = sumBy(input.deductions, (d) => d.amount);
+    const basicPay = toCents(calculateBasicPay(emp, input));
+    const otAmount = toCents(calculateOtAmount(emp.otRate, input.otHours));
+    const allowanceTotal = sumCentsBy(input.allowances, (a) => a.amount);
+    const deductionTotal = sumCentsBy(input.deductions, (d) => d.amount);
 
     const basis = epfBasis(emp.epfEtfAmount);
     const epfOn = emp.epfEnabled && input.isEpfEnabled && basis.greaterThan(0);
-    const epfEmployee = epfOn ? basis.times(EPF_EMPLOYEE_RATE) : ZERO;
-    const epfEmployer = epfOn ? basis.times(EPF_EMPLOYER_RATE) : ZERO;
-    const etfEmployer = epfOn ? basis.times(ETF_EMPLOYER_RATE) : ZERO;
+    const epfEmployee = epfOn ? toCents(basis.times(EPF_EMPLOYEE_RATE)) : ZERO;
+    const epfEmployer = epfOn ? toCents(basis.times(EPF_EMPLOYER_RATE)) : ZERO;
+    const etfEmployer = epfOn ? toCents(basis.times(ETF_EMPLOYER_RATE)) : ZERO;
 
     const tax = ZERO; // Tax will be calculated by backend
     const totalDeductions = epfEmployee
         .plus(tax)
-        .plus(toDecimal(input.salaryAdvance))
+        .plus(toCents(input.salaryAdvance))
         .plus(deductionTotal)
-        .plus(toDecimal(input.loanDeduction));
+        .plus(toCents(input.loanDeduction));
     const netSalary = basicPay.plus(otAmount).plus(allowanceTotal).minus(totalDeductions);
 
     return {
