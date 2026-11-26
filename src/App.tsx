@@ -48,7 +48,7 @@ function App(): JSX.Element {
   return (
     <AuthBootstrap>
     <Router>
-      <CompanySelectionGuard />
+      <CompanySelectionGuard>
       <RenewPlanModal />
       <TrialUpgradeModal />
       <Routes>
@@ -153,6 +153,7 @@ function App(): JSX.Element {
         />
         <Route path="*" element={<NotFound />} />  {/* Catch-all route at the bottom */}
       </Routes>
+      </CompanySelectionGuard>
     </Router>
     </AuthBootstrap>
   );
