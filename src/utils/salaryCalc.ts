@@ -97,15 +97,24 @@ export function calculateNonPaidLeaveDeduction(
     return toDecimal(basicSalary).dividedBy(companyWorkingDays).times(sickLeaveDays);
 }
 
-/** EPF basis is the configured epfEtfAmount only (no fallback to basic). */
-export function epfBasis(epfEtfAmount: MoneyInput): Decimal {
-    const basis = toDecimal(epfEtfAmount);
+/**
+ * EPF/ETF base for the month (same rule as the API): epfEtfAmount pro-rated by the share of
+ * the month that is paid - min(payable days, company working days) / company working days,
+ * i.e. basicPay / basicSalary for monthly staff - capped at gross earnings, rounded to cents.
+ * 0 paid days gives 0.
+ */
+export function epfBasis(
+    emp: SalaryEmployeeInput,
+    period: SalaryPeriodInput,
+    grossEarnings: Decimal,
+): Decimal {
+    const amount = toDecimal(emp.epfEtfAmount);
+    const payableDays = period.workedDays + applicableAnnualLeave(period.leaveDays, emp.paidLeave);
+    if (!amount.greaterThan(0) || period.companyWorkingDays <= 0 || payableDays <= 0) return ZERO;
+    const paidShare = new Decimal(Math.min(payableDays, period.companyWorkingDays))
+        .dividedBy(period.companyWorkingDays);
+    const basis = toCents(Decimal.min(amount.times(paidShare), grossEarnings));
     return basis.greaterThan(0) ? basis : ZERO;
-}
-
-export function calculateEmployeeEpf(emp: SalaryEmployeeInput, isEpfEnabled: boolean): Decimal {
-    const basis = epfBasis(emp.epfEtfAmount);
-    return emp.epfEnabled && isEpfEnabled && basis.greaterThan(0) ? basis.times(EPF_EMPLOYEE_RATE) : ZERO;
 }
 
 /**
@@ -119,7 +128,8 @@ export function calculatePayslip(emp: SalaryEmployeeInput, input: PayslipInput):
     const allowanceTotal = sumCentsBy(input.allowances, (a) => a.amount);
     const deductionTotal = sumCentsBy(input.deductions, (d) => d.amount);
 
-    const basis = epfBasis(emp.epfEtfAmount);
+    const grossEarnings = basicPay.plus(otAmount).plus(allowanceTotal);
+    const basis = epfBasis(emp, input, grossEarnings);
     const epfOn = emp.epfEnabled && input.isEpfEnabled && basis.greaterThan(0);
     const epfEmployee = epfOn ? toCents(basis.times(EPF_EMPLOYEE_RATE)) : ZERO;
     const epfEmployer = epfOn ? toCents(basis.times(EPF_EMPLOYER_RATE)) : ZERO;
@@ -131,7 +141,7 @@ export function calculatePayslip(emp: SalaryEmployeeInput, input: PayslipInput):
         .plus(toCents(input.salaryAdvance))
         .plus(deductionTotal)
         .plus(toCents(input.loanDeduction));
-    const netSalary = basicPay.plus(otAmount).plus(allowanceTotal).minus(totalDeductions);
+    const netSalary = grossEarnings.minus(totalDeductions);
 
     return {
         basicPay,

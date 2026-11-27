@@ -5,8 +5,8 @@ import { MoneyInput, ZERO, sumBy, toDecimal } from './money';
 import {
     AmountEntry,
     applicableAnnualLeave,
-    calculateEmployeeEpf,
     calculateNonPaidLeaveDeduction,
+    calculatePayslip,
 } from './salaryCalc';
 
 /**
@@ -79,6 +79,22 @@ function storedCardFigures(saved: SalaryRecord): SalaryCardFigures {
     };
 }
 
+/** Employee EPF of an unsaved salary: the same pro-rated, gross-capped rule the API saves. */
+function unsavedEmployeeEpf(input: SalaryCardInput): Decimal {
+    return calculatePayslip(input.emp, {
+        companyWorkingDays: input.companyWorkingDays,
+        workedDays: input.workedDays,
+        leaveDays: input.leaveDays,
+        sickLeaveDays: input.sickLeaveDays,
+        otHours: input.otHours,
+        salaryAdvance: input.salaryAdvance,
+        isEpfEnabled: input.isEpfEnabled,
+        loanDeduction: '0',
+        allowances: input.allowances,
+        deductions: input.deductions,
+    }).epfEmployee;
+}
+
 export function computeSalaryCardFigures(input: SalaryCardInput): SalaryCardFigures {
     const { emp, saved } = input;
     if (saved && saved.grossSalary != null && saved.totalDeduction != null) {
@@ -98,7 +114,7 @@ export function computeSalaryCardFigures(input: SalaryCardInput): SalaryCardFigu
         : sumBy(input.deductions, (item) => item.amount);
 
     const unpaidLeave = nonPaidLeave(input);
-    const epfAmount = saved ? toDecimal(saved.employeeEPF) : calculateEmployeeEpf(emp, input.isEpfEnabled);
+    const epfAmount = saved ? toDecimal(saved.employeeEPF) : unsavedEmployeeEpf(input);
 
     // Unsaved: same breakdown the backend stores - the basic pay is pro-rated for the
     // payable days (unpaid leave is already out of it), so there is no separate unpaid-leave
