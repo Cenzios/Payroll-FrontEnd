@@ -8,6 +8,8 @@ import { User, Building2, Loader2, Mail, Phone, MapPin, Lock, Eye, EyeOff, Arrow
 import { validateCompanyField } from '../drawers/drawerValidation';
 import Toast from "../../components/Toast";
 import { passwordPolicyError } from '../../utils/passwordPolicy';
+import { companyNameError, personNameError } from '../../utils/nameValidation';
+import { normalizeText } from '../../utils/textNormalize';
 
 const AccountTab = () => {
     const dispatch = useAppDispatch();
@@ -84,9 +86,7 @@ const AccountTab = () => {
 
     const validatePersonal = (field: string, value: string) => {
         if (field === 'fullName') {
-            if (!value.trim()) return 'Full name is required';
-            if (value.trim().length < 3 || value.trim().length > 50) return 'Name must be between 3 and 50 characters';
-            if (!/^[a-zA-Z\s]+$/.test(value.trim())) return 'Full name must contain letters only';
+            return personNameError(value, 'Full name');
         }
         return '';
     };
@@ -94,13 +94,7 @@ const AccountTab = () => {
     const validateCompany = (field: string, value: string) => {
         switch (field) {
             case 'name':
-                if (!value.trim())
-                    return 'Company name is required';
-                if (value.trim().length < 3 || value.trim().length > 50)
-                    return 'Name must be between 3 and 50 characters';
-                else if (/[^a-zA-Z0-9]{6,}/.test(value.trim()))
-                    return "Name must not contain more than 5 consecutive special characters";
-                break;
+                return companyNameError(value);
             case 'email':
                 // Same rules as the Add-company form (no 6-character TLD limit)
                 return validateCompanyField('email', value);
@@ -131,7 +125,7 @@ const AccountTab = () => {
         if (error) { setPersonalErrors({ fullName: error }); return; }
         setIsSavingPersonal(true);
         try {
-            const response = await updateProfile({ fullName: personalData.fullName });
+            const response = await updateProfile({ fullName: normalizeText(personalData.fullName) });
             if (response.data) dispatch(updateUser(response.data));
             setIsEditingPersonal(false);
             setToast({ message: response.message, type: "success" });
@@ -152,7 +146,7 @@ const AccountTab = () => {
         if (Object.keys(errors).length > 0) { setCompanyErrors(errors); return; }
         setIsSavingCompany(true);
         try {
-            const { message } = await companyApi.updateCompanyProfile(selectedCompany.id, companyData);
+            const { message } = await companyApi.updateCompanyProfile(selectedCompany.id, { ...companyData, name: normalizeText(companyData.name) });
             dispatch(apiSlice.util.invalidateTags(['Company']));
             setIsEditingCompany(false);
             setToast({ message, type: "success" });

@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { startSignup, clearError } from '../store/slices/authSlice';
 import { Loader2, Mail, User } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
+import { personNameError } from '../utils/nameValidation';
 
 
 const GoogleIcon = () => (
@@ -53,13 +54,7 @@ const Signup = () => {
       email: '',
     };
 
-    if (!formData.fullName) {
-      errors.fullName = 'Full name is required';
-    } else if (!/^[a-zA-Z\s]+$/.test(formData.fullName.trim())) {
-      errors.fullName = 'Full name must contain letters only';
-    } else if (formData.fullName.trim().length < 3 || formData.fullName.trim().length > 50) {
-      errors.fullName = 'Full name must be between 3 and 50 characters';
-    }
+    errors.fullName = personNameError(formData.fullName, 'Full name');
 
     if (!formData.email) {
       errors.email = 'Email is required';
@@ -75,18 +70,9 @@ const Signup = () => {
     const { name, value } = e.target;
 
     if (name === 'fullName') {
-      // Block non-letter characters entirely
-      if (value && !/^[a-zA-Z\s]*$/.test(value)) {
-        setValidationErrors(prev => ({ ...prev, fullName: 'Full name must contain letters only' }));
-        return; // Don't update formData — character is rejected
-      }
+      // Never silently drop typed characters: keep the input and say what is allowed
       setFormData(prev => ({ ...prev, fullName: value }));
-      // Live length feedback once they start typing
-      if (value.trim().length < 3 || value.trim().length > 50) {
-        setValidationErrors(prev => ({ ...prev, fullName: 'Full name must be between 3 and 50 characters' }));
-      } else {
-        setValidationErrors(prev => ({ ...prev, fullName: '' }));
-      }
+      setValidationErrors(prev => ({ ...prev, fullName: personNameError(value, 'Full name') }));
       return;
     }
 
