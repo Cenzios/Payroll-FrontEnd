@@ -17,6 +17,7 @@ import AlertBar from '../components/AlertBar';
 import logo from '../assets/images/logo-login.svg';
 import { useSearchParams } from 'react-router-dom';
 import { formatRs, sumBy, toDecimal, toDecimalString, ZERO } from '../utils/money';
+import LoanAmountNote from '../components/loans/LoanAmountNote';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -64,7 +65,8 @@ const Loans = () => {
 
   // Summary Calculations
   // Money totals via decimal.js (amounts are decimal strings)
-  const totalLoanAmount = sumBy(loans, (l) => l.amount);
+  // Cancelled loans were never lent (nothing paid), so they are not part of the total
+  const totalLoanAmount = sumBy(loans.filter((l) => l.status !== 'CANCELLED'), (l) => l.amount);
   const totalActiveLoans = loans.filter((l: any) => {
     const status = (l.status || 'Active').toUpperCase();
     return status === 'ACTIVE' || status === 'PENDING';
@@ -132,6 +134,7 @@ const Loans = () => {
           <p className="text-[16px] font-bold text-[#1D1F24]">
             {formatRs(loan.amount)}
           </p>
+          <LoanAmountNote loan={loan} />
         </div>
         <div className="text-right">
           <p className="text-[12px] font-semibold text-[#6B7280]">{loan.loanTitle}</p>
@@ -357,7 +360,10 @@ const Loans = () => {
                                   <div>{loan.loanTitle}</div>
                                   {loan.loanId && <div className="text-[12px] text-[#A8B0B9] font-mono mt-0.5">{loan.loanId}</div>}
                                 </td>
-                                <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{formatRs(loan.amount)}</td>
+                                <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">
+                                  <div>{formatRs(loan.amount)}</div>
+                                  <LoanAmountNote loan={loan} />
+                                </td>
                                 <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{toDecimalString(loan.interestRate)}% ({loan.interestRateType === 'ANNUALLY' ? 'Annually' : 'Monthly'})</td>
                                 <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{loan.installments?.filter((i: any) => i.status === 'PAID').length || 0} / {loan.installmentCount}</td>
                                 <td className="py-4 px-6 text-[#4F5660] font-medium text-[14px]">{formatRs(loan.monthlyPremium)}</td>
