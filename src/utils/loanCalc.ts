@@ -22,3 +22,19 @@ export function calculateMonthlyPremium(
     const growth = r.plus(1).pow(installmentCount);
     return p.times(r).times(growth).dividedBy(growth.minus(1));
 }
+
+/**
+ * Adds whole months to a 'YYYY-MM-DD' date, clamping the day to the target month's length
+ * (31 Jan + 1 month = 28/29 Feb), the same rule the API uses for instalment due dates.
+ * Returns '' for an unparseable date.
+ */
+export function addMonthsClamped(isoDate: string, months: number): string {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate);
+    if (!match) return '';
+    const monthIndex = Number(match[2]) - 1 + months;
+    const year = Number(match[1]) + Math.floor(monthIndex / 12);
+    const month = ((monthIndex % 12) + 12) % 12;
+    const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    const day = Math.min(Number(match[3]), lastDay);
+    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}

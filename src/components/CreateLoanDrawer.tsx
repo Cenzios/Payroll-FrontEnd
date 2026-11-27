@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 import loanTitleIcon from '../assets/images/loan-title.svg';
 import loanAmountIcon from '../assets/images/loan-amount.svg';
 import { formatRs, sanitizeMoneyInput, toDecimal, toDecimalString, toMoneyString } from '../utils/money';
-import { calculateMonthlyPremium } from '../utils/loanCalc';
+import { addMonthsClamped, calculateMonthlyPremium } from '../utils/loanCalc';
 import loanInstallmentIcon from '../assets/images/loan-installment.svg';
 import loanStartIcon from '../assets/images/loan-start.svg';
 import loanEndIcon from '../assets/images/loan-end.svg';
@@ -113,12 +113,11 @@ const CreateLoanDrawer = ({ isOpen, onClose, onSuccess, companyId }: CreateLoanD
   // Auto-calculate End Date based on Start Date and Installment Count
   useEffect(() => {
     if (startDate && installmentCount) {
-      const start = new Date(startDate);
       const count = parseInt(installmentCount);
-      if (!isNaN(start.getTime()) && count > 0) {
-        const end = new Date(start);
-        end.setMonth(end.getMonth() + count);
-        setEndDate(end.toISOString().split('T')[0]);
+      const end = count > 0 ? addMonthsClamped(startDate, count) : '';
+      if (end) {
+        // Last instalment's due date: day clamped to the month's length (no setMonth overflow)
+        setEndDate(end);
       }
     }
   }, [startDate, installmentCount]);
