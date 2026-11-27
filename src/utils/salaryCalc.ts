@@ -184,3 +184,34 @@ export function calculateEarningsLimit(
         );
     return base.plus(otAmount).plus(totalAllowances);
 }
+
+export interface SalaryLimitInput {
+    employeeStatus?: string;
+    companyWorkingDays: number;
+    workedDays: number;
+    leaveDays: number;
+    sickLeaveDays: number;
+    otHours: MoneyInput;
+}
+
+/**
+ * The day / hour / status limits the API enforces with 422 (salaryRules.ts), so Generate is
+ * blocked for the same requests. Returns the first violated rule's message, or null.
+ */
+export function salaryLimitError(input: SalaryLimitInput): string | null {
+    const companyDays = input.companyWorkingDays;
+    if (input.employeeStatus !== undefined && input.employeeStatus !== 'ACTIVE') {
+        return 'Salary can only be generated for active employees';
+    }
+    const days: [string, number][] = [
+        ['Worked days', input.workedDays],
+        ['Leave days', input.leaveDays],
+        ['Sick leave days', input.sickLeaveDays],
+    ];
+    const outOfRange = days.find(([, value]) => value < 0 || value > companyDays);
+    if (outOfRange) {
+        return `${outOfRange[0]} must be between 0 and the company working days (${companyDays})`;
+    }
+    if (toDecimal(input.otHours).lessThan(0)) return 'OT hours cannot be negative';
+    return null;
+}

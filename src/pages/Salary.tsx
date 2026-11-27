@@ -17,7 +17,7 @@ import {
 import { Employee } from "../types/employee.types";
 import type { SalaryRecord } from "../types/salary.types";
 import { isPositive, sanitizeMoneyInput, toDecimal, toDecimalString, toMoneyString } from "../utils/money";
-import { calculateEarningsLimit, calculatePayslip, wouldNetSalaryBeNegative } from "../utils/salaryCalc";
+import { calculateEarningsLimit, calculatePayslip, salaryLimitError, wouldNetSalaryBeNegative } from "../utils/salaryCalc";
 import { buildPreviewDetails, buildSavedDetails, installmentRemaining } from "../utils/payslipDetails";
 import Toast from "../components/Toast";
 import SalaryListSkeleton from "../components/skeletons/SalaryListSkeleton";
@@ -402,7 +402,7 @@ const Salary = () => {
     const { workedDays, otHours, salaryAdvance, isEpfEnabled, isLoanEnabled, loanDeduction, leaveDays, sickLeaveDays } = getEmployeeValues(emp.id);
     const maxWorkedDaysForEmp = getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays);
     if (workedDays < 0 || workedDays > maxWorkedDaysForEmp) return true;
-    if (leaveDays < 0 || sickLeaveDays < 0) return true;
+    if (salaryLimitError({ employeeStatus: emp.status, companyWorkingDays, workedDays, leaveDays, sickLeaveDays, otHours })) return true;
     if (workedDays + leaveDays + sickLeaveDays !== companyWorkingDays) return true;
 
     // Check for negative net salary (decimal.js)
@@ -544,6 +544,14 @@ const Salary = () => {
         message: "Please fix validation errors before generating",
         type: "error",
       });
+      return;
+    }
+    // Same day / hour / status limits the API enforces (422)
+    const limitError = salaryLimitError({
+      employeeStatus: emp.status, companyWorkingDays, workedDays, leaveDays, sickLeaveDays, otHours,
+    });
+    if (limitError) {
+      setToast({ message: limitError, type: "error" });
       return;
     }
 
