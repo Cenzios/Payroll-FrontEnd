@@ -568,7 +568,7 @@ const Employees = () => {
             ) : (
               <div className="flex gap-6 flex-1 overflow-hidden pb-4">
                 {/* Left Column */}
-                <div className="w-[60%] flex flex-col pr-6 h-full">
+                <div className="w-[60%] min-w-0 flex flex-col pr-6 h-full">
                   <div className="pb-6 shrink-0">
                     <div className="relative">
                       <input
@@ -598,28 +598,33 @@ const Employees = () => {
                           <div
                             key={emp.id}
                             onClick={() => setSelectedEmployee(emp)}
-                            className={`flex items-center justify-between cursor-pointer transition-all duration-200 rounded-[30px] ${selectedEmployee?.id === emp.id ? "bg-blue-200/40" : "hover:bg-gray-50/80"}`}
+                            className={`flex items-center gap-3 min-w-0 cursor-pointer transition-all duration-200 rounded-[30px] ${selectedEmployee?.id === emp.id ? "bg-blue-200/40" : "hover:bg-gray-50/80"}`}
                           >
-                            <div className="flex items-center gap-4 w-[30%] min-w-[250px]">
+                            {/* Shrinkable columns (min-w-0 + truncate) so the row never overflows its
+                                column: the ⋮ menu stays visible and clickable at every width.
+                                Email shows from xl (1280px), phone from lg (1024px). */}
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
                               <div className="w-12 h-12 rounded-full bg-blue-200 flex items-center justify-center shrink-0">
                                 <span className="font-semibold text-sm text-blue-700">{emp.fullName.charAt(0).toUpperCase()}</span>
                               </div>
-                              <h4 className="text-[14px] font-normal text-gray-800 truncate">{emp.fullName}</h4>
+                              <h4 className="text-[14px] font-normal text-gray-800 truncate" title={emp.fullName}>{emp.fullName}</h4>
                             </div>
-                            <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[220px]">
+                            <div className="hidden xl:flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-0">
                               <Mail className="w-4 h-4 text-gray-400 shrink-0" />
-                              <span className="truncate">{emp.email || "No email provided"}</span>
+                              <span className="truncate" title={emp.email || undefined}>{emp.email || "No email provided"}</span>
                             </div>
-                            <div className="flex items-center gap-6 shrink-0 w-[140px] justify-end">
-                              <div className="flex items-center gap-2 text-[14px] text-gray-500 flex-1 min-w-[100px]">
-                                <Phone className="w-4 h-4 text-gray-400 shrink-0" />
-                                <span>{emp.contactNumber}</span>
-                              </div>
-                              <button onClick={(e) => handleMenuClick(e, emp.id)}
-                                className="text-gray-500 hover:text-gray-900 p-1 rounded-full transition-colors">
-                                <MoreVertical className="w-5 h-5" />
-                              </button>
+                            <div className="hidden lg:flex items-center gap-2 text-[14px] text-gray-500 shrink-0 whitespace-nowrap">
+                              <Phone className="w-4 h-4 text-gray-400 shrink-0" />
+                              <span>{emp.contactNumber}</span>
                             </div>
+                            <button
+                              type="button"
+                              aria-label={`Actions for ${emp.fullName}`}
+                              onClick={(e) => handleMenuClick(e, emp.id)}
+                              className="shrink-0 mr-2 text-gray-500 hover:text-gray-900 p-1 rounded-full transition-colors"
+                            >
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
                           </div>
                         ))}
                       </div>
