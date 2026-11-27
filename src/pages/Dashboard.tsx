@@ -31,6 +31,7 @@ import UniversalDrawer from '../components/UniversalDrawer';
 import ConfirmationModal from '../components/ConfirmationModal';
 import AddonModal from '../components/AddonModal';
 import Toast from '../components/Toast';
+import { companyNameConflict } from '../components/drawers/DrawerFieldError';
 import { CreateCompanyRequest } from '../types/company.types';
 import { CreateEmployeeRequest } from '../types/employee.types';
 import {
@@ -148,6 +149,13 @@ const Dashboard = () => {
           localStorage.removeItem('temp_companyAddress');
           localStorage.removeItem('temp_companyPhone');
         } catch (err) {
+          if (companyNameConflict(err)) {
+            // Already created on an earlier attempt (e.g. the page was closed before cleanup)
+            ['temp_companyName', 'temp_companyEmail', 'temp_companyAddress', 'temp_companyPhone']
+              .forEach((key) => localStorage.removeItem(key));
+            refetchCompanies();
+            return;
+          }
           console.error('❌ Failed to create trial company:', err);
           pendingCompanyCreation.current = false;
         }
@@ -243,6 +251,9 @@ const Dashboard = () => {
       } else {
         setToast({ message: errorMsg, type: 'error' });
       }
+      // Duplicate company name: the drawer marks the Name field and stays open
+      const conflict = drawerMode === 'company' ? companyNameConflict(error) : null;
+      if (conflict) throw conflict;
     }
   };
 
