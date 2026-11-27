@@ -9,8 +9,25 @@ export interface SalaryLineItem {
     amount: string;
 }
 
+/** DRAFT until approved; only APPROVED salaries are paid, reported and downloadable. */
+export type SalaryStatus = 'DRAFT' | 'APPROVED';
+
+export interface SalaryUserRef {
+    id: string;
+    fullName: string;
+}
+
 export interface SalaryRecord {
     id: string;
+    status: SalaryStatus;
+    approvedAt?: string | null;
+    approvedBy?: SalaryUserRef | null;
+    updatedAt?: string;
+    updatedBy?: SalaryUserRef | null;
+    /** Inputs kept for draft edit / regenerate (null on salaries created before drafts). */
+    companyWorkingDays?: number | null;
+    isEpfEnabled?: boolean;
+    isLoanEnabled?: boolean;
     month: number;
     year: number;
     workingDays: number;

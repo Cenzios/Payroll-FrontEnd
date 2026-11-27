@@ -1,12 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from 'react-dom';
-import { Loader2, ChevronRight, Lock, Loader, Eye, ArrowUpRight, LockKeyhole } from "lucide-react";
+import { Loader2, ChevronRight, Loader, Eye, FileText } from "lucide-react";
 import { Employee } from "../types/employee.types";
 import { useAppSelector } from "../store/hooks";
 import type { SalaryRecord } from "../types/salary.types";
 import type { SalaryEntry } from "../store/slices/salarySlice";
 import { formatMoney, MoneyInput, toDecimal } from "../utils/money";
 import { computeSalaryCardFigures } from "../utils/salaryCardCalc";
+import SalaryDraftPanel from "./salary/SalaryDraftPanel";
+import SalaryStatusBadge from "./salary/SalaryStatusBadge";
+
+/** Draft workflow callbacks for a saved salary (see SalaryDraftPanel). */
+export interface SalaryDraftHandlers {
+    isWorkflowBusy: boolean;
+    onEditDraft: (emp: Employee, salary: SalaryRecord) => void;
+    onCancelEdit: () => void;
+    onRegenerateDraft: (salary: SalaryRecord) => Promise<void>;
+    onVoidDraft: (salary: SalaryRecord) => Promise<void>;
+    onApproveDraft: (salary: SalaryRecord) => Promise<void>;
+}
 
 interface EmployeeSalaryCardProps {
     emp: Employee;
@@ -41,6 +53,9 @@ interface EmployeeSalaryCardProps {
     setTouchedFields: React.Dispatch<React.SetStateAction<any>>;
     selectedMonth: number;
     selectedYear: number;
+    /** True while this employee's DRAFT is open for editing (inputs unlocked). */
+    isEditingDraft: boolean;
+    draftHandlers: SalaryDraftHandlers;
 }
 
 const fmt = (val: MoneyInput): string => formatMoney(val);
@@ -116,11 +131,14 @@ const EmployeeSalaryCard = ({
     setTouchedFields,
     selectedMonth,
     selectedYear,
+    isEditingDraft,
+    draftHandlers,
 }: EmployeeSalaryCardProps) => {
     const { accessStatus } = useAppSelector((state) => state.auth);
     const isSelected = selectedEmployee?.id === emp.id;
 
-    const isLocked = !!generatedSalary;
+    // A saved salary is read-only unless its DRAFT is being edited; APPROVED is always locked
+    const isLocked = !!generatedSalary && !isEditingDraft;
 
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
@@ -253,6 +271,7 @@ const EmployeeSalaryCard = ({
 
                     {/* Pill badges */}
                     <div className="flex items-center gap-2 flex-wrap justify-start md:justify-end">
+                        {generatedSalary && <SalaryStatusBadge status={generatedSalary.status} />}
                         {/* Salary type pill */}
                         <span className="px-4 py-1.5 rounded-full border border-[#0B74E633] bg-[#DEEEFF1F] text-[13px] font-semibold text-blue-600 
                         max-sm:text-[10px] max-sm:px-2 max-sm:py-1 max-sm:rounded-lg">
@@ -357,30 +376,20 @@ const EmployeeSalaryCard = ({
             {/* ── EXPANDED BODY ── */}
             {isSelected && (
                 <div onClick={(e) => e.stopPropagation()} className="animate-in fade-in slide-in-from-top-1 duration-200 relative">
-                    {/* Badge Overlay for Locked State */}
-                    {isLocked && (
-                        <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#00000099]/40 backdrop-blur-[2px] rounded-b-2xl">
-                            <div className="bg-[#FFFFFF66] border border-gray-600 rounded-2xl flex items-center shadow-2xl overflow-hidden">
-                                <div className="flex flex-wrap items-start ml-5 rounded-lg  px-4 md:px-5 py-2 border-b border-blue-100/70 bg-white">
-                                    <div>
-                                        <LockKeyhole className="w-5 h-5 text-gray-700" strokeWidth={2.5} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-[15px] font-bold text-gray-900 leading-tight">Pay-slip locked</h4>
-                                        <p className="text-[12px] font-medium text-gray-600">Generated - no further edits allowed</p>
-                                    </div>
-                                </div>
-                                <div className="px-6 py-4 h-full flex items-center">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleGeneratePayslip(emp); }}
-                                        className="flex items-center gap-2 bg-white text-gray-900 px-5 py-2.5 rounded-lg font-bold text-[14px]"
-                                    >
-                                        <ArrowUpRight className="w-4 h-4" strokeWidth={2.5} />
-                                        View Pay-slip
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    {/* Saved salary: approved = locked; draft = edit / regenerate / void / approve */}
+                    {isLocked && generatedSalary && (
+                        <SalaryDraftPanel
+                            salary={generatedSalary}
+                            employeeName={emp.fullName}
+                            employeeCode={emp.employeeId}
+                            periodLabel={periodLabel}
+                            busy={draftHandlers.isWorkflowBusy}
+                            onView={() => handleGeneratePayslip(emp)}
+                            onEdit={() => draftHandlers.onEditDraft(emp, generatedSalary)}
+                            onRegenerate={() => draftHandlers.onRegenerateDraft(generatedSalary)}
+                            onVoid={() => draftHandlers.onVoidDraft(generatedSalary)}
+                            onApprove={() => draftHandlers.onApproveDraft(generatedSalary)}
+                        />
                     )}
 
                     {/* ── ROW 3: Input fields ── */}
@@ -534,7 +543,7 @@ const EmployeeSalaryCard = ({
                         </div>
 
                         {/* Actions — pushed to right */}
-                        <div className={`flex items-center gap-3 w-full md:w-auto md:ml-auto ${isLocked ? "relative z-30" : ""}`}>
+                        <div className={`flex flex-wrap md:justify-end items-center gap-3 w-full md:w-auto md:ml-auto ${isLocked ? "relative z-30" : ""}`}>
                             {/* Generate / View */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleGeneratePayslip(emp); }}
@@ -556,9 +565,24 @@ const EmployeeSalaryCard = ({
                                 )}
                             </button>
 
-                            {/* Confirm — always visible, disabled when locked */}
+                            {isEditingDraft && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); draftHandlers.onCancelEdit(); }}
+                                    disabled={isSaving}
+                                    className="flex-1 md:flex-none px-4 py-2.5 rounded-2xl text-[14px] font-bold border border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    Cancel edit
+                                </button>
+                            )}
+
+                            {/* Save as draft (new) / Save changes (editing a draft); disabled when locked */}
                             <button
-                                onClick={(e) => { e.stopPropagation(); if (!isLocked) setIsConfirmModalOpen(true); }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (isLocked) return;
+                                    if (isEditingDraft) handleConfirmPayslip(emp);
+                                    else setIsConfirmModalOpen(true);
+                                }}
                                 disabled={isLocked || isSaving || hasAnyError(emp)}
                                 className={`flex-1 md:flex-none px-4 md:px-6 py-2.5 rounded-2xl text-[14px] font-bold transition-all duration-200
                     ${isLocked
@@ -568,7 +592,7 @@ const EmployeeSalaryCard = ({
                                             : "bg-[#2dac5c] text-white hover:bg-[#23964e] shadow-sm hover:shadow-md active:scale-95 pointer-events-auto"
                                     }`}
                             >
-                                Confirm
+                                {isEditingDraft ? "Save changes" : "Save draft"}
                             </button>
                         </div>
                     </div>
@@ -585,7 +609,11 @@ const EmployeeSalaryCard = ({
                                 <Loader className="w-5 h-5 rounded-full p-[2.5px] bg-[#5C81FE] text-white mr-2" />
                             )}
                             <p className="text-[#3D70F5] font-semibold">
-                                {isLocked ? "Click to View Pay-Slip" : "Click to Calculate Salary"}
+                                {!generatedSalary
+                                    ? "Click to Calculate Salary"
+                                    : generatedSalary.status === "DRAFT"
+                                        ? "Draft - click to review, edit or approve"
+                                        : "Approved - click to view pay-slip"}
                             </p>
                         </div>
 
@@ -608,16 +636,16 @@ const EmployeeSalaryCard = ({
                         {/* HEADER */}
                         <div className="flex items-start gap-3 mb-5">
                             <div className="w-11 h-11 rounded-xl bg-green-600 flex items-center justify-center">
-                                <Lock className="w-5 h-5 text-white" strokeWidth={2.5} />
+                                <FileText className="w-5 h-5 text-white" strokeWidth={2.5} />
                             </div>
 
                             <div>
                                 <h3 className="text-[18px] font-bold text-gray-900">
-                                    Confirm & Lock Payslip
+                                    Save salary as draft
                                 </h3>
                                 <p className="text-[12.5px] text-gray-500 mt-1 leading-snug">
-                                    Once locked, this payslip cannot be edited or reversed. <br />
-                                    Please review carefully before proceeding.
+                                    The draft can still be edited, regenerated or voided. <br />
+                                    Approve it when it is final.
                                 </p>
                             </div>
                         </div>
@@ -676,10 +704,10 @@ const EmployeeSalaryCard = ({
                         </div>
 
                         {/* WARNING */}
-                        <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-5">
-                            <span className="text-red-500 text-lg leading-none">⚠</span>
-                            <p className="text-[12px] text-red-500 leading-snug">
-                                This action is permanent. The payslip will be locked and distributed to the employee.
+                        <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-5">
+                            <span className="text-blue-500 text-lg leading-none">ℹ</span>
+                            <p className="text-[12px] text-blue-700 leading-snug">
+                                Drafts are not paid or reported yet: Bank Advice, EPF/ETF, C-Form and the payslip download only include approved salaries.
                             </p>
                         </div>
 
@@ -701,7 +729,7 @@ const EmployeeSalaryCard = ({
                                     setIsConfirmModalOpen(false);
                                 }}
                                 className="flex-1 py-3 rounded-xl font-semibold text-white bg-green-600">
-                                Yes Confirm & Lock
+                                Save draft
                             </button>
                         </div>
                     </div>

@@ -187,6 +187,7 @@ export function calculateEarningsLimit(
 
 export interface SalaryLimitInput {
     employeeStatus?: string;
+    salaryType?: string;
     companyWorkingDays: number;
     workedDays: number;
     leaveDays: number;
@@ -211,6 +212,10 @@ export function salaryLimitError(input: SalaryLimitInput): string | null {
     const outOfRange = days.find(([, value]) => value < 0 || value > companyDays);
     if (outOfRange) {
         return `${outOfRange[0]} must be between 0 and the company working days (${companyDays})`;
+    }
+    const totalDays = input.workedDays + input.leaveDays + input.sickLeaveDays;
+    if (input.salaryType === 'DAILY' && totalDays > companyDays) {
+        return `Worked days + leave + sick leave (${totalDays}) cannot exceed the company working days (${companyDays}) for daily-paid staff`;
     }
     if (toDecimal(input.otHours).lessThan(0)) return 'OT hours cannot be negative';
     return null;

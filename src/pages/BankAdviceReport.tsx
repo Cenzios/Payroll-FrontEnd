@@ -304,6 +304,12 @@ const BankAdviceReport = () => {
                                 </table>
                             </div>
 
+                            {(report?.pendingDrafts ?? 0) > 0 && (
+                                <div className="px-6 py-3 bg-amber-50 border-t border-amber-200 text-[13px] text-amber-800" data-testid="bank-advice-pending-drafts">
+                                    {report?.pendingDrafts} draft salar{report?.pendingDrafts === 1 ? 'y is' : 'ies are'} not approved yet and not included. Approve them on the Salary page.
+                                </div>
+                            )}
+
                             {/* Total Footer */}
                             {!isLoadingReport && bankReportData.length > 0 && (
                                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end items-center gap-4">

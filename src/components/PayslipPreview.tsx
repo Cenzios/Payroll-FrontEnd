@@ -17,6 +17,8 @@ interface PayslipPreviewProps {
     exportPDF: () => void;
     exportExcel: () => void;
     exportCSV: () => void;
+    /** Why the payslip cannot be downloaded (only APPROVED salaries can); null = allowed. */
+    downloadBlockedReason?: string | null;
     onClose?: () => void;
     title?: string;
 }
@@ -33,6 +35,7 @@ const PayslipPreview = ({
     exportPDF,
     exportExcel,
     exportCSV,
+    downloadBlockedReason = null,
     onClose,
     title = "PAY SLIP",
 }: PayslipPreviewProps) => {
@@ -256,10 +259,15 @@ const PayslipPreview = ({
                         Powered by Cenzios (PVT) LTD
                     </p>
 
+                    {downloadBlockedReason && (
+                        <p className="text-[11px] text-amber-600 font-semibold mt-2 mr-2 text-right" data-testid="payslip-download-blocked">{downloadBlockedReason}</p>
+                    )}
                     <button
                         ref={downloadBtnRef}
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        className="flex items-center justify-center mt-2 gap-2 px-4 md:px-8 py-2.5 bg-[#407BFF] text-white text-sm font-bold rounded-xl hover:bg-blue-600 transition-all shadow-sm active:scale-95 w-full md:w-auto"
+                        disabled={!!downloadBlockedReason}
+                        title={downloadBlockedReason ?? undefined}
+                        className="flex items-center justify-center mt-2 gap-2 px-4 md:px-8 py-2.5 bg-[#407BFF] text-white text-sm font-bold rounded-xl hover:bg-blue-600 transition-all shadow-sm active:scale-95 w-full md:w-auto disabled:bg-gray-300 disabled:cursor-not-allowed disabled:active:scale-100"
                     >
                         <ArrowDownIcon className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} /> Download
                     </button>

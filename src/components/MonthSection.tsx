@@ -20,6 +20,8 @@ interface MonthSectionProps {
     month: string;
     monthNumber: number;
     status: 'Completed' | 'Pending';
+    /** Draft salaries of the month (not in the totals). */
+    pendingDrafts?: number;
     employees: EmployeePayrollData[];
     totals: MonthTotals;
     isExpanded: boolean;
@@ -37,6 +39,7 @@ const MonthSection: React.FC<MonthSectionProps> = ({
     month,
     monthNumber,
     status,
+    pendingDrafts = 0,
     employees,
     totals,
     isExpanded,
@@ -80,6 +83,12 @@ const MonthSection: React.FC<MonthSectionProps> = ({
                             }`}>
                             {status}
                         </span>
+                        {pendingDrafts > 0 && (
+                            <span className="px-3 py-1 rounded-full text-xs whitespace-nowrap shrink-0 bg-amber-50 text-amber-700 border border-amber-200"
+                                title="Draft salaries are not approved yet and are not included in these totals">
+                                {pendingDrafts} draft{pendingDrafts === 1 ? '' : 's'} not included
+                            </span>
+                        )}
                     </div>
 
                     {/* Wraps instead of clipping the last column (e.g. "Total Net Pay" at 1440px) */}

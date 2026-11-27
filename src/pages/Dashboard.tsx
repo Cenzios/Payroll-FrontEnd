@@ -490,6 +490,13 @@ const Dashboard = () => {
                   />
                 </div>
 
+                {(dashboardData?.pendingDrafts ?? 0) > 0 && (
+                  <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-800" data-testid="dashboard-pending-drafts">
+                    {dashboardData?.pendingDrafts} draft salar{dashboardData?.pendingDrafts === 1 ? 'y' : 'ies'} for this month
+                    {dashboardData?.pendingDrafts === 1 ? ' is' : ' are'} not approved yet. Totals only include approved salaries.
+                  </div>
+                )}
+
                 {/* add buttons: mobile layout only (index.css shows .hidden.max-sm:flex below 768 px, Tailwind's
                     max-sm: stops at 640 px), so the buttons carry their gradient unconditionally - white
                     text must never sit on a transparent background at any width the row is shown */}

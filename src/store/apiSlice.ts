@@ -12,6 +12,8 @@ import type { PlanChangeResult } from '../types/subscription.types';
 // Money fields are decimal strings (API contract).
 interface DashboardSummary {
     totalEmployees: number;
+    /** Draft salaries of the current month (not approved, so not in the totals). */
+    pendingDrafts?: number;
     totalSalaryPaidThisMonth: string;
     totalCompanyEPF: string;
     totalCompanyETF: string;

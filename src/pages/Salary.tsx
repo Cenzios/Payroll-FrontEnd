@@ -16,6 +16,8 @@ import {
 } from "../store/apiSlice";
 import { Employee } from "../types/employee.types";
 import { useGetCompanyLeaveBalancesQuery } from "../store/leaveApi";
+import { draftLoanInstallments, useSalaryDraftWorkflow } from "./salary/useSalaryDraftWorkflow";
+import ApproveAllDraftsButton from "../components/salary/ApproveAllDraftsButton";
 import type { SalaryRecord } from "../types/salary.types";
 import { isPositive, sanitizeMoneyInput, toDecimal, toDecimalString, toMoneyString } from "../utils/money";
 import { calculateEarningsLimit, calculatePayslip, salaryLimitError, wouldNetSalaryBeNegative } from "../utils/salaryCalc";
@@ -88,6 +90,12 @@ const Salary = () => {
     message: string;
     type: "success" | "error";
   } | null>(null);
+
+  // Draft workflow: new salaries are DRAFT; edit / regenerate / void / approve (API messages)
+  const draftWorkflow = useSalaryDraftWorkflow(
+    selectedCompanyId, selectedMonth + 1, selectedYear, (message, type) => setToast({ message, type }),
+  );
+  const editingDraft = draftWorkflow.editing;
 
   // Pending Loans Query (for all employees)
   const { data: allPendingLoans } = useGetAllPendingLoanInstallmentsQuery(
@@ -272,6 +280,8 @@ const Salary = () => {
       employeeDays: {},
     });
     setSelectedEmployee(null);
+    draftWorkflow.handlers.onCancelEdit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth, selectedYear, dispatch]);
 
   // Paid leave resets every calendar year: the leave cap / "Bal" shown on each card is the
@@ -282,7 +292,9 @@ const Salary = () => {
   );
   const employees = (data?.employees || []).map((emp) => ({
     ...emp,
-    paidLeave: yearLeaveBalances?.[emp.id]?.remaining ?? 0,
+    // A draft being edited may keep the leave it already uses
+    paidLeave: (yearLeaveBalances?.[emp.id]?.remaining ?? 0)
+      + (editingDraft?.empId === emp.id ? editingDraft.salary.leaveDays : 0),
   }));
 
   // Fetch Companies to get the name
@@ -299,8 +311,11 @@ const Salary = () => {
     const salaryAdvance = employeeSalaryAdvance[empId] ?? "0";
     const leaveDays = employeeLeaveDays[empId] ?? 0;
     const sickLeaveDays = employeeSickLeaveDays[empId] ?? 0;
-    const hasLoanInstallment = !toDecimal(employeeLoanMap[empId]).isZero();
-    const loanDeduction = (isLoanEnabled && hasLoanInstallment) ? employeeLoanMap[empId] || "0" : "0";
+    // A draft being edited holds its instalment (RESERVED), so it is not in the pending list
+    const draftLoan = editingDraft?.empId === empId ? toDecimal(editingDraft.salary.loanDeduction) : toDecimal(0);
+    const loanAmount = draftLoan.isZero() ? employeeLoanMap[empId] || "0" : draftLoan.toFixed(4);
+    const hasLoanInstallment = !toDecimal(loanAmount).isZero();
+    const loanDeduction = (isLoanEnabled && hasLoanInstallment) ? loanAmount : "0";
     return {
       workedDays,
       isEpfEnabled,
@@ -412,7 +427,7 @@ const Salary = () => {
     const { workedDays, otHours, salaryAdvance, isEpfEnabled, isLoanEnabled, loanDeduction, leaveDays, sickLeaveDays } = getEmployeeValues(emp.id);
     const maxWorkedDaysForEmp = getEmployeeMaxWorkedDays(emp, selectedYear, selectedMonth, companyWorkingDays);
     if (workedDays < 0 || workedDays > maxWorkedDaysForEmp) return true;
-    if (salaryLimitError({ employeeStatus: emp.status, companyWorkingDays, workedDays, leaveDays, sickLeaveDays, otHours })) return true;
+    if (salaryLimitError({ employeeStatus: emp.status, salaryType: emp.salaryType, companyWorkingDays, workedDays, leaveDays, sickLeaveDays, otHours })) return true;
     if (workedDays + leaveDays + sickLeaveDays !== companyWorkingDays) return true;
 
     // Check for negative net salary (decimal.js)
@@ -558,7 +573,7 @@ const Salary = () => {
     }
     // Same day / hour / status limits the API enforces (422)
     const limitError = salaryLimitError({
-      employeeStatus: emp.status, companyWorkingDays, workedDays, leaveDays, sickLeaveDays, otHours,
+      employeeStatus: emp.status, salaryType: emp.salaryType, companyWorkingDays, workedDays, leaveDays, sickLeaveDays, otHours,
     });
     if (limitError) {
       setToast({ message: limitError, type: "error" });
@@ -594,15 +609,34 @@ const Salary = () => {
       isEpfEnabled,
       allowances: currentAllowances,
       deductions: currentDeductions,
-      loanInstallments: (isLoanEnabled && hasLoanInstallment)
-        ? (allPendingLoans || []).filter((inst) => inst.loan?.employeeId === emp.id)
-        : [],
+      loanInstallments: !(isLoanEnabled && hasLoanInstallment)
+        ? []
+        : editingDraft?.empId === emp.id && !toDecimal(editingDraft.salary.loanDeduction).isZero()
+          ? draftLoanInstallments(editingDraft.salary, (allPendingLoans || []).find((i) => i.loan?.employeeId === emp.id)?.loan?.loanTitle ?? "Loan")
+          : (allPendingLoans || []).filter((inst) => inst.loan?.employeeId === emp.id),
       ordinal: getOrdinalSuffix,
     });
 
     dispatch(setPreviewPayslip(details));
 
-    // Save to DB
+    // Editing a DRAFT: same inputs, PUT /salary/:id (recalculated by the API)
+    if (saveToDb && editingDraft?.empId === emp.id) {
+      await draftWorkflow.saveEdit({
+        workingDays: workedDays,
+        companyWorkingDays,
+        otHours: toDecimalString(otHours),
+        salaryAdvance: toMoneyString(salaryAdvance),
+        leaveDays: Math.min(leaveDays, emp.paidLeave || 0),
+        sickLeaveDays,
+        isEpfEnabled: emp.epfEnabled && isEpfEnabled,
+        isLoanEnabled,
+        allowances: currentAllowances.map(a => ({ type: a.type, amount: toMoneyString(a.amount) })),
+        deductions: currentDeductions.map(d => ({ type: d.type, amount: toMoneyString(d.amount) })),
+      });
+      return;
+    }
+
+    // Save to DB (new salaries are saved as DRAFT)
     if (saveToDb) {
       if (!selectedCompanyId) return;
       try {
@@ -631,7 +665,7 @@ const Salary = () => {
           allowances: currentAllowances.map(a => ({ type: a.type, amount: toMoneyString(a.amount) })),
           deductions: currentDeductions.map(d => ({ type: d.type, amount: toMoneyString(d.amount) })),
         }).unwrap();
-        setToast({ message: "Salary saved successfully!", type: "success" });
+        setToast({ message: "Salary saved as a draft. Review it, then approve it to lock it.", type: "success" });
       } catch (error: any) {
         setToast({
           message: error.data?.message || "Failed to save salary",
@@ -643,7 +677,7 @@ const Salary = () => {
 
   const handleGeneratePayslip = async (emp: Employee) => {
     const savedRecord = generatedSalaries[emp.id];
-    if (savedRecord) {
+    if (savedRecord && editingDraft?.empId !== emp.id) {
       setSelectedEmployee(emp);
       const details = buildSavedDetails(savedRecord, companyWorkingDays);
       dispatch(setPreviewPayslip(details));
@@ -842,6 +876,13 @@ const Salary = () => {
                       />
                     </div>
                   </div>
+
+                  <ApproveAllDraftsButton
+                    draftCount={Object.values(generatedSalaries).filter((r) => r.status === "DRAFT").length}
+                    periodLabel={new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long", year: "numeric" })}
+                    busy={draftWorkflow.isBusy}
+                    onApproveAll={draftWorkflow.approveAll}
+                  />
                 </div>
               </div>
 
@@ -913,6 +954,8 @@ const Salary = () => {
                           setTouchedFields={setTouchedFields}
                           selectedMonth={selectedMonth}
                           selectedYear={selectedYear}
+                          isEditingDraft={editingDraft?.empId === emp.id}
+                          draftHandlers={draftWorkflow.handlers}
                         />
                       </div>
                     );
@@ -942,6 +985,11 @@ const Salary = () => {
                 exportPDF={exportPDF}
                 exportExcel={exportExcel}
                 exportCSV={exportCSV}
+                downloadBlockedReason={(() => {
+                  const record = selectedEmployee ? generatedSalaries[selectedEmployee.id] : undefined;
+                  if (record?.status === "APPROVED" && editingDraft?.empId !== record.employeeId) return null;
+                  return record ? "Approve this salary to download its payslip." : "Save and approve the salary to download its payslip.";
+                })()}
                 onClose={() => {
                   setSelectedEmployee(null);
                   dispatch(setPreviewPayslip(null));

@@ -457,6 +457,7 @@ const Reports = () => {
                                             month={monthData.month}
                                             monthNumber={monthData.monthNumber}
                                             status={monthData.status}
+                                            pendingDrafts={monthData.pendingDrafts}
                                             employees={monthData.employees}
                                             totals={monthData.totals}
                                             isExpanded={expandedMonths.has(monthKey)}

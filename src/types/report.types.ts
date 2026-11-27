@@ -66,6 +66,8 @@ export interface PayrollSummaryMonth {
     month: string;
     monthNumber: number;
     status: 'Completed' | 'Pending';
+    /** Draft salaries of the month: not approved yet, so not in any total. */
+    pendingDrafts?: number;
     employees: PayrollSummaryEmployee[];
     totals: PayrollSummaryMonthTotals;
 }
@@ -251,4 +253,6 @@ export interface BankAdviceReportData {
     year: number;
     rows: BankAdviceRow[];
     totalAmount: string;
+    /** Draft salaries of the month: not approved, so not in the transfer list. */
+    pendingDrafts?: number;
 }
