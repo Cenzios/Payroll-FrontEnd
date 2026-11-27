@@ -235,6 +235,8 @@ export interface BankAdviceRow {
     employeeCode: string;
     fullName: string;
     accountHolderName: string;
+    /** 'EMPLOYEE_NAME' when no bank holder name is saved (accountHolderName is then the employee name). */
+    accountHolderNameSource?: 'BANK' | 'EMPLOYEE_NAME';
     bankName: string;
     branchName: string;
     accountNumber: string;

@@ -7,6 +7,7 @@ import type { EmployeeAnnualTotals, EmployeeMonthlyRow, SelectedSummaryEmployee,
 import { formatMoney, formatRs, MoneyInput, toChartNumber, toDecimal } from "./money";
 import { rowDeduction, rowGross, rowNet, sumRows } from "./reportRow";
 import { LOAN_TOTAL_LINE, payslipBasicLine, payslipTotals } from "./payslipTotals";
+import { normalizeText } from "./textNormalize";
 
 // --- Types ---
 
@@ -1414,6 +1415,8 @@ export interface BankAdviceReportData {
         employeeCode: string;
         fullName: string;
         accountHolderName: string;
+        /** 'EMPLOYEE_NAME' when no bank holder name is saved and the API fell back to the employee name. */
+        accountHolderNameSource?: "BANK" | "EMPLOYEE_NAME";
         bankName: string;
         branchName: string;
         accountNumber: string;
@@ -1423,6 +1426,19 @@ export interface BankAdviceReportData {
     year: number;
     totalAmount: string;
 }
+
+const HOLDER_FALLBACK_NOTE = "No bank account holder name saved; employee name used";
+
+/**
+ * The beneficiary name for a Bank Advice line: the bank Account Holder Name, exactly as on
+ * screen. Only when the employee has no holder name saved, the employee name is used and
+ * the line is flagged so the export can say so.
+ */
+const bankAdviceHolder = (item: BankAdviceReportData["reportData"][number]): { name: string; isFallback: boolean } => {
+    const holder = normalizeText(item.accountHolderName);
+    const isFallback = item.accountHolderNameSource === "EMPLOYEE_NAME" || !holder;
+    return { name: holder || normalizeText(item.fullName), isFallback };
+};
 
 export const exportBankAdviceReport = (
     format: "pdf" | "excel" | "csv",
@@ -1499,9 +1515,12 @@ export const exportBankAdviceReport = (
         doc.text("Bank Details Summary", 20, currentY + 6.5);
         currentY += 10;
 
-        const tableBody = reportData.map(item => [
+        const holders = reportData.map(bankAdviceHolder);
+        const anyFallback = holders.some(h => h.isFallback);
+        // Beneficiary = bank Account Holder Name (same as on screen); '*' marks an employee-name fallback
+        const tableBody = reportData.map((item, i) => [
             item.employeeCode,
-            item.fullName,
+            holders[i].isFallback ? `${holders[i].name} *` : holders[i].name,
             item.bankName,
             item.branchName,
             item.accountNumber,
@@ -1510,7 +1529,7 @@ export const exportBankAdviceReport = (
 
         autoTable(doc, {
             startY: currentY,
-            head: [["Employee ID", "Employee Name", "Bank Name", "Branch", "Account Number", "Total Amount"]],
+            head: [["Employee ID", "Account Holder Name", "Bank Name", "Branch", "Account Number", "Total Amount"]],
             body: tableBody,
             theme: "plain",
             styles: { fontSize: 8, cellPadding: 3 },
@@ -1545,7 +1564,14 @@ export const exportBankAdviceReport = (
         doc.setTextColor(255, 184, 0);
         doc.text(`${rs(totalAmount)}`, pageWidth - 20, currentY + 6.5, { align: "right" });
 
-        currentY += 25;
+        currentY += 10;
+        if (anyFallback) {
+            doc.setTextColor(120, 120, 120);
+            doc.setFontSize(7);
+            doc.setFont("helvetica", "normal");
+            doc.text(`* ${HOLDER_FALLBACK_NOTE}.`, 14, currentY + 5);
+        }
+        currentY += 15;
 
         // 3. Approved By Section
         if (currentY + 40 > pageHeight - 20) {
@@ -1586,18 +1612,24 @@ export const exportBankAdviceReport = (
             ["Bank Advice Report"],
             [periodStr],
             [],
-            ["Employee ID", "Employee Name", "Bank Name", "Branch", "Account Number", "Amount"]
+            ["Employee ID", "Account Holder Name", "Bank Name", "Branch", "Account Number", "Amount"]
         ];
+        const holders = reportData.map(bankAdviceHolder);
+        // A "Note" column only when some line had to fall back to the employee name
+        const anyFallback = holders.some(h => h.isFallback);
+        if (anyFallback) wsData[3].push("Note");
 
-        reportData.forEach(item => {
-            wsData.push([
+        reportData.forEach((item, i) => {
+            const row: (string | XLSX.CellObject)[] = [
                 item.employeeCode,
-                item.fullName,
+                holders[i].name,
                 item.bankName,
                 item.branchName,
                 item.accountNumber,
                 xlsNum(item.amount)
-            ]);
+            ];
+            if (anyFallback) row.push(holders[i].isFallback ? HOLDER_FALLBACK_NOTE : "");
+            wsData.push(row);
         });
 
         wsData.push([]);

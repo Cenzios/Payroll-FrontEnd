@@ -4,6 +4,7 @@ import { Plus, Building2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import CompanyCard from '../components/CompanyCard';
 import UniversalDrawer from '../components/UniversalDrawer';
+import { companyNameConflict } from '../components/drawers/DrawerFieldError';
 import Toast from '../components/Toast';
 import { Company, CreateCompanyRequest } from '../types/company.types';
 import { useGetCompaniesQuery, useCreateCompanyMutation, useUpdateCompanyMutation } from '../store/apiSlice';
@@ -55,6 +56,9 @@ const Companies = () => {
         } catch (error: any) {
             const fallback = isEdit ? 'Failed to update company' : 'Failed to create company';
             setToast({ message: error?.data?.message || fallback, type: 'error' });
+            // Duplicate company name: the drawer marks the Name field and stays open
+            const conflict = companyNameConflict(error);
+            if (conflict) throw conflict;
         }
     };
 

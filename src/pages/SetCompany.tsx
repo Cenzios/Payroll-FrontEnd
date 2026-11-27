@@ -5,6 +5,7 @@ import { clearError } from '../store/slices/authSlice';
 import { Building2, Loader2 } from 'lucide-react';
 import companyIllustration from '../assets/images/company-illustration.svg';
 import AuthLayout from '../components/AuthLayout';
+import { companyNameError } from '../utils/nameValidation';
 import LogoutButton from '../components/LogoutButton';
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -54,16 +55,7 @@ const SetCompany = () => {
   const validateField = (field: string, value: string): string => {
     switch (field) {
       case 'companyName': {
-        const trimmed = value.trim();
-        if (!trimmed)
-          return 'Company name is required';
-        if (!trimmed || trimmed.length < 3 || trimmed.length > 50)
-          return 'Company name must be between 3 and 50 characters';
-        // if (!/[a-zA-Z0-9]/.test(value.trim()))
-        //   return 'Name must contain letters or numbers';
-        else if (/[^a-zA-Z0-9]{6,}/.test(value.trim()))
-          return "Name must not contain more than 5 consecutive special characters";
-        return '';
+        return companyNameError(value);
       }
       case 'companyEmail': {
         const email = value.trim();

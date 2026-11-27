@@ -2,6 +2,8 @@ import { useState, FormEvent, useEffect } from "react";
 import { MapPin, Phone, Mail, Hotel, X } from "lucide-react";
 import { CreateCompanyRequest } from "../../types/company.types";
 import { validateCompanyField } from "./drawerValidation";
+import { DrawerFieldError } from "./DrawerFieldError";
+import { normalizeEmail, normalizeText } from "../../utils/textNormalize";
 
 interface CompanyDrawerProps {
     isOpen: boolean;
@@ -106,10 +108,20 @@ const CompanyDrawer = ({ isOpen, onClose, onSubmit, initialData }: CompanyDrawer
         if (!validate()) return;
         setIsSubmitting(true);
         try {
-            await onSubmit(companyData);
+            // Trimmed / canonical values (the API normalises the same way)
+            await onSubmit({
+                ...companyData,
+                name: normalizeText(companyData.name),
+                email: normalizeEmail(companyData.email),
+                address: companyData.address.trim(),
+                contactNumber: companyData.contactNumber.trim(),
+            });
         } catch (error) {
-            console.error(error);
-            throw error;
+            // Field-level rejection (e.g. duplicate name): show it on the field, keep the form open
+            if (error instanceof DrawerFieldError) {
+                setErrors((prev) => ({ ...prev, [error.field]: error.message }));
+                setTouched((prev) => ({ ...prev, [error.field]: true }));
+            }
         } finally {
             setIsSubmitting(false);
         }

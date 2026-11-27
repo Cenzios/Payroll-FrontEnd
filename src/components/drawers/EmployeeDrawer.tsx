@@ -14,6 +14,7 @@ import { Toggle, SRI_LANKAN_BANKS } from "./drawerConstants";
 import { validateEmployeeField } from "./drawerValidation";
 import Toast from "../Toast";
 import axiosInstance from "../../api/axios";
+import { normalizeCompact, normalizeEmail, normalizeText } from "../../utils/textNormalize";
 import { formatRs, isPositive, MoneyInput, sanitizeMoneyInput, sumBy, toDecimal, toDecimalString } from "../../utils/money";
 
 interface EmployeeDrawerProps {
@@ -239,8 +240,8 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
         else setIsCheckingNic(true);
         try {
             const params = new URLSearchParams({ companyId });
-            if (field === 'employeeId') params.append('employeeId', value.trim());
-            if (field === 'employeeNIC') params.append('employeeNIC', value.trim());
+            if (field === 'employeeId') params.append('employeeId', normalizeText(value));
+            if (field === 'employeeNIC') params.append('employeeNIC', normalizeCompact(value));
             if (initialData?.id) params.append('excludeId', initialData.id);
 
             // Shared axios instance: in-memory Bearer token + refresh-on-401
@@ -394,9 +395,19 @@ const EmployeeDrawer = ({ isOpen, onClose, onSubmit, companyId, initialData }: E
                 : [];
             const finalData = {
                 ...employeeData,
-                email: employeeData.email?.trim() || "",
-                designation: employeeData.designation?.trim() || "",
+                // Trimmed / canonical text (the API normalises the same way)
+                fullName: normalizeText(employeeData.fullName),
+                employeeId: normalizeText(employeeData.employeeId),
+                employeeNIC: normalizeCompact(employeeData.employeeNIC),
+                epfNumber: normalizeCompact(employeeData.epfNumber),
+                contactNumber: (employeeData.contactNumber ?? "").trim(),
+                email: normalizeEmail(employeeData.email),
+                designation: normalizeText(employeeData.designation),
                 address: employeeData.address?.trim() || "",
+                accountHolderName: normalizeText(employeeData.accountHolderName),
+                bankName: normalizeText(employeeData.bankName),
+                branchName: normalizeText(employeeData.branchName),
+                accountNumber: normalizeCompact(employeeData.accountNumber),
                 companyId: companyId || employeeData.companyId,
                 department: employeeData.department || "General",
                 // Money sent as decimal strings (API contract)

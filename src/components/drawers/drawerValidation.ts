@@ -1,5 +1,6 @@
 // Validation logic extracted from UniversalDrawer for both company and employee forms
 import { formatRs, toDecimal } from "../../utils/money";
+import { ACCOUNT_HOLDER_NAME_MAX, companyNameError, personNameError } from "../../utils/nameValidation";
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const phoneRegex = /^\+94\s?\d{9}$/;
 // All Sri Lankan landline area codes + mobile prefixes
@@ -9,15 +10,7 @@ export const validateCompanyField = (field: string, value: any): string => {
     let error = "";
     switch (field) {
         case "name":
-            if (!value)
-                return 'Company name is required';
-            else if (!value || value.trim().length < 3 || value.trim().length > 50)
-                error = "Name must be between 3 and 50 characters";
-            // name validation
-            // else if (!/[a-zA-Z0-9]/.test(value.trim()))
-            //     error = "Name must contain letters or numbers";
-             else if (/[^a-zA-Z0-9]{6,}/.test(value.trim()))
-                error = "Name must not contain more than 5 consecutive special characters";
+            error = companyNameError(value);
             break;
         case "email": {
             const email = value?.trim();
@@ -67,10 +60,7 @@ export const validateEmployeeField = (
 
     switch (field) {
         case "fullName":
-            if (!value || value.trim().length < 3 || value.trim().length > 50)
-                error = "Name must be between 3 and 50 characters";
-            else if (/[^a-zA-Z\s]/.test(value))
-                error = "Full name can only contain letters.";
+            error = personNameError(value, "Full name");
             break;
         case "employeeId":
             if (!value || !value.trim())
@@ -176,10 +166,7 @@ export const validateEmployeeField = (
                 error = "Branch name can only contain letters, numbers, and spaces";
             break;
         case "accountHolderName":
-            if (!value || value.trim().length < 3 || value.trim().length > 30)
-                error = "Account holder name must be between 3 and 30 characters";
-            else if (/[^a-zA-Z\s.-]/.test(value))
-                error = "Account holder name can only contain letters, spaces, dots, and hyphens";
+            error = personNameError(value, "Account holder name", ACCOUNT_HOLDER_NAME_MAX);
             break;
         case "employeeNIC":
             if (!value || !value.trim()) {
