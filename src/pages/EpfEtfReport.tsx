@@ -114,7 +114,9 @@ function aggregateEpfEtf(months: readonly PayrollSummaryMonth[], employees: read
                 : companyEPFETF.times(3).dividedBy(15).toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
 
             record.basicPay = record.basicPay.plus(earnedBasic);
-            record.epfEtfAmount = record.epfEtfAmount.plus(firstNonZero(emp.epfEtfAmount, employeeInfo?.epfEtfAmount));
+            // The pro-rated base the EPF was charged on (from the API; 0 when no EPF was charged),
+            // never the employee's full epfEtfAmount
+            record.epfEtfAmount = record.epfEtfAmount.plus(toCents(emp.epfEtfAmount));
             record.grossPay = record.grossPay.plus(computedGross);
             record.netPay = record.netPay.plus(firstNonZero(emp.netPay, emp.netSalary));
             if (empEpf.greaterThan(0)) {
