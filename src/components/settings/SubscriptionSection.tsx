@@ -42,6 +42,8 @@ const SubscriptionSection = () => {
         : null;
     // A free trial does not bill or auto-renew: it just ends on trialEndsAt
     const isTrial = subscription?.isTrial === true;
+    // A plan change waits for its invoice to be paid; the current plan stays active until then
+    const pendingChange = subscription?.status === 'PENDING_ACTIVATION' ? subscription.pendingInvoice : null;
 
     const dateLabel = (): string => {
         if (isCancelled) return 'Access Until:';
@@ -89,6 +91,25 @@ const SubscriptionSection = () => {
                 <PaymentPlanSkeleton />
             ) : subscription ? (
                 <>
+                    {pendingChange && (
+                        <div className="mb-4 flex items-start justify-between gap-3 bg-blue-50 border border-blue-200 text-blue-800 px-5 py-4 rounded-2xl max-sm:flex-col">
+                            <div>
+                                <p className="font-semibold text-sm">Plan change waiting for payment</p>
+                                <p className="text-xs mt-0.5">
+                                    The {subscription.planName} plan activates once its invoice of{' '}
+                                    <span className="font-bold">{formatRs(pendingChange.totalAmount)}</span> is paid.
+                                    Your current plan stays active until then.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => navigate('/settle-invoice')}
+                                className="px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-xl hover:bg-blue-700 whitespace-nowrap"
+                            >
+                                Pay now
+                            </button>
+                        </div>
+                    )}
+
                     {/* Cancellation scheduled banner */}
                     {isCancelled && cancelledEndDate && (
                         <div className="mb-4 flex items-start gap-3 bg-amber-50 border border-amber-200 text-amber-800 px-5 py-4 rounded-2xl">
