@@ -5,6 +5,7 @@ import { Employee, CreateEmployeeRequest, EmployeeDocument } from '../types/empl
 import { Notification } from '../types/notification.types';
 import type { LoanInstallment, SalaryRecord } from '../types/salary.types';
 import type { BankAdviceReportData } from '../types/report.types';
+import type { PlanChangeResult } from '../types/subscription.types';
 
 // Define types locally if not exported from files, or reuse existing types
 // We'll trust the types exist or use 'any' where strict typing isn't critical for the task
@@ -194,7 +195,8 @@ export const apiSlice = createApi({
             providesTags: ['Subscription'],
         }),
 
-        changePlan: builder.mutation<any, { newPlanId: string }>({
+        // Creates a pending plan change + invoice (201); the plan activates only once the invoice is paid
+        changePlan: builder.mutation<PlanChangeResult, { newPlanId: string }>({
             query: (data) => ({
                 url: '/subscription/change-plan',
                 method: 'POST',
@@ -203,7 +205,8 @@ export const apiSlice = createApi({
             invalidatesTags: ['Subscription', 'Dashboard'],
         }),
 
-        addAddon: builder.mutation<any, { type: string; value: number }>({
+        // Add-on slots only raise the per-company employee limit (billing is per active employee)
+        addAddon: builder.mutation<unknown, { type: 'EMPLOYEE_EXTRA'; value: number }>({
             query: (data) => ({
                 url: '/subscription/addon',
                 method: 'POST',
