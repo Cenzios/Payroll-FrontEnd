@@ -43,7 +43,8 @@ const SubscriptionSection = () => {
     // A free trial does not bill or auto-renew: it just ends on trialEndsAt
     const isTrial = subscription?.isTrial === true;
     // A plan change waits for its invoice to be paid; the current plan stays active until then
-    const pendingChange = subscription?.status === 'PENDING_ACTIVATION' ? subscription.pendingInvoice : null;
+    const pendingChange = subscription?.pendingPlanChange ?? null;
+    const pendingChangeInvoice = pendingChange?.pendingInvoice ?? null;
 
     const dateLabel = (): string => {
         if (isCancelled) return 'Access Until:';
@@ -91,13 +92,13 @@ const SubscriptionSection = () => {
                 <PaymentPlanSkeleton />
             ) : subscription ? (
                 <>
-                    {pendingChange && (
+                    {pendingChange && pendingChangeInvoice && (
                         <div className="mb-4 flex items-start justify-between gap-3 bg-blue-50 border border-blue-200 text-blue-800 px-5 py-4 rounded-2xl max-sm:flex-col">
                             <div>
                                 <p className="font-semibold text-sm">Plan change waiting for payment</p>
                                 <p className="text-xs mt-0.5">
-                                    The {subscription.planName} plan activates once its invoice of{' '}
-                                    <span className="font-bold">{formatRs(pendingChange.totalAmount)}</span> is paid.
+                                    The {pendingChange.planName} plan activates once its invoice of{' '}
+                                    <span className="font-bold">{formatRs(pendingChangeInvoice.totalAmount)}</span> is paid.
                                     Your current plan stays active until then.
                                 </p>
                             </div>

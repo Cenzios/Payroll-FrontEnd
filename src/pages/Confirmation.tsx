@@ -6,6 +6,7 @@ import celebrationImg from '../assets/images/celebration-illustration.svg';
 import bgIllustration from '../assets/images/Background-illustration.svg';
 import axiosInstance from '../api/axios';
 import { Loader2 } from 'lucide-react';
+import { isSettledActive, type CurrentSubscription } from '../types/subscription.types';
 
 
 
@@ -37,9 +38,11 @@ const Confirmation = () => {
         // Step 1: Check if subscription is ACTIVE
         const response = await axiosInstance.get('/subscription/current');
 
-        const subStatus = response.data.data.status;
+        const current = response.data.data as CurrentSubscription;
+        const subStatus = current.status;
 
-        if (subStatus === 'ACTIVE') {
+        // A paid plan change is done once it is the current plan (no plan change still pending)
+        if (isSettledActive(current)) {
           // Step 2: Also verify the access status (checks all invoices too)
           // This ensures overdue invoices have been cleared by the webhook before we redirect
           const accessResponse = await axiosInstance.get('/subscription/access-status', {

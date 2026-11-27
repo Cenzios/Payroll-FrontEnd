@@ -5,6 +5,7 @@ import PlanCard from '../components/PlanCard';
 import PlanVerify from '../components/PlanVerify';
 import { Loader2 } from 'lucide-react';
 import { isPositive } from '../utils/money';
+import { planBeingPurchased, type CurrentSubscription } from '../types/subscription.types';
 
 const PlanVerifyPage = () => {
     const [activeSubscription, setActiveSubscription] = useState<any>(null);
@@ -17,7 +18,8 @@ const PlanVerifyPage = () => {
                 // Fetch subscription to get plan info
                 const subRes = await axiosInstance.get('/subscription/current');
                 if (subRes.data?.data) {
-                    setActiveSubscription(subRes.data.data);
+                    // The plan being verified: a pending plan change, else the current plan
+                    setActiveSubscription(planBeingPurchased(subRes.data.data as CurrentSubscription));
                 }
 
                 // Fetch pending/latest document for referenceId

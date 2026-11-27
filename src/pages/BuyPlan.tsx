@@ -8,7 +8,7 @@ import PlanOption from '../components/PlanOption';
 import { PLANS, getPlanById } from '../constants/plans';
 import { useUpdateSubscriptionEmployeeCountMutation, useGetDashboardSummaryQuery } from '../store/apiSlice';
 import { isPositive } from '../utils/money';
-import type { CurrentSubscription } from '../types/subscription.types';
+import { isSettledActive, planBeingPurchased, type CurrentSubscription } from '../types/subscription.types';
 
 const BuyPlan = () => {
   const navigate = useNavigate();
@@ -100,13 +100,14 @@ const BuyPlan = () => {
         console.log('🔍 Fetching subscription from backend...');
         const response = await axiosInstance.get('/subscription/current');
 
-        const sub = response.data.data;
-        setActiveSubscription(sub);
+        const sub = response.data.data as CurrentSubscription | null;
+        // A plan change waiting for payment is what this page buys (not the current plan)
+        setActiveSubscription(planBeingPurchased(sub));
         console.log('✅ Subscription fetched:', sub);
 
         // ✅ Prevent accessing /buy-plan if user already has an active subscription (e.g. Free Trial or completed payment)
         // Bypass this check if the user is explicitly changing plans or renewing an overdue plan
-        if (sub?.status === 'ACTIVE' && !isPlanChange && !isRenewal) {
+        if (isSettledActive(sub) && !isPlanChange && !isRenewal) {
           console.warn('User already has an ACTIVE subscription. Redirecting to dashboard.');
           navigate('/dashboard', { replace: true });
           return;

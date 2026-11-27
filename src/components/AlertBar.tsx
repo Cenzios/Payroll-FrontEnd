@@ -56,7 +56,8 @@ const AlertBar = () => {
                 if (data?.data) {
                     const isTrialUser = data.data.isTrialUser;
                     const isPaid = data.data.isPaid;
-                    setSubscriptionStatus(data.data.status ?? null);
+                    // A plan change waiting for payment counts as PENDING_ACTIVATION here (slip check)
+                    setSubscriptionStatus(data.data.pendingPlanChange?.status ?? data.data.status ?? null);
 
                     // Detect cancelled subscriptions
                     if (data.data.isCancelled && data.data.cancelledEndDate) {

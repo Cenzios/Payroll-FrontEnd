@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import axiosInstance from "../api/axios";
 import { useGetUserDocumentsQuery } from "../store/apiSlice";
 import { formatRs } from "../utils/money";
+import { isSettledActive, type CurrentSubscription } from "../types/subscription.types";
 
 const PlanVerify = ({ referenceId, totalAmount, onResubmit }: { referenceId?: string; totalAmount?: string; onResubmit?: () => void }) => {
     const navigate = useNavigate();
@@ -23,7 +24,8 @@ const PlanVerify = ({ referenceId, totalAmount, onResubmit }: { referenceId?: st
                     axiosInstance.get('/user-documents') // ← use your actual documents endpoint
                 ]);
 
-                const subStatus = subRes.data?.data?.status;
+                // ACTIVE only counts once no plan change is still waiting for its payment
+                const subActive = isSettledActive(subRes.data?.data as CurrentSubscription | undefined);
                 const latestDoc = docsRes.data?.data?.[0]; // ← always fresh, no RTK cache issue
 
                 // if (subStatus === 'ACTIVE') {
@@ -44,7 +46,7 @@ const PlanVerify = ({ referenceId, totalAmount, onResubmit }: { referenceId?: st
                 }
 
                 // No document found — check subscription status directly
-                if (subStatus === 'ACTIVE') {
+                if (subActive) {
                     setStatus("APPROVED");
                 } else {
                     setStatus("PENDING");
