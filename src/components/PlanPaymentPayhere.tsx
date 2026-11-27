@@ -16,9 +16,9 @@ const PlanPaymentPayhere = () => {
         setIsLoading(true);
         setError(null);
         try {
+            // The server charges the plan's pending invoice total; no amount is sent
             const { data } = await axiosInstance.post('/payments/payhere/hash', {
                 planId: selectedPlan.id,
-                amount: selectedPlan.registrationFee,
             });
 
             const checkout = data.data;

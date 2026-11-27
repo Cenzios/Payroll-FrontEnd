@@ -74,21 +74,14 @@ const PlanPaymentCard = ({ pricePerEmployee = '0', employeeCount = 1, isActive =
                 if (!isAuthenticated) return;
 
                 const planId = isPlanChange ? selectedPlan.id : (localStorage.getItem('reg_planId') || PLANS.BASIC.id);
-                // Calculate the true amount based on the provided pricePerEmployee (e.g., 100) instead of the hardcoded default plan price
-                const amount = calculatedTotal;
 
-                console.log('📝 Creating Stripe Intent for Plan:', planId);
-
-                const { data } = await axiosInstance.post('/payments/intents', {
-                    planId,
-                    amount,
-                    currency: 'LKR'
-                });
+                // The server charges the plan's pending invoice total; no amount is sent
+                const { data } = await axiosInstance.post('/payments/intents', { planId });
 
                 if (data?.data?.clientSecret) {
                     setClientSecret(data.data.clientSecret);
                     const intentAmount: string | undefined = data?.data?.intent?.amount;
-                    setActualAmount(isPositive(intentAmount) && intentAmount ? intentAmount : amount);
+                    setActualAmount(isPositive(intentAmount) && intentAmount ? intentAmount : calculatedTotal);
                     console.log('Client Secret received');
                 } else {
                     throw new Error('No client secret returned');
