@@ -1,8 +1,14 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import bgIllustration from '../assets/images/Background-illustration.svg';
+import axios from 'axios';
 import axiosInstance from '../api/axios'; // ✅ ADDED
 import { Info } from 'lucide-react';
+import { PLAN_CHANGE_PAYMENT_REQUIRED } from '../types/subscription.types';
+
+/** The API's message for a failed request, if it sent one. */
+const apiErrorMessage = (error: unknown): string | undefined =>
+    axios.isAxiosError<{ message?: string }>(error) ? error.response?.data?.message : undefined;
 
 
 const TermsAndConditions = () => {
@@ -60,7 +66,8 @@ const TermsAndConditions = () => {
                 navigate('/dashboard');
             } catch (error) {
                 console.error('❌ Failed to start trial:', error);
-                alert('Failed to start trial. Please try again.');
+                // e.g. 409 "You have already used your free trial" (one trial per user)
+                alert(apiErrorMessage(error) ?? 'Failed to start trial. Please try again.');
             } finally {
                 setIsProcessing(false);
             }
@@ -79,6 +86,11 @@ const TermsAndConditions = () => {
             await axiosInstance.post('/subscription/activate-pending');
             navigate('/dashboard');
         } catch (error) {
+            // On a paid plan, a plan change only activates once its invoice is paid
+            if (apiErrorMessage(error) === PLAN_CHANGE_PAYMENT_REQUIRED) {
+                navigate('/buy-plan?isPlanChange=true');
+                return;
+            }
             console.error('❌ Failed to activate subscription:', error);
             alert('Failed to activate your account. Please try again.');
         } finally {

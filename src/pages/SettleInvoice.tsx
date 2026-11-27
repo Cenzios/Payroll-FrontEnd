@@ -26,6 +26,8 @@ interface PendingInvoice {
     totalAmount: string;
     dueDate: string | null;
     planName: string | null;
+    /** Paying this invoice activates a plan change (older APIs omit it). */
+    activatesPlan?: boolean;
 }
 
 interface AccessStatus {
@@ -119,6 +121,10 @@ function toBlockingInvoice(pending: PendingInvoice): BlockingInvoice {
 function payNowMessage(access: AccessStatus): string | undefined {
     const pending = access.pendingInvoice;
     if (access.status !== 'ACTIVE' || !pending) return access.message;
+    if (pending.activatesPlan) {
+        const plan = pending.planName ? `the ${pending.planName} plan` : 'your new plan';
+        return `Your plan change is waiting for payment: ${plan} activates once its invoice of ${formatRs(pending.totalAmount)} is paid. Your current plan stays active until then.`;
+    }
     const kind = pending.billingType === 'REGISTRATION' ? 'registration' : 'monthly';
     const plan = pending.planName ? ` for the ${pending.planName} plan` : '';
     const due = pending.dueDate ? `, due on ${new Date(pending.dueDate).toLocaleDateString('en-GB').replace(/\//g, '.')}` : '';

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Minus, Plus, CreditCard, Loader2 } from 'lucide-react';
 import { subscriptionApi } from '../api/subscriptionApi';
 import { useGetActiveSubscriptionQuery } from '../store/apiSlice';
-import { formatRs, toDecimal } from '../utils/money';
+import { formatRs } from '../utils/money';
+import { ADDON_MAX_SLOTS } from '../types/subscription.types';
 
 interface AddonModalProps {
     isOpen: boolean;
@@ -20,10 +21,10 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState('');
 
-    // employeePrice is a decimal string (API contract); arithmetic via decimal.js
-    const pricePerSlot: string = activeSub?.subscription?.plan?.employeePrice || '0';
+    // Slots only raise the employee limit; the monthly invoice bills each active employee at this price
+    const pricePerEmployee: string = activeSub?.subscription?.plan?.employeePrice || '0';
 
-    const handleIncrement = () => setSlots(prev => prev + 1);
+    const handleIncrement = () => setSlots(prev => Math.min(prev + 1, ADDON_MAX_SLOTS));
     const handleDecrement = () => setSlots(prev => (prev > 1 ? prev - 1 : 1));
 
     const handlePurchase = async () => {
@@ -53,8 +54,8 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
             >
                 {/* Header */}
                 <div className="p-6 border-b border-gray-100">
-                    <h2 className="text-xl font-bold text-gray-900">Mini-Bundle Add-Ons</h2>
-                    <p className="text-sm text-gray-500 mt-1">Need more capacity? Choose a bundle</p>
+                    <h2 className="text-xl font-bold text-gray-900">Extra Employee Slots</h2>
+                    <p className="text-sm text-gray-500 mt-1">Raise your employee limit per company. Slots themselves are free.</p>
                 </div>
 
                 {/* Content */}
@@ -77,8 +78,8 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
 
                             <button
                                 onClick={handleIncrement}
-                                className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-                                disabled={isPriceLoading}
+                                className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50"
+                                disabled={slots >= ADDON_MAX_SLOTS || isPriceLoading}
                             >
                                 <Plus className="w-4 h-4" />
                             </button>
@@ -102,17 +103,17 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
                         ) : (
                             <>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">Price per slot</span>
-                                    <span className="font-medium text-green-600">{formatRs(pricePerSlot)}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">Number of additional slots</span>
+                                    <span className="text-gray-600">Additional slots</span>
                                     <span className="font-medium text-blue-600">{slots}</span>
                                 </div>
-                                <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                                    <span className="font-bold text-gray-900">Total</span>
-                                    <span className="font-bold text-xl text-blue-600">{formatRs(toDecimal(pricePerSlot).times(slots))}</span>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-600">Charged now</span>
+                                    <span className="font-medium text-green-600">{formatRs('0')}</span>
                                 </div>
+                                <p className="border-t border-gray-200 pt-3 text-xs text-gray-500">
+                                    You are billed {formatRs(pricePerEmployee)} per active employee each month, whether or not
+                                    they use an extra slot. Up to {ADDON_MAX_SLOTS} slots per request.
+                                </p>
                             </>
                         )}
                     </div>
@@ -137,7 +138,7 @@ const AddonModal = ({ isOpen, onClose, onSuccess, onUpgradePlan }: AddonModalPro
                             ) : (
                                 <CreditCard className="w-4 h-4" />
                             )}
-                            Confirm Purchase
+                            Add Slots
                         </button>
                         <button
                             onClick={onClose}
