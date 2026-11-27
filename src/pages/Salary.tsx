@@ -15,6 +15,7 @@ import {
   useUpdateEmployeeMutation,
 } from "../store/apiSlice";
 import { Employee } from "../types/employee.types";
+import { useGetCompanyLeaveBalancesQuery } from "../store/leaveApi";
 import type { SalaryRecord } from "../types/salary.types";
 import { isPositive, sanitizeMoneyInput, toDecimal, toDecimalString, toMoneyString } from "../utils/money";
 import { calculateEarningsLimit, calculatePayslip, salaryLimitError, wouldNetSalaryBeNegative } from "../utils/salaryCalc";
@@ -273,7 +274,16 @@ const Salary = () => {
     setSelectedEmployee(null);
   }, [selectedMonth, selectedYear, dispatch]);
 
-  const employees = data?.employees || [];
+  // Paid leave resets every calendar year: the leave cap / "Bal" shown on each card is the
+  // balance of the SELECTED salary year (entitlement - leave used in that year's salaries).
+  const { data: yearLeaveBalances } = useGetCompanyLeaveBalancesQuery(
+    { companyId: selectedCompanyId || "", year: selectedYear },
+    { skip: !selectedCompanyId },
+  );
+  const employees = (data?.employees || []).map((emp) => ({
+    ...emp,
+    paidLeave: yearLeaveBalances?.[emp.id]?.remaining ?? 0,
+  }));
 
   // Fetch Companies to get the name
   const { data: companies } = useGetCompaniesQuery();

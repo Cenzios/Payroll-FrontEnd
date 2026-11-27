@@ -462,7 +462,7 @@ const EmployeeSalaryCard = ({
                                         max={emp.paidLeave}
                                         disabled={isLocked || (emp.paidLeave ?? 0) === 0}
                                     />
-                                    <p className="text-[10px] text-gray-400 font-medium text-right">Bal: {emp.paidLeave || 0}d</p>
+                                    <p className="text-[10px] text-gray-400 font-medium text-right" title={`Paid leave left in ${selectedYear}`}>Bal {selectedYear}: {emp.paidLeave || 0}d</p>
                                 </div>
                             </div>
                         )}

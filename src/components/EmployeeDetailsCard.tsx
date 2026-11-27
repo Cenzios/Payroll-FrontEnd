@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { Employee } from "../types/employee.types";
 import { formatMoney, toDecimal } from '../utils/money';
+import LeaveBalanceHistory from './LeaveBalanceHistory';
 
 interface EmployeeDetailsCardProps {
     selectedEmployee: Employee | null;
@@ -430,17 +431,22 @@ const EmployeeDetailsCard: React.FC<EmployeeDetailsCardProps> = ({
                                 </div>
                             </div>
 
-                            {/* Paid Leave */}
-                            <div className="flex items-center  gap-4">
-                                <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
-                                    <Calendar className="w-[14px] h-[14px]" />
-                                    <span>Annual Leave Days</span>
+                            {/* Annual paid-leave entitlement + remaining balance per year */}
+                            <div>
+                                <div className="flex items-center  gap-4">
+                                    <div className="w-[150px] flex items-center gap-2 text-[12px] font-semibold text-[#8B98A8]">
+                                        <Calendar className="w-[14px] h-[14px]" />
+                                        <span>Annual Leave Days</span>
+                                    </div>
+                                    <div className="text-[13px] font-medium text-gray-800">
+                                        {(selectedEmployee.annualLeave ?? selectedEmployee.paidLeave) > 0
+                                            ? `${selectedEmployee.annualLeave ?? selectedEmployee.paidLeave} days / year`
+                                            : "N/A"}
+                                    </div>
                                 </div>
-                                <div className="text-[13px] font-medium text-gray-800">
-                                    {selectedEmployee.paidLeave && selectedEmployee.paidLeave > 0
-                                        ? selectedEmployee.paidLeave
-                                        : "N/A"}
-                                </div>
+                                {(selectedEmployee.annualLeave ?? selectedEmployee.paidLeave) > 0 && (
+                                    <LeaveBalanceHistory employeeId={selectedEmployee.id} />
+                                )}
                             </div>
 
                             {/* Allowances */}

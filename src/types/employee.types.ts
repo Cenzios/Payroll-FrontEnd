@@ -15,6 +15,14 @@ export interface EmployeeDocument {
     documentType?: 'EMPLOYEE' | 'LOAN';
 }
 
+/** Paid-leave balance of one calendar year (entitlement resets every year). */
+export interface LeaveBalance {
+    year: number;
+    entitlement: number;
+    used: number;
+    remaining: number;
+}
+
 export interface Employee {
     id: string;
     fullName: string;
@@ -27,7 +35,11 @@ export interface Employee {
     email?: string;
     basicSalary: string;
     salaryType?: 'DAILY' | 'MONTHLY';
+    /** Annual paid-leave entitlement (days). Same value as annualLeave (older name). */
     paidLeave: number;
+    annualLeave?: number;
+    /** Paid leave left in the current calendar year (from the employee list API). */
+    leaveBalance?: LeaveBalance;
     otRate: string;
     epfEnabled: boolean;
     epfNumber?: string;
