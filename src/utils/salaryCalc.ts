@@ -161,19 +161,12 @@ export function calculatePayslip(emp: SalaryEmployeeInput, input: PayslipInput):
 }
 
 /**
- * Validation check used before enabling "generate": would the net salary be
- * negative? (Kept identical to the previous rule, which applies 8% EPF on the
- * basic pay rather than on epfEtfAmount.)
+ * Validation check used before enabling "generate": is the net that calculatePayslip (and
+ * the API, which rejects a negative net with 422) computes below 0? Same maths, so it blocks
+ * exactly the negative cases.
  */
 export function wouldNetSalaryBeNegative(emp: SalaryEmployeeInput, input: PayslipInput): boolean {
-    const basicPay = calculateBasicPay(emp, input);
-    const otAmount = calculateOtAmount(emp.otRate, input.otHours);
-    const epfAmount = emp.epfEnabled && input.isEpfEnabled ? basicPay.times(EPF_EMPLOYEE_RATE) : ZERO;
-    const totalEarnings = basicPay.plus(otAmount).plus(sumBy(input.allowances, (a) => a.amount));
-    const otherDeductions = epfAmount
-        .plus(toDecimal(input.loanDeduction))
-        .plus(sumBy(input.deductions, (d) => d.amount));
-    return totalEarnings.minus(otherDeductions.plus(toDecimal(input.salaryAdvance))).lessThan(0);
+    return calculatePayslip(emp, input).netSalary.lessThan(0);
 }
 
 /** Earnings ceiling for the "manage deductions" modal. */
