@@ -6,6 +6,8 @@ import PageHeader from '../components/PageHeader';
 import CreateLoanDrawer from '../components/CreateLoanDrawer';
 import LoanHistoryView from '../components/LoanHistoryView';
 import SuccessModal from '../components/SuccessModal';
+import Toast from '../components/Toast';
+import LoanActions from '../components/loans/LoanActions';
 import { useGetLoansQuery } from '../store/apiSlice';
 import loanIcon from '../assets/images/loanicon.svg';
 import loanAmount from '../assets/images/loan-amount-icon.svg';
@@ -14,7 +16,6 @@ import { DollarSign, HandCoins, CircleDotDashed, Shapes } from 'lucide-react';
 import AlertBar from '../components/AlertBar';
 import logo from '../assets/images/logo-login.svg';
 import { useSearchParams } from 'react-router-dom';
-import Decimal from 'decimal.js';
 import { formatRs, sumBy, toDecimal, toDecimalString, ZERO } from '../utils/money';
 
 const getStatusBadge = (status: string) => {
@@ -28,6 +29,10 @@ const getStatusBadge = (status: string) => {
     case 'Completed':
     case 'COMPLETED':
       return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-emerald-500">Completed</span>;
+    case 'SETTLED':
+      return <span className="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap bg-teal-50 text-teal-600">Settled early</span>;
+    case 'CANCELLED':
+      return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-500">Cancelled</span>;
     default:
       return <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-50 text-gray-500">{status}</span>;
   }
@@ -37,6 +42,7 @@ const Loans = () => {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   // const [selectedLoan, setSelectedLoan] = useState<any | null>(null);
   const { selectedCompanyId, user } = useAppSelector((state) => state.auth);
 
@@ -63,16 +69,20 @@ const Loans = () => {
     const status = (l.status || 'Active').toUpperCase();
     return status === 'ACTIVE' || status === 'PENDING';
   }).length;
+  // Collected = instalments paid through payroll + early settlements paid outside payroll
   const totalAmountCollected = loans.reduce(
-    (sum, l) => sum.plus(sumBy(l.installments, (ins) => ins.paidAmount)),
+    (sum, l) => sum.plus(sumBy(l.installments, (ins) => ins.paidAmount)).plus(toDecimal(l.settledAmount)),
     ZERO,
   );
-  // Pending = what the instalment schedules still expect (principal + interest) − collected
-  const totalRepayable = loans.reduce(
-    (sum, l) => sum.plus(l.installments && l.installments.length > 0 ? sumBy(l.installments, (ins) => ins.amount) : toDecimal(l.amount)),
-    ZERO,
-  );
-  const totalPendingPayment = Decimal.max(totalRepayable.minus(totalAmountCollected), 0);
+  // Pending = what ACTIVE loans' open instalments still expect (settled / cancelled owe nothing)
+  const OPEN_STATUSES = ['PENDING', 'PARTIAL', 'SKIPPED', 'RESERVED'];
+  const totalPendingPayment = loans
+    .filter((l) => (l.status ?? 'ACTIVE') === 'ACTIVE')
+    .reduce(
+      (sum, l) => sum.plus(sumBy((l.installments ?? []).filter((ins) => OPEN_STATUSES.includes(ins.status)),
+        (ins) => toDecimal(ins.amount).minus(toDecimal(ins.paidAmount)))),
+      ZERO,
+    );
 
   const SummaryCard = ({ title, value, icon: Icon, iconBg, iconColor }: {
     title: string;
@@ -322,6 +332,7 @@ const Loans = () => {
                               <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Installments</th>
                               <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Monthly Premium</th>
                               <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Status</th>
+                              <th className="py-4 px-6 text-sm font-medium text-[#97A0AB]">Actions</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#e3e4e7] ">
@@ -353,6 +364,10 @@ const Loans = () => {
                                 <td className="py-4 px-6">
                                   {getStatusBadge(loan.status || 'Active')}
                                 </td>
+                                <td className="py-4 px-6">
+                                  <LoanActions loan={loan} companyId={selectedCompanyId || ''} compact
+                                    onMessage={(message, type) => setToast({ message, type })} />
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -383,6 +398,8 @@ const Loans = () => {
         }}
         companyId={selectedCompanyId}
       />
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <SuccessModal
         isOpen={showSuccessModal}

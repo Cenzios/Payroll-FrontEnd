@@ -61,6 +61,32 @@ export interface Loan {
         employeeId: string;
     };
     installments?: LoanInstallment[];
+    /** ACTIVE until fully repaid (COMPLETED), settled early (SETTLED) or cancelled (CANCELLED). */
+    status?: LoanStatus;
+    /** Principal still owed on the unpaid instalments (default settlement amount). */
+    outstandingPrincipal?: string;
+    settledAmount?: string | null;
+    settledAt?: string | null;
+    settlementMethod?: SettlementMethod | null;
+    settlementNote?: string | null;
+    remainingInstallments?: number;
+    /** Change history, newest first (loan detail only). */
+    changeLogs?: LoanChangeLog[];
+}
+
+export type LoanStatus = 'ACTIVE' | 'COMPLETED' | 'SETTLED' | 'CANCELLED';
+export type SettlementMethod = 'CASH' | 'BANK_TRANSFER';
+
+/** One loan_change_log row: values are raw (money/rates as decimal strings, dates YYYY-MM-DD). */
+export interface LoanChangeLog {
+    id: string;
+    action: 'CREATE' | 'EDIT' | 'SETTLE' | 'CANCEL';
+    field: string | null;
+    oldValue: string | null;
+    newValue: string | null;
+    reason: string | null;
+    changedAt: string;
+    changedBy?: { id: string; fullName: string } | null;
 }
 
 export interface CreateLoanRequest {

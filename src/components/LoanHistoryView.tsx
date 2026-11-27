@@ -8,6 +8,10 @@ import DocumentViewerModal from './DocumentViewerModal';
 import logo from '../assets/images/logo-login.svg';
 import Decimal from 'decimal.js';
 import { formatRs, sumBy, toDecimal, toDecimalString } from '../utils/money';
+import { formatDate } from '../utils/dateFormat';
+import LoanActions from './loans/LoanActions';
+import LoanChangeTimeline from './loans/LoanChangeTimeline';
+import Toast from './Toast';
 
 
 interface LoanHistoryViewProps {
@@ -25,6 +29,12 @@ const getHistoryBadge = (status: string) => {
             return <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-orange-50 text-orange-500">Pending</span>;
         case 'Upcoming':
             return <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-500">Upcoming</span>;
+        case 'RESERVED':
+            return <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-600" title="Held by a draft salary; paid when it is approved">In draft salary</span>;
+        case 'SETTLED':
+            return <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-600">Settled</span>;
+        case 'CANCELLED':
+            return <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-red-50 text-red-500">Cancelled</span>;
         default:
             return <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-400">{status}</span>;
     }
@@ -38,6 +48,10 @@ const getLoanStatusBadge = (status: string) => {
             return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-orange-50 text-orange-500">Pending</span>;
         case 'COMPLETED':
             return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-green-50 text-emerald-500">Completed</span>;
+        case 'SETTLED':
+            return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-teal-50 text-teal-600">Settled early</span>;
+        case 'CANCELLED':
+            return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-red-50 text-red-500">Cancelled</span>;
         default:
             return <span className="px-4 py-1.5 rounded-full text-[13px] font-semibold bg-gray-50 text-gray-500">{status || 'Active'}</span>;
     }
@@ -55,6 +69,7 @@ const LoanHistoryView = ({ loan: initialLoan, onBack }: LoanHistoryViewProps) =>
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     const handleUploadClick = () => {
         setIsModalOpen(true);
@@ -240,7 +255,10 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                             </span>
                         )}
                     </button>
-                    {getLoanStatusBadge(loan.status)}
+                    {getLoanStatusBadge(loan.status ?? 'ACTIVE')}
+                    {selectedCompanyId && (
+                        <LoanActions loan={loan} companyId={selectedCompanyId} onMessage={(message, type) => setToast({ message, type })} />
+                    )}
 
                     <DocumentViewerModal
                         isOpen={isViewModalOpen}
@@ -321,6 +339,15 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                     </div>
                 </div>
             </div>
+
+            {loan.status === 'SETTLED' && (
+                <div className="mb-4 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-[13px] text-teal-800 max-sm:mx-4" data-testid="loan-settlement">
+                    Settled early for <span className="font-bold">{formatRs(loan.settledAmount ?? '0')}</span>
+                    {loan.settlementMethod ? ` by ${loan.settlementMethod === 'CASH' ? 'cash' : 'bank transfer'}` : ''}
+                    {loan.settledAt ? ` on ${formatDate(loan.settledAt)}` : ''}.
+                    {loan.settlementNote ? ` Note: ${loan.settlementNote}` : ''} No further instalments are deducted.
+                </div>
+            )}
 
             {/* <div className='overflow-y-auto'> */}
             {/* History Table */}
@@ -405,6 +432,8 @@ max-sm:mx-4 max-sm:mt-3 max-sm:rounded-2xl max-sm:bg-white max-sm:shadow-sm max-
                     </div>
                 </div>
             </div>
+            <LoanChangeTimeline loan={loan} />
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         </div>
     );
 };
