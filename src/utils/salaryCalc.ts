@@ -213,9 +213,11 @@ export function salaryLimitError(input: SalaryLimitInput): string | null {
     if (outOfRange) {
         return `${outOfRange[0]} must be between 0 and the company working days (${companyDays})`;
     }
+    // Daily and monthly staff alike (same rule as the API): a day is worked, leave or sick leave
     const totalDays = input.workedDays + input.leaveDays + input.sickLeaveDays;
-    if (input.salaryType === 'DAILY' && totalDays > companyDays) {
-        return `Worked days + leave + sick leave (${totalDays}) cannot exceed the company working days (${companyDays}) for daily-paid staff`;
+    if (totalDays > companyDays) {
+        const staff = input.salaryType === 'DAILY' ? 'daily-paid' : 'monthly-paid';
+        return `Worked days + leave + sick leave (${totalDays}) cannot exceed the company working days (${companyDays}) for ${staff} staff`;
     }
     if (toDecimal(input.otHours).lessThan(0)) return 'OT hours cannot be negative';
     return null;
