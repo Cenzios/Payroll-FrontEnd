@@ -47,6 +47,7 @@ import PageHeader from '../components/PageHeader';
 import { salaryApi } from '../api/salaryApi';
 import { formatRs } from '../utils/money';
 import AlertBar from '../components/AlertBar';
+import PendingDraftsNotice from '../components/PendingDraftsNotice';
 import logo from '../assets/images/logo-login.svg';
 
 
@@ -83,11 +84,12 @@ const Dashboard = () => {
     skip: !user,
   });
 
-  // Money totals are decimal strings (API contract)
-  const { data: lastMonthData = { totalNetPay: '0', totalCompanyEPFETF: '0', totalEmployeeEPF: '0' } } = useQuery({
+  // Money totals are decimal strings (API contract). The cards show LAST month, so the drafts
+  // of that same month come from the same report (pendingDrafts), labelled with its name.
+  const { data: lastMonthData = { totalNetPay: '0', totalCompanyEPFETF: '0', totalEmployeeEPF: '0', pendingDrafts: 0 } } = useQuery({
     queryKey: ['lastMonthSalary', selectedCompanyId],
     queryFn: async () => {
-      if (!selectedCompanyId) return { totalNetPay: '0', totalCompanyEPFETF: '0', totalEmployeeEPF: '0' };
+      if (!selectedCompanyId) return { totalNetPay: '0', totalCompanyEPFETF: '0', totalEmployeeEPF: '0', pendingDrafts: 0 };
       const now = new Date();
       const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
@@ -102,12 +104,14 @@ const Dashboard = () => {
       // const totals = response.data?.monthlyData?.[0]?.totals;
       const payload = response.data || response;
       const totals = payload?.monthlyData?.[0]?.totals;
+      const pendingDrafts = Number(payload?.monthlyData?.[0]?.pendingDrafts ?? payload?.overallTotals?.pendingDrafts ?? 0);
 
       return {
         totalNetPay: String(totals?.totalNetPay ?? '0'),
         // totalCompanyEPFETF: (totals?.totalCompanyEPF || 0) + (totals?.totalCompanyETF || 0),
         totalCompanyEPFETF: String(totals?.totalCompanyEPFETF ?? '0'),
         totalEmployeeEPF: String(totals?.totalEmployeeEPF ?? '0'),
+        pendingDrafts,
       };
     },
     enabled: !!selectedCompanyId,
@@ -490,12 +494,10 @@ const Dashboard = () => {
                   />
                 </div>
 
-                {(dashboardData?.pendingDrafts ?? 0) > 0 && (
-                  <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-800" data-testid="dashboard-pending-drafts">
-                    {dashboardData?.pendingDrafts} draft salar{dashboardData?.pendingDrafts === 1 ? 'y' : 'ies'} for this month
-                    {dashboardData?.pendingDrafts === 1 ? ' is' : ' are'} not approved yet. Totals only include approved salaries.
-                  </div>
-                )}
+                <PendingDraftsNotice
+                  cardMonthDrafts={selectedCompanyId ? lastMonthData.pendingDrafts : 0}
+                  currentMonthDrafts={dashboardData?.pendingDrafts ?? 0}
+                />
 
                 {/* add buttons: mobile layout only (index.css shows .hidden.max-sm:flex below 768 px, Tailwind's
                     max-sm: stops at 640 px), so the buttons carry their gradient unconditionally - white
